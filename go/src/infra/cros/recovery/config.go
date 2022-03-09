@@ -5,32 +5,39 @@
 package recovery
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"infra/cros/recovery/internal/planpb"
+	"io"
+	"log"
 )
 
-// configPlan holders for plans used for configuration.
-// Order of the plan specified the execution order.
-type configPlan struct {
-	name      string
-	body      string
-	allowFail bool
+// createConfiguration creates configuration plan based on provided plan data.
+func createConfiguration(plans []*planpb.Plan) *planpb.Configuration {
+	if len(plans) == 0 {
+		return nil
+	}
+	c := &planpb.Configuration{Plans: make(map[string]*planpb.Plan)}
+	for _, p := range plans {
+		c.PlanNames = append(c.PlanNames, p.GetName())
+		c.Plans[p.GetName()] = p
+	}
+	return c
 }
 
-// createConfiguration creates configuration plan based on provided plan data.
-func createConfiguration(plans []configPlan) string {
-	if len(plans) == 0 {
-		return ""
+func createConfigurationJSON(plans []*planpb.Plan) ([]byte, error) {
+	c := createConfiguration(plans)
+	if c == nil {
+		// Backwards compatibility.
+		return []byte(""), nil
 	}
-	planNames := ""
-	planBodies := ""
-	for i, p := range plans {
-		if i > 0 {
-			planNames += ","
-			planBodies += ","
-		}
-		planNames += fmt.Sprintf("%q", p.name)
-		planBodies += fmt.Sprintf(`%q:{%s, "allow_fail":%v}`, p.name, p.body, p.allowFail)
-	}
+	return json.Marshal(c)
+}
 
-	return fmt.Sprintf(`{"plan_names":[%s],"plans": {%s}}`, planNames, planBodies)
+func mustCreateConfigratuionJSON(plans []*planpb.Plan) io.Reader {
+	c, err := createConfigurationJSON(plans)
+	if err != nil {
+		log.Fatalf("Failed to create repair configs: %v", err)
+	}
+	return bytes.NewBuffer(c)
 }

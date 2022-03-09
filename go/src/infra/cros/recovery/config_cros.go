@@ -5,122 +5,78 @@
 package recovery
 
 import (
+	"infra/cros/recovery/internal/planpb"
 	"io"
-	"strings"
+
+	"github.com/golang/protobuf/proto"
 )
+
+//copyPlay returns a deep copy of plan and sets allowFail on the copy.
+func copyPlan(plan *planpb.Plan, allowFail bool) *planpb.Plan {
+	p := proto.Clone(plan).(*planpb.Plan)
+	p.AllowFail = allowFail
+	return p
+}
 
 // CrosRepairConfig provides config for repair cros setup in the lab task.
 func CrosRepairConfig() io.Reader {
-	return strings.NewReader(createConfiguration([]configPlan{
-		{
-			name:      "servo",
-			body:      servoRepairPlanBody,
-			allowFail: true,
-		},
-		{
-			name:      "cros",
-			body:      crosRepairPlanBody,
-			allowFail: false,
-		},
-		{
-			name:      "chameleon",
-			body:      chameleonPlanBody,
-			allowFail: true,
-		},
-		{
-			name:      "bluetooth_peer",
-			body:      btpeerRepairPlanBody,
-			allowFail: true,
-		},
-		{
-			name:      "wifi_router",
-			body:      wifiRouterRepairPlanBody,
-			allowFail: true,
-		},
-		{
-			name:      "close",
-			body:      crosClosePlanBody,
-			allowFail: true,
-		},
-	}))
+	plans := []*planpb.Plan{
+		copyPlan(servoRepairPlan, true),
+		copyPlan(crosRepairPlan, false),
+		copyPlan(chameleonPlan, true),
+		copyPlan(btpeerRepairPlan, true),
+		copyPlan(wifiRouterRepairPlan, true),
+		copyPlan(crosClosePlan, true),
+	}
+	return mustCreateConfigratuionJSON(plans)
 }
 
 // CrosDeployConfig provides config for deploy cros setup in the lab task.
 func CrosDeployConfig() io.Reader {
-	return strings.NewReader(createConfiguration([]configPlan{
-		{
-			name:      "servo",
-			body:      servoRepairPlanBody,
-			allowFail: false,
-		},
-		{
-			name:      "cros",
-			body:      crosDeployPlanBody,
-			allowFail: false,
-		},
-		{
-			name:      "chameleon",
-			body:      chameleonPlanBody,
-			allowFail: true,
-		},
-		{
-			name:      "bluetooth_peer",
-			body:      btpeerRepairPlanBody,
-			allowFail: true,
-		},
-		{
-			name:      "wifi_router",
-			body:      wifiRouterRepairPlanBody,
-			allowFail: true,
-		},
-		{
-			name:      "close",
-			body:      crosClosePlanBody,
-			allowFail: true,
-		},
-	}))
+	plans := []*planpb.Plan{
+		copyPlan(servoRepairPlan, false),
+		copyPlan(crosDeployPlan, false),
+		copyPlan(chameleonPlan, true),
+		copyPlan(btpeerRepairPlan, true),
+		copyPlan(wifiRouterRepairPlan, true),
+		copyPlan(crosClosePlan, true),
+	}
+	return mustCreateConfigratuionJSON(plans)
 }
 
-// crosClosePlanBody provides plan to close cros repair/deploy tasks.
-const crosClosePlanBody = `
-"critical_actions": [
-	"Remove in-use flag on servo-host",
-	"Remove request to reboot is servo is good"
-],
-"actions": {
-	"servo_state_is_working":{
-		"docs":[
-			"check the servo's state is ServoStateWorking."
-		],
-		"exec_name":"servo_match_state",
-		"exec_extra_args":[
-			"state:WORKING"
-		]
+// crosClosePlan provides plan to close cros repair/deploy tasks.
+var crosClosePlan = &planpb.Plan{
+	Name: "close",
+	CriticalActions: []string{
+		"Remove in-use flag on servo-host",
+		"Remove request to reboot is servo is good",
 	},
-	"Remove request to reboot is servo is good":{
-		"conditions":[
-			"is_not_flex_board",
-			"servo_state_is_working"
-		],
-		"exec_name":"cros_remove_reboot_request",
-		"allow_fail_after_recovery": true
+	Actions: map[string]*planpb.Action{
+		"servo_state_is_working": {
+			Docs:          []string{"check the servo's state is ServoStateWorking."},
+			ExecName:      "servo_match_state",
+			ExecExtraArgs: []string{"state:WORKING"},
+		},
+		"Remove request to reboot is servo is good": {
+			Conditions: []string{
+				"is_not_flex_board",
+				"servo_state_is_working",
+			},
+			ExecName:               "cros_remove_reboot_request",
+			AllowFailAfterRecovery: true,
+		},
+		"Remove in-use flag on servo-host": {
+			Conditions:             []string{"is_not_flex_board"},
+			ExecName:               "cros_remove_servo_in_use",
+			AllowFailAfterRecovery: true,
+		},
+		"is_not_flex_board": {
+			Docs: []string{"Verify that device is belong Reven models"},
+			ExecExtraArgs: []string{
+				"string_values:x1c",
+				"invert_result:true",
+			},
+			ExecName: "dut_check_model",
+		},
 	},
-	"Remove in-use flag on servo-host":{
-		"conditions":[
-			"is_not_flex_board"
-		],
-		"exec_name":"cros_remove_servo_in_use",
-		"allow_fail_after_recovery": true
-	},
-	"is_not_flex_board": {
-		"docs": [
-			"Verify that device is belong Reven models"
-		],
-		"exec_extra_args": [
-			"string_values:x1c",
-			"invert_result:true"
-		],
-		"exec_name":"dut_check_model"
-	}
 }
-`

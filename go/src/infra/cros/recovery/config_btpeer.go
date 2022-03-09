@@ -4,26 +4,29 @@
 
 package recovery
 
-const btpeerRepairPlanBody = `
-"critical_actions": [
-	"btpeer_state_broken",
-	"Device is pingable",
-	"cros_ssh",
-	"check_server",
-	"btpeer_state_working"
-],
-"actions": {
-	"check_server":{
-		"docs":[
-			"To check if devices is responsive we request not empty list of detected statuses."
-		],
-		"exec_name":"btpeer_get_detected_statuses"
+import (
+	"infra/cros/recovery/internal/planpb"
+
+	"google.golang.org/protobuf/types/known/durationpb"
+)
+
+var btpeerRepairPlan = &planpb.Plan{
+	Name: "bluetooth_peer",
+	CriticalActions: []string{
+		"btpeer_state_broken",
+		"Device is pingable",
+		"cros_ssh",
+		"check_server",
+		"btpeer_state_working",
 	},
-	"Device is pingable":{
-		"exec_timeout": {
-			"seconds":15
+	Actions: map[string]*planpb.Action{
+		"check_server": {
+			Docs:     []string{"To check if devices is responsive we request not empty list of detected statuses."},
+			ExecName: "btpeer_get_detected_statuses",
 		},
-		"exec_name":"cros_ping"
-	}
+		"Device is pingable": {
+			ExecTimeout: &durationpb.Duration{Seconds: 15},
+			ExecName:    "cros_ping",
+		},
+	},
 }
-`

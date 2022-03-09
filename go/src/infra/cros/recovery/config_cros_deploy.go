@@ -4,288 +4,256 @@
 
 package recovery
 
-// List of critical actions for deployment of the ChromeOS.
-var crosDeployPlanCriticalActionList = []string{
-	"Set needs_deploy state",
-	"Clean up",
-	"Servo has USB-key with require image",
-	"Device is pingable before deploy",
-	"DUT has expected OS version",
-	"DUT has expected test firmware",
-	"Collect DUT labels",
-	"Deployment checks",
-	"DUT verify",
+import (
+	"infra/cros/recovery/internal/planpb"
+	"log"
+
+	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
+)
+
+var crosDeployPlan = &planpb.Plan{
+	Name: "cros",
+	CriticalActions: []string{
+		"Set needs_deploy state",
+		"Clean up",
+		"Servo has USB-key with require image",
+		"Device is pingable before deploy",
+		"DUT has expected OS version",
+		"DUT has expected test firmware",
+		"Collect DUT labels",
+		"Deployment checks",
+		"DUT verify",
+	},
+	Actions: crosDeployAndRepairActions(),
 }
 
-// List of actions configs for deployment of the ChromeOS.
-var crosDeployPlanActions = `
-"DUT is in dev-mode and allowed to boot from USB-key":{
-	"docs":[
-		"Verify that device is set to boot in DEV mode and enabled to boot from USB-drive."
-	],
-	"exec_timeout": {
-		"seconds":2000
+var deployActions = map[string]*planpb.Action{
+	"DUT is in dev-mode and allowed to boot from USB-key": {
+		Docs:        []string{"Verify that device is set to boot in DEV mode and enabled to boot from USB-drive."},
+		ExecTimeout: &durationpb.Duration{Seconds: 2000},
+		ExecName:    "cros_read_gbb_by_servo",
+		ExecExtraArgs: []string{
+			"validate_in_dev_mode:true",
+			"validate_usb_boot_enabled:true",
+			"remove_file:false",
+		},
+		RecoveryActions: []string{"Set GBB flags to 0x18 by servo"},
 	},
-	"exec_name":"cros_read_gbb_by_servo",
-	"exec_extra_args":[
-		"validate_in_dev_mode:true",
-		"validate_usb_boot_enabled:true",
-		"remove_file:false"
-	],
-	"recovery_actions":[
-		"Set GBB flags to 0x18 by servo"
-	]
-},
-"Device is pingable before deploy":{
-	"docs":[
-		"Verify that device is present in setup.",
-		"All devices is pingable by default even they have prod images on them.",
-		"If device is not pingable then device is off on not connected"
-	],
-	"exec_name":"cros_ping",
-	"exec_timeout": {
-		"seconds":15
+	"Device is pingable before deploy": {
+		Docs: []string{
+			"Verify that device is present in setup.",
+			"All devices is pingable by default even they have prod images on them.",
+			"If device is not pingable then device is off on not connected",
+		},
+		ExecName:    "cros_ping",
+		ExecTimeout: &durationpb.Duration{Seconds: 15},
+		RecoveryActions: []string{
+			"Cold reset DUT by servo and wait to boot",
+			"Power cycle DUT by RPM and wait",
+			"Set GBB flags to 0x18 by servo",
+			"Install OS in DEV mode",
+		},
 	},
-	"recovery_actions":[
-		"Cold reset DUT by servo and wait to boot",
-		"Power cycle DUT by RPM and wait",
-		"Set GBB flags to 0x18 by servo",
-		"Install OS in DEV mode"
-	]
-},
-"Cold reset DUT by servo and wait to boot":{
-	"docs":[
-		"Verify that device has stable version OS on it and version is match."
-	],
-	"dependencies":[
-		"dut_servo_host_present",
-		"servo_state_is_working",
-		"Cold reset DUT by servo",
-		"Wait DUT to be pingable after reset"
-	],
-	"exec_name":"sample_pass",
-	"run_control": 1
-},
-"Cold reset DUT by servo":{
-	"docs":[
-		"Verify that device has stable version OS on it and version is match."
-	],
-	"dependencies":[
-		"dut_servo_host_present",
-		"servo_state_is_working"
-	],
-	"exec_name":"servo_set",
-	"exec_extra_args":[
-		"command:power_state",
-		"string_value:reset"
-	],
-	"run_control": 1
-},
-"DUT has expected OS version":{
-	"docs":[
-		"Verify that device has stable version OS on it and version is match."
-	],
-	"dependencies":[
-		"Device is pingable before deploy",
-		"has_stable_version_cros_image"
-	],
-	"exec_name":"cros_is_on_stable_version",
-	"recovery_actions":[
-		"Quick provision OS",
-		"Install OS in DEV mode"
-	]
-},
-"DUT has expected test firmware":{
-	"docs":[
-		"Verify that FW on the DUT has dev keys."
-	],
-	"dependencies":[
-		"cros_ssh"
-	],
-	"exec_name":"cros_has_dev_signed_firmware",
-	"exec_timeout": {
-		"seconds":600
+	"Cold reset DUT by servo and wait to boot": {
+		Docs: []string{"Verify that device has stable version OS on it and version is match."},
+		Dependencies: []string{
+			"dut_servo_host_present",
+			"servo_state_is_working",
+			"Cold reset DUT by servo",
+			"Wait DUT to be pingable after reset",
+		},
+		ExecName:   "sample_pass",
+		RunControl: 1,
 	},
-	"recovery_actions":[
-		"Update DUT firmware with factory mode and restart by servo",
-		"Update DUT firmware with factory mode and restart by host"
-	]
-},
-"Update DUT firmware with factory mode and restart by servo":{
-	"docs":[
-		"Force update FW on the DUT by factory mode.",
-		"Reboot device by servo"
-	],
-	"conditions":[
-		"servo_state_is_working"
-	],
-	"dependencies":[
-		"cros_ssh",
-		"Disable software-controlled write-protect for 'host'",
-		"Disable software-controlled write-protect for 'ec'"
-	],
-	"exec_timeout": {
-		"seconds":300
+	"Cold reset DUT by servo": {
+		Docs: []string{"Verify that device has stable version OS on it and version is match."},
+		Dependencies: []string{
+			"dut_servo_host_present",
+			"servo_state_is_working",
+		},
+		ExecName: "servo_set",
+		ExecExtraArgs: []string{
+			"command:power_state",
+			"string_value:reset",
+		},
+		RunControl: 1,
 	},
-	"exec_name":"cros_run_firmware_update",
-	"exec_extra_args":[
-		"mode:factory",
-		"force:true",
-		"reboot:by_servo"
-	]
-},
-"Update DUT firmware with factory mode and restart by host":{
-	"docs":[
-		"Force update FW on the DUT by factory mode.",
-		"Reboot device by host"
-	],
-	"conditions":[
-		"servo_state_is_not_working"
-	],
-	"dependencies":[
-		"cros_ssh",
-		"Disable software-controlled write-protect for 'host'",
-		"Disable software-controlled write-protect for 'ec'"
-	],
-	"exec_timeout": {
-		"seconds":300
+	"DUT has expected OS version": {
+		Docs: []string{"Verify that device has stable version OS on it and version is match."},
+		Dependencies: []string{
+			"Device is pingable before deploy",
+			"has_stable_version_cros_image",
+		},
+		ExecName: "cros_is_on_stable_version",
+		RecoveryActions: []string{
+			"Quick provision OS",
+			"Install OS in DEV mode",
+		},
 	},
-	"exec_name":"cros_run_firmware_update",
-	"exec_extra_args":[
-		"mode:factory",
-		"force:true",
-		"reboot:by_host"
-	]
-},
-"Deployment checks":{
-	"docs":[
-		"Run some specif checks as part of deployment."
-	],
-	"dependencies":[
-		"Verify battery charging level",
-		"Verify RPM config (not critical)",
-		"Verify boot in recovery mode"
-	],
-	"exec_name":"sample_pass"
-},
-"Verify battery charging level":{
-	"docs":[
-		"Battery will be checked that it can be charged to the 80% as if device cannot then probably device is not fully prepared for deployment.",
-		"If battery is not charged, then we will re-check every 15 minutes for 8 time to allows to charge the battery.",
-		"Dues overheat battery in audio boxes mostly it deployed "
-	],
-	"conditions":[
-		"Is not in audio box",
-		"Battery is expected on device",
-		"Battery is present on device"
-	],
-	"exec_name":"cros_battery_changable_to_expected_level",
-	"exec_extra_args":[
-		"charge_retry_count:8",
-		"charge_retry_interval:900"
-	],
-	"exec_timeout": {
-		"seconds":9000
-	}
-},
-"Verify boot in recovery mode":{
-	"docs":[
-		"TODO: Not implemented yet!",
-		"Allow to fail till it is ready"
-	],
-	"exec_name":"sample_fail",
-	"allow_fail_after_recovery": true
-},
-"Verify RPM config (not critical)":{
-	"docs":[
-		"Verify RPM configs and set RPM state",
-		"Not applicable for cr50 servos based on b/205728276"
-	],
-	"conditions":[
-		"dut_servo_host_present",
-		"servo_state_is_working",
-		"is_servo_main_ccd_cr50",
-		"has_rpm_info"
-	],
-	"exec_name": "rpm_audit",
-	"exec_timeout": {
-		"seconds": 600
-	}
-},
-"DUT verify":{
-	"docs":[
-		"Run all repair critcal actions."
-	],
-	"dependencies":[` + joinCriticalList(crosRepairPlanCriticalActionList) + `],
-	"exec_name":"sample_pass"
-},
-"Install OS in DEV mode":{
-	"docs":[
-		"Install OS on the device from USB-key when device is in DEV-mode."
-	],
-	"dependencies":[
-		"Set GBB flags to 0x18 by servo",
-		"Boot DUT from USB in DEV mode",
-		"Run install after boot from USB-drive",
-		"Cold reset DUT by servo and wait to boot",
-		"wait_device_to_boot_after_reset"
-	],
-	"exec_name":"sample_pass"
-},
-"Boot DUT from USB in DEV mode":{
-	"docs":[
-		"Restart and try to boot from USB-drive",
-		"First boot in dev mode can take time so set boot time to 10 minutes."
-	],
-	"exec_name":"cros_dev_mode_boot_from_servo_usb_drive",
-	"exec_extra_args":[
-		"boot_timeout:600",
-		"retry_interval:2"
-	],
-	"exec_timeout": {
-		"seconds":900
-	}
-},
-"Run install after boot from USB-drive":{
-	"docs":[
-		"Perform install process"
-	],
-	"exec_name":"cros_run_chromeos_install_command_after_boot_usbdrive",
-	"exec_timeout": {
-		"seconds":1200
-	}
-},
-"Clean up":{
-	"docs":[
-		"Verify that device is set to boot in DEV mode and enabled to boot from USB-drive."
-	],
-	"dependencies":[
-		"cros_remove_default_ap_file_servo_host"
-	],
-	"exec_name":"sample_pass"
-},
-"Collect DUT labels":{
-	"docs":[
-		"Updating device info in inventory."
-	],
-	"dependencies":[
-		"cros_ssh",
-		"cros_update_hwid_to_inventory",
-		"cros_update_serial_number_inventory",
-		"device_sku",
-		"servo_type_label"
-	],
-	"exec_name":"sample_pass"
-},
-"servo_type_label":{
-	"docs":[
-		"Update the servo type label for the DUT info."
-	],
-	"exec_name":"servo_update_servo_type_label",
-	"allow_fail_after_recovery": true
-},
-`
+	"DUT has expected test firmware": {
+		Docs:         []string{"Verify that FW on the DUT has dev keys."},
+		Dependencies: []string{"cros_ssh"},
+		ExecName:     "cros_has_dev_signed_firmware",
+		ExecTimeout:  &durationpb.Duration{Seconds: 600},
+		RecoveryActions: []string{
+			"Update DUT firmware with factory mode and restart by servo",
+			"Update DUT firmware with factory mode and restart by host",
+		},
+	},
+	"Update DUT firmware with factory mode and restart by servo": {
+		Docs: []string{
+			"Force update FW on the DUT by factory mode.",
+			"Reboot device by servo",
+		},
+		Conditions: []string{"servo_state_is_working"},
+		Dependencies: []string{
+			"cros_ssh",
+			"Disable software-controlled write-protect for 'host'",
+			"Disable software-controlled write-protect for 'ec'",
+		},
+		ExecTimeout: &durationpb.Duration{Seconds: 300},
+		ExecName:    "cros_run_firmware_update",
+		ExecExtraArgs: []string{
+			"mode:factory",
+			"force:true",
+			"reboot:by_servo",
+		},
+	},
+	"Update DUT firmware with factory mode and restart by host": {
+		Docs: []string{
+			"Force update FW on the DUT by factory mode.",
+			"Reboot device by host",
+		},
+		Conditions: []string{"servo_state_is_not_working"},
+		Dependencies: []string{
+			"cros_ssh",
+			"Disable software-controlled write-protect for 'host'",
+			"Disable software-controlled write-protect for 'ec'",
+		},
+		ExecTimeout: &durationpb.Duration{Seconds: 300},
+		ExecName:    "cros_run_firmware_update",
+		ExecExtraArgs: []string{
+			"mode:factory",
+			"force:true",
+			"reboot:by_host",
+		},
+	},
+	"Deployment checks": {
+		Docs: []string{"Run some specif checks as part of deployment."},
+		Dependencies: []string{
+			"Verify battery charging level",
+			"Verify RPM config (not critical)",
+			"Verify boot in recovery mode",
+		},
+		ExecName: "sample_pass",
+	},
+	"Verify battery charging level": {
+		Docs: []string{
+			"Battery will be checked that it can be charged to the 80% as if device cannot then probably device is not fully prepared for deployment.",
+			"If battery is not charged, then we will re-check every 15 minutes for 8 time to allows to charge the battery.",
+			"Dues overheat battery in audio boxes mostly it deployed ",
+		},
+		Conditions: []string{
+			"Is not in audio box",
+			"Battery is expected on device",
+			"Battery is present on device",
+		},
+		ExecName: "cros_battery_changable_to_expected_level",
+		ExecExtraArgs: []string{
+			"charge_retry_count:8",
+			"charge_retry_interval:900",
+		},
+		ExecTimeout: &durationpb.Duration{Seconds: 9000},
+	},
+	"Verify boot in recovery mode": {
+		Docs: []string{
+			"TODO: Not implemented yet!",
+			"Allow to fail till it is ready",
+		},
+		ExecName:               "sample_fail",
+		AllowFailAfterRecovery: true,
+	},
+	"Verify RPM config (not critical)": {
+		Docs: []string{
+			"Verify RPM configs and set RPM state",
+			"Not applicable for cr50 servos based on b/205728276",
+		},
+		Conditions: []string{
+			"dut_servo_host_present",
+			"servo_state_is_working",
+			"is_servo_main_ccd_cr50",
+			"has_rpm_info",
+		},
+		ExecName:    "rpm_audit",
+		ExecTimeout: &durationpb.Duration{Seconds: 600},
+	},
+	"DUT verify": {
+		Docs:         []string{"Run all repair critcal actions."},
+		Dependencies: crosRepairPlan.CriticalActions,
+		ExecName:     "sample_pass",
+	},
+	"Install OS in DEV mode": {
+		Docs: []string{"Install OS on the device from USB-key when device is in DEV-mode."},
+		Dependencies: []string{
+			"Set GBB flags to 0x18 by servo",
+			"Boot DUT from USB in DEV mode",
+			"Run install after boot from USB-drive",
+			"Cold reset DUT by servo and wait to boot",
+			"wait_device_to_boot_after_reset",
+		},
+		ExecName: "sample_pass",
+	},
+	"Boot DUT from USB in DEV mode": {
+		Docs: []string{
+			"Restart and try to boot from USB-drive",
+			"First boot in dev mode can take time so set boot time to 10 minutes.",
+		},
+		ExecName: "cros_dev_mode_boot_from_servo_usb_drive",
+		ExecExtraArgs: []string{
+			"boot_timeout:600",
+			"retry_interval:2",
+		},
+		ExecTimeout: &durationpb.Duration{Seconds: 900},
+	},
+	"Run install after boot from USB-drive": {
+		Docs:        []string{"Perform install process"},
+		ExecName:    "cros_run_chromeos_install_command_after_boot_usbdrive",
+		ExecTimeout: &durationpb.Duration{Seconds: 1200},
+	},
+	"Clean up": {
+		Docs:         []string{"Verify that device is set to boot in DEV mode and enabled to boot from USB-drive."},
+		Dependencies: []string{"cros_remove_default_ap_file_servo_host"},
+		ExecName:     "sample_pass",
+	},
+	"Collect DUT labels": {
+		Docs: []string{"Updating device info in inventory."},
+		Dependencies: []string{
+			"cros_ssh",
+			"cros_update_hwid_to_inventory",
+			"cros_update_serial_number_inventory",
+			"device_sku",
+			"servo_type_label",
+		},
+		ExecName: "sample_pass",
+	},
+	"servo_type_label": {
+		Docs:                   []string{"Update the servo type label for the DUT info."},
+		ExecName:               "servo_update_servo_type_label",
+		AllowFailAfterRecovery: true,
+	},
+}
 
-// Represents the Chrome OS deployment plan for DUT.
-var crosDeployPlanBody = `"critical_actions": [` + joinCriticalList(crosDeployPlanCriticalActionList) + `],
-"actions": {` + crosDeployPlanActions + crosRepairPlanActions + `}`
+func crosDeployAndRepairActions() map[string]*planpb.Action {
+	combo := make(map[string]*planpb.Action)
+	for name, action := range deployActions {
+		combo[name] = proto.Clone(action).(*planpb.Action)
+	}
+	for name, action := range crosRepairPlan.Actions {
+		if _, ok := combo["name"]; ok {
+			log.Fatalf("duplicate name in crosDeploy and crosRepair plan actions: %s", name)
+		}
+		combo[name] = proto.Clone(action).(*planpb.Action)
+	}
+	return combo
+}

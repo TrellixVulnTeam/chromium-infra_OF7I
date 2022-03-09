@@ -4,25 +4,26 @@
 
 package recovery
 
-const chameleonPlanBody = `
-"critical_actions": [
-	"Mark as bad",
-	"Device is pingable",
-	"cros_ssh",
-	"Mark as good"
-],
-"actions": {
-	"Mark as bad":{
-		"exec_name":"chameleon_state_broken"
+import (
+	"infra/cros/recovery/internal/planpb"
+
+	"google.golang.org/protobuf/types/known/durationpb"
+)
+
+var chameleonPlan = &planpb.Plan{
+	Name: "chameleon",
+	CriticalActions: []string{
+		"Mark as bad",
+		"Device is pingable",
+		"cros_ssh",
+		"Mark as good",
 	},
-	"Mark as good":{
-		"exec_name":"chameleon_state_working"
-	},
-	"Device is pingable":{
-		"exec_timeout": {
-			"seconds":15
+	Actions: map[string]*planpb.Action{
+		"Mark as bad":  {ExecName: "chameleon_state_broken"},
+		"Mark as good": {ExecName: "chameleon_state_working"},
+		"Device is pingable": {
+			ExecTimeout: &durationpb.Duration{Seconds: 15},
+			ExecName:    "cros_ping",
 		},
-		"exec_name":"cros_ping"
-	}
+	},
 }
-`

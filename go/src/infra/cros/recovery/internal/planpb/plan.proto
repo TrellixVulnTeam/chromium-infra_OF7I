@@ -20,6 +20,7 @@ message Configuration {
 
 // Plan holds information about actions for recovery engine to execute.
 message Plan {
+  string name = 4;
   // Critical actions are actions which have to pass for plan to succeed.
   // Order matters.
   repeated string critical_actions = 1;

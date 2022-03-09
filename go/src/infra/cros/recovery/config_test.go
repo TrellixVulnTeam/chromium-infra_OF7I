@@ -5,14 +5,15 @@
 package recovery
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"infra/cros/recovery/internal/loader"
+	"infra/cros/recovery/internal/planpb"
 	"io"
-	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-
-	"infra/cros/recovery/internal/loader"
+	"github.com/golang/protobuf/proto"
 )
 
 // verifyConfig verifies that configuration can be parsed and contains all execs present in library.
@@ -24,7 +25,7 @@ func verifyConfig(name string, t *testing.T, c io.Reader) {
 	ctx := context.Background()
 	p, err := loader.LoadConfiguration(ctx, c)
 	if err != nil {
-		t.Errorf("%q expected to pass by failed with error: %s", name, err)
+		t.Errorf("%q expected to pass but failed with error: %s", name, err)
 	}
 	if p == nil {
 		t.Errorf("%q default config is empty", name)
@@ -57,8 +58,8 @@ func TestCrosDeployConfig(t *testing.T) {
 
 var generateCases = []struct {
 	name string
-	in   []configPlan
-	out  string
+	in   []*planpb.Plan
+	want string
 }{
 	{
 		"empty",
@@ -67,27 +68,39 @@ var generateCases = []struct {
 	},
 	{
 		"single plan",
-		[]configPlan{
+		[]*planpb.Plan{
 			{
-				"p1",
-				`"critical_actions":[], "actions":{}`,
-				false,
+				Name:            "p1",
+				CriticalActions: []string{},
+				Actions:         make(map[string]*planpb.Action),
+				AllowFail:       false,
 			},
 		},
 		`{"plan_names":["p1"],"plans": {"p1":{"critical_actions":[], "actions":{}, "allow_fail":false}}}`,
 	},
 	{
 		"full",
-		[]configPlan{
+		[]*planpb.Plan{
 			{
-				"p1",
-				`"critical_actions":["c1","c2"], "actions":{"c1":{"dependencies":["c2"],"exec_name":"sample_pass"},"c2":{"exec_name":"sample_fail"}}`,
-				false,
+				Name:            "p1",
+				CriticalActions: []string{"c1", "c2"},
+				Actions: map[string]*planpb.Action{
+					"c1": {
+						Dependencies: []string{"c2"},
+						ExecName:     "sample_pass",
+					},
+					"c2": {ExecName: "sample_fail"},
+				},
+				AllowFail: false,
 			},
 			{
-				"p2",
-				`"critical_actions":["c3","c4"], "actions":{"c3":{"exec_name":"sample_pass"},"c4":{"exec_name":"sample_fail"}}`,
-				true,
+				Name:            "p2",
+				CriticalActions: []string{"c3", "c4"},
+				Actions: map[string]*planpb.Action{
+					"c3": {ExecName: "sample_pass"},
+					"c4": {ExecName: "sample_fail"},
+				},
+				AllowFail: true,
 			},
 		},
 		`{"plan_names":["p1","p2"],"plans": {"p1":{"critical_actions":["c1","c2"], "actions":{"c1":{"dependencies":["c2"],"exec_name":"sample_pass"},"c2":{"exec_name":"sample_fail"}}, "allow_fail":false},"p2":{"critical_actions":["c3","c4"], "actions":{"c3":{"exec_name":"sample_pass"},"c4":{"exec_name":"sample_fail"}}, "allow_fail":true}}}`,
@@ -96,24 +109,42 @@ var generateCases = []struct {
 
 func TestCreateConfiguration(t *testing.T) {
 	t.Parallel()
-	for _, c := range generateCases {
+	for i, c := range generateCases {
 		cs := c
 		t.Run(cs.name, func(t *testing.T) {
 			ctx := context.Background()
-			c := createConfiguration(cs.in)
-			if d := cmp.Diff(c, cs.out); d != "" {
-				t.Errorf("diff: %v\nwant: %v", d, cs.out)
+			got, err := createConfigurationJSON(cs.in)
+			if err != nil {
+				t.Fatalf("createConfigurationJSON(%d): %v", i, err)
 			}
-			if cs.out != "" {
-				p, err := loader.LoadConfiguration(ctx, strings.NewReader(c))
-				if err != nil {
+
+			if cs.want == "" {
+				if string(got) != "" {
+					t.Errorf("createConfigurationJSON(%d): %q, want empty", i, got)
 				}
-				if err != nil {
-					t.Errorf("expected to pass by failed with error: %s", err)
-				}
-				if p == nil {
-					t.Errorf("default config is empty")
-				}
+				// Remaining tests are not relevant on empty result.
+				return
+			}
+
+			var gotProto, wantProto planpb.Plan
+			// Convert both to protos and compare. This test now is more
+			// useful to show this refactoring did not break anything.
+			if err := json.Unmarshal(got, &gotProto); err != nil {
+				t.Fatalf("Failed to unmarshal got bytes: %v", err)
+			}
+			if err := json.Unmarshal([]byte(cs.want), &wantProto); err != nil {
+				t.Fatalf("Failed to unmarshal want bytes: %v", err)
+			}
+
+			if !proto.Equal(&wantProto, &gotProto) {
+				t.Errorf("createConfiguration(%d): %v, want %v", i, got, cs.want)
+			}
+			p, err := loader.LoadConfiguration(ctx, bytes.NewReader(got))
+			if err != nil {
+				t.Errorf("loader.LoadConfiguration failed: %v", err)
+			}
+			if p == nil {
+				t.Error("Default config is empty")
 			}
 		})
 	}
