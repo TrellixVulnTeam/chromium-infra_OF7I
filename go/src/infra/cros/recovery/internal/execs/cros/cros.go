@@ -333,11 +333,12 @@ type TpmStatus struct {
 func NewTpmStatus(ctx context.Context, run execs.Runner, timeout time.Duration) *TpmStatus {
 	status, _ := run(ctx, timeout, "tpm_manager_client", "status", "--nonsensitive")
 	log.Debug(ctx, "New Tpm Status :%q", status)
-	var ts = &TpmStatus{}
 	statusItems := strings.Split(status, "\n")
-	// The uppercase on this string is deliberate.
-	successStatus := "STATUS_SUCCESS"
-	ts.success = strings.Contains(strings.ToUpper(status), successStatus)
+	var ts = &TpmStatus{
+		statusMap: make(map[string]string),
+		// The uppercase on this string is deliberate.
+		success: strings.Contains(strings.ToUpper(status), "STATUS_SUCCESS"),
+	}
 	// Following the logic in Labpack, if the TPM status string
 	// contains 2 lines or fewer, we will return an empty map for the
 	// TPM status values.
@@ -373,10 +374,10 @@ func (tpmStatus *TpmStatus) hasSuccess() bool {
 
 // isOwned checks whether TPM has been cleared or not.
 func (tpmStatus *TpmStatus) isOwned() (bool, error) {
-	if tpmStatus.statusMap == nil {
+	if len(tpmStatus.statusMap) == 0 {
 		return false, errors.Reason("tpm status is owned: not initialized").Err()
 	}
-	return tpmStatus.statusMap["is_owned"] != "", nil
+	return tpmStatus.statusMap["is_owned"] == "true", nil
 }
 
 // SimpleReboot executes a simple reboot command using a command
