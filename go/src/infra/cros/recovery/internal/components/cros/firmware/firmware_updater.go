@@ -46,6 +46,18 @@ func RunFirmwareUpdater(ctx context.Context, req *FirmwareUpdaterRequest, run co
 	return errors.Annotate(err, "run firmware update").Err()
 }
 
+// DisableWriteProtection disables software-controlled write-protect for both FPROMs, and install the RO firmware
+func DisableWriteProtect(ctx context.Context, run components.Runner, log logger.Logger, timeout time.Duration, fprom string) error {
+	switch fprom {
+	case "host", "ec":
+	default:
+		return errors.Reason("disable write-protect %q: unsupported", fprom).Err()
+	}
+	out, err := run(ctx, timeout, "flashrom", "-p", fprom, "--wp-disable")
+	log.Debug("Disable writeProtection stdout:\n%s", out)
+	return errors.Annotate(err, "disable write-protect %q", fprom).Err()
+}
+
 // ReadFirmwareKeysFromHost read AP keys from the host.
 func ReadFirmwareKeysFromHost(ctx context.Context, run components.Runner, log logger.Logger) ([]string, error) {
 	const extractImagePath = "/tmp/bios.bin"

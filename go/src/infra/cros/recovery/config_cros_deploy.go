@@ -120,7 +120,9 @@ var crosDeployPlanActions = `
 		"servo_state_is_working"
 	],
 	"dependencies":[
-		"cros_ssh"
+		"cros_ssh",
+		"Disable software-controlled write-protect for 'host'",
+		"Disable software-controlled write-protect for 'ec'"
 	],
 	"exec_timeout": {
 		"seconds":300
@@ -141,7 +143,9 @@ var crosDeployPlanActions = `
 		"servo_state_is_not_working"
 	],
 	"dependencies":[
-		"cros_ssh"
+		"cros_ssh",
+		"Disable software-controlled write-protect for 'host'",
+		"Disable software-controlled write-protect for 'ec'"
 	],
 	"exec_timeout": {
 		"seconds":300

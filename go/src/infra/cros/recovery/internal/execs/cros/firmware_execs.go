@@ -106,6 +106,17 @@ func runFirmwareUpdaterExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+// runDisableWriteProtectExec disables software-controlled write-protect.
+//
+// ChromeOS devices have 'host' and 'ec' FPROMs, provide by 'fprom:ec'.
+func runDisableFPROMWriteProtectExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.NewRunner(info.RunArgs.DUT.Name)
+	am := info.GetActionArgs(ctx)
+	fprom := am.AsString(ctx, "fprom", "")
+	err := firmware.DisableWriteProtect(ctx, run, info.NewLogger(), info.ActionTimeout, fprom)
+	return errors.Annotate(err, "disable fprom: %q write-protect", fprom).Err()
+}
+
 func hasDevSignedFirmwareExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.NewRunner(info.RunArgs.DUT.Name)
 	if keys, err := firmware.ReadFirmwareKeysFromHost(ctx, run, info.NewLogger()); err != nil {
@@ -122,4 +133,5 @@ func init() {
 	execs.Register("cros_is_rw_firmware_stable_version_available", isRWFirmwareStableVersionAvailableExec)
 	execs.Register("cros_has_dev_signed_firmware", hasDevSignedFirmwareExec)
 	execs.Register("cros_run_firmware_update", runFirmwareUpdaterExec)
+	execs.Register("cros_disable_fprom_write_protect", runDisableFPROMWriteProtectExec)
 }

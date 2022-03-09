@@ -876,6 +876,38 @@ const crosRepairPlanActions = `
 	},
 	"exec_name":"servo_recover_ac_power"
 },
+"Disable software-controlled write-protect for 'host'":{
+	"docs":[
+		"Disable write-protect fprom 'host'."
+	],
+	"dependencies":[
+		"cros_ssh"
+	],
+	"exec_name":"cros_disable_fprom_write_protect",
+	"exec_extra_args":[
+		"fprom:host"
+	],
+	"exec_timeout": {
+		"seconds":300
+	},
+	"allow_fail_after_recovery": true
+},
+"Disable software-controlled write-protect for 'ec'":{
+	"docs":[
+		"Disable write-protect fprom 'ec'."
+	],
+	"dependencies":[
+		"cros_ssh"
+	],
+	"exec_name":"cros_disable_fprom_write_protect",
+	"exec_extra_args":[
+		"fprom:ec"
+	],
+	"exec_timeout": {
+		"seconds":300
+	},
+	"allow_fail_after_recovery": true
+},
 "Set needs_deploy state":{
 	"exec_name":"dut_state_needs_deploy"
 }
