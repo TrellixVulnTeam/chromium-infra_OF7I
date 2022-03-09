@@ -2,11 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import {LABELS_PREFIX} from "./IssueWizardConfig.ts";
+
 // Chromium project component prefix
 const CR_PREFIX = 'Cr-';
-
-// Customer Question conver to related labels
-const LABELS_PREFIX = 'LABELS: '
 
 // customized function for add additoinal data base on different categories.
 export function expandDescriptions(

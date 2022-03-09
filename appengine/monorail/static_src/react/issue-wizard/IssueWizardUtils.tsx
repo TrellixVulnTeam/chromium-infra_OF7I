@@ -114,11 +114,11 @@ export function buildIssueDescription(
   channel: string,
   ): string {
   const issueDescription =
-    "Steps to reproduce the problem:\n" + reproduceStep.trim() + "\n\n"
-    + "Problem Description:\n" + description.trim() + "\n\n"
-    + "Additional Comments:\n" + comments.trim() + "\n\n"
-    + "Chrome version:" + chromeVersion.trim() + " Channel: " + channel + "\n\n"
-    + "OS:" + os.trim();
+    "<b>Steps to reproduce the problem:</b>\n" + reproduceStep.trim() + "\n\n"
+    + "<b>Problem Description:</b>\n" + description.trim() + "\n\n"
+    + "<b>Additional Comments:</b>\n" + comments.trim() + "\n\n"
+    + "<b>Chrome version: </b>" + chromeVersion.trim() + " <b>Channel: </b>" + channel + "\n\n"
+    + "<b>OS:</b>" + os.trim();
   return issueDescription;
 }
 
@@ -126,8 +126,14 @@ export function buildIssueLabels(category: string, osName: string, chromeVersion
   const labels = [
     {label:'via-wizard-'+category},
     {label:'Pri-2'},
-    {label:osName},
   ];
+
+  const os = osName.split(' ')[0];
+  if (os !== 'Unknown/Other') {
+    labels.push({
+      label: 'OS-'+os
+    })
+  }
   const mainChromeVersion = chromeVersion.split('.').length > 0 ? chromeVersion.split('.')[0] : null;
   if (mainChromeVersion !== null) {
     labels.push({

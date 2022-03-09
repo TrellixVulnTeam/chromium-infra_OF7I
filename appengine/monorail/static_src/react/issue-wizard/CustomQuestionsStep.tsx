@@ -14,6 +14,7 @@ import Alert from '@material-ui/core/Alert';
 import AttachmentUploader from './AttachmentUploader.tsx';
 import Modal from '@material-ui/core/Modal';
 import Box from '@material-ui/core/Box';
+import {LABELS_PREFIX} from './IssueWizardConfig.ts';
 
 const userStyles = makeStyles({
   greyText: {
@@ -64,7 +65,9 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
 
   const updateAnswer = (answer: string, index: number) => {
     const updatedAnswers = answers;
-    updatedAnswers[index] = questions[index].answerPrefix + answer;
+    const answerPrefix = questions[index].answerPrefix !== LABELS_PREFIX ?
+      '<b>' + questions[index].answerPrefix + '</b> ' : LABELS_PREFIX;
+    updatedAnswers[index] = answerPrefix + answer;
     setAnswers(updatedAnswers);
   }
 

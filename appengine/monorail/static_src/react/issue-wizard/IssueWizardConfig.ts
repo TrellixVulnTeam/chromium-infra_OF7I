@@ -5,6 +5,9 @@
 // TODO: create a `monorail/frontend/config/` folder to store all the feature config file
 import {IssueCategory, IssueWizardPersona, CustomQuestionType} from "./IssueWizardTypes.tsx";
 
+// Customer Question convert to related labels
+export const LABELS_PREFIX = 'LABELS: ';
+
 export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
   {
     name: 'UI',
@@ -75,7 +78,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Select,
         question: "Does the problem occur on multiple sites?",
-        answerPrefix: "LABELS: ",
+        answerPrefix: LABELS_PREFIX,
         options: ["Not sure - I don't know", "Yes - Please describe below", "No - Just that one URL"],
         subQuestions: [null,null,null],
       },
@@ -131,7 +134,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Select,
         question: "What kind of software had the problem?",
-        answerPrefix: "LABELS: ",
+        answerPrefix: LABELS_PREFIX,
         options: ["Chrome Extension - Adds new browser functionality", "Chrome Theme - Makes Chrome look awesome"],
         subQuestions: [
           null,
@@ -242,7 +245,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Select,
         question: "Please select a label to classify your issue:",
-        answerPrefix: "LABELS: ",
+        answerPrefix: LABELS_PREFIX,
         options: [
           "Not sure - I don't know",
           "Type-Feature - Request for new or improved features",
@@ -264,7 +267,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type:CustomQuestionType.Select,
         question:"Which <a href='https://bugs.chromium.org/p/chromium/adminComponents' target='_blank'>component</a> does this fall under?",
-        answerPrefix: "LABELS: ",
+        answerPrefix: LABELS_PREFIX,
         options: [
           "Not sure - I don't know",
           "Blink>Animation",
