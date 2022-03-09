@@ -8,6 +8,7 @@ import (
 	"context"
 	"time"
 
+	"cloud.google.com/go/bigquery"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
@@ -15,7 +16,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	kartepb "infra/cros/karte/api"
-	"infra/cros/karte/internal/bigquery"
 	"infra/cros/karte/internal/datastore"
 	"infra/cros/karte/internal/errors"
 	"infra/cros/karte/internal/idstrategy"
@@ -119,7 +119,7 @@ const bigqueryProject = "chrome-fleet-karte-dev"
 // PersistAction persists a single action.
 func (k *karteFrontend) PersistAction(ctx context.Context, req *kartepb.PersistActionRequest) (*kartepb.PersistActionResponse, error) {
 	// TODO(gregorynisbet): Use the client to insert something.
-	_ = bigquery.GetClient(ctx)
+	_, _ = bigquery.NewClient(ctx, bigquery.DetectProjectID)
 	id := req.GetActionId()
 	if id == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "persist action: request ID cannot be empty")

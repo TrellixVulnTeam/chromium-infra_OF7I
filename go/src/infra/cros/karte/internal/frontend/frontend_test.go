@@ -6,7 +6,6 @@ package frontend
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
@@ -22,8 +21,6 @@ import (
 	_ "go.chromium.org/luci/gae/service/datastore/crbug1242998safeget"
 
 	kartepb "infra/cros/karte/api"
-	"infra/cros/karte/internal/bigquery"
-	"infra/cros/karte/internal/errors"
 	"infra/cros/karte/internal/idstrategy"
 	"infra/cros/karte/internal/scalars"
 )
@@ -187,76 +184,6 @@ func TestCreateObservation(t *testing.T) {
 	_, err := k.CreateObservation(ctx, &kartepb.CreateObservationRequest{})
 	if err == nil {
 		t.Error("expected Create Observation to fail")
-	}
-}
-
-func TestPersistActionsInsertRow(t *testing.T) {
-	t.Parallel()
-	cases := []struct {
-		name              string
-		initDatastore     []*ActionEntity
-		id                string
-		checkForDuplicate bool
-		errorFragment     string
-	}{
-		{
-			name:              "empty",
-			initDatastore:     []*ActionEntity{},
-			id:                "entity1",
-			checkForDuplicate: false,
-			errorFragment:     "no such entity",
-		},
-		{
-			name: "successfully persist one item",
-			initDatastore: []*ActionEntity{
-				{
-					Kind:       "ssh-attempt",
-					CreateTime: time.Unix(1, 2),
-				},
-			},
-			id:                "entity1",
-			checkForDuplicate: false,
-			errorFragment:     "no such entity",
-		},
-	}
-
-	for _, tt := range cases {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			ctx := gaetesting.TestingContext()
-			// For paranoia, set the current project to a project ID that GCP will never support.
-			ctx = bigquery.UseProject(ctx, invalidProjectID)
-			// Set the bigquery client to a fake client owned by the Karte project.
-			fakebq := bigquery.NewFakeClient(ctx)
-			ctx = bigquery.UseClient(ctx, fakebq)
-			// Set the id strategy to the production strategy.
-			ctx = idstrategy.Use(ctx, idstrategy.NewDefault())
-			// Make the in-memory datastore consistent (so changes show up immediately).
-			datastore.GetTestable(ctx).Consistent(true)
-
-			k := NewKarteFrontend()
-			// Populate our fake datastore with the initial entities
-			// before attempting to persist them.
-			for _, ent := range tt.initDatastore {
-				_, err := k.CreateAction(ctx, &kartepb.CreateActionRequest{
-					Action: ent.ConvertToAction(),
-				})
-				if err != nil {
-					t.Errorf("unexpected error: %s", err)
-				}
-			}
-			_, err := k.PersistAction(ctx, &kartepb.PersistActionRequest{
-				ActionId:          tt.id,
-				CheckForDuplicate: tt.checkForDuplicate,
-			})
-			msg, _ := errors.Inspect(err)
-			if strings.Contains(msg, tt.errorFragment) {
-				// Do nothing since the error message is what we expect.
-			} else {
-				t.Errorf("unexpected error fragment: %q does not contain %q", err, tt.errorFragment)
-			}
-		})
 	}
 }
 
