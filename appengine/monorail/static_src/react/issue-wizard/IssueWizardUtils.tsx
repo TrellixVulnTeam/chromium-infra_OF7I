@@ -105,12 +105,19 @@ export function getLabelsByCategory(categories: IssueCategory[]): Map<string, Ar
 }
 
 
-export function buildIssueDescription(reproduceStep: string, description: string, comments: string, os: string, chromeVersion: string): string {
+export function buildIssueDescription(
+  reproduceStep: string,
+  description: string,
+  comments: string,
+  os: string,
+  chromeVersion: string,
+  channel: string,
+  ): string {
   const issueDescription =
     "Steps to reproduce the problem:\n" + reproduceStep.trim() + "\n\n"
     + "Problem Description:\n" + description.trim() + "\n\n"
     + "Additional Comments:\n" + comments.trim() + "\n\n"
-    + "Chrome version:" + chromeVersion.trim() + "\n\n"
+    + "Chrome version:" + chromeVersion.trim() + " Channel: " + channel + "\n\n"
     + "OS:" + os.trim();
   return issueDescription;
 }

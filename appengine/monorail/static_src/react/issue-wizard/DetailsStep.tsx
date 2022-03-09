@@ -9,7 +9,7 @@ import TextField from '@material-ui/core/TextField';
 import {red, grey} from '@material-ui/core/colors';
 import DotMobileStepper from './DotMobileStepper.tsx';
 import SelectMenu from './SelectMenu.tsx';
-import {OS_LIST, ISSUE_WIZARD_QUESTIONS, ISSUE_REPRODUCE_PLACEHOLDER} from './IssueWizardConfig.ts'
+import {OS_LIST, ISSUE_WIZARD_QUESTIONS, ISSUE_REPRODUCE_PLACEHOLDER, OS_CHANNEL_LIST} from './IssueWizardConfig.ts'
 import {getTipByCategory} from './IssueWizardUtils.tsx';
 import CustomQuestionSelector from './CustomQuestions/CustomQuestionSelector.tsx';
 
@@ -76,6 +76,11 @@ export default function DetailsStep(props: Props): React.ReactElement {
   const selectOs = (os: string) => {
     setTextValues({...textValues, 'osName': os});
   }
+
+  const selectChannel = (channel: string) => {
+    setTextValues({...textValues, 'channel': channel});
+  }
+
   const tipByCategory = getTipByCategory(ISSUE_WIZARD_QUESTIONS);
 
   const nextEnabled =
@@ -98,6 +103,8 @@ export default function DetailsStep(props: Props): React.ReactElement {
           <div className={classes.inlineStyle}>
             <h3 className={classes.inlineTitle}>Operating System:</h3>
             <SelectMenu optionsList={OS_LIST} selectedOption={textValues.osName} setOption={selectOs} />
+            <h3 className={classes.inlineTitle}>Channel:</h3>
+            <SelectMenu optionsList={OS_CHANNEL_LIST} selectedOption={textValues.channel} setOption={selectChannel} />
           </div>
           <div className={classes.inlineStyle}>
             <h3 className={classes.inlineTitle}>Chrome version: </h3>

@@ -399,6 +399,30 @@ export const OS_LIST = [
 
 ]
 
+// possible user os channel
+export const OS_CHANNEL_LIST = [
+  {
+    name: 'Not sure',
+    description: '',
+  },
+  {
+    name: 'Stable',
+    description: '',
+  },
+  {
+    name: 'Beta',
+    description: '',
+  },
+  {
+    name: 'Dev',
+    description: '',
+  },
+  {
+    name: 'Canary',
+    description: '',
+  },
+]
+
 export const BROWSER_LIST = [
   {
     name: 'Apple Safari',

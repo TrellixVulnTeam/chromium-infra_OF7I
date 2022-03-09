@@ -14,7 +14,7 @@ import {getOs, getChromeVersion, buildIssueDescription} from './issue-wizard/Iss
 import Header from './issue-wizard/Header.tsx'
 
 import {GetQuestionsByCategory, buildIssueLabels, getCompValByCategory, getLabelsByCategory} from './issue-wizard/IssueWizardUtils.tsx';
-import {ISSUE_WIZARD_QUESTIONS, ISSUE_REPRODUCE_PLACEHOLDER} from './issue-wizard/IssueWizardConfig.ts';
+import {ISSUE_WIZARD_QUESTIONS, ISSUE_REPRODUCE_PLACEHOLDER, OS_CHANNEL_LIST} from './issue-wizard/IssueWizardConfig.ts';
 import {prpcClient} from 'prpc-client-instance.js';
 import {expandDescriptions} from './issue-wizard/IssueWizardDescriptionsUtils.tsx';
 import SubmitSuccessStep from './issue-wizard/SubmitSuccessStep.tsx';
@@ -48,6 +48,7 @@ export function IssueWizard(props: Props): ReactElement {
       describeProblem: '',
       chromeVersion: getChromeVersion(),
       osName: getOs(),
+      channel: OS_CHANNEL_LIST[0].name,
     });
 
   const questionByCategory = GetQuestionsByCategory(ISSUE_WIZARD_QUESTIONS);
@@ -59,6 +60,7 @@ export function IssueWizard(props: Props): ReactElement {
       describeProblem: '',
       chromeVersion: getChromeVersion(),
       osName: getOs(),
+      channel: OS_CHANNEL_LIST[0].name,
     });
     setIsRegression(false);
   }
@@ -92,7 +94,12 @@ export function IssueWizard(props: Props): ReactElement {
     const onSubmitIssue = (comments: string, customQuestionsAnswers: Array<string>, attachments: Array<any>,onSuccess: Function, onFailure: Function) => {
       const summary = textValues.oneLineSummary;
       const component =  compValByCategory.get(category);
-      const description = buildIssueDescription(textValues.stepsToReproduce, textValues.describeProblem, comments, textValues.osName, textValues.chromeVersion);
+      const description = buildIssueDescription(
+        textValues.stepsToReproduce,
+        textValues.describeProblem,
+        comments, textValues.osName,
+        textValues.chromeVersion,
+        textValues.channel);
       const labels = buildIssueLabels(category, textValues.osName, textValues.chromeVersion, labelsByCategory.get(category));
 
       const {expandDescription, expandLabels, compVal} =
