@@ -875,6 +875,9 @@ const crosRepairPlanActions = `
 		"seconds":600
 	},
 	"exec_name":"servo_recover_ac_power"
+},
+"Set needs_deploy state":{
+	"exec_name":"dut_state_needs_deploy"
 }
 `
 

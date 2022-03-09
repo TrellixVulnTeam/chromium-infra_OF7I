@@ -6,6 +6,7 @@ package recovery
 
 // List of critical actions for deployment of the ChromeOS.
 var crosDeployPlanCriticalActionList = []string{
+	"Set needs_deploy state",
 	"Clean up",
 	"Servo has USB-key with require image",
 	"Device is pingable before deploy",
