@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/rand/mathrand"
 
+	experimental_cmds "infra/cmd/shivas/internal/experimental"
 	"infra/cmd/shivas/internal/meta"
 	queen_cmds "infra/cmd/shivas/internal/queen/cmds"
 	sw_cmds "infra/cmd/shivas/internal/swarming/cmds"
@@ -62,6 +63,7 @@ Full documentation http://go/shivas-cli`,
 			subcommands.Section("Internal use"),
 			bot_cmds.PrintBotInfo,
 			operations.AdminCmd,
+			experimental_cmds.VerifyBotStatusCmd,
 		},
 	}
 }
