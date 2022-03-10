@@ -53,6 +53,11 @@ export function IssueWizard(props: Props): ReactElement {
 
   const questionByCategory = GetQuestionsByCategory(ISSUE_WIZARD_QUESTIONS);
 
+  const moveStep = (step: number) => {
+    window.scrollTo(0, 0);
+    setActiveStep(step);
+  }
+
   const reset = () => {
     setTextValues({
       oneLineSummary: '',
@@ -77,14 +82,14 @@ export function IssueWizard(props: Props): ReactElement {
         setUserPersona={setUserPersona}
         category={category}
         setCategory={updateCategory}
-        setActiveStep={setActiveStep}
+        setActiveStep={moveStep}
         />;
       } else if (activeStep === 1) {
         page = <DetailsStep
           textValues={textValues}
           setTextValues={setTextValues}
           category={category}
-          setActiveStep={setActiveStep}
+          setActiveStep={moveStep}
           setIsRegression={setIsRegression}
     />;
    } else if (activeStep === 2) {
@@ -129,7 +134,7 @@ export function IssueWizard(props: Props): ReactElement {
     }
     page =
       <CustomQuestionsStep
-        setActiveStep={setActiveStep}
+        setActiveStep={moveStep}
         questions={questionByCategory.get(category)}
         onSubmit={onSubmitIssue}
         setnewIssueID={setnewIssueID}
