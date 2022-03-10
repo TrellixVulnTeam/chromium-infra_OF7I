@@ -15,12 +15,12 @@ import (
 	"sync"
 	"time"
 
-	"go.chromium.org/luci/common/retry"
-	"go.chromium.org/luci/common/sync/parallel"
-
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/retry"
+	"go.chromium.org/luci/common/sync/parallel"
+	"google.golang.org/api/googleapi"
 )
 
 // DirWriter exposes methods to write a local directory to Google Storage.
@@ -37,12 +37,16 @@ type gsClient interface {
 	NewWriter(p gs.Path) (gs.Writer, error)
 }
 
-// NewDirWriter creates an object which can write a directory and its subdirectories to the given Google Storage path
-func NewDirWriter(client gsClient, maxConcurrentUploads int) *DirWriter {
-	return &DirWriter{
-		client:               client,
-		maxConcurrentUploads: maxConcurrentUploads,
-		retryIterator: &concurrencySafeRetryIterator{
+// transientErrorRetryIterator chooses a delay for all transient errors.
+// It stops on success or a non-transient error.
+type transientErrorRetryIterator struct {
+	impl retry.Iterator
+}
+
+// newTransientErrorRetryIterator creates a new transient error retry iterator.
+func newTransientErrorRetryIterator() *transientErrorRetryIterator {
+	return &transientErrorRetryIterator{
+		impl: &concurrencySafeRetryIterator{
 			i: &retry.ExponentialBackoff{
 				Limited: retry.Limited{
 					Delay:   100 * time.Millisecond,
@@ -52,6 +56,28 @@ func NewDirWriter(client gsClient, maxConcurrentUploads int) *DirWriter {
 				Multiplier: 2,
 			},
 		},
+	}
+}
+
+// Next picks a duration to wait after an error. Returns stop if and only if the error is nil or transient.
+func (i *transientErrorRetryIterator) Next(ctx context.Context, e error) time.Duration {
+	// The first few checks are thread-safe and can happen outside the core of the retry iterator
+	// that's governed by the mutex.
+	if e == nil {
+		return retry.Stop
+	}
+	if cloudErr, code := extractCloudErrorCode(e); cloudErr != nil && code == 403 {
+		return retry.Stop
+	}
+	return i.impl.Next(ctx, e)
+}
+
+// NewDirWriter creates an object which can write a directory and its subdirectories to the given Google Storage path
+func NewDirWriter(client gsClient, maxConcurrentUploads int) *DirWriter {
+	return &DirWriter{
+		client:               client,
+		maxConcurrentUploads: maxConcurrentUploads,
+		retryIterator:        newTransientErrorRetryIterator(),
 	}
 }
 
@@ -239,4 +265,24 @@ func (r *concurrencySafeRetryIterator) Next(ctx context.Context, err error) time
 	r.m.Lock()
 	defer r.m.Unlock()
 	return r.i.Next(ctx, err)
+}
+
+// errorExtractionLimit is the maximum number of times that we can unwrap an error.
+// We set this to a finite value out of paranoia.
+const errorExtractionLimit = 1000
+
+// extractCloudErrorCode takes an error that wraps a *googleapi.Error (possibly an
+// arbitrary number of times less than the errorExtractionLimit) and returns the *googleapi.Error and the exit code contained therein.
+//
+// extractCloudErrorCode returns (nil, 0) if and only if e is not and does not contain a *googleapi.Error.
+func extractCloudErrorCode(e error) (*googleapi.Error, int) {
+	cur := e
+	for i := 1; i <= errorExtractionLimit; i++ {
+		switch v := cur.(type) {
+		case *googleapi.Error:
+			return v, v.Code
+		}
+		cur = errors.Unwrap(cur)
+	}
+	return nil, 0
 }

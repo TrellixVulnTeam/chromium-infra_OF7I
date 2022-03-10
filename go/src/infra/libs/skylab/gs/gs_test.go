@@ -12,10 +12,12 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/gcloud/gs"
 	gcgs "go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/common/retry"
+	"google.golang.org/api/googleapi"
 )
 
 // Implements InnerClient interface, writing to provided local directory instead
@@ -144,5 +146,80 @@ func TestConcurrentUploads(t *testing.T) {
 		if _, err := os.Stat(filepath.Join(tf.dst, f)); os.IsNotExist(err) {
 			t.Errorf("File %s not copied. os.Stat() returned: %s", f, err)
 		}
+	}
+}
+
+// TestExtractCloudErrorCode tests that we can extract a response code from an arbitrarily wrapped googleapi.Error.
+func TestExtractCloudErrorCode(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		in       error
+		cloudErr *googleapi.Error
+		code     int
+	}{
+		{
+			name:     "nil",
+			in:       nil,
+			cloudErr: nil,
+			code:     0,
+		},
+		{
+			name:     "non-cloud error",
+			in:       fmt.Errorf("I am not a cloud error"),
+			cloudErr: nil,
+			code:     0,
+		},
+		{
+			name: "403 cloud error",
+			in: &googleapi.Error{
+				Code: 403,
+			},
+			cloudErr: &googleapi.Error{
+				Code: 403,
+			},
+			code: 403,
+		},
+		{
+			name: "wrapped cloud error",
+			in: fmt.Errorf("wrapping an error: %w", &googleapi.Error{
+				Code: 403,
+			}),
+			cloudErr: &googleapi.Error{
+				Code: 403,
+			},
+			code: 403,
+		},
+		{
+			name: "LUCI wrapped cloud error",
+			in: errors.Annotate(
+				&googleapi.Error{
+					Code: 403,
+				},
+				"something",
+			).Err(),
+			cloudErr: &googleapi.Error{
+				Code: 403,
+			},
+			code: 403,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			actualErr, actualCode := extractCloudErrorCode(tt.in)
+
+			if diff := cmp.Diff(tt.cloudErr, actualErr); diff != "" {
+				t.Errorf("cloudErr differs (-want +got): %s", diff)
+			}
+
+			if diff := cmp.Diff(tt.code, actualCode); diff != "" {
+				t.Errorf("error code differs (-want +got): %s", diff)
+			}
+		})
 	}
 }
