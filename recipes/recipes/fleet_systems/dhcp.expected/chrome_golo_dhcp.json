@@ -20,6 +20,46 @@
   },
   {
     "cmd": [
+      "cipd",
+      "ensure",
+      "-root",
+      "[CLEANUP]/packages",
+      "-ensure-file",
+      "infra/shivas/${platform} prod",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "project:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "ensure shivas installed",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-prod------------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/shivas/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
       "vpython",
       "-u",
       "RECIPE_REPO[depot_tools]/gerrit_client.py",
@@ -221,7 +261,8 @@
       "@@@STEP_LOG_LINE@zone_host_map.json@{@@@",
       "@@@STEP_LOG_LINE@zone_host_map.json@  \"test_zone\": [@@@",
       "@@@STEP_LOG_LINE@zone_host_map.json@    \"test-host\"@@@",
-      "@@@STEP_LOG_LINE@zone_host_map.json@  ]@@@",
+      "@@@STEP_LOG_LINE@zone_host_map.json@  ],@@@",
+      "@@@STEP_LOG_LINE@zone_host_map.json@  \"test_zone_no_hosts\": []@@@",
       "@@@STEP_LOG_LINE@zone_host_map.json@}@@@",
       "@@@STEP_LOG_END@zone_host_map.json@@@"
     ]
@@ -253,46 +294,6 @@
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@files@chrome_golo/services/dhcpd/test_zone/foo@@@",
       "@@@STEP_LOG_END@files@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "ensure",
-      "-root",
-      "[CLEANUP]/packages",
-      "-ensure-file",
-      "infra/shivas/${platform} prod",
-      "-max-threads",
-      "0",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "luci_context": {
-      "realm": {
-        "name": "project:try"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "ensure_installed",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-prod------------\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/shivas/resolved-platform\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    ]@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
     ]
   },
   {
@@ -367,6 +368,13 @@
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@]@@@",
       "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "test_zone:",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@test-host: 14.04@@@"
     ]
   },
   {
@@ -468,7 +476,7 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "DHCP config test for test_zone on 14.04 hosts: test-host"
+    "name": "DHCP config test for test_zone on 14.04"
   },
   {
     "name": "$result"
