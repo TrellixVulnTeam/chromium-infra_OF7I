@@ -1187,7 +1187,8 @@ func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 	if machinelse.GetChromeosMachineLse().GetDeviceLse() != nil {
 		// Validate device config
 		if err := validateDeviceConfig(ctx, machine); err != nil {
-			return errors.Annotate(err, "Validation error - Missing device config").Err()
+			// Keep error msg shorter to avoid hitting gRPC response length limit
+			return errors.Annotate(err, "device config is not valid, please verify whether it exists in http://shortn/_CLeuVYZoWt").Err()
 		}
 	}
 
