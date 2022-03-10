@@ -15,14 +15,13 @@ import (
 	b64 "encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 
 	"github.com/golang/protobuf/jsonpb"
-	luciauth "go.chromium.org/luci/auth"
+	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/luciexe/build"
 
@@ -63,13 +62,6 @@ func main() {
 	} else {
 		build.Main(input, &writeOutputProps, &mergeOutputProps,
 			func(ctx context.Context, args []string, state *build.State) error {
-
-				cwd, err := os.Getwd()
-				if err != nil {
-					return errors.Annotate(err, "internal run: cannot get current working directory!").Err()
-				}
-				logRoot := filepath.Join(cwd, "logs")
-
 				// TODO(otabek@): Add custom logger.
 				lg := logger.NewLogger()
 
@@ -86,67 +78,14 @@ func main() {
 				// for the process as a whole. This will also indirectly influence lg.
 				log.SetOutput(os.Stderr)
 
-				// TODO(gregorynisbet): Remove canary.
-				// Write a labpack canary file with contents that are unique.
-				err = ioutil.WriteFile(
-					filepath.Join(logRoot, "_labpack_canary"),
-					[]byte("46182c32-2c9d-4abd-a029-54a71c90261e"),
-					0b110_110_110,
-				)
-				if err == nil {
-					lg.Info("successfully wrote canary file")
-				} else {
-					lg.Error("failed to write canary file: %s", err)
-				}
-
 				res := &steps.LabpackResponse{Success: true}
-				err = internalRun(ctx, input, state, lg, logRoot)
+				err := internalRun(ctx, input, state, lg)
 				if err != nil {
 					res.Success = false
 					res.FailReason = err.Error()
 					lg.Debug("Finished with err: %s", err)
 				}
 				writeOutputProps(res)
-
-				// TODO(gregorynisbet): Extract to function.
-
-				// Actually persist the logs
-				swarmingTaskID := state.Infra().GetSwarming().GetTaskId()
-				if swarmingTaskID == "" {
-					// Failed to get the swarming task, log and move on.
-					lg.Error("Swarming task is empty!")
-				} else {
-					// Just out of an abundance of caution, note that the following block is safe
-					// even if the command /usr/bin/timeout does not exist (or timeout does not exist
-					// at that path). Any errors that we encounter when running commands are logged and
-					// don't interfere with the overall task.
-
-					// upload.Upload can potentially loop for a long time. Set a timeout of 30s.
-					//
-					// Also, protect ourselves from this task by running it as a subprocess.
-					// See b:223230183 for details.
-					cmd := exec.Command(
-						"/usr/bin/timeout",
-						"30s",
-						"paris-uploader",
-						"upload",
-						"-local",
-						".",
-						"-gs",
-						// TODO(gregorynisbet): Allow this parameter to be overridden from outside.
-						fmt.Sprintf("gs://chromeos-autotest-results/swarming-%s", swarmingTaskID),
-					)
-					// Forward both these streams to our stderr.
-					cmd.Stdout = os.Stderr
-					cmd.Stderr = os.Stderr
-
-					if rErr := cmd.Run(); rErr == nil {
-						lg.Info("call to paris-offloader was successful")
-					} else {
-						lg.Error("error when calling paris-offloader: %s", rErr)
-					}
-				}
-
 				// if err is nil then will marked as SUCCESS
 				return err
 			},
@@ -156,7 +95,7 @@ func main() {
 }
 
 // internalRun main entry point to execution received request.
-func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State, lg logger.Logger, logRoot string) (err error) {
+func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State, lg logger.Logger) (err error) {
 	// Catching the panic here as luciexe just set a step as fail and but not exit execution.
 	defer func() {
 		if r := recover(); r != nil {
@@ -181,7 +120,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	var metrics metrics.Metrics
 	if !in.GetNoMetrics() {
 		var err error
-		metrics, err = karte.NewMetrics(ctx, kclient.ProdConfig(luciauth.Options{}))
+		metrics, err = karte.NewMetrics(ctx, kclient.ProdConfig(auth.Options{}))
 		if err == nil {
 			lg.Info("internal run: metrics client successfully created.")
 		} else {
@@ -192,6 +131,13 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	cr, err := getConfiguration(in.GetConfiguration(), lg)
 	if err != nil {
 		return errors.Annotate(err, "internal run").Err()
+	}
+
+	// TODO(gregorynisbet): Consider falling back to a temporary directory
+	//                      if we for some reason cannot get our working directory.
+	logRoot, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "cannot get working dir: %s\n", logRoot)
 	}
 
 	runArgs := &recovery.RunArgs{
