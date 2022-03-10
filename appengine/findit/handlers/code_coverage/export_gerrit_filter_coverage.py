@@ -59,14 +59,7 @@ class ExportAllCoverageMetrics(BaseHandler):
           config=ndb.ContextOptions(use_cache=False))
       for x in results:
         if x.gerrit_hashtag or x.author:
-          # To prevent bloating up of feature coverage dashboard, we do not
-          # generate coverage metrics for features which are older than 90 days.
-          if x.gerrit_hashtag and x.update_timestamp + datetime.timedelta(
-              days=90) < datetime.datetime.now():
-            x.is_active = False
-            make_inactive.append(x)
-          else:
-            yield x.key.id()
+          yield x.key.id()
     ndb.put_multi(make_inactive)
 
   def HandleGet(self):
@@ -78,6 +71,7 @@ class ExportAllCoverageMetrics(BaseHandler):
       url = '/coverage/task/gerrit-filter-coverage?modifier_id=%d' % (
           modifier_id)
       author = modifier.author.replace('@', '_') if modifier.author else None
+      author = author.replace('.', '_') if author else None
       taskqueue.add(
           method='GET',
           url=url,
