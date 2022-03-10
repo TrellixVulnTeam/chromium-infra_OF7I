@@ -71,10 +71,15 @@ func CVRunPubSubHandler(ctx *router.Context) {
 		return
 	case !processed:
 		status = "ignored"
+		// Use subtly different "success" response codes to surface in
+		// standard GAE logs whether an ingestion was ignored or not,
+		// while still acknowledging the pub/sub.
+		// See https://cloud.google.com/pubsub/docs/push#receiving_messages.
+		ctx.Writer.WriteHeader(http.StatusNoContent) // 204
 	default:
 		status = "success"
+		ctx.Writer.WriteHeader(http.StatusOK)
 	}
-	ctx.Writer.WriteHeader(http.StatusOK)
 }
 
 func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (project string, processed bool, err error) {

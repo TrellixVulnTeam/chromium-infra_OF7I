@@ -61,10 +61,15 @@ func BuildbucketPubSubHandler(ctx *router.Context) {
 	}
 	if processed {
 		status = "success"
+		// Use subtly different "success" response codes to surface in
+		// standard GAE logs whether an ingestion was ignored or not,
+		// while still acknowledging the pub/sub.
+		// See https://cloud.google.com/pubsub/docs/push#receiving_messages.
+		ctx.Writer.WriteHeader(http.StatusOK)
 	} else {
 		status = "ignored"
+		ctx.Writer.WriteHeader(http.StatusNoContent) // 204
 	}
-	ctx.Writer.WriteHeader(http.StatusOK)
 }
 
 func bbPubSubHandlerImpl(ctx context.Context, request *http.Request) (project string, processed bool, err error) {

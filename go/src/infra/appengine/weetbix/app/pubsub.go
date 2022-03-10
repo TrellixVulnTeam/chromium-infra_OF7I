@@ -28,8 +28,12 @@ func processErr(ctx *router.Context, err error) string {
 		ctx.Writer.WriteHeader(http.StatusInternalServerError)
 		return "transient-failure"
 	} else {
-		// Permanent failures are 200s so that PubSub does not retry them.
-		ctx.Writer.WriteHeader(http.StatusOK)
+		// Permanent failures are 202s so that:
+		// - PubSub does not retry them, and
+		// - the results can be distinguished from success / ignored results
+		//   (which are reported as 200 OK / 204 No Content) in logs.
+		// See https://cloud.google.com/pubsub/docs/push#receiving_messages.
+		ctx.Writer.WriteHeader(http.StatusAccepted)
 		return "permanent-failure"
 	}
 }
