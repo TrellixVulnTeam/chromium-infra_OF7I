@@ -101,7 +101,8 @@ func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContai
 		return nil, errors.Annotate(err, "run test: failed to create input file %s", inputFileName).Err()
 	}
 	if err = services.RunTestCLI(ctx, crosTestContainer, networkName, inputFileName, crosTestDir, resultDir, token); err != nil {
-		return nil, errors.Annotate(err, "run test: failed to run test CLI").Err()
+		// Do not raise the err, as we want to still check for a results.json
+		log.Printf("Get error while run cros-test: %v", err)
 	}
 
 	resultFileName := path.Join(crosTestDir, "result.json")
