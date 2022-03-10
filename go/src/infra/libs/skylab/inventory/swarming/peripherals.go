@@ -134,6 +134,14 @@ func otherPeripheralsConverter(dims Dimensions, ls *inventory.SchedulableLabels)
 			appendDim(dims, "label-bluetooth_state", btState[hardwareStatePrefixLength:])
 		}
 	}
+	if peripheralWifiState := p.GetPeripheralWifiState(); peripheralWifiState != inventory.PeripheralState_UNKNOWN {
+		if pwsState, ok := lab.PeripheralState_name[int32(peripheralWifiState)]; ok {
+			dims["label-peripheral_wifi_state"] = []string{pwsState}
+		}
+	}
+	for _, v := range p.GetPeripheralWifiFeatures() {
+		appendDim(dims, "label-peripheral_wifi_feature", v.String())
+	}
 
 }
 
@@ -212,5 +220,19 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dim
 		delete(d, "label-bluetooth_state")
 	}
 
+	if pwsStateName, ok := getLastStringValue(d, "label-peripheral_wifi_state"); ok {
+		pwsState := inventory.PeripheralState_UNKNOWN
+		if sIndex, ok := lab.PeripheralState_value[strings.ToUpper(pwsStateName)]; ok {
+			pwsState = inventory.PeripheralState(sIndex)
+		}
+		p.PeripheralWifiState = &pwsState
+		delete(d, "label-peripheral_wifi_state")
+	}
+
+	p.PeripheralWifiFeatures = make([]inventory.Peripherals_WifiFeature, len(d["label-peripheral_wifi_feature"]))
+	for i, v := range d["label-peripheral_wifi_feature"] {
+		p.PeripheralWifiFeatures[i] = inventory.Peripherals_WifiFeature(inventory.Peripherals_WifiFeature_value[v])
+	}
+	delete(d, "label-peripheral_wifi_feature")
 	return d
 }
