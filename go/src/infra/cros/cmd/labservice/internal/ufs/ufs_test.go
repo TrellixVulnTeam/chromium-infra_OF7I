@@ -14,6 +14,7 @@ import (
 	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
+
 	"infra/cros/cmd/labservice/internal/ufs/cache"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
@@ -115,6 +116,7 @@ func TestGetChromeOsDutTopology_single(t *testing.T) {
 							Peripherals: []labapi.Chameleon_Peripheral{labapi.Chameleon_DP},
 						},
 						Servo: &labapi.Servo{
+							Present: true,
 							ServodAddress: &labapi.IpEndpoint{
 								Address: "servo_host",
 								Port:    33,

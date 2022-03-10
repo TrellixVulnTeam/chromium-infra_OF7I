@@ -248,10 +248,12 @@ func getServo(p *lab.Peripherals) *labapi.Servo {
 	s := p.GetServo()
 	if s != nil && s.GetServoHostname() != "" {
 		return &labapi.Servo{
+			Present: true,
 			ServodAddress: &labapi.IpEndpoint{
 				Address: s.GetServoHostname(),
 				Port:    s.GetServoPort(),
 			},
+			Serial: s.GetServoSerial(),
 		}
 	}
 	return nil
