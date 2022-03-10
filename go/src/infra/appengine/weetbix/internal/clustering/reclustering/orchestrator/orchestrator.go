@@ -49,8 +49,8 @@ var (
 		field.String("project"),
 	)
 
-	ageGauge = metric.NewFloat("weetbix/clustering/reclustering/age",
-		"Age of the last completed re-clustering, by LUCI Project. "+
+	lastCompletedGauge = metric.NewInt("weetbix/clustering/reclustering/last_completed",
+		"UNIX timstamp of the last completed re-clustering, by LUCI Project. "+
 			"Not reported until at least one re-clustering completes.",
 		&types.MetricMetadata{
 			Units: types.Seconds,
@@ -226,9 +226,9 @@ func orchestrateProject(ctx context.Context, project string, attemptStart, attem
 	// Export metrics.
 	progressGauge.Set(ctx, float64(metrics.progress)/1000.0, project)
 	workersGauge.Set(ctx, int64(workers), project)
-	if metrics.ageInSeconds != nil {
+	if metrics.lastCompleted != runs.StartingEpoch {
 		// Only report time since last completion once there is a last completion.
-		ageGauge.Set(ctx, *metrics.ageInSeconds, project)
+		lastCompletedGauge.Set(ctx, metrics.lastCompleted.Unix(), project)
 	}
 
 	err = scheduleWorkers(ctx, project, attemptStart, attemptEnd, workers)
@@ -239,9 +239,9 @@ func orchestrateProject(ctx context.Context, project string, attemptStart, attem
 }
 
 type metrics struct {
-	// ageInSeconds is the time since the last completed re-clustering.
-	// Only reported if there has been re-clustering completed.
-	ageInSeconds *float64
+	// lastCompleted is the time since the last completed re-clustering.
+	// If no reclustering has been completed this is runs.StartingEpoch.
+	lastCompleted time.Time
 	// progress, measured from 0.0 to 1.0.
 	progress float64
 }
@@ -312,11 +312,7 @@ func createProjectRun(ctx context.Context, project string, attemptStart, attempt
 	metrics := &metrics{
 		progress: float64(progress) / 1000.0,
 	}
-	if lastComplete.AttemptTimestamp != runs.StartingEpoch {
-		// Only report time since last completion once there is a last completion.
-		metrics.ageInSeconds = new(float64)
-		*metrics.ageInSeconds = lastComplete.AttemptTimestamp.Sub(lastRun.AttemptTimestamp).Seconds()
-	}
+	metrics.lastCompleted = lastComplete.AttemptTimestamp
 	return metrics, err
 }
 
