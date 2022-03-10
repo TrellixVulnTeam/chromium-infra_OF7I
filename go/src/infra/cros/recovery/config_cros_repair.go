@@ -57,6 +57,7 @@ var crosRepairPlan = &planpb.Plan{
 				"cros_servo_power_reset_repair",
 				"Trigger kernel panic to reset the whole board and try ssh to DUT",
 				"cros_servo_cr50_reboot_repair",
+				"Install OS in recovery mode by booting from servo USB-drive",
 			},
 		},
 		"internal_storage": {
@@ -96,6 +97,7 @@ var crosRepairPlan = &planpb.Plan{
 			ExecName: "cros_has_python_interpreter_working",
 			RecoveryActions: []string{
 				"Quick provision OS",
+				"Install OS in recovery mode by booting from servo USB-drive",
 			},
 		},
 		"last_provision_successful": {
@@ -103,6 +105,9 @@ var crosRepairPlan = &planpb.Plan{
 				"cros_storage_writing",
 			},
 			ExecName: "cros_is_last_provision_successful",
+			RecoveryActions: []string{
+				"Install OS in recovery mode by booting from servo USB-drive",
+			},
 		},
 		"device_enrollment": {
 			Dependencies: []string{
@@ -146,6 +151,7 @@ var crosRepairPlan = &planpb.Plan{
 				"cros_servo_power_reset_repair",
 				"cros_servo_cr50_reboot_repair",
 				"Restore AC detection by EC console",
+				"Install OS in recovery mode by booting from servo USB-drive",
 			},
 			ExecName: "sample_pass",
 		},
@@ -154,6 +160,9 @@ var crosRepairPlan = &planpb.Plan{
 				"is_not_flex_board",
 				"cros_is_not_virtual_machine",
 				"cros_is_tpm_present",
+			},
+			RecoveryActions: []string{
+				"Install OS in recovery mode by booting from servo USB-drive",
 			},
 			ExecName: "cros_is_tpm_in_good_status",
 		},
@@ -179,6 +188,9 @@ var crosRepairPlan = &planpb.Plan{
 				"cros_is_firmware_in_good_state",
 				"cros_rw_firmware_stable_verion",
 			},
+			RecoveryActions: []string{
+				"Install OS in recovery mode by booting from servo USB-drive",
+			},
 			ExecName: "sample_pass",
 		},
 		"stop_start_ui": {
@@ -189,6 +201,7 @@ var crosRepairPlan = &planpb.Plan{
 			RecoveryActions: []string{
 				"cros_servo_power_reset_repair",
 				"cros_servo_cr50_reboot_repair",
+				"Install OS in recovery mode by booting from servo USB-drive",
 			},
 			ExecName: "cros_stop_start_ui",
 		},
@@ -198,6 +211,9 @@ var crosRepairPlan = &planpb.Plan{
 			},
 			Conditions: []string{
 				"is_not_flex_board",
+			},
+			RecoveryActions: []string{
+				"Install OS in recovery mode by booting from servo USB-drive",
 			},
 			ExecName:               "cros_are_required_rw_vpd_keys_present",
 			AllowFailAfterRecovery: true,
@@ -303,7 +319,16 @@ var crosRepairPlan = &planpb.Plan{
 			ExecName: "sample_pass",
 		},
 		"cros_gsctool": {
-			ExecName: "sample_pass",
+			Docs: []string{
+				"Confirm that the GSC tool is function. This action ",
+				"has been created so that it can be used to attach a ",
+				"recovery action if the GSC tool is not functional on ",
+				"the DUT.",
+			},
+			RecoveryActions: []string{
+				"Install OS in recovery mode by booting from servo USB-drive",
+			},
+			ExecName: "cros_is_gsc_tool_present",
 		},
 		"battery_is_good": {
 			Docs: []string{
@@ -360,6 +385,9 @@ var crosRepairPlan = &planpb.Plan{
 			Conditions: []string{
 				"is_not_flex_board",
 			},
+			RecoveryActions: []string{
+				"Install OS in recovery mode by booting from servo USB-drive",
+			},
 			ExecName: "cros_match_dev_tpm_firmware_version",
 		},
 		"cros_tpm_kernver_match": {
@@ -369,6 +397,9 @@ var crosRepairPlan = &planpb.Plan{
 			Conditions: []string{
 				"is_not_flex_board",
 			},
+			RecoveryActions: []string{
+				"Install OS in recovery mode by booting from servo USB-drive",
+			},
 			ExecName: "cros_match_dev_tpm_kernel_version",
 		},
 		"cros_default_boot": {
@@ -377,6 +408,9 @@ var crosRepairPlan = &planpb.Plan{
 			},
 			Conditions: []string{
 				"is_not_flex_board",
+			},
+			RecoveryActions: []string{
+				"Install OS in recovery mode by booting from servo USB-drive",
 			},
 			ExecName: "cros_is_default_boot_from_disk",
 		},
@@ -424,12 +458,16 @@ var crosRepairPlan = &planpb.Plan{
 			},
 			RecoveryActions: []string{
 				"cros_switch_to_secure_mode_and_reboot",
+				"Install OS in recovery mode by booting from servo USB-drive",
 			},
 			ExecName: "cros_is_file_system_writable",
 		},
 		"cros_storage_file_system": {
 			Dependencies: []string{
 				"cros_ssh",
+			},
+			RecoveryActions: []string{
+				"Install OS in recovery mode by booting from servo USB-drive",
 			},
 			ExecName: "cros_has_critical_kernel_error",
 		},
@@ -672,7 +710,10 @@ var crosRepairPlan = &planpb.Plan{
 				"Wait DUT to be pingable after some action on it.",
 			},
 			ExecTimeout: &durationpb.Duration{Seconds: 150},
-			ExecName:    "cros_ping",
+			RecoveryActions: []string{
+				"Install OS in recovery mode by booting from servo USB-drive",
+			},
+			ExecName: "cros_ping",
 		},
 		"Trigger kernel panic to reset the whole board and try ssh to DUT": {
 			Docs: []string{
@@ -861,6 +902,22 @@ var crosRepairPlan = &planpb.Plan{
 		},
 		"Set needs_deploy state": {
 			ExecName: "dut_state_needs_deploy",
+		},
+		"Install OS in recovery mode by booting from servo USB-drive": {
+			Docs: []string{
+				"This action installs the test image on DUT utilizing ",
+				"the features of servo. DUT will be booted in recovery ",
+				"mode. In some cases RO FW is not allowed to boot in ",
+				"reovery mode with active PD, so we will change it to ",
+				"sink-mode if required.",
+			},
+			Dependencies: []string{
+				"Servo has USB-key with require image",
+				"cros_update_provision_os_version",
+			},
+			ExecName:      "cros_disable_fprom_write_protect",
+			ExecExtraArgs: []string{"halt_timeout:120"},
+			ExecTimeout:   &durationpb.Duration{Seconds: 3600},
 		},
 	},
 }
