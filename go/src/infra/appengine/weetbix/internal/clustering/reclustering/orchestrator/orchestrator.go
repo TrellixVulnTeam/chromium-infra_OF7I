@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/tsmon"
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/common/tsmon/types"
@@ -77,6 +78,16 @@ func CronHandler(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+func init() {
+	// TODO(meiring): Remove or move metrics implementation into the callback,
+	// once it has been verified that the callback is called.
+	// Until then, simply performing this registration may have the desired
+	// effect of "unsticking" the metrics.
+	tsmon.RegisterGlobalCallback(func(ctx context.Context) {
+		logging.Infof(ctx, "Running global metrics callback.")
+	}, workersGauge, progressGauge, lastCompletedGauge, statusGauge)
 }
 
 func orchestrate(ctx context.Context) error {
