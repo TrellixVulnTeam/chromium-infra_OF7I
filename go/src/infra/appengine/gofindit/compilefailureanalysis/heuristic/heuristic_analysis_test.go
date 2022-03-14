@@ -6,6 +6,7 @@ package heuristic
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -51,14 +52,36 @@ func TestAnalyzeFailure(t *testing.T) {
 	mc.Client.EXPECT().GetBuild(gomock.Any(), gomock.Any(), gomock.Any()).Return(res, nil).AnyTimes()
 
 	Convey("GetCompileLog", t, func() {
+		ninjaLogJson := map[string]interface{}{
+			"failures": []interface{}{
+				map[string]interface{}{
+					"dependencies": []string{"d1", "d2"},
+					"output":       "/opt/s/w/ir/cache/goma/client/gomacc blah blah...",
+					"output_nodes": []string{"n1", "n2"},
+					"rule":         "CXX",
+				},
+			},
+		}
+		ninjaLogStr, err := json.Marshal(ninjaLogJson)
+		So(err, ShouldBeNil)
+
 		c = logdog.MockClientContext(c, map[string]string{
-			"https://logs.chromium.org/logs/ninja_log":  "ninja_log",
+			"https://logs.chromium.org/logs/ninja_log":  string(ninjaLogStr),
 			"https://logs.chromium.org/logs/stdout_log": "stdout_log",
 		})
 		logs, err := GetCompileLogs(c, 12345)
 		So(err, ShouldBeNil)
 		So(*logs, ShouldResemble, model.CompileLogs{
-			NinjaLog:  "ninja_log",
+			NinjaLog: &model.NinjaLog{
+				Failures: []*model.NinjaLogFailure{
+					{
+						Dependencies: []string{"d1", "d2"},
+						Output:       "/opt/s/w/ir/cache/goma/client/gomacc blah blah...",
+						OutputNodes:  []string{"n1", "n2"},
+						Rule:         "CXX",
+					},
+				},
+			},
 			StdOutLog: "stdout_log",
 		})
 	})

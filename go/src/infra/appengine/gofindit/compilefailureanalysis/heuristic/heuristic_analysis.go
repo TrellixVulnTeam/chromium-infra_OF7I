@@ -6,6 +6,7 @@ package heuristic
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"infra/appengine/gofindit/internal/buildbucket"
 	"infra/appengine/gofindit/internal/gitiles"
@@ -91,14 +92,17 @@ func GetCompileLogs(c context.Context, bbid int64) (*model.CompileLogs, error) {
 		}
 	}
 
-	ninjaLog := ""
+	ninjaLog := &model.NinjaLog{}
 	stdoutLog := ""
 
 	// TODO(crbug.com/1295566): Parallelize downloading ninja & stdout logs
 	if ninjaUrl != "" {
-		ninjaLog, err = logdog.GetLogFromViewUrl(c, ninjaUrl)
+		log, err := logdog.GetLogFromViewUrl(c, ninjaUrl)
 		if err != nil {
 			logging.Errorf(c, "Failed to get ninja log: %v", err)
+		}
+		if err = json.Unmarshal([]byte(log), ninjaLog); err != nil {
+			return nil, fmt.Errorf("Failed to unmarshal ninja log %w. Log: %s", err, log)
 		}
 	}
 
@@ -109,7 +113,7 @@ func GetCompileLogs(c context.Context, bbid int64) (*model.CompileLogs, error) {
 		}
 	}
 
-	if ninjaLog != "" || stdoutLog != "" {
+	if len(ninjaLog.Failures) > 0 || stdoutLog != "" {
 		return &gfim.CompileLogs{
 			NinjaLog:  ninjaLog,
 			StdOutLog: stdoutLog,
