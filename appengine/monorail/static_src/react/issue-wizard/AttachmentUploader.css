@@ -1,0 +1,52 @@
+.materialIcons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: 'antialiased';
+
+}
+
+.button {
+  margin-right: 8px;
+  padding: 0.1em 4px;
+  display: inline-flex;
+  width: auto;
+  cursor: pointer;
+  border: var(--chops-normal-border);
+  margin-left: 0;
+}
+
+.controls:focus-within > label{
+  border: 2px solid #1976d2;
+}
+
+.controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  font-size: 12px;
+}
+
+.inputUpload {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+  top: -9999;
+  left: -9999;
+}
+
+.error {
+  color: red;
+}

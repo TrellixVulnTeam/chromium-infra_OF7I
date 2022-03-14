@@ -2,60 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {makeStyles} from '@material-ui/styles';
 import React from 'react';
 import Button from '@material-ui/core/Button';
-
-const userStyles = makeStyles({
-  materialIcons: {
-    fontFamily: 'Material Icons',
-    fontWeight: 'normal',
-    fontStyle: 'normal',
-    fontSize: '20px',
-    lineHeight: 1,
-    letterSpacing: 'normal',
-    textTransform: 'none',
-    display: 'inline-block',
-    whiteSpace: 'nowrap',
-    wordWrap: 'normal',
-    direction: 'ltr',
-    WebkitFontFeatureSettings: 'liga',
-    WebkitFontSmoothing: 'antialiased',
-  },
-
-  controls: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    width: '100%',
-    fontSize: '12px',
-  },
-
-  button: {
-    marginRight: '8px',
-    padding: '0.1em 4px',
-    display: 'inline-flex',
-    width: 'auto',
-    cursor: 'pointer',
-    border: 'var(--chops-normal-border)',
-    marginLeft: 0,
-  },
-
-  inputUpload: {
-    /* We need the file uploader to be hidden but still accessible. */
-    opacity: 0,
-    width: 0,
-    height: 0,
-    position: 'absolute',
-    top: -9999,
-    left: -9999,
-  },
-
-  error: {
-    color: 'red',
-  }
-});
+import styles from './AttachmentUploader.css';
 
 type Props = {
   files: Array<File>,
@@ -81,7 +30,7 @@ const getTotalSize = (files: Array<File>) => {
 
 const MAX_SIZE = 10 * 1000 * 1000;
 export default function AttachmentUploader(props: Props): React.ReactElement {
-  const classes = userStyles();
+
   const {files, setFiles, setSubmitEnable} = props;
   const [isOverSize, setIsOverSize] = React.useState(false);
 
@@ -113,10 +62,10 @@ export default function AttachmentUploader(props: Props): React.ReactElement {
   }
   return (
     <>
-      <div className={classes.controls}>
-        <input className={classes.inputUpload} id="file-uploader" type="file" multiple onChange={onSelectFile}/>
-        <label className={classes.button} for="file-uploader">
-          <i className={classes.materialIcons} role="presentation">attach_file</i>Add attachments
+      <div className={styles.controls}>
+        <input className={styles.inputUpload} id="file-uploader" type="file" multiple onChange={onSelectFile}/>
+        <label className={styles.button} for="file-uploader">
+          <i className={styles.materialIcons} role="presentation">attach_file</i>Add attachments
         </label>
         You can include multiple attachments (Max: 10.0 MB per issue)
       </div>
@@ -132,7 +81,7 @@ export default function AttachmentUploader(props: Props): React.ReactElement {
           }
         </ul>)
       }
-      {isOverSize ? <div className={classes.error}>Warning: Attachments are too big !</div> : null}
+      {isOverSize ? <div className={styles.error}>Warning: Attachments are too big !</div> : null}
     </>
   );
 }
