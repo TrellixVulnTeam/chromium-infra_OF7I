@@ -2079,6 +2079,21 @@ Example attached device host:
 
 The protobuf definition of a deployed machine is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto`
+
+	// GetADHText description for GetAttachedDeviceHostCmd and GetADHCmd
+	GetADHText string = `Get attached device host details by filters.
+
+This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
+default to operate in the browser lab namespace.
+
+'shivas get adh ...' is an alias of 'shivas get attached-device-host...'
+
+Example:
+
+shivas get adh {name1} {name2}
+shivas get adh -state serving -state needs_repair -zone atl97
+
+Gets the attached device host and prints the output in user format.`
 )
 
 func CronTriggerAvailableJobsString() string {

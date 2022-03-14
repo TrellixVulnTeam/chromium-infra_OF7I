@@ -65,6 +65,7 @@ var (
 	VlanTitle                  = []string{"Vlan Name", "CIDR Block", "IP Capacity", "DHCP range", "Description", "State", "Zones", "Reserved IPs", "UpdateTime"}
 	VMTitle                    = []string{"VM Name", "OS Version", "OS Image", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "DeploymentTicket", "Description", "UpdateTime"}
 	RackTitle                  = []string{"Rack Name", "Bbnum", "Zone", "Capacity", "State", "Realm", "UpdateTime"}
+	AttachedDeviceLSETitle     = []string{"Host", "OS Version", "OS Image", "Zone", "Rack", "Machine(s)", "State", "Schedulable", "Associated Hostname", "Associated Host Port", "Description", "UpdateTime"}
 	MachineLSETitle            = []string{"Host", "OS Version", "OS Image", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "VM capacity", "DeploymentTicket", "Description", "UpdateTime"}
 	MachineLSEFullTitle        = []string{"Host", "OS Version", "OS Image", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
 	MachineLSEDeploymentTitle  = []string{"Serial Number", "Hostname", "Deployment Identifier", "Deployment Env", "UpdateTime"}
@@ -1450,6 +1451,11 @@ func machineLSEOutputStrs(pm proto.Message) []string {
 	if len(m.GetMachines()) > 1 {
 		machine = strSlicesToStr(m.GetMachines())
 	}
+	// TODO (justinsuen): Omit attached device results for now. Need to refactor
+	// and include attached device lses here as well.
+	if m.GetAttachedDeviceLse() != nil {
+		return nil
+	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
 		m.GetChromeBrowserMachineLse().GetOsVersion().GetValue(),
@@ -1474,8 +1480,61 @@ func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
 		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
 		return
 	}
+	if output := machineLSEOutputStrs(m); output != nil {
+		var out string
+		for _, s := range output {
+			out += fmt.Sprintf("%s\t", s)
+		}
+		fmt.Fprintln(tw, out)
+	}
+}
+
+// PrintAttachedDeviceLSEs prints the attached device machinelses in table form.
+func PrintAttachedDeviceLSEs(res []proto.Message, keysOnly bool) {
+	entities := make([]*ufspb.MachineLSE, len(res))
+	for i, r := range res {
+		entities[i] = r.(*ufspb.MachineLSE)
+	}
+	defer tw.Flush()
+	for _, m := range entities {
+		m.Name = ufsUtil.RemovePrefix(m.Name)
+		printAttachedDeviceLSE(m, keysOnly)
+	}
+}
+
+func attachedDeviceLSEOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.MachineLSE)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Local().Format(timeFormat)
+	}
+	machine := ""
+	if len(m.GetMachines()) >= 1 {
+		machine = strSlicesToStr(m.GetMachines())
+	}
+	return []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		m.GetAttachedDeviceLse().GetOsVersion().GetValue(),
+		m.GetAttachedDeviceLse().GetOsVersion().GetImage(),
+		ufsUtil.RemoveZonePrefix(m.GetZone()),
+		m.GetRack(),
+		machine,
+		ufsUtil.RemoveStatePrefix(m.GetResourceState().String()),
+		fmt.Sprintf("%v", m.GetSchedulable()),
+		m.GetAttachedDeviceLse().GetAssociatedHostname(),
+		m.GetAttachedDeviceLse().GetAssociatedHostPort(),
+		m.GetDescription(),
+		ts,
+	}
+}
+
+func printAttachedDeviceLSE(m *ufspb.MachineLSE, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
+		return
+	}
 	var out string
-	for _, s := range machineLSEOutputStrs(m) {
+	for _, s := range attachedDeviceLSEOutputStrs(m) {
 		out += fmt.Sprintf("%s\t", s)
 	}
 	fmt.Fprintln(tw, out)
