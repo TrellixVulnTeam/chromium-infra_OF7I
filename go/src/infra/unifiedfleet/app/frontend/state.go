@@ -150,6 +150,11 @@ func (fs *FleetServerImpl) UpdateDutState(ctx context.Context, req *api.UpdateDu
 	return res, nil
 }
 
+// UpdateDeviceRecoveryData update device configs for a DUT
+func (fs *FleetServerImpl) UpdateDeviceRecoveryData(ctx context.Context, req *api.UpdateDeviceRecoveryDataRequest) (rsp *api.UpdateDeviceRecoveryDataResponse, err error) {
+	return &api.UpdateDeviceRecoveryDataResponse{}, nil
+}
+
 // GetDutState gets the ChromeOS device DutState.
 func (fs *FleetServerImpl) GetDutState(ctx context.Context, req *api.GetDutStateRequest) (rsp *chromeosLab.DutState, err error) {
 	defer func() {

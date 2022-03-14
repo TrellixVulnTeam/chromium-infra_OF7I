@@ -25,6 +25,7 @@ import "infra/unifiedfleet/api/v1/models/peripherals.proto";
 import "infra/unifiedfleet/api/v1/models/lse_prototype.proto";
 import "infra/unifiedfleet/api/v1/models/state.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/dut_state.proto";
+import "infra/unifiedfleet/api/v1/models/chromeos/lab/servo.proto";
 import "infra/unifiedfleet/api/v1/models/machine_lse_deployment.proto";
 import "infra/unifiedfleet/api/v1/models/scheduling_unit.proto";
 
@@ -288,6 +289,9 @@ service Fleet {
   // UpdateDutState updates the state config for a DUT
   // If the dut state doesn't exist before, it will create the dut state record.
   rpc UpdateDutState(UpdateDutStateRequest) returns (models.chromeos.lab.DutState);
+
+  // UpdateDeviceRecoveryData updates the device configs for a DUT
+  rpc UpdateDeviceRecoveryData(UpdateDeviceRecoveryDataRequest) returns (UpdateDeviceRecoveryDataResponse);
 
   // GetDHCPConfig retrieves a dhcp record.
   rpc GetDHCPConfig(GetDHCPConfigRequest) returns (models.DHCPConfig);
@@ -1776,6 +1780,48 @@ message UpdateDutStateRequest {
   models.LabMeta lab_meta = 4;
 }
 
+message UpdateDeviceRecoveryDataRequest {
+  // The id or asset tag for chromeos device.
+  string chromeos_device_id = 1 [(google.api.field_behavior) = REQUIRED];
+  // The hostname of the device.
+  // Optional field but strongly recommended. If empty, hostname will be derived from chromeos_device_id.
+  string hostname = 2;
+  // The DUT state to update.
+  models.State resource_state = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // The state record to update.
+  // DutState.id is required and its value should be equal to chromeos_device_id(tag 1)
+  // DutState.hostname is optional, if not empty it should be equal to hostname(tag 2)
+  models.chromeos.lab.DutState dut_state = 4 [(google.api.field_behavior) = REQUIRED];
+
+  message DutData {
+    string serial_number = 1;
+    string hwID = 2;
+    string device_sku = 3;
+  }
+
+  // Used for updating back essential configs from repair/deploy task.
+  DutData dut_data = 5;
+
+  message WifiRouter {
+    string hostname = 1;
+    models.chromeos.lab.PeripheralState state = 2;
+  }
+  message LabData {
+    string servo_type = 1;
+    bool smart_usbhub = 2;
+    models.chromeos.lab.ServoTopology servo_topology = 3;
+    string servo_component = 4;
+    repeated WifiRouter wifi_routers = 5;
+  }
+
+  // Used for updating back essential configs from repair/deploy task.
+  LabData lab_data = 6;
+}
+
+message UpdateDeviceRecoveryDataResponse {
+  // Reserved for response to UpdateDeviceRecoveryDataRequest
+}
 
 
 message RackRegistrationRequest {

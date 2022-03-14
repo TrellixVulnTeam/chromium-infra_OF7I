@@ -1473,6 +1473,23 @@ func (s *DecoratedFleet) UpdateDutState(ctx context.Context, req *UpdateDutState
 	return
 }
 
+func (s *DecoratedFleet) UpdateDeviceRecoveryData(ctx context.Context, req *UpdateDeviceRecoveryDataRequest) (rsp *UpdateDeviceRecoveryDataResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateDeviceRecoveryData", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateDeviceRecoveryData(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateDeviceRecoveryData", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) GetDHCPConfig(ctx context.Context, req *GetDHCPConfigRequest) (rsp *models.DHCPConfig, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
