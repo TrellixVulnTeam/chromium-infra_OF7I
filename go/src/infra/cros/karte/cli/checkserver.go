@@ -28,7 +28,7 @@ var CheckServer = &subcommands.Command{
 	},
 }
 
-// CheckServerRun stores the arguments for the check-server command.
+// checkServerRun stores the arguments for the check-server command.
 // Its lifetime is the lifetime of the check-server command.
 type checkServerRun struct {
 	subcommands.CommandRunBase
@@ -44,7 +44,7 @@ func (c *checkServerRun) Run(a subcommands.Application, args []string, env subco
 	return 0
 }
 
-// InnerRun runs the check-server command and returns a go-level error.
+// innerRun runs the check-server command and returns a go-level error.
 func (c *checkServerRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	// TODO(gregorynisbet): Replace hardcoded Karte server with arguments.
 	resp, err := http.Get(fmt.Sprintf("http://%s/hello-world", site.DefaultCLIKarteServer))

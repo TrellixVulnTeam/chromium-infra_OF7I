@@ -16,7 +16,7 @@ import (
 	"infra/cros/karte/internal/site"
 )
 
-// Main creates a single unimportant action in the dev karte instance for testing
+// main creates a single unimportant action in the dev karte instance for testing
 // purposes.
 func main() {
 	ctx := context.Background()

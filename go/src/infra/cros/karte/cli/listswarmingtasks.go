@@ -30,7 +30,7 @@ var ListSwarmingTasks = &subcommands.Command{
 	},
 }
 
-// ListSwarmingTasksRun is the list-tasks command.
+// listSwarmingTasksRun is the list-tasks command.
 type listSwarmingTasksRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
@@ -46,10 +46,10 @@ func (c *listSwarmingTasksRun) Run(a subcommands.Application, args []string, env
 	return 0
 }
 
-// ListSwarmingTasksNumEvents is the number of events that we look at when listing recent swarming tasks.
+// listSwarmingTasksNumEvents is the number of events that we look at when listing recent swarming tasks.
 const listSwarmingTasksNumEvents = 1000
 
-// InnerRun is the main implementation of list-swarming-tasks. List-swarming-tasks looks a constant number of actions into the past
+// innerRun is the main implementation of list-swarming-tasks. List-swarming-tasks looks a constant number of actions into the past
 // and then tallies how many of them belong to each swarming task ID.
 func (c *listSwarmingTasksRun) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
 	if len(args) > 0 {

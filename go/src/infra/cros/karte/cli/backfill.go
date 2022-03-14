@@ -24,7 +24,7 @@ var Backfill = &subcommands.Command{
 	},
 }
 
-// BackfillRun stores the arguments for the backfill command.
+// backfillRun stores the arguments for the backfill command.
 type backfillRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags

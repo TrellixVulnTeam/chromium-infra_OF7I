@@ -8,7 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-// Cmpopts allows unexported fields on types that are owned
+// cmpopts allows unexported fields on types that are owned
 // by this karte package.
 var cmpopts = []cmp.Option{
 	cmp.AllowUnexported(Identifier{}),

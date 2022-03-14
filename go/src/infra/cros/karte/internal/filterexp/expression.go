@@ -15,7 +15,7 @@ import (
 	"infra/cros/karte/internal/errors"
 )
 
-// Comparisons are the valid comparisons.
+// comparisons are the valid comparisons.
 // TODO(gregorynisbet): Factor these into a symbols package or similar to isolate
 //                      details about how CEL names infix operators.
 var comparisons = map[string]bool{
@@ -26,7 +26,7 @@ var comparisons = map[string]bool{
 	"_>_":  true,
 }
 
-// IsComparison checks whether the function names a CEL comparison (e.g. _>_ and _==_).
+// isComparison checks whether the function names a CEL comparison (e.g. _>_ and _==_).
 func isComparison(name string) bool {
 	return comparisons[name]
 }
@@ -48,7 +48,7 @@ type Constant struct {
 	Value interface{}
 }
 
-// IsExpression is a placeholder method for type safety.
+// isExpression is a placeholder method for type safety.
 func (c *Constant) isExpression() {}
 
 // An identifier is a free variable in a filter expression.
@@ -56,10 +56,10 @@ type Identifier struct {
 	Value string
 }
 
-// IsExpression is a placeholder method for type safety.
+// isExpression is a placeholder method for type safety.
 func (i *Identifier) isExpression() {}
 
-// An application is a function application. This is the only kind of node that
+// An Application is a function application. This is the only kind of node that
 // branches. Anything that takes arguments, whether a connective (&&), a predicate (<=), or
 // a function, is treated as a function application.
 type Application struct {
@@ -67,7 +67,7 @@ type Application struct {
 	Tail []Expression
 }
 
-// IsExpression is a placeholder method for type safety.
+// isExpression is a placeholder method for type safety.
 func (a *Application) isExpression() {}
 
 // Parse takes a program and produces a list of expressions.
@@ -151,7 +151,7 @@ func NewApplication(head string, tail ...Expression) Expression {
 	}
 }
 
-// ProcessConjunct takes a list of expressions to analyze and a current expression that is headed by "_&&_".
+// processConjunct takes a list of expressions to analyze and a current expression that is headed by "_&&_".
 // It then takes the arguments of this expression and adds them back to hopper.
 //
 // This function invalidates the argument hopper.
@@ -170,7 +170,7 @@ func processConjunct(hopper []*exprpb.Expr, e *exprpb.Expr_Call) ([]*exprpb.Expr
 	return hopper, nil
 }
 
-// ProcessComparison takes a list of expressions to be emitted and a current expression that is headed by a
+// processComparison takes a list of expressions to be emitted and a current expression that is headed by a
 // a comparator. It then produces an expression and adds it to the list of expressions to be emitted.
 //
 // This function invalidates the argument conjuncts.
@@ -200,7 +200,7 @@ func processComparison(comparisons []Expression, e *exprpb.Expr_Call) (Expressio
 	return &newExpr, nil
 }
 
-// ExtractConstantValue extracts the golang value from a constant and ensure that it has
+// extractConstantValue extracts the golang value from a constant and ensure that it has
 // a supported type.
 func extractConstantValue(e *exprpb.Constant) (Expression, error) {
 	switch v := e.ConstantKind.(type) {

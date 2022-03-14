@@ -32,7 +32,7 @@ var PersistSingleAction = &subcommands.Command{
 	},
 }
 
-// PersistSingleActionRun runs the command.
+// persistSingleActionRun runs the command.
 type persistSingleActionRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
@@ -48,7 +48,7 @@ func (c *persistSingleActionRun) Run(a subcommands.Application, args []string, e
 	return 0
 }
 
-// InnerRun validates arguments and performs the RPC call.
+// innerRun validates arguments and performs the RPC call.
 func (c *persistSingleActionRun) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
 	if len(args) == 0 {
 		return errors.Reason("persist single action: need an action").Err()

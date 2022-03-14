@@ -10,10 +10,10 @@ import (
 	kartepb "infra/cros/karte/api"
 )
 
-// ContextKey is an opaque type that holds a context key.
+// contextKey is an opaque type that holds a context key.
 type contextKey string
 
-// ContextConstant is an arbitrary value whose address will
+// contextConstant is an arbitrary value whose address will
 // be the context key used to store and retrieve Karte contexts.
 const contextConstant = contextKey("karte client")
 

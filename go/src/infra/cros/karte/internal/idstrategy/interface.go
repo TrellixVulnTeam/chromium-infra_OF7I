@@ -27,10 +27,10 @@ import (
 //
 const IDVersion = "zzzz"
 
-// Key is an opaque key type for storing things in the context.
+// key is an opaque key type for storing things in the context.
 type key string
 
-// StrategyKey is the key for the strategy in the context.
+// strategyKey is the key for the strategy in the context.
 const strategyKey = key("strategy key")
 
 // Get gets the current strategy from the context.
@@ -56,7 +56,7 @@ type Strategy interface {
 	IDForObservation(ctx context.Context, observation *kartepb.Observation) (string, error)
 }
 
-// ProdStrategy generates an ID that takes into account the time that an entity was created and appends a UUID for disambiguation.
+// prodStrategy generates an ID that takes into account the time that an entity was created and appends a UUID for disambiguation.
 type prodStrategy struct{}
 
 // IDForAction takes an action and generates an ID.
@@ -86,7 +86,7 @@ func NewDefault() Strategy {
 	return &prodStrategy{}
 }
 
-// NaiveStrategy produces incremental IDs in a naive, non-threadsafe way. It is useful only for tests.
+// naiveStrategy produces incremental IDs in a naive, non-threadsafe way. It is useful only for tests.
 type naiveStrategy struct {
 	counter int64
 }
@@ -116,7 +116,7 @@ func NewNaive() Strategy {
 	return &naiveStrategy{counter: NaiveFirstID}
 }
 
-// MakeID makes an unambiguous ID for a given entity.
+// makeID makes an unambiguous ID for a given entity.
 func makeID(ctx context.Context, t time.Time) (string, error) {
 	disambiguation := mathrand.Uint32(ctx)
 	return makeRawID(t, disambiguation)
@@ -125,7 +125,7 @@ func makeID(ctx context.Context, t time.Time) (string, error) {
 // Use 9,223,372,036,854,775,807 as the end of time.
 const endOfTime = 0x7FFFFFFFFFFFFFFF
 
-// MakeRawID makes an ID for a given entity by taking a time (the creation or ingestion time, depending on the kind).
+// makeRawID makes an ID for a given entity by taking a time (the creation or ingestion time, depending on the kind).
 // The uuidSuffix is a uuid that will be used as a disambiguation suffix.
 func makeRawID(t time.Time, disambiguation uint32) (string, error) {
 	if t.IsZero() {

@@ -20,15 +20,15 @@ import (
 // The character '-' precedes all of these characters.
 const alphabet = "0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz"
 
-// Lex64 uses '-' as padding. It appears before alphabet.
+// lex64 uses '-' as padding. It appears before alphabet.
 var lex64 = base64.NewEncoding(alphabet).WithPadding('-')
 
-// Lex64NoPadding does not pad the output. Without padding, we get better space usage but worse algebraic properties.
+// lex64NoPadding does not pad the output. Without padding, we get better space usage but worse algebraic properties.
 // Without padding, no comparisons are reversed, but sort order is not preserved in general.
 // Without padding, we don't have round-trip equivalence.
 var lex64NoPadding = base64.NewEncoding(alphabet).WithPadding(base64.NoPadding)
 
-// GetEncoding gets the encoding, parameterized by whether we want padding or not.
+// getEncoding gets the encoding, parameterized by whether we want padding or not.
 func getEncoding(padding bool) *base64.Encoding {
 	if padding {
 		return lex64

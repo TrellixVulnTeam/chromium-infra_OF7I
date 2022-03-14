@@ -23,7 +23,7 @@ import (
 	"infra/cros/karte/internal/scalars"
 )
 
-// DefaultBatchSize is the default size of a batch for a datastore query.
+// defaultBatchSize is the default size of a batch for a datastore query.
 const defaultBatchSize = 1000
 
 // ActionKind is the kind of an action
@@ -108,7 +108,7 @@ type ObservationEntity struct {
 	ValueNumber float64 `gae:"value_number"`
 }
 
-// Cmp compares two ObservationEntities. ObservationEntities are linearly ordered by all their fields.
+// cmp compares two ObservationEntities. ObservationEntities are linearly ordered by all their fields.
 // This order is not related to the semantics of an ObservationEntity.
 func (e *ObservationEntity) cmp(o *ObservationEntity) int {
 	if e._kind > o._kind {
@@ -222,7 +222,7 @@ func (q *ActionEntitiesQuery) Next(ctx context.Context, batchSize int32) ([]*Act
 	return entities, nil
 }
 
-// NewActionEntitiesQuery makes an action entities query that starts at the position implied
+// newActionEntitiesQuery makes an action entities query that starts at the position implied
 // by the given token and lists all action entities matching the condition described in the
 // filter.
 func newActionEntitiesQuery(token string, filter string) (*ActionEntitiesQuery, error) {
@@ -312,7 +312,7 @@ func newObservationEntitiesQuery(token string, filter string) (*ObservationEntit
 	}, nil
 }
 
-// ConvertActionToActionEntity takes an action and converts it to an action entity.
+// convertActionToActionEntity takes an action and converts it to an action entity.
 func convertActionToActionEntity(action *kartepb.Action) (*ActionEntity, error) {
 	if action == nil {
 		return nil, status.Errorf(codes.Internal, "convert action to action entity: action is nil")
@@ -355,7 +355,7 @@ func GetActionEntityByID(ctx context.Context, id string) (*ActionEntity, error) 
 	return actionEntity, nil
 }
 
-// ConvertObservationToObservationEntity takes an observation and converts it to an observation entity.
+// convertObservationToObservationEntity takes an observation and converts it to an observation entity.
 func convertObservationToObservationEntity(observation *kartepb.Observation) (*ObservationEntity, error) {
 	if observation == nil {
 		return nil, status.Errorf(codes.Internal, "convert observation to observation entity: action is nil")

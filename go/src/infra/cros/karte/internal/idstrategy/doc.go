@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// IDstrategy contains strategies for converting concrete objects to store in Karte
+// idstrategy contains strategies for converting concrete objects to store in Karte
 // (actions and observations) into identities. There are two strategies in this package.
 //
 // ProdStrategy  -- Uses the current time and an entropy source.

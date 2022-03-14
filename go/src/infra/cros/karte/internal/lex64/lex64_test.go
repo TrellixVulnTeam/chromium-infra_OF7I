@@ -189,7 +189,7 @@ func TestInputTruncation(t *testing.T) {
 	}
 }
 
-// CmpString compares two sequences of bytes and returns +1, 0, or -1.
+// cmpString compares two sequences of bytes and returns +1, 0, or -1.
 func cmpBytes(a []byte, b []byte) int {
 	return strings.Compare(string(a), string(b))
 }

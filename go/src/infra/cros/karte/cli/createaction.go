@@ -35,7 +35,7 @@ var CreateAction = &subcommands.Command{
 	},
 }
 
-// CreateActionRun runs create-action.
+// createActionRun runs create-action.
 type createActionRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
@@ -53,7 +53,7 @@ type createActionRun struct {
 	// sealTime string
 }
 
-// NontrivialActionFields counts the number of fields in the action to be created with a non-default value.
+// nontrivialActionFields counts the number of fields in the action to be created with a non-default value.
 func (c *createActionRun) nontrivialActionFields() int {
 	tally := 0
 	if c.kind != "" {
@@ -81,7 +81,7 @@ func (c *createActionRun) Run(a subcommands.Application, args []string, env subc
 	return 0
 }
 
-// InnerRun creates an action and returns an error.
+// innerRun creates an action and returns an error.
 func (c *createActionRun) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
 	if len(args) != 0 {
 		return fmt.Errorf("positional arguments are not accepted")

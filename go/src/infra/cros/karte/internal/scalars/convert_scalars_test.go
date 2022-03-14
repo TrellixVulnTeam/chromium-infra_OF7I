@@ -49,7 +49,7 @@ func TestTimestampConversionRoundTripsFromTimestampPtr(t *testing.T) {
 	}
 }
 
-// Mod is like %, but guarantees that num % denom is in the range [0, denom).
+// mod is like %, but guarantees that num % denom is in the range [0, denom).
 func mod(num int64, denom int64) (int64, error) {
 	if denom <= 0 {
 		return 0, errors.New("denominator must be positive")

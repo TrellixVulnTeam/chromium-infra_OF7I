@@ -50,7 +50,7 @@ func ApplyConditions(q *datastore.Query, conditions []Expression) (*datastore.Qu
 	return q, nil
 }
 
-// ComparisonParseResult is the result of parsing a single comparison. It has a comparator
+// comparisonParseResult is the result of parsing a single comparison. It has a comparator
 // such as _==_ or _<_, a field, and a value, which is the value of a constant.
 //
 // TODO(gregorynisbet): Change ComparisonParseResult to use an ApplyToQuery method.
@@ -61,7 +61,7 @@ type comparisonParseResult struct {
 	value interface{}
 }
 
-// ValidateComparison takes an expression that should be a comparison, confirms that it really is
+// validateComparison takes an expression that should be a comparison, confirms that it really is
 // a comparison, and extracts information from the expression AST.
 func validateComparison(e Expression) (*comparisonParseResult, error) {
 	if e == nil {

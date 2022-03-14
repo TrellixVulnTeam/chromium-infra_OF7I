@@ -38,7 +38,7 @@ func (i *IDInfo) VersionlessBytes() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// Base128 converts an IDInfo into base128, which preserves lexicographic order.
+// Encoded converts an IDInfo into base128, which preserves lexicographic order.
 func (i *IDInfo) Encoded() (string, error) {
 	bytes, err := i.VersionlessBytes()
 	if err != nil {
