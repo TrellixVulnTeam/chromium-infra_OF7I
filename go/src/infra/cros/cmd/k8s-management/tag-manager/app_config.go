@@ -48,7 +48,7 @@ func newAppConfig(officialTagPattern string, policies ...tagPolicy) *appConfig {
 // apply applies tag policies to the repo.
 func (a *appConfig) apply(repo ImageRepo) error {
 	log.Printf("%q: Applying tag policies", repo.Name())
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	t, err := repo.List(ctx)
 	if err != nil {
