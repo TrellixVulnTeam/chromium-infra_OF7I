@@ -1,0 +1,68 @@
+From bb9e04c099d2f61dde49444fccebdc87b895c9f3 Mon Sep 17 00:00:00 2001
+From: Weizhong Xia <weizhong@google.com>
+Date: Wed, 12 Jan 2022 16:38:46 -0800
+Subject: [PATCH] Handle macOS 11 and later properly
+
+This is copied from https://github.com/ryandesign/macports-ports/blob/
+b798d79d2675306cd6947dbae7b6f37b101ae767/devel/apr/files/dynamic_lookup-11.patch
+
+The major change is to remove the .orig in the old patch to make it
+appliable.
+---
+ build/libtool.m4 | 13 ++++---------
+ configure        | 13 ++++---------
+ 2 files changed, 8 insertions(+), 18 deletions(-)
+
+diff --git a/build/libtool.m4 b/build/libtool.m4
+index e86a682..58f79d4 100644
+--- a/build/libtool.m4
++++ b/build/libtool.m4
+@@ -1067,16 +1067,11 @@ _LT_EOF
+       _lt_dar_allow_undefined='$wl-undefined ${wl}suppress' ;;
+     darwin1.*)
+       _lt_dar_allow_undefined='$wl-flat_namespace $wl-undefined ${wl}suppress' ;;
+-    darwin*) # darwin 5.x on
+-      # if running on 10.5 or later, the deployment target defaults
+-      # to the OS version, if on x86, and 10.4, the deployment
+-      # target defaults to 10.4. Don't you love it?
+-      case ${MACOSX_DEPLOYMENT_TARGET-10.0},$host in
+-	10.0,*86*-darwin8*|10.0,*-darwin[[91]]*)
+-	  _lt_dar_allow_undefined='$wl-undefined ${wl}dynamic_lookup' ;;
+-	10.[[012]][[,.]]*)
++    darwin*)
++      case ${MACOSX_DEPLOYMENT_TARGET},$host in
++        10.[[012]],*|,*powerpc*)
+ 	  _lt_dar_allow_undefined='$wl-flat_namespace $wl-undefined ${wl}suppress' ;;
+-	10.*)
++        *)
+ 	  _lt_dar_allow_undefined='$wl-undefined ${wl}dynamic_lookup' ;;
+       esac
+     ;;
+diff --git a/configure b/configure
+index ade76d9..df30b5f 100755
+--- a/configure
++++ b/configure
+@@ -13905,16 +13905,11 @@ $as_echo "$lt_cv_ld_force_load" >&6; }
+       _lt_dar_allow_undefined='$wl-undefined ${wl}suppress' ;;
+     darwin1.*)
+       _lt_dar_allow_undefined='$wl-flat_namespace $wl-undefined ${wl}suppress' ;;
+-    darwin*) # darwin 5.x on
+-      # if running on 10.5 or later, the deployment target defaults
+-      # to the OS version, if on x86, and 10.4, the deployment
+-      # target defaults to 10.4. Don't you love it?
+-      case ${MACOSX_DEPLOYMENT_TARGET-10.0},$host in
+-	10.0,*86*-darwin8*|10.0,*-darwin[91]*)
+-	  _lt_dar_allow_undefined='$wl-undefined ${wl}dynamic_lookup' ;;
+-	10.[012][,.]*)
++    darwin*)
++      case ${MACOSX_DEPLOYMENT_TARGET},$host in
++        10.[012],*|,*powerpc*)
+ 	  _lt_dar_allow_undefined='$wl-flat_namespace $wl-undefined ${wl}suppress' ;;
+-	10.*)
++	*)
+ 	  _lt_dar_allow_undefined='$wl-undefined ${wl}dynamic_lookup' ;;
+       esac
+     ;;
+-- 
+2.34.1.703.g22d0c6ccf7-goog
+
