@@ -59,6 +59,17 @@ func TestRetry(t *testing.T) {
 			So(err, ShouldBeNil)
 		})
 
+		Convey("retries deadline exceeded errors", func() {
+			client := &fakeClient{
+				err: status.Error(codes.DeadlineExceeded, "fake deadline exceeded failure"),
+				max: 1,
+			}
+
+			err := Retry(ctx, "fake op", client.op)
+
+			So(err, ShouldBeNil)
+		})
+
 		Convey("fails if all retries are exhausted", func() {
 			client := &fakeClient{
 				err: status.Error(codes.NotFound, "fake not found failure"),
