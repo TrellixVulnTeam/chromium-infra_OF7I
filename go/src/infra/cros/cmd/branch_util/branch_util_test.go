@@ -24,6 +24,7 @@ import (
 	mv "infra/cros/internal/chromeosversion"
 	gerrit "infra/cros/internal/gerrit"
 	"infra/cros/internal/git"
+	"infra/cros/internal/gs"
 	"infra/cros/internal/repo"
 	rh "infra/cros/internal/repoharness"
 	"infra/cros/internal/testutil"
@@ -489,7 +490,7 @@ func (f *fakeCreateRemoteBranchesAPI) CreateRemoteBranchesAPI(
 }
 
 // setUpCreate creates the necessary mocks we need to test the create function
-func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHarness, *branch.Client, *gerrit.Client, error) {
+func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHarness, *branch.Client, *gerrit.Client, gs.Client, error) {
 	r := setUp(t, nil)
 
 	// Get manifest contents for return
@@ -501,7 +502,7 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 	}
 	manifestFile, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	manifest := string(manifestFile)
 
@@ -519,10 +520,12 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 	t.Cleanup(ctl.Finish)
 
 	// Mock manifest request
-	reqManifest := &gitilespb.DownloadFileRequest{
-		Project:    "chromeos/manifest-versions",
-		Path:       buildspecName,
-		Committish: "HEAD",
+	expectedReads := map[string][]byte{
+		"gs://chromeos-manifest-versions/" + buildspecName: []byte(manifest),
+	}
+	fgs := &gs.FakeClient{
+		T:             t,
+		ExpectedReads: expectedReads,
 	}
 
 	// Mock version file request
@@ -532,14 +535,7 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 		Committish: "refs/heads/" + versionBranch,
 	}
 
-	// Mock out calls to gerrit.DownloadFileFromGitiles.
 	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
-	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqManifest)).Return(
-		&gitilespb.DownloadFileResponse{
-			Contents: manifest,
-		},
-		nil,
-	)
 	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqVersionFile)).Return(
 		&gitilespb.DownloadFileResponse{
 			Contents: string(crosVersionFile),
@@ -557,12 +553,12 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 		FakeCreateRemoteBranchesAPI: f.CreateRemoteBranchesAPI,
 	}
 
-	return r, bc, gerrit.NewTestClient(mockClientMap), nil
+	return r, bc, gerrit.NewTestClient(mockClientMap), fgs, nil
 }
 
 func TestCreate(t *testing.T) {
 	t.Parallel()
-	r, bc, gc, err := setUpCreate(t, false, false, false)
+	r, bc, gc, gsc, err := setUpCreate(t, false, false, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -577,7 +573,7 @@ func TestCreate(t *testing.T) {
 		custom:            branch,
 		buildSpecManifest: "12/3.0.0.xml",
 	}
-	ret := c.innerRun(context.Background(), bc, nil, gc)
+	ret := c.innerRun(context.Background(), bc, nil, gc, gsc)
 	assert.Assert(t, ret == 0)
 
 	manifest := r.Harness.Manifest()
@@ -613,7 +609,7 @@ func TestCreate(t *testing.T) {
 // Covers crbug.com/1744928.
 func TestCreateReleaseNonmain(t *testing.T) {
 	t.Parallel()
-	r, bc, gc, err := setUpCreate(t, false, false, true)
+	r, bc, gc, gsc, err := setUpCreate(t, false, false, true)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -630,7 +626,7 @@ func TestCreateReleaseNonmain(t *testing.T) {
 		release:           true,
 		buildSpecManifest: "12/2.1.0.xml",
 	}
-	ret := c.innerRun(context.Background(), bc, nil, gc)
+	ret := c.innerRun(context.Background(), bc, nil, gc, gsc)
 	assert.Assert(t, ret == 0)
 
 	assert.NilError(t, r.AssertCrosBranches([]string{branch}))
@@ -663,7 +659,7 @@ func TestCreateReleaseNonmain(t *testing.T) {
 }
 func TestCreateDryRun(t *testing.T) {
 	t.Parallel()
-	r, bc, gc, err := setUpCreate(t, true, false, false)
+	r, bc, gc, gsc, err := setUpCreate(t, true, false, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -677,7 +673,7 @@ func TestCreateDryRun(t *testing.T) {
 		custom:            branch,
 		buildSpecManifest: "12/3.0.0.xml",
 	}
-	ret := c.innerRun(context.Background(), bc, nil, gc)
+	ret := c.innerRun(context.Background(), bc, nil, gc, gsc)
 	assert.Assert(t, ret == 0)
 	assertNoRemoteDiff(t, r)
 }
@@ -685,7 +681,7 @@ func TestCreateDryRun(t *testing.T) {
 // Test create overwrites existing branches when --force is set.
 func TestCreateOverwrite(t *testing.T) {
 	t.Parallel()
-	r, bc, gc, err := setUpCreate(t, false, true, false)
+	r, bc, gc, gsc, err := setUpCreate(t, false, true, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -703,7 +699,7 @@ func TestCreateOverwrite(t *testing.T) {
 		custom:            branch,
 		buildSpecManifest: "12/3.0.0.xml",
 	}
-	ret := c.innerRun(context.Background(), bc, nil, gc)
+	ret := c.innerRun(context.Background(), bc, nil, gc, gsc)
 	assert.Assert(t, ret == 0)
 
 	assert.NilError(t, r.AssertCrosBranches([]string{branch}))
@@ -730,7 +726,7 @@ func TestCreateOverwrite(t *testing.T) {
 // Test create dies when it tries to overwrite without --force.
 func TestCreateOverwriteMissingForce(t *testing.T) {
 	t.Parallel()
-	r, bc, gc, err := setUpCreate(t, false, false, false)
+	r, bc, gc, gsc, err := setUpCreate(t, false, false, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -749,7 +745,7 @@ func TestCreateOverwriteMissingForce(t *testing.T) {
 		custom:            branch,
 		buildSpecManifest: "12/3.0.0.xml",
 	}
-	ret := c.innerRun(context.Background(), bc, nil, gc)
+	ret := c.innerRun(context.Background(), bc, nil, gc, gsc)
 	assert.Assert(t, ret != 0)
 	assert.Assert(t, strings.Contains(stderrBuf.String(), "rerun with --force"))
 
@@ -765,7 +761,7 @@ func TestCreateOverwriteMissingForce(t *testing.T) {
 // Test create dies when given a version that was already branched.
 func TestCreatExistingVersion(t *testing.T) {
 	t.Parallel()
-	r, bc, gc, err := setUpCreate(t, false, false, false)
+	r, bc, gc, gsc, err := setUpCreate(t, false, false, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -792,7 +788,7 @@ func TestCreatExistingVersion(t *testing.T) {
 		stabilize:         true,
 		buildSpecManifest: "12/3.0.0.xml",
 	}
-	ret := c.innerRun(context.Background(), bc, nil, gc)
+	ret := c.innerRun(context.Background(), bc, nil, gc, gsc)
 	assert.Assert(t, ret != 0)
 	assert.Assert(t, strings.Contains(stderrBuf.String(), "already branched 3.0.0"))
 	assertNoRemoteDiff(t, r)
@@ -824,10 +820,12 @@ func TestCreate9496(t *testing.T) {
 	t.Cleanup(ctl.Finish)
 
 	// Mock manifest request
-	reqManifest := &gitilespb.DownloadFileRequest{
-		Project:    "chromeos/manifest-versions",
-		Path:       "buildspecs/" + buildspecName,
-		Committish: "HEAD",
+	expectedReads := map[string][]byte{
+		"gs://chromeos-manifest-versions/buildspecs/" + buildspecName: manifestFile,
+	}
+	fgs := &gs.FakeClient{
+		T:             t,
+		ExpectedReads: expectedReads,
 	}
 
 	// Mock version file request
@@ -836,15 +834,8 @@ func TestCreate9496(t *testing.T) {
 		Path:       "chromeos/config/chromeos_version.sh",
 		Committish: "refs/heads/main",
 	}
-
-	// Mock out calls to gerrit.DownloadFileFromGitiles.
 	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
-	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqManifest)).Return(
-		&gitilespb.DownloadFileResponse{
-			Contents: string(manifestFile),
-		},
-		nil,
-	)
+
 	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqVersionFile)).Return(
 		&gitilespb.DownloadFileResponse{
 			Contents: string(crosVersionFile),
@@ -876,7 +867,7 @@ func TestCreate9496(t *testing.T) {
 		release:           true,
 		buildSpecManifest: buildspecName,
 	}
-	ret := c.innerRun(context.Background(), bc, nil, gc)
+	ret := c.innerRun(context.Background(), bc, nil, gc, fgs)
 	assert.Assert(t, ret == 0)
 
 	manifest := r.Harness.Manifest()

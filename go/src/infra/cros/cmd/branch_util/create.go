@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
 	"os"
 
@@ -13,17 +12,20 @@ import (
 	mv "infra/cros/internal/chromeosversion"
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/git"
+	"infra/cros/internal/gs"
 	"infra/cros/internal/manifestutil"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/errors"
+	lgs "go.chromium.org/luci/common/gcloud/gs"
 )
 
 const (
-	branchCreatorGroup = "mdb/chromeos-branch-creators"
-	internalGerritURL  = "chrome-internal.googlesource.com"
-	externalGerritURL  = "chromium.googlesource.com"
+	branchCreatorGroup       = "mdb/chromeos-branch-creators"
+	internalGerritURL        = "chrome-internal.googlesource.com"
+	externalGerritURL        = "chromium.googlesource.com"
+	manifestVersionsGSBucket = "chromeos-manifest-versions"
 )
 
 func getCmdCreateBranch(opts auth.Options) *subcommands.Command {
@@ -143,12 +145,17 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 		bc.LogErr(errors.Annotate(err, "failed to create gitiles client").Err().Error())
 		return 4
 	}
+	gsClient, err := gs.NewProdClient(ctx, authedClient)
+	if err != nil {
+		bc.LogErr(errors.Annotate(err, "failed to create gs client").Err().Error())
+		return 5
+	}
 
 	// Do work.
-	return c.innerRun(ctx, bc, authedClient, gitilesClient)
+	return c.innerRun(ctx, bc, authedClient, gitilesClient, gsClient)
 }
 
-func (c *createBranch) innerRun(ctx context.Context, bc *branch.Client, authedClient *http.Client, gc *gerrit.Client) int {
+func (c *createBranch) innerRun(ctx context.Context, bc *branch.Client, authedClient *http.Client, gc *gerrit.Client, gsClient gs.Client) int {
 	// Check if the user is in mdb/chromeos-branch-creators, unless SkipGroupCheck is set.
 	// This is not to say that an unauthorized user can simply call the tool with --skip-group-check;
 	// ACLs will still be enforced. Skipping this check is necessary for bot invocations,
@@ -177,26 +184,10 @@ func (c *createBranch) innerRun(ctx context.Context, bc *branch.Client, authedCl
 		file.ResolveImplicitLinks()
 		bc.WorkingManifest = *file
 	} else {
-		file, err := gc.DownloadFileFromGitiles(ctx, internalGerritURL,
-			"chromeos/manifest-versions", "HEAD", "buildspecs/"+c.buildSpecManifest)
+		gsPath := lgs.MakePath(manifestVersionsGSBucket, "buildspecs/"+c.buildSpecManifest)
+		manifest, err := manifestutil.LoadManifestFromGS(ctx, gsClient, gsPath)
 		if err != nil {
-			bc.LogErr(errors.Annotate(err, "failed to fetch buildspec %v", c.buildSpecManifest).Err().Error())
-			return 1
-		}
-		bc.LogOut("Got %v from Gitiles", c.buildSpecManifest)
-		wm, err := ioutil.TempFile("", "working-manifest.xml")
-		if err != nil {
-			bc.LogErr("%s\n", err.Error())
-			return 1
-		}
-		_, err = wm.WriteString(file)
-		if err != nil {
-			bc.LogErr("%s\n", err.Error())
-			return 1
-		}
-		manifest, err := manifestutil.LoadManifestFromFile(wm.Name())
-		if err != nil {
-			err = errors.Annotate(err, "failed to load manifests").Err()
+			err = errors.Annotate(err, "failed to fetch manifest %v", gsPath).Err()
 			bc.LogErr("%s\n", err.Error())
 			return 1
 		}

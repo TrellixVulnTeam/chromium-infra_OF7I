@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/api/gerrit"
+	"go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 )
 
@@ -98,7 +99,7 @@ func Run(c branchCommand, a subcommands.Application, args []string, env subcomma
 
 func main() {
 	opts := chromeinfra.DefaultAuthOptions()
-	opts.Scopes = []string{gerrit.OAuthScope, auth.OAuthScopeEmail}
+	opts.Scopes = append(gs.ReadOnlyScopes, gerrit.OAuthScope, auth.OAuthScopeEmail)
 	s := &branchApplication{
 		getApplication(opts),
 		log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds),
