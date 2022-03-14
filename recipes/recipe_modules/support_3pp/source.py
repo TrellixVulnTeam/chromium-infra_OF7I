@@ -408,8 +408,11 @@ def _download_source(api, download_manifest):
   """
   # Checkout a raw git source given remote git hash.
   if download_manifest.protocol == 'git':
-    api.git.checkout(download_manifest.source_uri,
-                     download_manifest.source_hash, download_manifest.path)
+    api.git.checkout(
+        download_manifest.source_uri,
+        ref=download_manifest.source_hash,
+        dir_path=download_manifest.path,
+        tags=True)
   elif download_manifest.protocol == 'url':
     for i, uri in enumerate(download_manifest.source_uri):
       if not download_manifest.artifact_names:

@@ -374,7 +374,8 @@
       "fetch",
       "origin",
       "hash",
-      "--progress"
+      "--progress",
+      "--tags"
     ],
     "cwd": "[START_DIR]/3pp/wd/pkg/dep/linux-amd64/1.5.0-rc1/checkout",
     "env": {
@@ -1156,7 +1157,8 @@
       "fetch",
       "origin",
       "main",
-      "--progress"
+      "--progress",
+      "--tags"
     ],
     "cwd": "[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/1.5.0-rc1/checkout",
     "env": {
@@ -2154,7 +2156,8 @@
       "fetch",
       "origin",
       "hash",
-      "--progress"
+      "--progress",
+      "--tags"
     ],
     "cwd": "[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/v1.4.1/checkout",
     "env": {

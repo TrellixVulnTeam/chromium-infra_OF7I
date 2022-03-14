@@ -315,7 +315,8 @@
       "fetch",
       "origin",
       "hash",
-      "--progress"
+      "--progress",
+      "--tags"
     ],
     "cwd": "[START_DIR]/3pp/wd/tools/tool/linux-amd64/1.4.1/checkout",
     "env": {
