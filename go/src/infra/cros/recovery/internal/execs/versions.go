@@ -42,10 +42,10 @@ func (v *versioner) Cros(ctx context.Context, resource string) (*components.Cros
 		res.OSImage = v
 	}
 	if v, ok := r.GetValue()["fw_image"]; ok {
-		res.FWImage = v
+		res.FwImage = v
 	}
 	if v, ok := r.GetValue()["fw_version"]; ok {
-		res.FWversion = v
+		res.FwVersion = v
 	}
 	return res, nil
 }

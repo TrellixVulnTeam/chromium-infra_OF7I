@@ -61,8 +61,12 @@ func rebootExec(ctx context.Context, info *execs.ExecInfo) error {
 
 // isOnStableVersionExec matches device OS version to stable CrOS version.
 func isOnStableVersionExec(ctx context.Context, info *execs.ExecInfo) error {
+	sv, err := info.Versioner().Cros(ctx, info.RunArgs.DUT.Name)
+	if err != nil {
+		return errors.Annotate(err, "match os version").Err()
+	}
 	argsMap := info.GetActionArgs(ctx)
-	expected := argsMap.AsString(ctx, "os_name", info.RunArgs.DUT.StableVersion.CrosImage)
+	expected := argsMap.AsString(ctx, "os_name", sv.OSImage)
 	log.Debug(ctx, "Expected version: %s", expected)
 	fromDevice, err := releaseBuildPath(ctx, info.DefaultRunner())
 	if err != nil {
@@ -77,7 +81,11 @@ func isOnStableVersionExec(ctx context.Context, info *execs.ExecInfo) error {
 
 // notOnStableVersionExec verifies devices OS is not matches stable CrOS version.
 func notOnStableVersionExec(ctx context.Context, info *execs.ExecInfo) error {
-	expected := info.RunArgs.DUT.StableVersion.CrosImage
+	sv, err := info.Versioner().Cros(ctx, info.RunArgs.DUT.Name)
+	if err != nil {
+		return errors.Annotate(err, "match os version").Err()
+	}
+	expected := sv.OSImage
 	log.Debug(ctx, "Expected version: %s", expected)
 	fromDevice, err := releaseBuildPath(ctx, info.DefaultRunner())
 	if err != nil {

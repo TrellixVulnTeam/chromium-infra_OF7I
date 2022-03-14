@@ -16,7 +16,11 @@ import (
 )
 
 func servoUSBHasCROSStableImageExec(ctx context.Context, info *execs.ExecInfo) error {
-	expectedImage := info.RunArgs.DUT.StableVersion.CrosImage
+	sv, err := info.Versioner().Cros(ctx, info.RunArgs.DUT.Name)
+	if err != nil {
+		return errors.Annotate(err, "servo usb-key has cros stable image").Err()
+	}
+	expectedImage := sv.OSImage
 	if expectedImage == "" {
 		return errors.Reason("servo usb-key has cros stable image: stable image is not specified").Err()
 	}

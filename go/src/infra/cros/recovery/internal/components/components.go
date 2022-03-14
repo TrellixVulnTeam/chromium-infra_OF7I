@@ -37,8 +37,8 @@ type Servod interface {
 // CrosVersion holds information for ChromeOS devices.
 type CrosVersionInfo struct {
 	OSImage   string
-	FWImage   string
-	FWversion string
+	FwImage   string
+	FwVersion string
 }
 
 // Versioner defines the interface to receive versions information per request.

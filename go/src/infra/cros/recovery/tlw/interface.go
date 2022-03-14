@@ -231,9 +231,6 @@ type Dut struct {
 	WifiRouterHosts []*WifiRouterHost
 	// RPMOutlet of the DUT setup.
 	RPMOutlet *RPMOutlet
-
-	// StableVersion of the DUT.
-	StableVersion *StableVersion
 	// ProvisionedInfo tells provisioned info for the DUT.
 	ProvisionedInfo *DUTProvisionedInfo
 	// Extra attrubes of the DUT.
@@ -251,20 +248,6 @@ type DUTProvisionedInfo struct {
 	// JobRepoURL provide path to download client code to the DUT.
 	// Example: http://{cache_server}:8082/download/{gs_path}
 	JobRepoURL string
-}
-
-// StableVersion holds info about stable versions used for recovery devices.
-type StableVersion struct {
-	// ChromeOS stable image in standard GS path format.
-	// Example: board-release/R90-13816.47.0
-	CrosImage string
-	// ChromeOS firmware version in a format that align with omaha manifest data,
-	// and crossystem or chromeos-firmwareupdate output.
-	// Example: Google_Board.13434.261.0
-	CrosFirmwareVersion string
-	// ChromeOS firmware image in standard GS path format.
-	// Example: board-firmware/R87-13434.261.0
-	CrosFirmwareImage string
 }
 
 // HardwareState describes the state of hardware components.

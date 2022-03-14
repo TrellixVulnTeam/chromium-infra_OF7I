@@ -101,6 +101,7 @@ func New(ufs UFSClient, csac CSAClient) (tlw.Access, error) {
 		devices:       make(map[string]*tlw.Dut),
 		hostTypes:     make(map[string]hostType),
 		hostToParents: make(map[string]string),
+		versionMap:    make(map[string]*tlw.VersionResponse),
 	}
 	return c, nil
 }
@@ -627,12 +628,6 @@ func (c *tlwClient) GetDut(ctx context.Context, name string) (*tlw.Dut, error) {
 	if err != nil {
 		return nil, errors.Annotate(err, "get DUT %q", name).Err()
 	}
-	gv, err := c.getStableVersion(ctx, dut)
-	if err != nil {
-		log.Info(ctx, "Get DUT %q: failed to receive stable-version. Error: %s", name, err)
-	} else {
-		dut.StableVersion = gv
-	}
 	dut.ProvisionedInfo, err = localinfo.ReadProvisionInfo(ctx, dut.Name)
 	return dut, errors.Annotate(err, "get dut").Err()
 }
@@ -645,31 +640,30 @@ func (c *tlwClient) Version(ctx context.Context, req *tlw.VersionRequest) (*tlw.
 	// Creating cache key for versions based on hostname which is targeted.
 	versionKey := fmt.Sprintf("%s|%s", req.GetType(), req.Resource)
 	if v, ok := c.versionMap[versionKey]; ok {
+		log.Debug(ctx, "Received version %q (cache): %#v", req.GetType(), v)
 		return v, nil
 	}
 	dut, err := c.getDevice(ctx, req.Resource)
 	if err != nil {
 		return nil, errors.Annotate(err, "version").Err()
 	}
-	res := &tlw.VersionResponse{}
+	var res *tlw.VersionResponse
 	switch req.GetType() {
 	case tlw.VersionRequest_CROS:
-		gv, err := c.getStableVersion(ctx, dut)
-		if err != nil {
+		if sv, err := c.getCrosStableVersion(ctx, dut); err != nil {
 			log.Info(ctx, "version: failed to receive stable-version for %q. Error: %s", dut.Name, err)
 		} else {
-			res.Value = map[string]string{
-				"os_image":   gv.CrosImage,
-				"fw_image":   gv.CrosFirmwareVersion,
-				"fw_version": gv.CrosFirmwareImage,
-			}
+			res = sv
 		}
 	case tlw.VersionRequest_WIFI_ROUTER:
 		// TODO: need implement
-		res.Value = map[string]string{
-			"os_image": "gale-test-ap-tryjob/R92-13982.81.0-b4959409",
+		res = &tlw.VersionResponse{
+			Value: map[string]string{
+				"os_image": "gale-test-ap-tryjob/R92-13982.81.0-b4959409",
+			},
 		}
 	}
+	log.Debug(ctx, "Received version %q: %#v", req.GetType(), res)
 	c.versionMap[versionKey] = res
 	return res, nil
 }
@@ -769,8 +763,8 @@ func (c *tlwClient) isServoHost(host string) bool {
 	return false
 }
 
-// getStableVersion receives stable versions of device.
-func (c *tlwClient) getStableVersion(ctx context.Context, dut *tlw.Dut) (*tlw.StableVersion, error) {
+// getCrosStableVersion receives stable versions for ChromeOS device.
+func (c *tlwClient) getCrosStableVersion(ctx context.Context, dut *tlw.Dut) (*tlw.VersionResponse, error) {
 	req := &fleet.GetStableVersionRequest{Hostname: dut.Name}
 	res, err := c.csaClient.GetStableVersion(ctx, req)
 	if err != nil {
@@ -782,10 +776,12 @@ func (c *tlwClient) getStableVersion(ctx context.Context, dut *tlw.Dut) (*tlw.St
 	if res.GetCrosVersion() == "" {
 		return nil, errors.Reason("get stable-version %q: version is empty", dut.Name).Err()
 	}
-	return &tlw.StableVersion{
-		CrosImage:           fmt.Sprintf("%s-release/%s", dut.Board, res.GetCrosVersion()),
-		CrosFirmwareVersion: res.GetFirmwareVersion(),
-		CrosFirmwareImage:   res.GetFaftVersion(),
+	return &tlw.VersionResponse{
+		Value: map[string]string{
+			"os_image":   fmt.Sprintf("%s-release/%s", dut.Board, res.GetCrosVersion()),
+			"fw_image":   res.GetFaftVersion(),
+			"fw_version": res.GetFirmwareVersion(),
+		},
 	}, nil
 }
 
