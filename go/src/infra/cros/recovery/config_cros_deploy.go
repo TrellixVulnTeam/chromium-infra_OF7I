@@ -222,6 +222,7 @@ var deployActions = map[string]*planpb.Action{
 	},
 	"Clean up": {
 		Docs:         []string{"Verify that device is set to boot in DEV mode and enabled to boot from USB-drive."},
+		Conditions:   []string{"dut_servo_host_present"},
 		Dependencies: []string{"cros_remove_default_ap_file_servo_host"},
 		ExecName:     "sample_pass",
 	},
