@@ -11,8 +11,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os/exec"
 	"time"
+
+	"go.chromium.org/luci/common/errors"
 )
 
 var (
@@ -23,6 +26,7 @@ var (
 // Proxy holds info for active running ssh proxy for requested host.
 type proxy struct {
 	host         string
+	hostIp       string
 	hostPort     int
 	jumpHost     string
 	jumpHostPort int
@@ -33,17 +37,24 @@ type proxy struct {
 func newProxy(ctx context.Context, host string, hostPort int, jumpHost string, jumpHostPort int) *proxy {
 	p, ok := proxyPool[host]
 	if !ok {
+		ip, err := lookupHost(host)
 		p = &proxy{
 			host:         host,
+			hostIp:       ip,
 			hostPort:     hostPort,
 			jumpHost:     jumpHost,
 			jumpHostPort: jumpHostPort,
+		}
+		if err != nil {
+			fmt.Printf("Fail loopup ip for %s: %s\n", host, err)
+			proxyPool[p.host] = p
+			return p
 		}
 		// Ex.: the proxy create command will look something like this:
 		// "ssh -f -N -L jumpHostPort:127.0.0.1:22 -L hostPort:host:22 root@jumpHost"
 		p.cmd = exec.CommandContext(ctx, "ssh", "-f", "-N",
 			"-L", fmt.Sprintf("%d:127.0.0.1:22", p.jumpHostPort),
-			"-L", fmt.Sprintf("%d:%s:22", p.hostPort, p.host),
+			"-L", fmt.Sprintf("%d:%s:22", p.hostPort, p.hostIp),
 			fmt.Sprintf("root@%s", p.jumpHost))
 		initSystemProcAttr(p)
 		stderr, err := p.cmd.StderrPipe()
@@ -84,4 +95,17 @@ func (p *proxy) address() string {
 // Port provides proxy port information.
 func (p *proxy) Port() int {
 	return p.hostPort
+}
+
+// lookupHost is a helper function that looks up the IP address of the provided
+// host by using the local resolver.
+func lookupHost(hostname string) (string, error) {
+	addrs, err := net.LookupHost(hostname)
+	if err != nil {
+		return "", errors.Annotate(err, "lookup host %q", hostname).Err()
+	}
+	if len(addrs) == 0 {
+		return "", errors.Reason("lookup host %q: no ip addresses found", hostname).Err()
+	}
+	return addrs[0], nil
 }
