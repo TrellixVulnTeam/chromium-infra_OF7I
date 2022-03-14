@@ -14,7 +14,6 @@ var servoRepairPlan = &planpb.Plan{
 	CriticalActions: []string{
 		"set_state_missing_config",
 		"servo_host_info",
-		"servo_servod_port_present",
 		"servod_info",
 		"set_state_wrong_config",
 		"servo_has_serial",
