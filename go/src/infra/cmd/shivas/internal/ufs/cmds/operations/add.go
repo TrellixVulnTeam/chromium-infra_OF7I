@@ -9,6 +9,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 
 	"infra/cmd/shivas/internal/ufs/subcmds/asset"
+	"infra/cmd/shivas/internal/ufs/subcmds/attacheddevicehost"
 	"infra/cmd/shivas/internal/ufs/subcmds/attacheddevicemachine"
 	"infra/cmd/shivas/internal/ufs/subcmds/cachingservice"
 	"infra/cmd/shivas/internal/ufs/subcmds/chromeplatform"
@@ -62,6 +63,7 @@ func (c *add) Run(a subcommands.Application, args []string, env subcommands.Env)
 // GetCommands lists all the subcommands under add
 // Aliases:
 //   attacheddevicemachine.AddAttachedDeviceMachineCmd = attacheddevicemachine.AddADMCmd
+//   attacheddevicehost.AddAttachedDeviceHostCmd = attacheddevicehost.AddADHCmd
 func (c addApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
@@ -73,6 +75,8 @@ func (c addApp) GetCommands() []*subcommands.Command {
 		machine.AddMachineCmd,
 		attacheddevicemachine.AddAttachedDeviceMachineCmd,
 		attacheddevicemachine.AddADMCmd,
+		attacheddevicehost.AddAttachedDeviceHostCmd,
+		attacheddevicehost.AddADHCmd,
 		host.AddHostCmd,
 		kvm.AddKVMCmd,
 		rpm.AddRPMCmd,

@@ -2040,6 +2040,45 @@ Example:
 shivas delete adm {Machine Name}
 Deletes the given attached device machine based on machine name.
 `
+
+	// AddADHLongDesc long description for AddAttachedDeviceHostCmd and AddADHCmd
+	AddADHLongDesc string = `Add an attached device host on an attached device machine
+
+'shivas add adh ...' is an alias of 'shivas add attached-device-host...'
+
+Examples:
+shivas add adh -f testhost.json
+Adds an attached device host by reading a JSON file input.
+
+shivas add adh -name test-adh -machine test-adm -man manufacturer1 -os ios -associated-hostname test-assoc-host -associated-hostport test-assoc-port
+Adds an attached device host by parameters.
+`
+
+	// AttachedDeviceMachineLSEFileText description for an attached device machinelse/host file input
+	AttachedDeviceMachineLSEFileText string = `[JSON mode] Path to a file containing host specification in JSON format.
+This file must contain one machine deployment JSON message
+
+Example attached device host:
+{
+	"name": "test-adh",
+	"hostname": "test-adh",
+	"attachedDeviceLse": {
+		"osVersion": {
+			"value": "ios",
+		},
+		"associatedHostname": "test-assoc-host",
+		"associatedHostPort": "test-assoc-port"
+	},
+	"machines": [
+		"test-adm"
+	],
+	"manufacturer": "manufacturer1",
+	"tags": [],
+	"schedulable": true
+}
+
+The protobuf definition of a deployed machine is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto`
 )
 
 func CronTriggerAvailableJobsString() string {
