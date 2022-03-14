@@ -29,7 +29,7 @@ var crosRepairPlan = &planpb.Plan{
 		"servo_keyboard",
 		"servo_mac_address",
 		"cros_match_job_repo_url_version_to_inventory",
-		"cros_provisioning_labels_repair",
+		"Match provision labels",
 		"device_labels",
 		"Collect dmesg logs from DUT",
 	},
@@ -417,6 +417,7 @@ var crosRepairPlan = &planpb.Plan{
 		"cros_boot_in_normal_mode": {
 			Conditions: []string{
 				"is_not_flex_board",
+				"Pools required to be in Secure mode",
 			},
 			Dependencies: []string{
 				"cros_storage_writing",
@@ -601,6 +602,16 @@ var crosRepairPlan = &planpb.Plan{
 			ExecName:    "servo_download_image_to_usb",
 			ExecTimeout: &durationpb.Duration{Seconds: 3000},
 		},
+		"Match provision labels": {
+			Docs: []string{
+				"Verify that provision labels is correct.",
+			},
+			Dependencies: []string{
+				"cros_match_cros_version_to_inventory",
+				"cros_match_job_repo_url_version_to_inventory",
+			},
+			ExecName: "sample_pass",
+		},
 		"cros_match_cros_version_to_inventory": {
 			Docs: []string{
 				"Verify that cros-version match version on the host.",
@@ -639,17 +650,19 @@ var crosRepairPlan = &planpb.Plan{
 				" GBB flags and disable booting into dev-mode. Then it reboots",
 				" the DUT.",
 			},
+			Conditions: []string{"Pools required to be in Secure mode"},
 			Dependencies: []string{
-				"cros_set_gbb_flags",
+				"Reset GBB flags",
 				"cros_switch_to_secure_mode",
 				"cros_reboot",
 			},
 			ExecName: "sample_pass",
 		},
-		"cros_set_gbb_flags": {
+		"Reset GBB flags": {
 			Docs: []string{
 				"This action sets the GBB flags.",
 			},
+			ExecName:               "cros_set_gbb_flags",
 			ExecTimeout:            &durationpb.Duration{Seconds: 3600},
 			AllowFailAfterRecovery: true,
 		},
@@ -694,11 +707,11 @@ var crosRepairPlan = &planpb.Plan{
 			},
 			Dependencies: []string{
 				"servo_power_state_reset",
-				"wait_device_to_boot_after_reset",
+				"Wait DUT to be SSHable after reset",
 			},
 			ExecName: "sample_pass",
 		},
-		"wait_device_to_boot_after_reset": {
+		"Wait DUT to be SSHable after reset": {
 			Docs: []string{
 				"Try to wait device to be sshable after the device being rebooted.",
 			},
@@ -725,7 +738,7 @@ var crosRepairPlan = &planpb.Plan{
 			},
 			Dependencies: []string{
 				"Trigger kernel panic by servod",
-				"wait_device_to_boot_after_reset",
+				"Wait DUT to be SSHable after reset",
 			},
 			ExecName: "sample_pass",
 		},
@@ -758,7 +771,7 @@ var crosRepairPlan = &planpb.Plan{
 				"servo_power_state_cr50_reset",
 				"sleep_1_second",
 				"init_dut_for_servo",
-				"wait_device_to_boot_after_reset",
+				"Wait DUT to be SSHable after reset",
 			},
 			ExecName: "sample_pass",
 		},
@@ -918,6 +931,29 @@ var crosRepairPlan = &planpb.Plan{
 			ExecName:      "cros_disable_fprom_write_protect",
 			ExecExtraArgs: []string{"halt_timeout:120"},
 			ExecTimeout:   &durationpb.Duration{Seconds: 3600},
+		},
+		"Pools allowed to stay in DEV mode": {
+			Docs: []string{
+				"Verify that pools are allowed to stay in DEV mode.",
+			},
+			ExecName: "dut_is_in_pool",
+			ExecExtraArgs: []string{
+				"crouton",
+				"faft-test",
+				"faft-test-au",
+				"faft-test-tot",
+				"nyc-meet-lab",
+				"satlab_faft",
+			},
+		},
+		"Pools required to be in Secure mode": {
+			Docs: []string{
+				"Verify that DUT need to be in Secure mode.",
+			},
+			Conditions: []string{
+				"Pools allowed to stay in DEV mode",
+			},
+			ExecName: "sample_fail",
 		},
 	},
 }

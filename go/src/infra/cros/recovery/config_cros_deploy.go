@@ -199,7 +199,7 @@ var deployActions = map[string]*planpb.Action{
 			"Boot DUT from USB in DEV mode",
 			"Run install after boot from USB-drive",
 			"Cold reset DUT by servo and wait to boot",
-			"wait_device_to_boot_after_reset",
+			"Wait DUT to be SSHable after reset",
 		},
 		ExecName: "sample_pass",
 	},
