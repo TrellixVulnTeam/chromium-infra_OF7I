@@ -73,6 +73,8 @@ func innerMain() error {
 
 	// Please ensure the official tag regex matches the whole tag, i.e. starting
 	// with '^' and ending with '$'.
+	const timestampPrefix = `^\d{8}T\d{6}`
+	const timestampOnly = `^\d{8}T\d{6}$`
 	// The order of tag policies matters! Because tag policies may depend on
 	// each other, e.g. policy of "prod" may depend on policy of "canary".
 	// Please add the dependent policy first.
@@ -84,35 +86,40 @@ func innerMain() error {
 		{
 			&gcrRepo{"gcr.io/chromeos-drone-images/drone", auth},
 			newAppConfig(
-				`^\d{8}T\d{6}-chromeos-test$`, latestOfficialPolicy, canaryMaxDistancePolicy, prodMaxDistancePolicy,
+				timestampPrefix+"-chromeos-test$", latestOfficialPolicy, canaryMaxDistancePolicy, prodMaxDistancePolicy,
 			),
 		},
 		// Images used by caching service.
 		{
 			&gcrRepo{"gcr.io/chromeos-cacheserver-images/nginx", auth},
-			newAppConfig(`^\d{8}T\d{6}-chromeos-test$`, latestOfficialPolicy),
+			newAppConfig(timestampPrefix+"-chromeos-test$", latestOfficialPolicy),
 		},
 		{
 			&gcrRepo{"gcr.io/chromeos-cacheserver-images/conf_creator", auth},
-			newAppConfig(`^\d{8}T\d{6}$`, latestOfficialPolicy),
+			newAppConfig(timestampOnly, latestOfficialPolicy),
 		},
 		{
 			&gcrRepo{"gcr.io/chromeos-cacheserver-images/nginx_access_log_metrics", auth},
-			newAppConfig(`^\d{8}T\d{6}$`, latestOfficialPolicy),
+			newAppConfig(timestampOnly, latestOfficialPolicy),
 		},
 		{
 			&gcrRepo{"gcr.io/chromeos-cacheserver-images/gsa_server", auth},
-			newAppConfig(`^\d{8}T\d{6}$`, latestOfficialPolicy),
+			newAppConfig(timestampOnly, latestOfficialPolicy),
 		},
 		// Image used by RPM service.
 		{
 			&gcrRepo{"gcr.io/chromeos-rpmserver-images/rpm", auth},
-			newAppConfig(`^\d{8}T\d{6}-cloudbuild$`, latestOfficialPolicy),
+			newAppConfig(timestampPrefix+"-cloudbuild$", latestOfficialPolicy),
 		},
 		// Image used by K8s Metrics service.
 		{
 			&gcrRepo{"gcr.io/cros-lab-servers/k8s-metrics", auth},
-			newAppConfig(`^\d{8}T\d{6}$`, latestOfficialPolicy),
+			newAppConfig(timestampOnly, latestOfficialPolicy),
+		},
+		// Image used by K8s container cache.
+		{
+			&gcrRepo{"gcr.io/cros-lab-servers/container-cache", auth},
+			newAppConfig(timestampOnly, latestOfficialPolicy),
 		},
 	}
 	ch := make(chan string, len(data))
