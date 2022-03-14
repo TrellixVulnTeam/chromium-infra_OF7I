@@ -11,6 +11,7 @@ import "google/api/field_behavior.proto";
 import "google/protobuf/field_mask.proto";
 import "infra/cros/karte/api/action.proto";
 import "infra/cros/karte/api/observation.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "infra/cros/karte/api;kartepb";
 
@@ -37,6 +38,15 @@ service Karte {
 
   // PersistAction persists a single action to bigquery directly.
   rpc PersistAction(PersistActionRequest) returns (PersistActionResponse) {
+    option (google.api.http) = {
+      get: "/v1/persist-actions"
+    };
+  }
+
+  // PersistActionRange persists a range of actions organized by their creation time.
+  // Since the seal time is typically what we are interested in, not the creation time, this RPC
+  // also takes a seal time as a parameter.
+  rpc PersistActionRange(PersistActionRangeRequest) returns (PersistActionRangeResponse) {
     option (google.api.http) = {
       get: "/v1/persist-actions"
     };
@@ -90,6 +100,17 @@ message PersistActionRequest {
    bool check_for_duplicate = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
+// PersistActionRangeRequest describes what range of actions to persist.
+message PersistActionRangeRequest {
+  // Start_time is the nominal start time. Defaults to one hour before the present.
+  google.protobuf.Timestamp start_time = 1;
+  // Stop_time is the nominal stop time. Defaults to the present.
+  google.protobuf.Timestamp stop_time = 2;
+  // Seal_time_seconds defaults to the current seal time, expressed in seconds.
+  // The seal time is the maximum amount of time that an event can be modifiable for.
+  int32 seal_time_seconds = 3;
+}
+
 // ListActionsRequest takes a page size and a token indicating where to start.
 message ListActionsRequest {
   // The maximum number of actions to return. The service may return fewer than
@@ -121,6 +142,15 @@ message PersistActionResponse {
 
   // Succeeded is true if and only if the call was successful. It is possible for a
   // call to be successful without producing a new record.
+  bool succeeded = 2;
+}
+
+// PersistActionRangeResponse is the response to a persist actions request.
+message PersistActionRangeResponse {
+  // Created_records is the number of created records.
+  int32 created_records = 1;
+
+  // Succeeded is true if and only if no errors at all were encountered during persistence.
   bool succeeded = 2;
 }
 

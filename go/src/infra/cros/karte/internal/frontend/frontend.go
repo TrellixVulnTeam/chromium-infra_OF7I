@@ -151,6 +151,11 @@ func (k *karteFrontend) PersistAction(ctx context.Context, req *kartepb.PersistA
 	}, nil
 }
 
+// PersistActionRange persists a range of actions.
+func (k *karteFrontend) PersistActionRange(ctx context.Context, req *kartepb.PersistActionRangeRequest) (*kartepb.PersistActionRangeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "persist action range is not implemented")
+}
+
 // ListActions lists the actions that Karte knows about.
 func (k *karteFrontend) ListActions(ctx context.Context, req *kartepb.ListActionsRequest) (*kartepb.ListActionsResponse, error) {
 	q, err := newActionEntitiesQuery(req.GetPageToken(), req.GetFilter())
