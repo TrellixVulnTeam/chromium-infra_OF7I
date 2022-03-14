@@ -50,3 +50,9 @@ func ConvertActionStatusToInt32(status kartepb.Action_Status) int32 {
 func ConvertInt32ToActionStatus(i int32) kartepb.Action_Status {
 	return kartepb.Action_Status(i)
 }
+
+// ConvertActionStatusIntToString takes an int32 and converts it to the string representation of an action status.
+// If this function is passed a integer that is out of range, the results are undefined.
+func ConvertActionStatusIntToString(i int32) string {
+	return kartepb.Action_Status_name[i]
+}

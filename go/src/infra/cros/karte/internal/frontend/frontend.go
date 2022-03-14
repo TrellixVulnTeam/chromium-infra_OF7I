@@ -8,7 +8,8 @@ import (
 	"context"
 	"time"
 
-	"cloud.google.com/go/bigquery"
+	cloudBQ "cloud.google.com/go/bigquery"
+	luciBQ "go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
@@ -113,24 +114,41 @@ func (k *karteFrontend) CreateObservation(ctx context.Context, req *kartepb.Crea
 	return req.GetObservation(), nil
 }
 
-// TODO(gregorynisbet): Use a project from the context instead of a hardcoded project.
-const bigqueryProject = "chrome-fleet-karte-dev"
-
 // PersistAction persists a single action.
 func (k *karteFrontend) PersistAction(ctx context.Context, req *kartepb.PersistActionRequest) (*kartepb.PersistActionResponse, error) {
-	// TODO(gregorynisbet): Use the client to insert something.
-	_, _ = bigquery.NewClient(ctx, bigquery.DetectProjectID)
+	client, err := cloudBQ.NewClient(ctx, cloudBQ.DetectProjectID)
+	if err != nil {
+		logging.Errorf(ctx, "Cannot create bigquery client: %s", err)
+		return nil, status.Errorf(codes.Aborted, "persist action: cannot create bigquery client: %s", err)
+	}
 	id := req.GetActionId()
 	if id == "" {
+		logging.Errorf(ctx, "Cannot get action ID: %s", err)
 		return nil, status.Errorf(codes.InvalidArgument, "persist action: request ID cannot be empty")
 	}
 	ent := ActionEntity{}
 	ent.ID = id
 	if err := datastore.Get(ctx, &ent); err != nil {
+		logging.Errorf(ctx, "Cannot retrieve action: %s", err)
 		return nil, errors.Annotate(err, "persist action").Err()
 	}
-	// Give up if we make it far enough through the API call that we *would* insert into bigquery.
-	return nil, status.Errorf(codes.Unimplemented, "not yet implemented: we give up")
+	rawBqRecord := ent.ConvertToBQAction()
+	var bqRecord cloudBQ.ValueSaver = &luciBQ.Row{
+		Message: rawBqRecord,
+	}
+
+	logging.Infof(ctx, "beginning to insert record to bigquery")
+	tbl := client.Dataset("entities").Table("actions")
+	inserter := tbl.Inserter()
+	if err := inserter.Put(ctx, bqRecord); err != nil {
+		logging.Errorf(ctx, "cannot insert action: %s", err)
+		return nil, status.Errorf(codes.Aborted, "error persisting single record: %s", err)
+	}
+
+	return &kartepb.PersistActionResponse{
+		Succeeded:     true,
+		CreatedRecord: true,
+	}, nil
 }
 
 // ListActions lists the actions that Karte knows about.

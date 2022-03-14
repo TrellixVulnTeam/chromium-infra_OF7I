@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	kartepb "infra/cros/karte/api"
+	kbqpb "infra/cros/karte/api/bigquery"
 	"infra/cros/karte/internal/datastore"
 	"infra/cros/karte/internal/errors"
 	"infra/cros/karte/internal/filterexp"
@@ -71,6 +72,28 @@ func (e *ActionEntity) ConvertToAction() *kartepb.Action {
 		SealTime:          scalars.ConvertTimeToTimestampPtr(e.SealTime),
 		Hostname:          e.Hostname,
 		ModificationCount: e.ModificationCount,
+	}
+}
+
+// ConvertToBQAction converts a datastore action entity to a bigquery proto.
+func (e *ActionEntity) ConvertToBQAction() *kbqpb.Action {
+	if e == nil {
+		return nil
+	}
+	return &kbqpb.Action{
+		Name:           e.ID,
+		Kind:           e.Kind,
+		SwarmingTaskId: e.SwarmingTaskID,
+		BuildbucketId:  e.BuildbucketID,
+		AssetTag:       e.AssetTag,
+		StartTime:      scalars.ConvertTimeToTimestampPtr(e.StartTime),
+		StopTime:       scalars.ConvertTimeToTimestampPtr(e.StopTime),
+		CreateTime:     scalars.ConvertTimeToTimestampPtr(e.CreateTime),
+		Status:         scalars.ConvertActionStatusIntToString(e.Status),
+		FailReason:     e.FailReason,
+		SealTime:       scalars.ConvertTimeToTimestampPtr(e.SealTime),
+		Hostname:       e.Hostname,
+		// ModificationCount is intentionally absent from BigQuery table.
 	}
 }
 

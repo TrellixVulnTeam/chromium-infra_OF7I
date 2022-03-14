@@ -14,6 +14,12 @@ import (
 
 const progName = "karte"
 
+// EventsDataset is the name of the events dataset in bigquery for Karte.
+const EventsDatasetName = "events"
+
+// EventsTable is the name of the events table in the events dataset.
+const EventsTableName = "events_table"
+
 // DefaultCLIKarteServer is the default server that the karte command line tool talks to.
 // The Karte commands are *not* exclusively readonly, therefore we should default to talking
 // to the dev instance rather than the prod instance.
