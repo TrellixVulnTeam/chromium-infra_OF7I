@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/tsmon"
 	"go.chromium.org/luci/common/tsmon/distribution"
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
@@ -40,6 +41,15 @@ var (
 		// Status: "joined", "awaiting_presubmit", "awaiting_build".
 		field.String("status"))
 )
+
+func init() {
+	// Register metrics as global metrics, which has the effort of
+	// resetting them after every flush.
+	tsmon.RegisterGlobalCallback(func(ctx context.Context) {
+		// Do nothing -- the metrics will be populated by the cron
+		// job itself and does not need to be triggered externally.
+	}, activeRulesGauge, creationTimeStatusDist)
+}
 
 // GlobalMetrics handles the "global-metrics" cron job. It reports
 // metrics related to overall system state (that are not logically

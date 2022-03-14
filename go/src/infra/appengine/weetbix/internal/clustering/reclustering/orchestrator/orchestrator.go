@@ -81,12 +81,11 @@ func CronHandler(ctx context.Context) error {
 }
 
 func init() {
-	// TODO(meiring): Remove or move metrics implementation into the callback,
-	// once it has been verified that the callback is called.
-	// Until then, simply performing this registration may have the desired
-	// effect of "unsticking" the metrics.
+	// Register metrics as global metrics, which has the effort of
+	// resetting them after every flush.
 	tsmon.RegisterGlobalCallback(func(ctx context.Context) {
-		logging.Infof(ctx, "Running global metrics callback.")
+		// Do nothing -- the metrics will be populated by the cron
+		// job itself and does not need to be triggered externally.
 	}, workersGauge, progressGauge, lastCompletedGauge, statusGauge)
 }
 
