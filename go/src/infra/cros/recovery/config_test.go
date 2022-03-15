@@ -5,7 +5,11 @@
 package recovery
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
+	"log"
 	"testing"
 
 	"infra/cros/recovery/config"
@@ -45,11 +49,19 @@ func TestLabstationDeployConfig(t *testing.T) {
 // TestCrosRepairConfig verifies the cros repair configuration.
 func TestCrosRepairConfig(t *testing.T) {
 	t.Parallel()
-	verifyConfig("dut-repair", t, CrosRepairConfig())
+	verifyConfig("dut-repair", t, config.CrosRepairConfig())
 }
 
 // TestCrosDeployConfig verifies the cros deploy configuration.
 func TestCrosDeployConfig(t *testing.T) {
 	t.Parallel()
-	verifyConfig("dut-deploy", t, CrosDeployConfig())
+	verifyConfig("dut-deploy", t, config.CrosDeployConfig())
+}
+
+func mustCreateConfigJSON(c *config.Configuration) io.Reader {
+	b, err := json.Marshal(c)
+	if err != nil {
+		log.Fatalf("Failed to create JSON config: %v", err)
+	}
+	return bytes.NewBuffer(b)
 }

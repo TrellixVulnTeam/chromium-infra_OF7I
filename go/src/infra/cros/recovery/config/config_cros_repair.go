@@ -2,38 +2,42 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package recovery
+package config
 
 import (
 	"google.golang.org/protobuf/types/known/durationpb"
-
-	"infra/cros/recovery/config"
 )
 
-var crosRepairPlan = &config.Plan{
-	CriticalActions: []string{
-		"dut_state_repair_failed",
-		"cros_ssh",
-		"internal_storage",
-		"last_provision_successful",
-		"device_system_info",
-		"has_python",
-		"device_enrollment",
-		"power_info",
-		"tpm_info",
-		"tools_checks",
-		"hardware_audit",
-		"firmware_check",
-		"stop_start_ui",
-		"rw_vpd",
-		"servo_keyboard",
-		"servo_mac_address",
-		"cros_match_job_repo_url_version_to_inventory",
-		"Match provision labels",
-		"device_labels",
-		"Collect dmesg logs from DUT",
-	},
-	Actions: map[string]*config.Action{
+func crosRepairPlan() *Plan {
+	return &Plan{
+		CriticalActions: []string{
+			"dut_state_repair_failed",
+			"cros_ssh",
+			"internal_storage",
+			"last_provision_successful",
+			"device_system_info",
+			"has_python",
+			"device_enrollment",
+			"power_info",
+			"tpm_info",
+			"tools_checks",
+			"hardware_audit",
+			"firmware_check",
+			"stop_start_ui",
+			"rw_vpd",
+			"servo_keyboard",
+			"servo_mac_address",
+			"cros_match_job_repo_url_version_to_inventory",
+			"Match provision labels",
+			"device_labels",
+			"Collect dmesg logs from DUT",
+		},
+		Actions: crosRepairActions(),
+	}
+}
+
+func crosRepairActions() map[string]*Action {
+	return map[string]*Action{
 		"Device is pingable": {
 			Dependencies: []string{
 				"dut_has_name",
@@ -1000,5 +1004,5 @@ var crosRepairPlan = &config.Plan{
 			},
 			ExecName: "cros_booted_from_external_storage",
 		},
-	},
+	}
 }

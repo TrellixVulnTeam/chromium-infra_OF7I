@@ -11,10 +11,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
+
+type configGiver = func() *Configuration
 
 var testValidateCases = []struct {
 	name string
@@ -145,8 +146,7 @@ func TestValidate(t *testing.T) {
 			execsExist := func(string) bool {
 				return true
 			}
-			got := proto.Clone(c.got).(*Configuration)
-			cNew, err := Validate(ctx, got, execsExist)
+			cNew, err := Validate(ctx, c.got, execsExist)
 			if err != nil {
 				t.Errorf("unmarshal fail: %s", err)
 			}

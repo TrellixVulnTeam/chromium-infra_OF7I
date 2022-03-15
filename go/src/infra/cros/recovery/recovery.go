@@ -218,7 +218,7 @@ func defaultConfiguration(tn tasknames.TaskName, ds tlw.DUTSetupType) (*config.C
 	case tasknames.Recovery:
 		switch ds {
 		case tlw.DUTSetupTypeCros:
-			return CrosRepairConfig(), nil
+			return config.CrosRepairConfig(), nil
 		case tlw.DUTSetupTypeLabstation:
 			return config.LabstationRepairConfig(), nil
 		default:
@@ -227,7 +227,7 @@ func defaultConfiguration(tn tasknames.TaskName, ds tlw.DUTSetupType) (*config.C
 	case tasknames.Deploy:
 		switch ds {
 		case tlw.DUTSetupTypeCros:
-			return CrosDeployConfig(), nil
+			return config.CrosDeployConfig(), nil
 		case tlw.DUTSetupTypeLabstation:
 			return config.LabstationDeployConfig(), nil
 		default:
