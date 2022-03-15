@@ -431,6 +431,9 @@ func appendChromeOsLabels(attrMap map[string]string, labels []string, dut *labap
 				attrMap["servo_port"] = fmt.Sprintf("%v", port)
 			}
 		}
+		if serial := servo.GetSerial(); serial != "" {
+			attrMap["servo_serial"] = serial
+		}
 	}
 	// - Chameleon
 	if chameleon := dut.GetChameleon(); chameleon != nil {

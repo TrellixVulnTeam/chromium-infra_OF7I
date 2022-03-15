@@ -86,6 +86,7 @@ func TestConvertAttachedDeviceDutTopologyToHostInfoForChromeOS(t *testing.T) {
 		model := "dummy_model"
 		servo_address := "dummy_servo_ip_address"
 		servo_port := 12345
+		servo_serial := "ASDF12345"
 		input := labapi.DutTopology{
 			Id: &labapi.DutTopology_Id{
 				Value: "dummy_dut_topology_id",
@@ -106,6 +107,7 @@ func TestConvertAttachedDeviceDutTopologyToHostInfoForChromeOS(t *testing.T) {
 									Address: servo_address,
 									Port:    int32(servo_port),
 								},
+								Serial: servo_serial,
 							},
 							Chameleon: &labapi.Chameleon{
 								Peripherals: []labapi.Chameleon_Peripheral{
@@ -138,8 +140,9 @@ func TestConvertAttachedDeviceDutTopologyToHostInfoForChromeOS(t *testing.T) {
 
 		want := &skylab_local_state.AutotestHostInfo{
 			Attributes: map[string]string{
-				"servo_host": servo_address,
-				"servo_port": fmt.Sprintf("%v", servo_port),
+				"servo_host":   servo_address,
+				"servo_port":   fmt.Sprintf("%v", servo_port),
+				"servo_serial": servo_serial,
 			},
 			Labels: []string{
 				"board:" + board,
