@@ -146,7 +146,7 @@ def compute_task_def(build, settings, fake_build):
       'realm': build.realm,
       'tags': _compute_tags(build),
       'priority': str(sw.priority),
-      'task_slices': _compute_task_slices(build, settings),
+      'task_slices': _compute_task_slices(build, settings, fake_build),
   }
   if build.proto.number:  # pragma: no branch
     task['name'] += '-%d' % build.proto.number
@@ -201,7 +201,7 @@ def _compute_tags(build):
   return sorted(tags)
 
 
-def _compute_task_slices(build, settings):
+def _compute_task_slices(build, settings, fake_build):
   """Compute swarming task slices."""
 
   # {expiration_secs: [{'key': key, 'value': value}]}
@@ -247,7 +247,7 @@ def _compute_task_slices(build, settings):
               'key': 'BUILDBUCKET_EXPERIMENTAL',
               'value': str(build.experimental).upper(),
           }],
-          'command': _compute_command(build, settings),
+          'command': _compute_command(build, settings, fake_build),
       },
   }
 
@@ -346,9 +346,9 @@ def _compute_cipd_input(build, settings):
   }
 
 
-def _compute_command(build, settings):
+def _compute_command(build, settings, fake_build):
   if not _using_kitchen(build.proto):
-    return _compute_bbagent(build, settings)
+    return _compute_bbagent(build, settings, fake_build)
 
   logdog = build.proto.infra.logdog
   annotation_url = (
@@ -433,9 +433,9 @@ def _cli_encode_proto(message):
   return _CLI_ENCODED_STRIP_RE.sub('', raw)
 
 
-def _compute_bbagent(build, settings):
+def _compute_bbagent(build, settings, fake_build):
   """Returns the command for bbagent."""
-  if build.bbagent_getbuild:
+  if build.bbagent_getbuild and not fake_build:
     logging.info('using bbagent getbuild mode for %d', build.proto.id)
     return [
         u'bbagent${EXECUTABLE_SUFFIX}',

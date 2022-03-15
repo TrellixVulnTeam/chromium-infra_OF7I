@@ -294,7 +294,7 @@ class TaskDefTest(BaseTest):
         )
     )
     self.assertEqual(
-        swarming._compute_bbagent(build, self.settings),
+        swarming._compute_bbagent(build, self.settings, fake_build=False),
         [u'bbagent${EXECUTABLE_SUFFIX}', bbagentargs],
     )
 
@@ -304,11 +304,31 @@ class TaskDefTest(BaseTest):
     )
     build.experiments.append('+%s' % (experiments.BBAGENT_GET_BUILD,))
     self.assertEqual(
-        swarming._compute_bbagent(build, self.settings),
+        swarming._compute_bbagent(build, self.settings, fake_build=False),
         [
             u'bbagent${EXECUTABLE_SUFFIX}', u'-host',
             u'cr-buildbucket.example.com', u'-build-id', u'9027773186396127232'
         ],
+    )
+
+  def test_compute_bbagent_get_build_fake(self):
+    build = self._test_build(
+        infra=dict(buildbucket=dict(hostname='cr-buildbucket.example.com'),)
+    )
+    build.experiments.append('+%s' % (experiments.BBAGENT_GET_BUILD,))
+    proto = copy.deepcopy(build.proto)
+    build.tags_to_protos(proto.tags)
+    bbagentargs = swarming._cli_encode_proto(
+        launcher_pb2.BBAgentArgs(
+            payload_path=swarming._KITCHEN_CHECKOUT,
+            cache_dir=swarming._CACHE_DIR,
+            known_public_gerrit_hosts=self.settings.known_public_gerrit_hosts,
+            build=proto,
+        )
+    )
+    self.assertEqual(
+        swarming._compute_bbagent(build, self.settings, fake_build=True),
+        [u'bbagent${EXECUTABLE_SUFFIX}', bbagentargs],
     )
 
   def test_compute_cipd_input_exclusion(self):
