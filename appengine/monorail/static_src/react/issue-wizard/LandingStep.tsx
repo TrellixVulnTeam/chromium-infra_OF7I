@@ -32,9 +32,6 @@ const useStyles = makeStyles({
   flex: {
     display: 'flex',
   },
-  inlineBlock: {
-    display: 'inline-block',
-  },
   warningBox: {
     minHeight: '10vh',
     borderStyle: 'solid',
@@ -145,9 +142,8 @@ export default function LandingStep(props: Props) {
           </div>
           <SelectMenu optionsList={categoryList} selectedOption={category} setOption={setCategory} />
           <div className={classes.warningBox}>
-            <p className={classes.warningHeader}> Avoid duplicate issue reports:</p>
+            <p className={classes.warningHeader}> <span className={classes.star}>*</span>Avoid duplicate issue reports:</p>
             <div>
-              <div className={classes.star}>*</div>
               <FormControlLabel className={classes.pad}
                 control={
                   <CustomCheckbox
@@ -157,7 +153,7 @@ export default function LandingStep(props: Props) {
                   />
                 }
                 label={
-                  <p>By checking this box, I'm acknowledging that I have searched for <a href="/p/chromium/issues/list" target="_blank">existing issues</a> that already report this problem.</p>
+                  <span>By checking this box, I'm acknowledging that I have searched for <a href="/p/chromium/issues/list" target="_blank">existing issues</a> that already report this problem.</span>
                 }
               />
             </div>

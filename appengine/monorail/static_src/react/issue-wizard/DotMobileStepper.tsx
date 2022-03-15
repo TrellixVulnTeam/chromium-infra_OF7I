@@ -16,6 +16,10 @@ const useStyles = makeStyles({
   root: {
     width: '100%',
     flexGrow: 1,
+    padding: '8px 0px',
+  },
+  back: {
+    padding: '6px 0px',
   },
 }, {defaultTheme: theme});
 
@@ -81,7 +85,7 @@ export default function DotsMobileStepper(props: Props) : React.ReactElement {
   }
 
   const backButton = activeStep === 0 ? <Button></Button> :
-    (<Button aria-label="backButton" size="medium" onClick={handleBack} disabled={activeStep === 0}>
+    (<Button aria-label="backButton" size="medium" onClick={handleBack} disabled={activeStep === 0} className={classes.back}>
       <KeyboardArrowLeft />
       Back
     </Button>);
