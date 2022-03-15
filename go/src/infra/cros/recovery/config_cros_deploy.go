@@ -84,6 +84,7 @@ var deployActions = map[string]*config.Action{
 		Dependencies: []string{
 			"Device is pingable before deploy",
 			"has_stable_version_cros_image",
+			"Device NOT booted from USB-drive",
 		},
 		ExecName: "cros_is_on_stable_version",
 		RecoveryActions: []string{
@@ -198,6 +199,7 @@ var deployActions = map[string]*config.Action{
 		Dependencies: []string{
 			"Set GBB flags to 0x18 by servo",
 			"Boot DUT from USB in DEV mode",
+			"Device booted from USB-drive",
 			"Run install after boot from USB-drive",
 			"Cold reset DUT by servo and wait to boot",
 			"Wait DUT to be SSHable after reset",

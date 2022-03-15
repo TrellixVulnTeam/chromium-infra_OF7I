@@ -955,5 +955,37 @@ var crosRepairPlan = &config.Plan{
 			},
 			ExecName: "sample_fail",
 		},
+		"Set default boot as disk and reboot": {
+			Docs: []string{
+				"Set default boot from disk and reboot.",
+			},
+			Dependencies: []string{
+				"Set default boot as disk",
+			},
+			ExecName: "cros_reboot",
+		},
+		"Set default boot as disk": {
+			Docs: []string{
+				"Set default boot from disk by crossystem.",
+			},
+			ExecName:      "cros_run_shell_command",
+			ExecExtraArgs: []string{"crossystem dev_default_boot=disk"},
+		},
+		"Device NOT booted from USB-drive": {
+			Docs: []string{
+				"Verify that device was not booted from USB-drive.",
+			},
+			Conditions: []string{"Device booted from USB-drive"},
+			RecoveryActions: []string{
+				"Set default boot as disk and reboot",
+			},
+			ExecName: "sample_fail",
+		},
+		"Device booted from USB-drive": {
+			Docs: []string{
+				"Verify that device was booted from USB-drive.",
+			},
+			ExecName: "cros_booted_from_external_storage",
+		},
 	},
 }
