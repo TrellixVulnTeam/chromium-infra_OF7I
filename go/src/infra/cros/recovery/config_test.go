@@ -6,9 +6,10 @@ package recovery
 
 import (
 	"context"
-	"infra/cros/recovery/internal/loader"
-	"io"
 	"testing"
+
+	"infra/cros/recovery/config"
+	"infra/cros/recovery/internal/execs"
 )
 
 // verifyConfig verifies that configuration can be parsed and contains all execs present in library.
@@ -16,9 +17,9 @@ import (
 // 1) Cannot parse by loader,
 // 2) Missing dependency, condition or recovery action used in the actions,
 // 3) Used unknown exec function.
-func verifyConfig(name string, t *testing.T, c io.Reader) {
+func verifyConfig(name string, t *testing.T, c *config.Configuration) {
 	ctx := context.Background()
-	p, err := loader.LoadConfiguration(ctx, c)
+	p, err := config.Load(ctx, mustCreateConfigJSON(c), execs.Exist)
 	if err != nil {
 		t.Errorf("%q expected to pass but failed with error: %s", name, err)
 	}

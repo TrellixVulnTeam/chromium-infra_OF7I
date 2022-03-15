@@ -19,7 +19,6 @@ import (
 	"infra/cros/recovery/config"
 	"infra/cros/recovery/internal/engine"
 	"infra/cros/recovery/internal/execs"
-	"infra/cros/recovery/internal/loader"
 	"infra/cros/recovery/internal/localtlw/localproxy"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/logger"
@@ -158,7 +157,7 @@ func retrieveResources(ctx context.Context, args *RunArgs) (resources []string, 
 
 // loadConfiguration loads and verifies a configuration.
 // If configuration is not provided by args then default is used.
-func loadConfiguration(ctx context.Context, dut *tlw.Dut, args *RunArgs) (config *config.Configuration, err error) {
+func loadConfiguration(ctx context.Context, dut *tlw.Dut, args *RunArgs) (rc *config.Configuration, err error) {
 	if args.ShowSteps {
 		var step *build.Step
 		step, ctx = build.StartStep(ctx, "Load configuration")
@@ -174,9 +173,13 @@ func loadConfiguration(ctx context.Context, dut *tlw.Dut, args *RunArgs) (config
 			return nil, errors.Reason("load configuration: expected config to be provided for custom tasks").Err()
 		}
 		// Get default configuration if not provided.
-		cr, err = defaultConfiguration(args.TaskName, dut.SetupType)
-		if err != nil {
+		if c, err := defaultConfiguration(args.TaskName, dut.SetupType); err != nil {
 			return nil, errors.Annotate(err, "load configuration").Err()
+
+		} else if cv, err := config.Validate(ctx, c, execs.Exist); err != nil {
+			return nil, errors.Annotate(err, "load configuration").Err()
+		} else {
+			return cv, nil
 		}
 	}
 	if c, err := parseConfiguration(ctx, cr); err != nil {
@@ -188,18 +191,19 @@ func loadConfiguration(ctx context.Context, dut *tlw.Dut, args *RunArgs) (config
 
 // ParsedDefaultConfiguration returns parsed default configuration for requested task and setup.
 func ParsedDefaultConfiguration(ctx context.Context, tn tasknames.TaskName, ds tlw.DUTSetupType) (*config.Configuration, error) {
-	if cr, err := defaultConfiguration(tn, ds); err != nil {
-		return nil, errors.Annotate(err, "load configuration").Err()
-	} else if c, err := parseConfiguration(ctx, cr); err != nil {
-		return nil, errors.Annotate(err, "load configuration").Err()
+	if c, err := defaultConfiguration(tn, ds); err != nil {
+		return nil, errors.Annotate(err, "parse default configuration").Err()
+	} else if cv, err := config.Validate(ctx, c, execs.Exist); err != nil {
+		return nil, errors.Annotate(err, "parse default configuration").Err()
 	} else {
-		return c, nil
+		return cv, nil
 	}
+
 }
 
 // parseConfiguration parses configuration to configuration proto instance.
-func parseConfiguration(ctx context.Context, cr io.Reader) (config *config.Configuration, err error) {
-	if c, err := loader.LoadConfiguration(ctx, cr); err != nil {
+func parseConfiguration(ctx context.Context, cr io.Reader) (*config.Configuration, error) {
+	if c, err := config.Load(ctx, cr, execs.Exist); err != nil {
 		return c, errors.Annotate(err, "parse configuration").Err()
 	} else if len(c.GetPlans()) == 0 {
 		return nil, errors.Reason("load configuration: no plans provided by configuration").Err()
@@ -209,7 +213,7 @@ func parseConfiguration(ctx context.Context, cr io.Reader) (config *config.Confi
 }
 
 // defaultConfiguration provides configuration based on type of setup and task name.
-func defaultConfiguration(tn tasknames.TaskName, ds tlw.DUTSetupType) (io.Reader, error) {
+func defaultConfiguration(tn tasknames.TaskName, ds tlw.DUTSetupType) (*config.Configuration, error) {
 	switch tn {
 	case tasknames.Recovery:
 		switch ds {

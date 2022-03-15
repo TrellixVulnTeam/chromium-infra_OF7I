@@ -5,8 +5,6 @@
 package recovery
 
 import (
-	"io"
-
 	"github.com/golang/protobuf/proto"
 
 	"infra/cros/recovery/config"
@@ -20,8 +18,8 @@ func copyPlan(plan *config.Plan, allowFail bool) *config.Plan {
 }
 
 // CrosRepairConfig provides config for repair cros setup in the lab task.
-func CrosRepairConfig() io.Reader {
-	c := &config.Configuration{
+func CrosRepairConfig() *config.Configuration {
+	return &config.Configuration{
 		PlanNames: []string{
 			PlanServo,
 			PlanCrOS,
@@ -38,12 +36,11 @@ func CrosRepairConfig() io.Reader {
 			PlanWifiRouter:    copyPlan(wifiRouterRepairPlan, true),
 			PlanClosing:       copyPlan(crosClosePlan, true),
 		}}
-	return mustCreateConfigJSON(c)
 }
 
 // CrosDeployConfig provides config for deploy cros setup in the lab task.
-func CrosDeployConfig() io.Reader {
-	c := &config.Configuration{
+func CrosDeployConfig() *config.Configuration {
+	return &config.Configuration{
 		PlanNames: []string{
 			PlanServo,
 			PlanCrOS,
@@ -61,7 +58,6 @@ func CrosDeployConfig() io.Reader {
 			PlanClosing:       copyPlan(crosClosePlan, true),
 		},
 	}
-	return mustCreateConfigJSON(c)
 }
 
 // crosClosePlan provides plan to close cros repair/deploy tasks.

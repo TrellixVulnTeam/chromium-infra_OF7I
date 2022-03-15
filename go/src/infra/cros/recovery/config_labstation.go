@@ -5,8 +5,7 @@
 package recovery
 
 import (
-	"io"
-
+	"github.com/golang/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"infra/cros/recovery/config"
@@ -274,7 +273,11 @@ var labstationDeployConfig = &config.Configuration{
 }
 
 // LabstationRepairConfig provides config for repair labstation task.
-func LabstationRepairConfig() io.Reader { return mustCreateConfigJSON(labstationRepairConfig) }
+func LabstationRepairConfig() *config.Configuration {
+	return proto.Clone(labstationRepairConfig).(*config.Configuration)
+}
 
 // LabstationDeployConfig provides config for deploy labstation task.
-func LabstationDeployConfig() io.Reader { return mustCreateConfigJSON(labstationDeployConfig) }
+func LabstationDeployConfig() *config.Configuration {
+	return proto.Clone(labstationDeployConfig).(*config.Configuration)
+}

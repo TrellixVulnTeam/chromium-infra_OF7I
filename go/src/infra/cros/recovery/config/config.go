@@ -1,9 +1,8 @@
-// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Copyright 2022 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Package loader provides functionality to load configuration and verify it.
-package loader
+package config
 
 import (
 	"context"
@@ -12,16 +11,14 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
-	"infra/cros/recovery/config"
-	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
 )
 
-// TODO(otabek@): Add data validation for loaded config.
-// 1) Looping actions
+// ExecsExist function to check if exec is exit.
+type ExecsExist func(execName string) bool
 
-// LoadConfiguration performs loading the configuration source with data validation.
-func LoadConfiguration(ctx context.Context, r io.Reader) (*config.Configuration, error) {
+// Load performs loading the configuration source with data validation.
+func Load(ctx context.Context, r io.Reader, execsExit ExecsExist) (*Configuration, error) {
 	log.Debug(ctx, "Load configuration: started.")
 	if r == nil {
 		return nil, errors.Reason("load configuration: reader is not provided").Err()
@@ -33,18 +30,33 @@ func LoadConfiguration(ctx context.Context, r io.Reader) (*config.Configuration,
 	if len(data) == 0 {
 		return nil, errors.Reason("load configuration: configuration is empty").Err()
 	}
-	config := config.Configuration{}
-	if err := json.Unmarshal(data, &config); err != nil {
+	c := &Configuration{}
+	if err := json.Unmarshal(data, c); err != nil {
 		return nil, errors.Annotate(err, "load configuration").Err()
 	}
-	for pName, p := range config.GetPlans() {
+	c, err = Validate(ctx, c, execsExit)
+	if err != nil {
+		return nil, errors.Annotate(err, "load configuration").Err()
+	}
+	log.Debug(ctx, "Load configuration: finished successfully.")
+	return c, nil
+}
+
+// Validate validate configuration before usage.
+//
+// The validater is also fix missed adjusted actions.
+func Validate(ctx context.Context, c *Configuration, execsExist ExecsExist) (*Configuration, error) {
+	if c == nil {
+		return c, nil
+	}
+	for pName, p := range c.GetPlans() {
 		createMissingActions(p, p.GetCriticalActions())
 		for _, a := range p.GetActions() {
 			createMissingActions(p, a.GetConditions())
 			createMissingActions(p, a.GetDependencies())
 			createMissingActions(p, a.GetRecoveryActions())
 		}
-		if err := setAndVerifyExecs(p); err != nil {
+		if err := setAndVerifyExecs(p, execsExist); err != nil {
 			return nil, errors.Annotate(err, "load configuration").Err()
 		}
 		// Check for cycle in dependency.
@@ -52,12 +64,23 @@ func LoadConfiguration(ctx context.Context, r io.Reader) (*config.Configuration,
 			return nil, errors.Annotate(err, "load configuration: of %q", pName).Err()
 		}
 	}
-	log.Debug(ctx, "Load configuration: finished successfully.")
-	return &config, nil
+	return c, nil
+}
+
+// createMissingActions creates missing actions to the plan.
+func createMissingActions(p *Plan, actions []string) {
+	if p.GetActions() == nil {
+		p.Actions = make(map[string]*Action)
+	}
+	for _, a := range actions {
+		if _, ok := p.GetActions()[a]; !ok {
+			p.GetActions()[a] = &Action{}
+		}
+	}
 }
 
 // Check the plans critical action for present of connection to avoid infinity loop running of recovery engine.
-func verifyPlanAcyclic(plan *config.Plan) error {
+func verifyPlanAcyclic(plan *Plan) error {
 	visited := map[string]bool{}
 	var verifyAction func(string) error
 	// ReferenceName stands for each action's type of dependency list.
@@ -98,25 +121,9 @@ func verifyPlanAcyclic(plan *config.Plan) error {
 	return nil
 }
 
-// createMissingActions creates missing actions to the plan.
-func createMissingActions(p *config.Plan, actions []string) {
-	if p.GetActions() == nil {
-		p.Actions = make(map[string]*config.Action)
-	}
-	for _, a := range actions {
-		if _, ok := p.GetActions()[a]; !ok {
-			p.GetActions()[a] = &config.Action{}
-		}
-	}
-}
-
-// execsExist is link to the function to check if exec function is present.
-// Link created to create ability to override for local testing.
-var execsExist = execs.Exist
-
 // setAndVerifyExecs sets exec-name if missing and validate whether exec is present
 // in recovery-lib.
-func setAndVerifyExecs(p *config.Plan) error {
+func setAndVerifyExecs(p *Plan, execsExist ExecsExist) error {
 	for an, a := range p.GetActions() {
 		if a.GetExecName() == "" {
 			a.ExecName = an
