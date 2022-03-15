@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"infra/cros/internal/assert"
+	"infra/cros/internal/cmd"
+	"infra/cros/internal/git"
 )
 
 func TestVersionsEqual(t *testing.T) {
@@ -174,6 +176,12 @@ func TestUpdateVersionFile_success(t *testing.T) {
 	assert.NilError(t, err)
 	err = ioutil.WriteFile(tmpPath, fileContents, 0644)
 	assert.NilError(t, err)
+
+	// Set git mock expectations.
+	git.CommandRunnerImpl = &cmd.FakeCommandRunner{
+		ExpectedDir: tmpDir,
+		ExpectedCmd: []string{"git", "checkout", "-B", pushBranch},
+	}
 
 	// Call UpdateVersionFile.
 	var v VersionInfo

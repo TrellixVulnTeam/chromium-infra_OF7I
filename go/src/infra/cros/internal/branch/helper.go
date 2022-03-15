@@ -551,7 +551,7 @@ func (c *Client) CheckIfAlreadyBranched(vinfo mv.VersionInfo, manifestInternal r
 	if err != nil {
 		err = errors.Annotate(err, "failed to list remote branches for %s", remoteURL).Err()
 	}
-
+	fmt.Printf("Remote branches for %+v: %v\n", manifestInternal, remoteBranches)
 	branchForVersionExists, err := BranchExists(pattern, majorMinor, branchType, remoteBranches)
 	if err != nil {
 		return err

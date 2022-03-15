@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 
+	"infra/cros/internal/git"
+
 	"go.chromium.org/luci/common/errors"
 )
 
@@ -42,6 +44,7 @@ var (
 const (
 	branchRegex   string = `.*-(?P<build>[0-9]+)(?P<branch>\.[0-9]+)?\.B`
 	keyValueRegex string = `(?P<prefix>%s=)(\d+)(?P<suffix>\b)`
+	pushBranch    string = "tmp_checkin_branch"
 )
 
 var chromeosVersionMapping = map[VersionComponent](*regexp.Regexp){
@@ -222,6 +225,11 @@ func (v *VersionInfo) UpdateVersionFile() error {
 		fileData = pattern.ReplaceAllString(fileData, newVersionTemplate)
 	}
 
+	repoDir := filepath.Dir(v.VersionFile)
+	// Create new branch.
+	if err = git.CreateBranch(repoDir, pushBranch); err != nil {
+		return err
+	}
 	// Update version file.
 	if err = ioutil.WriteFile(v.VersionFile, []byte(fileData), 0644); err != nil {
 		return errors.Annotate(err, "could not write version file %s", v.VersionFile).Err()
