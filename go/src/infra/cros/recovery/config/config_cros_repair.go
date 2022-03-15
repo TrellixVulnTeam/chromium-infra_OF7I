@@ -102,6 +102,7 @@ func crosRepairActions() map[string]*Action {
 			RecoveryActions: []string{
 				"Quick provision OS",
 				"Install OS in recovery mode by booting from servo USB-drive",
+				"Repair by powerwash",
 			},
 		},
 		"last_provision_successful": {
@@ -112,6 +113,7 @@ func crosRepairActions() map[string]*Action {
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
 				"Quick provision OS",
+				"Repair by powerwash",
 			},
 		},
 		"device_enrollment": {
@@ -170,6 +172,7 @@ func crosRepairActions() map[string]*Action {
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
 				"Quick provision OS",
+				"Repair by powerwash",
 			},
 			ExecName: "cros_is_tpm_in_good_status",
 		},
@@ -214,6 +217,7 @@ func crosRepairActions() map[string]*Action {
 				"cros_servo_cr50_reboot_repair",
 				"Install OS in recovery mode by booting from servo USB-drive",
 				"Quick provision OS",
+				"Repair by powerwash",
 			},
 			ExecName: "cros_stop_start_ui",
 		},
@@ -227,6 +231,7 @@ func crosRepairActions() map[string]*Action {
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
 				"Quick provision OS",
+				"Repair by powerwash",
 			},
 			ExecName:               "cros_are_required_rw_vpd_keys_present",
 			AllowFailAfterRecovery: true,
@@ -341,6 +346,7 @@ func crosRepairActions() map[string]*Action {
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
 				"Quick provision OS",
+				"Repair by powerwash",
 			},
 			ExecName: "cros_is_gsc_tool_present",
 		},
@@ -426,6 +432,7 @@ func crosRepairActions() map[string]*Action {
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
 				"Quick provision OS",
+				"Repair by powerwash",
 			},
 			ExecName: "cros_is_default_boot_from_disk",
 		},
@@ -476,6 +483,7 @@ func crosRepairActions() map[string]*Action {
 				"cros_switch_to_secure_mode_and_reboot",
 				"Install OS in recovery mode by booting from servo USB-drive",
 				"Quick provision OS",
+				"Repair by powerwash",
 			},
 			ExecName: "cros_is_file_system_writable",
 		},
@@ -486,6 +494,7 @@ func crosRepairActions() map[string]*Action {
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
 				"Quick provision OS",
+				"Repair by powerwash",
 			},
 			ExecName: "cros_has_critical_kernel_error",
 		},
@@ -742,6 +751,7 @@ func crosRepairActions() map[string]*Action {
 			ExecTimeout: &durationpb.Duration{Seconds: 150},
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
+				"Repair by powerwash",
 			},
 			ExecName: "cros_ping",
 		},
@@ -1003,6 +1013,23 @@ func crosRepairActions() map[string]*Action {
 				"Verify that device was booted from USB-drive.",
 			},
 			ExecName: "cros_booted_from_external_storage",
+		},
+		"Write factory-install-reset to file system": {
+			ExecName: "cros_run_shell_command",
+			ExecExtraArgs: []string{
+				"echo \"fast safe\" > /mnt/stateful_partition/factory_install_reset",
+			},
+			AllowFailAfterRecovery: true,
+		},
+		"Repair by powerwash": {
+			Docs: []string{
+				"Install the stable test image designated for the DUT.",
+			},
+			Dependencies: []string{
+				"Write factory-install-reset to file system",
+				"Quick provision OS",
+			},
+			ExecName: "sample_pass",
 		},
 	}
 }
