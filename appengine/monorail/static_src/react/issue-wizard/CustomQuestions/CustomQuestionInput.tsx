@@ -37,6 +37,7 @@ export default function CustomQuestionInput(props: Props): React.ReactElement {
         value={answer}
         onChange={handleChange}
         className={classes.inputArea}
+        inputProps={{ maxLength: 1000 }}
       />
     </>
   );

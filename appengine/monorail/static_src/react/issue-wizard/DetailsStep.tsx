@@ -111,14 +111,14 @@ export default function DetailsStep(props: Props): React.ReactElement {
             <TextField variant="outlined" onChange={handleChange('chromeVersion')} value={textValues.chromeVersion}/>
           </div>
 
-          <h3 className={classes.head}>Please enter a one line summary <span className={classes.red}>*</span></h3>
+          <h3 className={classes.head}>Please enter a one line summary (100 character limit) <span className={classes.red}>*</span></h3>
           <TextField id="outlined-basic-1" variant="outlined" inputProps={{maxLength: 100}} onChange={handleChange('oneLineSummary')} value={textValues.oneLineSummary}/>
 
-          <h3 className={classes.head}>Steps to reproduce problem <span className={classes.red}>*</span></h3>
-          <TextField multiline rows={4} id="outlined-basic-2" variant="outlined" onChange={handleChange('stepsToReproduce')} value={textValues.stepsToReproduce}/>
+          <h3 className={classes.head}>Steps to reproduce problem (5000 character limit) <span className={classes.red}>*</span></h3>
+          <TextField multiline rows={4} id="outlined-basic-2" variant="outlined" inputProps={{maxLength: 5000}} onChange={handleChange('stepsToReproduce')} value={textValues.stepsToReproduce}/>
 
-          <h3 className={classes.head}>Please describe the problem <span className={classes.red}>*</span></h3>
-          <TextField multiline rows={3} id="outlined-basic-3" variant="outlined" onChange={handleChange('describeProblem')} value={textValues.describeProblem}/>
+          <h3 className={classes.head}>Please describe the problem (5000 character limit)<span className={classes.red}>*</span></h3>
+          <TextField multiline rows={3} id="outlined-basic-3" variant="outlined" inputProps={{maxLength: 5000}} onChange={handleChange('describeProblem')} value={textValues.describeProblem}/>
 
           <CustomQuestionSelector
             question="Did this work before?"
