@@ -633,6 +633,7 @@ var servoRepairPlan = &config.Plan{
 			ExecExtraArgs: []string{"command:dut_controller_missing_fault",
 				"expected_string_value:off",
 			},
+			Conditions: []string{"is_not_servo_v3"},
 			RecoveryActions: []string{
 				"servo_power_delivery_repair",
 				"servo_fake_disconnect_dut_repair",
