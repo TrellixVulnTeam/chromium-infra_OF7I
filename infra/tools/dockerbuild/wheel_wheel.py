@@ -106,8 +106,9 @@ class SourceOrPrebuilt(Builder):
           available via PyPi. If None, a default set of packaged wheels will be
           generated based on standard PyPi expectations, encoded with each
           Platform's "packaged" property.
-      env (Dict[str, str]|None): Envvars to set when building the wheel from
-          source.
+      env_cb (Callable[[Wheel], Dict[str, str]]|None): Envvars to set when
+          building the wheel from source. The Wheel object is received as an
+          argument.
       kwargs: Keyword arguments forwarded to Builder.
     """
     self._pypi_src = source.pypi_sdist(
@@ -118,7 +119,7 @@ class SourceOrPrebuilt(Builder):
     self._tpp_libs = tpp_libs
     self._src_filter = src_filter
     self._skip_auditwheel = skip_auditwheel
-    self._env = kwargs.pop('env', None)
+    self._env_cb = kwargs.pop('env_cb', None)
     version_suffix = '.' + patch_version if patch_version else None
 
     super(SourceOrPrebuilt, self).__init__(
@@ -133,9 +134,10 @@ class SourceOrPrebuilt(Builder):
   def build_fn(self, system, wheel):
     if wheel.plat.name in self._packaged:
       return BuildPackageFromPyPiWheel(system, wheel)
+    wheel_env = self._env_cb(wheel) if self._env_cb else None
     return BuildPackageFromSource(system, wheel, self._pypi_src,
                                   self._src_filter, self._build_deps,
-                                  self._tpp_libs, self._env,
+                                  self._tpp_libs, wheel_env,
                                   self._skip_auditwheel)
 
 

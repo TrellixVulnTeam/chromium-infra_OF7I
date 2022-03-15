@@ -185,7 +185,7 @@ _NUMPY_DEPENDENCY = SPECS['numpy-1.2x.supported.1']
 # the dependencies' source code in the build script. We use
 # LIBXML2_VERSION and LIBXSLT_VERSION to specify the versions of
 # libxml2 and libxslt.
-def _LxmlEnv():
+def _LxmlEnv(w):
   env = {
       'CFLAGS': '-O2 -g -fPIC',
       'STATIC_DEPS': 'true',
@@ -194,9 +194,21 @@ def _LxmlEnv():
   }
   # This is necessary to prevent lxml's build system from forcing
   # x86_64 on Mac.
-  if sys.platform == 'darwin':
+  if w.plat.name.startswith('mac-'):
     env['LDFLAGS'] = ''
 
+  return env
+
+
+def _GrpcEnv(w):
+  env = {}
+  override_plat = None
+  if w.plat.name.startswith('linux-arm64'):
+    override_plat = 'linux-aarch64'
+  elif w.plat.name.startswith('linux-armv6'):
+    override_plat = 'linux-armv6l'
+  if override_plat:
+    env['GRPC_BUILD_OVERRIDE_BORING_SSL_ASM_PLATFORM'] = override_plat
   return env
 
 
@@ -314,6 +326,12 @@ SPECS.update({
             patch_version='chromium.7',
         ),
         SourceOrPrebuilt(
+            'cffi',
+            '1.15.0',
+            packaged=['windows-x86', 'windows-x64'],
+            pyversions=['py2', 'py3'],
+        ),
+        SourceOrPrebuilt(
             'coverage',
             '4.3.4',
             packaged=[
@@ -371,7 +389,7 @@ SPECS.update({
             pyversions=['py3'],
             patches=('mac-arm64',),
             patch_version='chromium.4',
-            env={
+            env_cb=lambda w: {
                 'CMAKE_BUILD_TYPE': 'Release',
                 'FREETYPEPY_BUNDLE_FT': '1',
                 'PYTHON_ARCH': '64',
@@ -384,7 +402,7 @@ SPECS.update({
             'gevent',
             '1.4.0',
             packaged=('manylinux-x64', 'windows-x86', 'windows-x64'),
-            env={
+            env_cb=lambda w: {
                 # manylinux1 is too old to build libuv.
                 # So, maybe when manylinux2010 catches on we can build it.
                 # That said, this is currently only used for the recipe engine,
@@ -511,6 +529,8 @@ SPECS.update({
             ],
             pyversions=['py3']),
         SourceOrPrebuilt(
+            'grpcio', '1.44.0', pyversions=['py3'], env_cb=_GrpcEnv),
+        SourceOrPrebuilt(
             'grpcio-tools',
             '1.32.0',
             skip_plat=[
@@ -556,7 +576,7 @@ SPECS.update({
         SourceOrPrebuilt(
             'lxml',
             '4.6.3',
-            env=_LxmlEnv(),
+            env_cb=_LxmlEnv,
             packaged=[
                 'windows-x86-py3',
                 'windows-x64-py3',
@@ -1430,6 +1450,8 @@ SPECS.update({
         Universal('google-auth-oauthlib', '0.3.0'),
         Universal('google-auth-oauthlib', '0.4.4', pyversions=['py3']),
         Universal('google-auth-oauthlib', '0.4.5', pyversions=['py3']),
+        Universal('google-cloud-appengine-logging', '1.1.1'),
+        Universal('google-cloud-audit-log', '0.2.0'),
         Universal('google-cloud-bigquery', '0.28.0'),
         Universal('google-cloud-bigquery', '2.7.0', pyversions=['py3']),
         Universal('google-cloud-bigtable', '0.28.1'),
@@ -1461,6 +1483,7 @@ SPECS.update({
         Universal('google-resumable-media', '2.2.1', pyversions=['py3']),
         Universal('google-resumable-media', '2.3.0', pyversions=['py3']),
         Universal('googleapis-common-protos', '1.52.0'),
+        Universal('grpcio-status', '1.44.0', pyversions=['py3']),
         Universal('html5lib', '1.0.1'),
         Universal('httplib2', '0.19.1', pyversions=['py3']),
         Universal('hypothesis', '6.9.1', pyversions=['py3']),
@@ -1534,6 +1557,7 @@ SPECS.update({
         Universal('pluggy', '0.13.1', pyversions=['py3']),
         Universal('ply', '3.11'),
         Universal('portend', '2.2'),
+        Universal('proto-plus', '1.20.3', pyversions=['py3']),
         Universal('protobuf', '3.2.0'),
         Universal('protobuf', '3.6.0'),
         Universal('protobuf', '3.6.1'),
@@ -1553,6 +1577,7 @@ SPECS.update({
         Universal('pyasn1_modules', '0.0.8'),
         Universal('pyasn1_modules', '0.2.4'),
         Universal('pyasn1_modules', '0.2.8'),
+        Universal('pycparser', '2.21'),
         Universal('pyfakefs', '3.7.2'),
         Universal('pyglet', '1.5.0'),
         Universal('pylint', '1.6.5', pyversions=['py2']),

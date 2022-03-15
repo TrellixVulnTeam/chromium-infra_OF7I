@@ -1295,6 +1295,35 @@ wheel: <
 * *windows-x86*
 * *windows-x86-py3*
 
+### 1.15.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/cffi/${vpython_platform}"
+  version: "version:1.15.0"
+>
+```
+
+
+* *linux-arm64*
+* *linux-arm64-py3*
+* *linux-armv6*
+* *linux-mips*
+* *linux-mips64*
+* *linux-mipsel*
+* *mac-arm64*
+* *mac-arm64-cp38*
+* *mac-x64*
+* *mac-x64-cp38*
+* *manylinux-x64*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *manylinux-x64-ucs2*
+* *windows-x64*
+* *windows-x64-py3*
+* *windows-x86*
+* *windows-x86-py3*
+
 ## **chardet**
 
 ### 3.0.4
@@ -2481,6 +2510,34 @@ wheel: <
 
 * *universal*
 
+## **google-cloud-appengine-logging**
+
+### 1.1.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-cloud-appengine-logging-py2_py3"
+  version: "version:1.1.1"
+>
+```
+
+
+* *universal*
+
+## **google-cloud-audit-log**
+
+### 0.2.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-cloud-audit-log-py2_py3"
+  version: "version:0.2.0"
+>
+```
+
+
+* *universal*
+
 ## **google-cloud-bigquery**
 
 ### 0.28.0
@@ -3175,6 +3232,38 @@ wheel: <
 * *manylinux-x64-ucs2*
 * *windows-x64*
 * *windows-x86*
+
+### 1.44.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/grpcio/${vpython_platform}"
+  version: "version:1.44.0"
+>
+```
+
+
+* *linux-arm64-py3*
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
+* *windows-x86-py3*
+
+## **grpcio-status-py3**
+
+### 1.44.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/grpcio-status-py3"
+  version: "version:1.44.0"
+>
+```
+
+
+* *universal*
 
 ## **grpcio-tools**
 
@@ -5139,6 +5228,18 @@ wheel: <
 
 * *universal*
 
+### 1.20.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/proto-plus-py3"
+  version: "version:1.20.3"
+>
+```
+
+
+* *universal*
+
 ## **protobuf**
 
 ### 3.10.0
@@ -5594,6 +5695,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/pycparser-py2_py3"
   version: "version:2.19"
+>
+```
+
+
+* *universal*
+
+### 2.21
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pycparser-py2_py3"
+  version: "version:2.21"
 >
 ```
 
