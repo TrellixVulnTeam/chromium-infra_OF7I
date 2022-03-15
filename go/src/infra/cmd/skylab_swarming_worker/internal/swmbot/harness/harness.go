@@ -88,9 +88,11 @@ func Open(ctx context.Context, b *swmbot.Info, o ...Option) (i *Info, err error)
 		}
 		// Load DUT's info(e.g. labels, attributes, stable_versions) from UFS/inventory.
 		dut, sv := dh.loadUFSDUTInfo(ctx)
+		// Load DUT's info from dut state file on drone.
+		dh.loadLocalDUTInfo(ctx)
+		// Below setup steps only applies to ChromeOS devices and non-ChromeOS admin
+		// tasks will not be supported in ssw.
 		if dh.DeviceType == ChromeOSDevice {
-			// Load DUT's info from dut state file on drone.
-			dh.loadLocalDUTInfo(ctx)
 			// Convert DUT's info into autotest/labpack friendly format, a.k.a host_info_store.
 			hi := dh.makeHostInfo(dut, sv)
 			dh.addLocalStateToHostInfo(hi)
