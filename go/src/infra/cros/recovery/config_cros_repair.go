@@ -107,6 +107,7 @@ var crosRepairPlan = &config.Plan{
 			ExecName: "cros_is_last_provision_successful",
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
+				"Quick provision OS",
 			},
 		},
 		"device_enrollment": {
@@ -152,6 +153,7 @@ var crosRepairPlan = &config.Plan{
 				"cros_servo_cr50_reboot_repair",
 				"Restore AC detection by EC console",
 				"Install OS in recovery mode by booting from servo USB-drive",
+				"Quick provision OS",
 			},
 			ExecName: "sample_pass",
 		},
@@ -163,6 +165,7 @@ var crosRepairPlan = &config.Plan{
 			},
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
+				"Quick provision OS",
 			},
 			ExecName: "cros_is_tpm_in_good_status",
 		},
@@ -179,17 +182,21 @@ var crosRepairPlan = &config.Plan{
 			},
 			ExecName: "sample_pass",
 		},
+		"cros is firmware in good state": {
+			RecoveryActions: []string{
+				"Install OS in recovery mode by booting from servo USB-drive",
+				"Quick provision OS",
+			},
+			ExecName: "cros_is_firmware_in_good_state",
+		},
 		"firmware_check": {
 			Conditions: []string{
 				"is_not_flex_board",
 			},
 			Dependencies: []string{
 				"cros_storage_writing",
-				"cros_is_firmware_in_good_state",
+				"cros is firmware in good state",
 				"cros_rw_firmware_stable_verion",
-			},
-			RecoveryActions: []string{
-				"Install OS in recovery mode by booting from servo USB-drive",
 			},
 			ExecName: "sample_pass",
 		},
@@ -202,6 +209,7 @@ var crosRepairPlan = &config.Plan{
 				"cros_servo_power_reset_repair",
 				"cros_servo_cr50_reboot_repair",
 				"Install OS in recovery mode by booting from servo USB-drive",
+				"Quick provision OS",
 			},
 			ExecName: "cros_stop_start_ui",
 		},
@@ -214,6 +222,7 @@ var crosRepairPlan = &config.Plan{
 			},
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
+				"Quick provision OS",
 			},
 			ExecName:               "cros_are_required_rw_vpd_keys_present",
 			AllowFailAfterRecovery: true,
@@ -327,6 +336,7 @@ var crosRepairPlan = &config.Plan{
 			},
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
+				"Quick provision OS",
 			},
 			ExecName: "cros_is_gsc_tool_present",
 		},
@@ -411,6 +421,7 @@ var crosRepairPlan = &config.Plan{
 			},
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
+				"Quick provision OS",
 			},
 			ExecName: "cros_is_default_boot_from_disk",
 		},
@@ -460,6 +471,7 @@ var crosRepairPlan = &config.Plan{
 			RecoveryActions: []string{
 				"cros_switch_to_secure_mode_and_reboot",
 				"Install OS in recovery mode by booting from servo USB-drive",
+				"Quick provision OS",
 			},
 			ExecName: "cros_is_file_system_writable",
 		},
@@ -469,6 +481,7 @@ var crosRepairPlan = &config.Plan{
 			},
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
+				"Quick provision OS",
 			},
 			ExecName: "cros_has_critical_kernel_error",
 		},
@@ -928,7 +941,7 @@ var crosRepairPlan = &config.Plan{
 				"Servo has USB-key with require image",
 				"cros_update_provision_os_version",
 			},
-			ExecName:      "cros_disable_fprom_write_protect",
+			ExecName:      "os_install_repair",
 			ExecExtraArgs: []string{"halt_timeout:120"},
 			ExecTimeout:   &durationpb.Duration{Seconds: 3600},
 		},
