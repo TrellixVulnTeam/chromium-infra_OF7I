@@ -72,7 +72,7 @@ func ProdConfig(o auth.Options) *Config {
 // EmptyConfig is a config with no content. It is expected to fail to construct a client if used as the
 // base config without the appropriate options being set.
 func EmptyConfig() *Config {
-	return &Config{}
+	return nil
 }
 
 // NewClient creates a new client for the Karte service.

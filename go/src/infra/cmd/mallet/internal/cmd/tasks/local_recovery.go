@@ -23,7 +23,10 @@ import (
 	commonFlags "infra/cmd/mallet/internal/cmd/cmdlib"
 	"infra/cmd/mallet/internal/site"
 	"infra/cmdsupport/cmdlib"
+	kclient "infra/cros/karte/client"
 	"infra/cros/recovery"
+	"infra/cros/recovery/karte"
+	"infra/cros/recovery/logger/metrics"
 	"infra/cros/recovery/tasknames"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
@@ -45,6 +48,7 @@ For now only running in testing mode.`,
 		c.Flags.StringVar(&c.configFile, "config", "", "Path to the custom json config file.")
 		c.Flags.StringVar(&c.logRoot, "log-root", "", "Path to the custom json config file.")
 		c.Flags.StringVar(&c.devJumpHost, "dev-jump-host", "", "Jump host for SSH (Dev-only feature).")
+		c.Flags.StringVar(&c.karteServer, "karte-server", "", "Use karte metric to record the action.")
 
 		c.Flags.BoolVar(&c.onlyVerify, "only-verify", false, "Block recovery actions and run only verifiers.")
 		c.Flags.BoolVar(&c.updateInventory, "update-inv", false, "Update UFS at the end execution.")
@@ -63,6 +67,7 @@ type localRecoveryRun struct {
 	devJumpHost     string
 	logRoot         string
 	configFile      string
+	karteServer     string
 	onlyVerify      bool
 	updateInventory bool
 	deployTask      bool
@@ -151,6 +156,29 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 		return errors.Annotate(err, "local recovery").Err()
 	}
 
+	var metrics metrics.Metrics
+	if c.karteServer != "" {
+		var err error
+		authOptions, err := c.authFlags.Options()
+		if err != nil {
+			return errors.Annotate(err, "create action").Err()
+		}
+		if c.karteServer == "dev" {
+			metrics, err = karte.NewMetrics(ctx, kclient.DevConfig(authOptions))
+		} else if c.karteServer == "prod" {
+			metrics, err = karte.NewMetrics(ctx, kclient.ProdConfig(authOptions))
+		} else if c.karteServer == "local" {
+			metrics, err = karte.NewMetrics(ctx, kclient.LocalConfig(authOptions))
+		} else {
+			metrics, err = karte.NewMetrics(ctx, kclient.EmptyConfig())
+		}
+		if err == nil {
+			logger.Info("internal run: metrics client successfully created.")
+		} else {
+			return errors.Annotate(err, "ineer run: failed to instantiate karte client of server: %q", c.karteServer).Err()
+		}
+	}
+
 	in := &recovery.RunArgs{
 		UnitName:              unit,
 		Access:                access,
@@ -158,6 +186,7 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 		EnableRecovery:        !c.onlyVerify,
 		EnableUpdateInventory: c.updateInventory,
 		ShowSteps:             c.showSteps,
+		Metrics:               metrics,
 		TaskName:              tn,
 		LogRoot:               logRoot,
 		DevJumpHost:           c.devJumpHost,
