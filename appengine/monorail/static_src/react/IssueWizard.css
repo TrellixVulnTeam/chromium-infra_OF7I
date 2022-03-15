@@ -16,3 +16,9 @@
 .poppins {
   font-family: 'Poppins', serif;
 }
+
+.feedback {
+  text-align: right;
+  padding-top: 1.5em;
+  color: #888;
+}

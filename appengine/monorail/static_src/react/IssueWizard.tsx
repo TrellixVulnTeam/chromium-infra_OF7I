@@ -18,6 +18,7 @@ import {ISSUE_WIZARD_QUESTIONS, ISSUE_REPRODUCE_PLACEHOLDER, OS_CHANNEL_LIST} fr
 import {prpcClient} from 'prpc-client-instance.js';
 import {expandDescriptions} from './issue-wizard/IssueWizardDescriptionsUtils.tsx';
 import SubmitSuccessStep from './issue-wizard/SubmitSuccessStep.tsx';
+import {IssueWizardFeedback} from './issue-wizard/IssueWizardFeedback.tsx';
 
 /**
  * Base component for the issue filing wizard, wrapper for other components.
@@ -29,7 +30,6 @@ import SubmitSuccessStep from './issue-wizard/SubmitSuccessStep.tsx';
 }
 export function IssueWizard(props: Props): ReactElement {
   const {loginUrl, userDisplayName} = props;
-
   React.useEffect(() => {
     if(!userDisplayName) {
       window.location.href = loginUrl;
@@ -50,7 +50,7 @@ export function IssueWizard(props: Props): ReactElement {
       osName: getOs(),
       channel: OS_CHANNEL_LIST[0].name,
     });
-
+  const [enableFeedback, setEnableFeedback] = React.useState(false);
   const questionByCategory = GetQuestionsByCategory(ISSUE_WIZARD_QUESTIONS);
 
   const moveStep = (step: number) => {
@@ -149,7 +149,9 @@ export function IssueWizard(props: Props): ReactElement {
       <div className={styles.container}>
         <Header />
         {page}
+        <div className={styles.feedback} onClick={()=>{setEnableFeedback(true);}}>Report a problem with this wizard</div>
       </div>
+      <IssueWizardFeedback enable={enableFeedback} setEnable={setEnableFeedback}/>
     </>
   );
 }
