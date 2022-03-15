@@ -28,12 +28,12 @@ func servoRepairPlan() *Plan {
 			"has_enough_disk_space",
 			"set_state_not_connected",
 			"servo_root_check",
+			"set_state_servod_issue",
+			"servo_host_servod_start",
 			"set_state_topology_issue",
 			"servo_topology",
 			"set_state_servo_updater_issue",
 			"servo_fw_need_update",
-			"set_state_servod_issue",
-			"servo_host_servod_start",
 			"set_state_servo_host_issue",
 			"servod_get_serialname",
 			"set_state_servod_proxy_issue",
@@ -174,6 +174,15 @@ func servoRepairPlan() *Plan {
 					"servo_topology_single_child",
 					"servo_topology_dual_setup",
 				},
+				ExecName: "sample_pass",
+			},
+			"servo_topology_single_child": {
+				Conditions: []string{"is_not_servo_v3"},
+				ExecName:   "servo_topology_update",
+				ExecExtraArgs: []string{
+					"min_child:1",
+					"persist_topology:true",
+				},
 				RecoveryActions: []string{
 					"servo_host_servod_stop",
 					"servo_power_cycle_repair",
@@ -186,15 +195,6 @@ func servoRepairPlan() *Plan {
 					"reflash_cr_50_fw_on_dut",
 					"reset_ec_on_dut",
 				},
-				ExecName: "sample_pass",
-			},
-			"servo_topology_single_child": {
-				Conditions: []string{"is_not_servo_v3"},
-				ExecName:   "servo_topology_update",
-				ExecExtraArgs: []string{
-					"min_child:1",
-					"persist_topology:true",
-				},
 			},
 			"servo_topology_dual_setup": {
 				Conditions: []string{
@@ -206,7 +206,18 @@ func servoRepairPlan() *Plan {
 					"min_child:2",
 					"persist_topology:true",
 				},
-				RecoveryActions:        []string{"servod_restart_dut"},
+				RecoveryActions: []string{
+					"servo_host_servod_stop",
+					"servo_power_cycle_repair",
+					"servo_power_delivery_repair",
+					"servo_fake_disconnect_dut_repair",
+					"servo_servod_cc_toggle_repair",
+					"servo_reboot_ec_on_dut",
+					"reboot_dut_by_power_state:reset",
+					"cros_create_reboot_request",
+					"reflash_cr_50_fw_on_dut",
+					"reset_ec_on_dut",
+				},
 				AllowFailAfterRecovery: true,
 			},
 			"servo_v3_root_present": {
@@ -506,12 +517,9 @@ func servoRepairPlan() *Plan {
 				},
 				ExecName: "servo_check_servod_control",
 			},
-			"is_dual_setup_configured": {
-				Docs: []string{"Check whether the servo device has been configured such that dual setup is expected of it."},
-			},
 			"is_dual_setup": {
-				Docs:       []string{"Check whether the servo device has dual setup. This check only applies to the devices that have the dual setup configured on them."},
-				Conditions: []string{"is_dual_setup_configured"},
+				Docs:     []string{"Check whether the servo device has dual setup. This check only applies to the devices that have the dual setup configured on them."},
+				ExecName: "is_dual_setup_configured",
 			},
 			"is_not_dual_setup": {
 				Conditions: []string{"is_dual_setup"},
