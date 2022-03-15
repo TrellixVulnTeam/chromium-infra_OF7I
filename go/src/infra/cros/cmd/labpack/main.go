@@ -58,7 +58,7 @@ func main() {
 	var mergeOutputProps func(*steps.LabpackResponse)
 	if LuciexeProtocolPassthru {
 		log.Printf("Bypassing luciexe.")
-		panic("Bypassing luciexe not yet supported.")
+		log.Fatalf("Bypassing luciexe not yet supported.")
 	} else {
 		build.Main(input, &writeOutputProps, &mergeOutputProps,
 			func(ctx context.Context, args []string, state *build.State) error {
