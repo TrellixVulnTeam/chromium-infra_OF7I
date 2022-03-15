@@ -75,4 +75,22 @@ message CleanCherryPickPattern {
 
   // Paths that must have a human reviewer.
   repeated string excluded_paths = 2;
+
+  // FileCheckBypassRule provides a way to bypass the rule: "the current
+  // revision shouldn't make any file changes compared with the initial
+  // revision". It is a list of requirements, all of which must be met for
+  // Rubber-Stamper to bypass the file change rule.
+  message FileCheckBypassRule {
+    // The allowed paths of files that change between the initial revision and
+    // the current revision.
+    repeated string included_paths = 1;
+
+    // Hashtag of the CL.
+    string hashtag = 2;
+
+    // Allowed CL owners. The CL owner needs to be one of them.
+    repeated string allowed_owners = 3;
+  }
+
+  FileCheckBypassRule file_check_bypass_rule = 3;
 }
