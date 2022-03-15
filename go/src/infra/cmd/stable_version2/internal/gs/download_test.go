@@ -93,6 +93,10 @@ func (f *FakeClient) Attrs(p gs.Path) (*storage.ObjectAttrs, error) {
 	panic("Attrs")
 }
 
+func (f *FakeClient) Objects(p gs.Path) ([]*storage.ObjectAttrs, error) {
+	panic("Objects")
+}
+
 func (f *FakeClient) NewReader(p gs.Path, offset int64, length int64) (io.ReadCloser, error) {
 	if offset != 0 {
 		panic("nonzero offsets unsupported")
