@@ -266,7 +266,13 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	// Remove the provisionFailed marker as provisioning stateful is skipped if OS
 	// is already on the requested version.
 	if err := runCmd(p.c, "rm "+provisionFailed); err != nil {
-		log.Printf("Failed to remove provisionFailed file, %s", err)
+		log.Printf("provision: Warning, failed to remove provisionFailed file, %s", err)
+	}
+
+	if bootID, err := getBootID(p.c); err != nil {
+		log.Printf("provision: Warning, failed to get boot ID")
+	} else {
+		log.Printf("provision: boot ID is %s", bootID)
 	}
 }
 
@@ -506,4 +512,11 @@ func fileExists(c *ssh.Client, path string) bool {
 		fmt.Sprintf("if [ -f %s ]; then echo found; fi", path))
 	// Treat failure as file missing.
 	return err != nil || exists != ""
+}
+
+func getBootID(c *ssh.Client) (string, error) {
+	return runCmdOutput(c,
+		fmt.Sprintf(
+			"if [ -f '%[1]s' ]; then cat '%[1]s'; else echo 'no boot_id available'; fi",
+			"/proc/sys/kernel/random/boot_id"))
 }
