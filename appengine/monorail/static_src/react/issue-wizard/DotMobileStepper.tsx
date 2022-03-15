@@ -79,6 +79,13 @@ export default function DotsMobileStepper(props: Props) : React.ReactElement {
         <KeyboardArrowRight />
       </Button>);
   }
+
+  const backButton = activeStep === 0 ? <Button></Button> :
+    (<Button aria-label="backButton" size="medium" onClick={handleBack} disabled={activeStep === 0}>
+      <KeyboardArrowLeft />
+      Back
+    </Button>);
+
   return (
     <MobileStepper
       id="mobile-stepper"
@@ -88,12 +95,7 @@ export default function DotsMobileStepper(props: Props) : React.ReactElement {
       activeStep={activeStep}
       className={classes.root}
       nextButton={nextButton}
-      backButton={
-        <Button aria-label="backButton" size="medium" onClick={handleBack} disabled={activeStep === 0}>
-          <KeyboardArrowLeft />
-          Back
-        </Button>
-      }
+      backButton={backButton}
     />
   );
 }

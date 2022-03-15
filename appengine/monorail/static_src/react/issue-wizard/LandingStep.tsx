@@ -66,6 +66,14 @@ const useStyles = makeStyles({
     fontSize: '18px',
     lineHeight: '32px',
   },
+  alertDetail: {
+    fontSize: '16px',
+  },
+  link: {
+    fontSize: '20px',
+    fontWeight: 'bolder',
+    textDecoration: 'underline',
+  },
   red: {
     color: red[600],
   },
@@ -105,13 +113,14 @@ export default function LandingStep(props: Props) {
         <div className={classes.subheader}>
           Prefer to file an issue manually?
         </div>
-        <div>
+        <div className={classes.alertDetail}>
           It's usually best to work through this short wizard so that your issue is given the labels needed for the right team to see it.
           Otherwise it might take longer for your issue to be triaged and resolved.
         </div>
-        <div>However, if you are a Chromium contributor and none of the other options apply, you may use the
-          <a href="entry"> regular issue entry form</a>
-        .</div>
+        <div className={classes.alertDetail}>
+          However, if you are a Chromium contributor and none of the other options apply, you may use the
+          <a className={classes.link} href="entry"> regular issue entry form</a>.
+        </div>
       </div>
     );
   }
@@ -155,7 +164,9 @@ export default function LandingStep(props: Props) {
           </div>
         </div>
       }
-      <DotMobileStepper nextEnabled={nextEnabled} activeStep={0} setActiveStep={setActiveStep}/>
+      { userPersona === IssueWizardPersona.Contributor ? null :
+        <DotMobileStepper nextEnabled={nextEnabled} activeStep={0} setActiveStep={setActiveStep}/>
+      }
     </>
   );
 }

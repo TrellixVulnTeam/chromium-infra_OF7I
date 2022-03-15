@@ -8,7 +8,7 @@ import {assert} from 'chai';
 
 import DotMobileStepper from './DotMobileStepper.tsx';
 
-describe('DotMobileStepper', () => {
+describe.only('DotMobileStepper', () => {
   let container: HTMLElement;
 
   afterEach(cleanup);
@@ -21,14 +21,14 @@ describe('DotMobileStepper', () => {
       assert.equal(count, 2)
   });
 
-  it('back button disabled on first step', () => {
+  it('back button not avlialbe on first step', () => {
     render(<DotMobileStepper activeStep={0} nextEnabled={true}/>).container;
 
     // Finds a button on the page with "back" as text using React testing library.
-    const backButton = screen.getByRole('button', {name: /backButton/i}) as HTMLButtonElement;
+    const backButton = document.querySelector('[aria-label="backButton"]');
 
-    // Back button is disabled on the first step.
-    assert.isTrue(backButton.disabled);
+    // Back button is not avliable on the first step.
+    assert.notExists(backButton);
   });
 
   it('both buttons enabled on second step', () => {
