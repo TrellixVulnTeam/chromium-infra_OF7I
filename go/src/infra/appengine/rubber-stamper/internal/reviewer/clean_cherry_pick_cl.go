@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
+	"gopkg.in/src-d/go-git.v4/plumbing/format/gitignore"
 
 	"infra/appengine/rubber-stamper/config"
 	"infra/appengine/rubber-stamper/internal/gerrit"
@@ -117,4 +118,47 @@ func reviewCleanCherryPick(ctx context.Context, cfg *config.Config, gc gerrit.Cl
 		return "The change is not mergeable.", nil
 	}
 	return "", nil
+}
+
+// bypassFileCheck tells whether the invalid files check can be bypassed for
+// this cherry-pick.
+func bypassFileCheck(ctx context.Context, invalidFiles []string, hashtags []string, owner string, fr *config.CleanCherryPickPattern_FileCheckBypassRule) bool {
+	if fr == nil || len(fr.IncludedPaths) == 0 || fr.GetHashtag() == "" || len(fr.AllowedOwners) == 0 {
+		return false
+	}
+
+	// File needs to be in the allow list.
+	var patterns []gitignore.Pattern
+	for _, path := range fr.IncludedPaths {
+		patterns = append(patterns, gitignore.ParsePattern(path, nil))
+	}
+	matcher := gitignore.NewMatcher(patterns)
+
+	for _, file := range invalidFiles {
+		if !matcher.Match(splitPath(file), false) {
+			return false
+		}
+	}
+
+	// CL hashtag.
+	tagValid := false
+	for _, hashtag := range hashtags {
+		if hashtag == fr.GetHashtag() {
+			tagValid = true
+			break
+		}
+	}
+	if !tagValid {
+		return false
+	}
+
+	// Allowed CL owner.
+	ownerValid := false
+	for _, allowedOwner := range fr.AllowedOwners {
+		if owner == allowedOwner {
+			ownerValid = true
+			break
+		}
+	}
+	return ownerValid
 }

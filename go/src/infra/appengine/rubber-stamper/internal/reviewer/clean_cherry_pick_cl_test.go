@@ -324,3 +324,53 @@ func TestReviewCleanCherryPick(t *testing.T) {
 		})
 	})
 }
+
+func TestReviewBypassFileCheck(t *testing.T) {
+	Convey("bypass file check", t, func() {
+		ctx := context.Background()
+
+		fr := &config.CleanCherryPickPattern_FileCheckBypassRule{
+			IncludedPaths: []string{"dir_a/dir_b/**/*.json"},
+			Hashtag:       "Example_Hashtag",
+			AllowedOwners: []string{"userA@example.com", "userB@example.com"},
+		}
+
+		invalidFiles := []string{"dir_a/dir_b/test.json", "dir_a/dir_b/dir_c/ok.json"}
+		hashtags := []string{"Random", "Example_Hashtag"}
+		owner := "userA@example.com"
+
+		Convey("approve", func() {
+			So(bypassFileCheck(ctx, invalidFiles, hashtags, owner, fr), ShouldEqual, true)
+		})
+		Convey("decline when config is incomplete", func() {
+			Convey("nil config", func() {
+				fr = nil
+				So(bypassFileCheck(ctx, invalidFiles, hashtags, owner, fr), ShouldEqual, false)
+			})
+			Convey("no includedPath", func() {
+				fr.IncludedPaths = nil
+				So(bypassFileCheck(ctx, invalidFiles, hashtags, owner, fr), ShouldEqual, false)
+			})
+			Convey("no hashtag", func() {
+				fr.Hashtag = ""
+				So(bypassFileCheck(ctx, invalidFiles, hashtags, owner, fr), ShouldEqual, false)
+			})
+			Convey("no allowedOwners", func() {
+				fr.AllowedOwners = nil
+				So(bypassFileCheck(ctx, invalidFiles, hashtags, owner, fr), ShouldEqual, false)
+			})
+		})
+		Convey("decline when files are not included", func() {
+			invalidFiles = append(invalidFiles, "dir_c/ok.json")
+			So(bypassFileCheck(ctx, invalidFiles, hashtags, owner, fr), ShouldEqual, false)
+		})
+		Convey("decline when no hashtag matches", func() {
+			hashtags = []string{"Random1", "Random2"}
+			So(bypassFileCheck(ctx, invalidFiles, hashtags, owner, fr), ShouldEqual, false)
+		})
+		Convey("decline when owner is not allowed", func() {
+			owner = "userC@example.com"
+			So(bypassFileCheck(ctx, invalidFiles, hashtags, owner, fr), ShouldEqual, false)
+		})
+	})
+}
