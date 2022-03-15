@@ -72,39 +72,40 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 	if len(args) == 0 {
 		return errors.Reason("create recovery task: unit is not specified").Err()
 	}
-	unit := args[0]
-	e := c.envFlags.Env()
-	var configuration string
-	if c.configFile != "" {
-		b, err := os.ReadFile(c.configFile)
-		if err != nil {
-			return errors.Annotate(err, "create recovery task: open configuration file").Err()
+	for _, unit := range args {
+		e := c.envFlags.Env()
+		var configuration string
+		if c.configFile != "" {
+			b, err := os.ReadFile(c.configFile)
+			if err != nil {
+				return errors.Annotate(err, "create recovery task: open configuration file").Err()
+			}
+			configuration = b64.StdEncoding.EncodeToString(b)
 		}
-		configuration = b64.StdEncoding.EncodeToString(b)
-	}
-	task := string(tasknames.Recovery)
-	if c.deployTask {
-		task = string(tasknames.Deploy)
-	}
+		task := string(tasknames.Recovery)
+		if c.deployTask {
+			task = string(tasknames.Deploy)
+		}
 
-	taskID, err := labpack.ScheduleTask(
-		ctx,
-		bc,
-		&labpack.Params{
-			UnitName:         unit,
-			TaskName:         task,
-			EnableRecovery:   !c.onlyVerify,
-			AdminService:     e.AdminService,
-			InventoryService: e.UFSService,
-			UpdateInventory:  c.updateUFS,
-			NoStepper:        c.noStepper,
-			NoMetrics:        true,
-			Configuration:    configuration,
-		},
-	)
-	if err != nil {
-		return errors.Annotate(err, "create recovery task").Err()
+		taskID, err := labpack.ScheduleTask(
+			ctx,
+			bc,
+			&labpack.Params{
+				UnitName:         unit,
+				TaskName:         task,
+				EnableRecovery:   !c.onlyVerify,
+				AdminService:     e.AdminService,
+				InventoryService: e.UFSService,
+				UpdateInventory:  c.updateUFS,
+				NoStepper:        c.noStepper,
+				NoMetrics:        true,
+				Configuration:    configuration,
+			},
+		)
+		if err != nil {
+			return errors.Annotate(err, "create recovery task").Err()
+		}
+		fmt.Fprintf(a.GetOut(), "Created recovery task for %s: %s\n", unit, bc.BuildURL(taskID))
 	}
-	fmt.Fprintf(a.GetOut(), "Created recovery task for %s: %s\n", unit, bc.BuildURL(taskID))
 	return nil
 }
