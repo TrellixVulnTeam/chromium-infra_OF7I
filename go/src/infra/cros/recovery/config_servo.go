@@ -5,12 +5,12 @@
 package recovery
 
 import (
-	"infra/cros/recovery/internal/planpb"
-
 	"google.golang.org/protobuf/types/known/durationpb"
+
+	"infra/cros/recovery/config"
 )
 
-var servoRepairPlan = &planpb.Plan{
+var servoRepairPlan = &config.Plan{
 	CriticalActions: []string{
 		"set_state_missing_config",
 		"servo_host_info",
@@ -65,7 +65,7 @@ var servoRepairPlan = &planpb.Plan{
 		"update_servo_type_label",
 		"set_state_working",
 	},
-	Actions: map[string]*planpb.Action{
+	Actions: map[string]*config.Action{
 		"servo_host_servod_start": {
 			Conditions: []string{"is_not_container"},
 			RecoveryActions: []string{

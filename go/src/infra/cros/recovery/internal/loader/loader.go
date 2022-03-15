@@ -12,16 +12,16 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/config"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
-	"infra/cros/recovery/internal/planpb"
 )
 
 // TODO(otabek@): Add data validation for loaded config.
 // 1) Looping actions
 
 // LoadConfiguration performs loading the configuration source with data validation.
-func LoadConfiguration(ctx context.Context, r io.Reader) (*planpb.Configuration, error) {
+func LoadConfiguration(ctx context.Context, r io.Reader) (*config.Configuration, error) {
 	log.Debug(ctx, "Load configuration: started.")
 	if r == nil {
 		return nil, errors.Reason("load configuration: reader is not provided").Err()
@@ -33,7 +33,7 @@ func LoadConfiguration(ctx context.Context, r io.Reader) (*planpb.Configuration,
 	if len(data) == 0 {
 		return nil, errors.Reason("load configuration: configuration is empty").Err()
 	}
-	config := planpb.Configuration{}
+	config := config.Configuration{}
 	if err := json.Unmarshal(data, &config); err != nil {
 		return nil, errors.Annotate(err, "load configuration").Err()
 	}
@@ -57,7 +57,7 @@ func LoadConfiguration(ctx context.Context, r io.Reader) (*planpb.Configuration,
 }
 
 // Check the plans critical action for present of connection to avoid infinity loop running of recovery engine.
-func verifyPlanAcyclic(plan *planpb.Plan) error {
+func verifyPlanAcyclic(plan *config.Plan) error {
 	visited := map[string]bool{}
 	var verifyAction func(string) error
 	// ReferenceName stands for each action's type of dependency list.
@@ -99,13 +99,13 @@ func verifyPlanAcyclic(plan *planpb.Plan) error {
 }
 
 // createMissingActions creates missing actions to the plan.
-func createMissingActions(p *planpb.Plan, actions []string) {
+func createMissingActions(p *config.Plan, actions []string) {
 	if p.GetActions() == nil {
-		p.Actions = make(map[string]*planpb.Action)
+		p.Actions = make(map[string]*config.Action)
 	}
 	for _, a := range actions {
 		if _, ok := p.GetActions()[a]; !ok {
-			p.GetActions()[a] = &planpb.Action{}
+			p.GetActions()[a] = &config.Action{}
 		}
 	}
 }
@@ -116,7 +116,7 @@ var execsExist = execs.Exist
 
 // setAndVerifyExecs sets exec-name if missing and validate whether exec is present
 // in recovery-lib.
-func setAndVerifyExecs(p *planpb.Plan) error {
+func setAndVerifyExecs(p *config.Plan) error {
 	for an, a := range p.GetActions() {
 		if a.GetExecName() == "" {
 			a.ExecName = an

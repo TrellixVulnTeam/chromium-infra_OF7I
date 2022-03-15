@@ -14,16 +14,16 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/luciexe/build"
 
+	"infra/cros/recovery/config"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
-	"infra/cros/recovery/internal/planpb"
 	"infra/cros/recovery/logger/metrics"
 )
 
 // recoveryEngine holds info required for running a recovery plan.
 type recoveryEngine struct {
 	planName string
-	plan     *planpb.Plan
+	plan     *config.Plan
 	args     *execs.RunArgs
 	// Caches
 	actionResultsCache map[string]error
@@ -34,7 +34,7 @@ type recoveryEngine struct {
 var startOverTag = errors.BoolTag{Key: errors.NewTagKey("start-over")}
 
 // Run runs the recovery plan.
-func Run(ctx context.Context, planName string, plan *planpb.Plan, args *execs.RunArgs) error {
+func Run(ctx context.Context, planName string, plan *config.Plan, args *execs.RunArgs) error {
 	r := &recoveryEngine{
 		planName: planName,
 		plan:     plan,
@@ -235,7 +235,7 @@ func (r *recoveryEngine) runActionExec(ctx context.Context, actionName string, e
 // Default time limit per action exec function.
 const defaultExecTimeout = 60 * time.Second
 
-func actionExecTimeout(a *planpb.Action) time.Duration {
+func actionExecTimeout(a *config.Action) time.Duration {
 	if a.ExecTimeout != nil {
 		return a.ExecTimeout.AsDuration()
 	}
@@ -243,7 +243,7 @@ func actionExecTimeout(a *planpb.Action) time.Duration {
 }
 
 // runActionExecWithTimeout runs action's exec function with timeout.
-func (r *recoveryEngine) runActionExecWithTimeout(ctx context.Context, a *planpb.Action) error {
+func (r *recoveryEngine) runActionExecWithTimeout(ctx context.Context, a *config.Action) error {
 	timeout := actionExecTimeout(a)
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer func() { cancel() }()
@@ -356,7 +356,7 @@ func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) (
 }
 
 // getAction finds and provides action from the plan collection.
-func (r *recoveryEngine) getAction(name string) *planpb.Action {
+func (r *recoveryEngine) getAction(name string) *config.Action {
 	if a, ok := r.plan.Actions[name]; ok {
 		return a
 	}
@@ -432,9 +432,9 @@ func (r *recoveryEngine) actionResultFromCache(actionName string) (err error, ok
 // cacheActionResult sets action's result to the cache.
 func (r *recoveryEngine) cacheActionResult(actionName string, err error) {
 	switch r.getAction(actionName).GetRunControl() {
-	case planpb.RunControl_RERUN_AFTER_RECOVERY, planpb.RunControl_RUN_ONCE:
+	case config.RunControl_RERUN_AFTER_RECOVERY, config.RunControl_RUN_ONCE:
 		r.actionResultsCache[actionName] = err
-	case planpb.RunControl_ALWAYS_RUN:
+	case config.RunControl_ALWAYS_RUN:
 		// Do not cache the value
 	}
 }
@@ -443,7 +443,7 @@ func (r *recoveryEngine) cacheActionResult(actionName string, err error) {
 // with run-control=RERUN_AFTER_RECOVERY.
 func (r *recoveryEngine) resetCacheAfterSuccessfulRecoveryAction() {
 	for name, a := range r.plan.GetActions() {
-		if a.GetRunControl() == planpb.RunControl_RERUN_AFTER_RECOVERY {
+		if a.GetRunControl() == config.RunControl_RERUN_AFTER_RECOVERY {
 			delete(r.actionResultsCache, name)
 		}
 	}

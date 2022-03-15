@@ -5,12 +5,12 @@
 package recovery
 
 import (
-	"infra/cros/recovery/internal/planpb"
-
 	"google.golang.org/protobuf/types/known/durationpb"
+
+	"infra/cros/recovery/config"
 )
 
-var btpeerRepairPlan = &planpb.Plan{
+var btpeerRepairPlan = &config.Plan{
 	CriticalActions: []string{
 		"btpeer_state_broken",
 		"Device is pingable",
@@ -18,7 +18,7 @@ var btpeerRepairPlan = &planpb.Plan{
 		"check_server",
 		"btpeer_state_working",
 	},
-	Actions: map[string]*planpb.Action{
+	Actions: map[string]*config.Action{
 		"check_server": {
 			Docs:     []string{"To check if devices is responsive we request not empty list of detected statuses."},
 			ExecName: "btpeer_get_detected_statuses",

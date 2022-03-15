@@ -6,9 +6,10 @@ package recovery
 
 import (
 	"fmt"
-	"infra/cros/recovery/internal/planpb"
 
 	"google.golang.org/protobuf/types/known/durationpb"
+
+	"infra/cros/recovery/config"
 )
 
 // galeOsName is used as stable version for gale.
@@ -18,7 +19,7 @@ const galeOsName = "gale-test-ap-tryjob/R92-13982.81.0-b4959409"
 
 var osNameArg = fmt.Sprintf("os_name:%s", galeOsName)
 
-var wifiRouterRepairPlan = &planpb.Plan{
+var wifiRouterRepairPlan = &config.Plan{
 	CriticalActions: []string{
 		"wifirouter_state_broken",
 		"Device is pingable",
@@ -27,7 +28,7 @@ var wifiRouterRepairPlan = &planpb.Plan{
 		"is_wifirouter_tools_present",
 		"wifirouter_state_working",
 	},
-	Actions: map[string]*planpb.Action{
+	Actions: map[string]*config.Action{
 		"is_wifirouter_tools_present": {
 			Docs: []string{
 				"check whether wifirouter critial tools present: ",

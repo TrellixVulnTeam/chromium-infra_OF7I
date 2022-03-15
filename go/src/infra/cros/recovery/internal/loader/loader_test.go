@@ -10,13 +10,13 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"infra/cros/recovery/internal/planpb"
+	"infra/cros/recovery/config"
 )
 
 var testCases = []struct {
 	name string
 	got  string
-	exp  *planpb.Configuration
+	exp  *config.Configuration
 }{
 	{
 		"simple",
@@ -28,8 +28,8 @@ var testCases = []struct {
 				}
 			}
 		}`,
-		&planpb.Configuration{
-			Plans: map[string]*planpb.Plan{
+		&config.Configuration{
+			Plans: map[string]*config.Plan{
 				"plan1": {
 					AllowFail:       false,
 					CriticalActions: nil,
@@ -84,22 +84,22 @@ var testCases = []struct {
 				}
 			}
 		}`,
-		&planpb.Configuration{
-			Plans: map[string]*planpb.Plan{
+		&config.Configuration{
+			Plans: map[string]*config.Plan{
 				"full": {
 					AllowFail: true,
 					CriticalActions: []string{
 						"a1-full",
 						"missing_critical_action",
 					},
-					Actions: map[string]*planpb.Action{
+					Actions: map[string]*config.Action{
 						"a1-full": {
 							ExecName:               "a1",
 							Conditions:             []string{"c1", "c2"},
 							Dependencies:           []string{"d1"},
 							RecoveryActions:        []string{"r2"},
 							AllowFailAfterRecovery: true,
-							RunControl:             planpb.RunControl_RUN_ONCE,
+							RunControl:             config.RunControl_RUN_ONCE,
 						},
 						"c1": {
 							ExecName: "c1",
@@ -124,7 +124,7 @@ var testCases = []struct {
 							ExecName:     "r2-exec",
 							Dependencies: []string{"d2"},
 							ExecTimeout:  &durationpb.Duration{Seconds: 1000},
-							RunControl:   planpb.RunControl_ALWAYS_RUN,
+							RunControl:   config.RunControl_ALWAYS_RUN,
 						},
 						"missing_critical_action": {
 							ExecName: "missing_critical_action",
@@ -166,13 +166,13 @@ func TestLoadConfiguration(t *testing.T) {
 
 var cycleTestCases = []struct {
 	testName     string
-	in           *planpb.Plan
+	in           *config.Plan
 	errorActions []string
 }{
 	{
 		"A_dependency -> A",
-		&planpb.Plan{
-			Actions: map[string]*planpb.Action{
+		&config.Plan{
+			Actions: map[string]*config.Action{
 				"A": {Dependencies: []string{"A"}},
 			},
 		},
@@ -180,8 +180,8 @@ var cycleTestCases = []struct {
 	},
 	{
 		"A_dependency -> B_condition -> A",
-		&planpb.Plan{
-			Actions: map[string]*planpb.Action{
+		&config.Plan{
+			Actions: map[string]*config.Action{
 				"A": {Dependencies: []string{"B"}},
 				"B": {Conditions: []string{"A"}},
 			},
@@ -190,8 +190,8 @@ var cycleTestCases = []struct {
 	},
 	{
 		"A_dependency -> B_condition -> C_recovery -> A",
-		&planpb.Plan{
-			Actions: map[string]*planpb.Action{
+		&config.Plan{
+			Actions: map[string]*config.Action{
 				"A": {Dependencies: []string{"B"}},
 				"B": {Conditions: []string{"C"}},
 				"C": {RecoveryActions: []string{"A"}},
@@ -201,8 +201,8 @@ var cycleTestCases = []struct {
 	},
 	{
 		"A_dependency -> B_dependency -> C_dependency -> A",
-		&planpb.Plan{
-			Actions: map[string]*planpb.Action{
+		&config.Plan{
+			Actions: map[string]*config.Action{
 				"A": {Dependencies: []string{"B"}},
 				"B": {Dependencies: []string{"C"}},
 				"C": {Dependencies: []string{"A"}},
@@ -212,8 +212,8 @@ var cycleTestCases = []struct {
 	},
 	{
 		"C_dependency -> B_condition -> A_recovery -> C",
-		&planpb.Plan{
-			Actions: map[string]*planpb.Action{
+		&config.Plan{
+			Actions: map[string]*config.Action{
 				"A": {RecoveryActions: []string{"C"}},
 				"B": {Conditions: []string{"A"}},
 				"C": {Dependencies: []string{"B"}},
@@ -223,8 +223,8 @@ var cycleTestCases = []struct {
 	},
 	{
 		"A_dependency -> B_condition -> C_recovery -> D_recovery -> E_dependency -> F_condition -> B",
-		&planpb.Plan{
-			Actions: map[string]*planpb.Action{
+		&config.Plan{
+			Actions: map[string]*config.Action{
 				"A": {Dependencies: []string{"B"}},
 				"B": {Conditions: []string{"C"}},
 				"C": {RecoveryActions: []string{"D"}},
@@ -237,8 +237,8 @@ var cycleTestCases = []struct {
 	},
 	{
 		"A_dependency -> B_condition -> C_recovery -> D_recovery -> E_dependency -> F_condition -> B",
-		&planpb.Plan{
-			Actions: map[string]*planpb.Action{
+		&config.Plan{
+			Actions: map[string]*config.Action{
 				"A": {Dependencies: []string{"B"}},
 				"B": {Conditions: []string{"C"}},
 				"C": {RecoveryActions: []string{"D"}},
@@ -251,8 +251,8 @@ var cycleTestCases = []struct {
 	},
 	{
 		"A_dependency -> B_condition -> C_recovery -> D_recovery -> E_dependency -> F; A_dependency -> E_dependency -> F; C_condition -> F",
-		&planpb.Plan{
-			Actions: map[string]*planpb.Action{
+		&config.Plan{
+			Actions: map[string]*config.Action{
 				"A": {Dependencies: []string{"B", "E"}},
 				"B": {Conditions: []string{"C"}},
 				"C": {RecoveryActions: []string{"D", "F"}},
@@ -266,8 +266,8 @@ var cycleTestCases = []struct {
 	// Test Case: Cycle in actions, but not reachable by critical actions.
 	{
 		"A_dependency -> B_condition -> C_recovery; D_recovery -> E_dependency -> F_recovery -> D",
-		&planpb.Plan{
-			Actions: map[string]*planpb.Action{
+		&config.Plan{
+			Actions: map[string]*config.Action{
 				"A": {Dependencies: []string{"B"}},
 				"B": {Conditions: []string{"C"}},
 				"C": {},
@@ -308,32 +308,32 @@ func TestVerifyPlanAcyclic(t *testing.T) {
 
 var createMissingActionsCases = []struct {
 	name      string
-	inPlan    *planpb.Plan
+	inPlan    *config.Plan
 	inActions []string
-	outPlan   *planpb.Plan
+	outPlan   *config.Plan
 }{
 	{
 		"init Actions and set action if missed in actions map",
-		&planpb.Plan{
+		&config.Plan{
 			Actions: nil,
 		},
 		[]string{"a"},
-		&planpb.Plan{
-			Actions: map[string]*planpb.Action{
+		&config.Plan{
+			Actions: map[string]*config.Action{
 				"a": {},
 			},
 		},
 	},
 	{
 		"do not replace if action is present in the plan",
-		&planpb.Plan{
-			Actions: map[string]*planpb.Action{
+		&config.Plan{
+			Actions: map[string]*config.Action{
 				"a": {Dependencies: []string{"F"}},
 			},
 		},
 		[]string{"a"},
-		&planpb.Plan{
-			Actions: map[string]*planpb.Action{
+		&config.Plan{
+			Actions: map[string]*config.Action{
 				"a": {Dependencies: []string{"F"}},
 			},
 		},

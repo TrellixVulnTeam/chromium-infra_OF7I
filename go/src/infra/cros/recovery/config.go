@@ -7,12 +7,13 @@ package recovery
 import (
 	"bytes"
 	"encoding/json"
-	"infra/cros/recovery/internal/planpb"
 	"io"
 	"log"
+
+	"infra/cros/recovery/config"
 )
 
-func mustCreateConfigJSON(c *planpb.Configuration) io.Reader {
+func mustCreateConfigJSON(c *config.Configuration) io.Reader {
 	b, err := json.Marshal(c)
 	if err != nil {
 		log.Fatalf("Failed to create JSON config: %v", err)

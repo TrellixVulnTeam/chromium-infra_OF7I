@@ -5,22 +5,23 @@
 package recovery
 
 import (
-	"infra/cros/recovery/internal/planpb"
 	"io"
 
 	"github.com/golang/protobuf/proto"
+
+	"infra/cros/recovery/config"
 )
 
 //copyPlay returns a deep copy of plan and sets allowFail on the copy.
-func copyPlan(plan *planpb.Plan, allowFail bool) *planpb.Plan {
-	p := proto.Clone(plan).(*planpb.Plan)
+func copyPlan(plan *config.Plan, allowFail bool) *config.Plan {
+	p := proto.Clone(plan).(*config.Plan)
 	p.AllowFail = allowFail
 	return p
 }
 
 // CrosRepairConfig provides config for repair cros setup in the lab task.
 func CrosRepairConfig() io.Reader {
-	c := &planpb.Configuration{
+	c := &config.Configuration{
 		PlanNames: []string{
 			PlanServo,
 			PlanCrOS,
@@ -29,7 +30,7 @@ func CrosRepairConfig() io.Reader {
 			PlanWifiRouter,
 			PlanClosing,
 		},
-		Plans: map[string]*planpb.Plan{
+		Plans: map[string]*config.Plan{
 			PlanServo:         copyPlan(servoRepairPlan, true),
 			PlanCrOS:          copyPlan(crosRepairPlan, false),
 			PlanChameleon:     copyPlan(chameleonPlan, true),
@@ -42,7 +43,7 @@ func CrosRepairConfig() io.Reader {
 
 // CrosDeployConfig provides config for deploy cros setup in the lab task.
 func CrosDeployConfig() io.Reader {
-	c := &planpb.Configuration{
+	c := &config.Configuration{
 		PlanNames: []string{
 			PlanServo,
 			PlanCrOS,
@@ -51,7 +52,7 @@ func CrosDeployConfig() io.Reader {
 			PlanWifiRouter,
 			PlanClosing,
 		},
-		Plans: map[string]*planpb.Plan{
+		Plans: map[string]*config.Plan{
 			PlanServo:         copyPlan(servoRepairPlan, false),
 			PlanCrOS:          copyPlan(crosDeployPlan, false),
 			PlanChameleon:     copyPlan(chameleonPlan, true),
@@ -64,12 +65,12 @@ func CrosDeployConfig() io.Reader {
 }
 
 // crosClosePlan provides plan to close cros repair/deploy tasks.
-var crosClosePlan = &planpb.Plan{
+var crosClosePlan = &config.Plan{
 	CriticalActions: []string{
 		"Remove in-use flag on servo-host",
 		"Remove request to reboot is servo is good",
 	},
-	Actions: map[string]*planpb.Action{
+	Actions: map[string]*config.Action{
 		"servo_state_is_working": {
 			Docs:          []string{"check the servo's state is ServoStateWorking."},
 			ExecName:      "servo_match_state",

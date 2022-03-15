@@ -5,14 +5,15 @@
 package recovery
 
 import (
-	"infra/cros/recovery/internal/planpb"
 	"log"
 
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
+
+	"infra/cros/recovery/config"
 )
 
-var crosDeployPlan = &planpb.Plan{
+var crosDeployPlan = &config.Plan{
 	CriticalActions: []string{
 		"Set needs_deploy state",
 		"Clean up",
@@ -27,7 +28,7 @@ var crosDeployPlan = &planpb.Plan{
 	Actions: crosDeployAndRepairActions(),
 }
 
-var deployActions = map[string]*planpb.Action{
+var deployActions = map[string]*config.Action{
 	"DUT is in dev-mode and allowed to boot from USB-key": {
 		Docs:        []string{"Verify that device is set to boot in DEV mode and enabled to boot from USB-drive."},
 		ExecTimeout: &durationpb.Duration{Seconds: 2000},
@@ -244,16 +245,16 @@ var deployActions = map[string]*planpb.Action{
 	},
 }
 
-func crosDeployAndRepairActions() map[string]*planpb.Action {
-	combo := make(map[string]*planpb.Action)
+func crosDeployAndRepairActions() map[string]*config.Action {
+	combo := make(map[string]*config.Action)
 	for name, action := range deployActions {
-		combo[name] = proto.Clone(action).(*planpb.Action)
+		combo[name] = proto.Clone(action).(*config.Action)
 	}
 	for name, action := range crosRepairPlan.Actions {
 		if _, ok := combo["name"]; ok {
 			log.Fatalf("duplicate name in crosDeploy and crosRepair plan actions: %s", name)
 		}
-		combo[name] = proto.Clone(action).(*planpb.Action)
+		combo[name] = proto.Clone(action).(*config.Action)
 	}
 	return combo
 }

@@ -8,7 +8,7 @@ package chromeos.recovery;
 
 import "google/protobuf/duration.proto";
 
-option go_package = "infra/cros/recovery/internal/planpb;planpb";
+option go_package = "infra/cros/recovery/config;config";
 
 // Configuration provides the plans to be used by the recovery engine.
 message Configuration {

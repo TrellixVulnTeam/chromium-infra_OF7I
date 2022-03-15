@@ -16,12 +16,12 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/luciexe/build"
 
+	"infra/cros/recovery/config"
 	"infra/cros/recovery/internal/engine"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/loader"
 	"infra/cros/recovery/internal/localtlw/localproxy"
 	"infra/cros/recovery/internal/log"
-	"infra/cros/recovery/internal/planpb"
 	"infra/cros/recovery/logger"
 	"infra/cros/recovery/logger/metrics"
 	"infra/cros/recovery/tasknames"
@@ -158,7 +158,7 @@ func retrieveResources(ctx context.Context, args *RunArgs) (resources []string, 
 
 // loadConfiguration loads and verifies a configuration.
 // If configuration is not provided by args then default is used.
-func loadConfiguration(ctx context.Context, dut *tlw.Dut, args *RunArgs) (config *planpb.Configuration, err error) {
+func loadConfiguration(ctx context.Context, dut *tlw.Dut, args *RunArgs) (config *config.Configuration, err error) {
 	if args.ShowSteps {
 		var step *build.Step
 		step, ctx = build.StartStep(ctx, "Load configuration")
@@ -187,7 +187,7 @@ func loadConfiguration(ctx context.Context, dut *tlw.Dut, args *RunArgs) (config
 }
 
 // ParsedDefaultConfiguration returns parsed default configuration for requested task and setup.
-func ParsedDefaultConfiguration(ctx context.Context, tn tasknames.TaskName, ds tlw.DUTSetupType) (*planpb.Configuration, error) {
+func ParsedDefaultConfiguration(ctx context.Context, tn tasknames.TaskName, ds tlw.DUTSetupType) (*config.Configuration, error) {
 	if cr, err := defaultConfiguration(tn, ds); err != nil {
 		return nil, errors.Annotate(err, "load configuration").Err()
 	} else if c, err := parseConfiguration(ctx, cr); err != nil {
@@ -198,7 +198,7 @@ func ParsedDefaultConfiguration(ctx context.Context, tn tasknames.TaskName, ds t
 }
 
 // parseConfiguration parses configuration to configuration proto instance.
-func parseConfiguration(ctx context.Context, cr io.Reader) (config *planpb.Configuration, err error) {
+func parseConfiguration(ctx context.Context, cr io.Reader) (config *config.Configuration, err error) {
 	if c, err := loader.LoadConfiguration(ctx, cr); err != nil {
 		return c, errors.Annotate(err, "parse configuration").Err()
 	} else if len(c.GetPlans()) == 0 {
@@ -295,7 +295,7 @@ func logDUTInfo(ctx context.Context, resource string, dut *tlw.Dut, msg string) 
 }
 
 // runDUTPlans executes single DUT against task's plans.
-func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration, args *RunArgs) error {
+func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *config.Configuration, args *RunArgs) error {
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
 		defer args.Logger.DedentLogging()
@@ -375,7 +375,7 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 }
 
 // runSinglePlan run single plan for all resources associated with plan.
-func runSinglePlan(ctx context.Context, planName string, plan *planpb.Plan, execArgs *execs.RunArgs) error {
+func runSinglePlan(ctx context.Context, planName string, plan *config.Plan, execArgs *execs.RunArgs) error {
 	log.Info(ctx, "Run plan %q: starting...", planName)
 	resources := collectResourcesForPlan(planName, execArgs.DUT)
 	if len(resources) == 0 {
@@ -396,7 +396,7 @@ func runSinglePlan(ctx context.Context, planName string, plan *planpb.Plan, exec
 }
 
 // runDUTPlanPerResource runs a plan against the single resource of the DUT.
-func runDUTPlanPerResource(ctx context.Context, resource, planName string, plan *planpb.Plan, execArgs *execs.RunArgs) (rErr error) {
+func runDUTPlanPerResource(ctx context.Context, resource, planName string, plan *config.Plan, execArgs *execs.RunArgs) (rErr error) {
 	log.Info(ctx, "Run plan %q for %q: started", planName, resource)
 	if execArgs.ShowSteps {
 		var step *build.Step

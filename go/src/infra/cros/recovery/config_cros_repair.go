@@ -5,12 +5,12 @@
 package recovery
 
 import (
-	"infra/cros/recovery/internal/planpb"
-
 	"google.golang.org/protobuf/types/known/durationpb"
+
+	"infra/cros/recovery/config"
 )
 
-var crosRepairPlan = &planpb.Plan{
+var crosRepairPlan = &config.Plan{
 	CriticalActions: []string{
 		"dut_state_repair_failed",
 		"cros_ssh",
@@ -33,7 +33,7 @@ var crosRepairPlan = &planpb.Plan{
 		"device_labels",
 		"Collect dmesg logs from DUT",
 	},
-	Actions: map[string]*planpb.Action{
+	Actions: map[string]*config.Action{
 		"Device is pingable": {
 			Dependencies: []string{
 				"dut_has_name",

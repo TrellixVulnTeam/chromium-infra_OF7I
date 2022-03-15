@@ -5,15 +5,16 @@
 package recovery
 
 import (
-	"infra/cros/recovery/internal/planpb"
 	"io"
 
 	"google.golang.org/protobuf/types/known/durationpb"
+
+	"infra/cros/recovery/config"
 )
 
-var labstationRepairConfig = &planpb.Configuration{
+var labstationRepairConfig = &config.Configuration{
 	PlanNames: []string{PlanCrOS},
-	Plans: map[string]*planpb.Plan{
+	Plans: map[string]*config.Plan{
 		PlanCrOS: {
 			AllowFail: false,
 			CriticalActions: []string{
@@ -27,7 +28,7 @@ var labstationRepairConfig = &planpb.Configuration{
 				"reboot_by_request",
 				"dut_state_ready",
 			},
-			Actions: map[string]*planpb.Action{
+			Actions: map[string]*config.Action{
 				"dut_state_repair_failed": {
 					RunControl: 2,
 				},
@@ -188,9 +189,9 @@ var labstationRepairConfig = &planpb.Configuration{
 	},
 }
 
-var labstationDeployConfig = &planpb.Configuration{
+var labstationDeployConfig = &config.Configuration{
 	PlanNames: []string{PlanCrOS},
-	Plans: map[string]*planpb.Plan{
+	Plans: map[string]*config.Plan{
 		PlanCrOS: {
 			AllowFail: false,
 			CriticalActions: []string{
@@ -205,7 +206,7 @@ var labstationDeployConfig = &planpb.Configuration{
 				"validate_rpm",
 				"dut_state_ready",
 			},
-			Actions: map[string]*planpb.Action{
+			Actions: map[string]*config.Action{
 				"check_host_info": {
 					Docs: []string{
 						"Check basic info for deployment.",

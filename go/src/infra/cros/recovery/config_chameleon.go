@@ -5,19 +5,19 @@
 package recovery
 
 import (
-	"infra/cros/recovery/internal/planpb"
-
 	"google.golang.org/protobuf/types/known/durationpb"
+
+	"infra/cros/recovery/config"
 )
 
-var chameleonPlan = &planpb.Plan{
+var chameleonPlan = &config.Plan{
 	CriticalActions: []string{
 		"Mark as bad",
 		"Device is pingable",
 		"cros_ssh",
 		"Mark as good",
 	},
-	Actions: map[string]*planpb.Action{
+	Actions: map[string]*config.Action{
 		"Mark as bad":  {ExecName: "chameleon_state_broken"},
 		"Mark as good": {ExecName: "chameleon_state_working"},
 		"Device is pingable": {

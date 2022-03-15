@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"infra/cros/recovery/config"
 	"infra/cros/recovery/internal/execs"
-	"infra/cros/recovery/internal/planpb"
 	"infra/cros/recovery/logger/metrics"
 
 	"github.com/google/go-cmp/cmp"
@@ -26,22 +26,22 @@ const (
 
 var planTestCases = []struct {
 	name       string
-	got        *planpb.Plan
+	got        *config.Plan
 	expSuccess bool
 }{
 	{
 		"simple",
-		&planpb.Plan{},
+		&config.Plan{},
 		true,
 	},
 	{
 		"critical action fail",
-		&planpb.Plan{
+		&config.Plan{
 			CriticalActions: []string{
 				"a1",
 				"a2",
 			},
-			Actions: map[string]*planpb.Action{
+			Actions: map[string]*config.Action{
 				"a1": {
 					ExecName: exec_pass,
 				},
@@ -54,13 +54,13 @@ var planTestCases = []struct {
 	},
 	{
 		"allowed critical action fail",
-		&planpb.Plan{
+		&config.Plan{
 			AllowFail: true,
 			CriticalActions: []string{
 				"a1",
 				"a2",
 			},
-			Actions: map[string]*planpb.Action{
+			Actions: map[string]*config.Action{
 				"a1": {
 					ExecName: exec_pass,
 				},
@@ -73,11 +73,11 @@ var planTestCases = []struct {
 	},
 	{
 		"skip fail action as not applicable",
-		&planpb.Plan{
+		&config.Plan{
 			CriticalActions: []string{
 				"a1",
 			},
-			Actions: map[string]*planpb.Action{
+			Actions: map[string]*config.Action{
 				"a1": {
 					ExecName:   exec_fail,
 					Conditions: []string{"c1"},
@@ -91,11 +91,11 @@ var planTestCases = []struct {
 	},
 	{
 		"skip fail dependency as not applicable",
-		&planpb.Plan{
+		&config.Plan{
 			CriticalActions: []string{
 				"a1",
 			},
-			Actions: map[string]*planpb.Action{
+			Actions: map[string]*config.Action{
 				"a1": {
 					ExecName:     exec_pass,
 					Dependencies: []string{"d1"},
@@ -113,11 +113,11 @@ var planTestCases = []struct {
 	},
 	{
 		"fail action by dependencies",
-		&planpb.Plan{
+		&config.Plan{
 			CriticalActions: []string{
 				"a1",
 			},
-			Actions: map[string]*planpb.Action{
+			Actions: map[string]*config.Action{
 				"a1": {
 					ExecName:     exec_pass,
 					Dependencies: []string{"d1"},
@@ -131,11 +131,11 @@ var planTestCases = []struct {
 	},
 	{
 		"success run",
-		&planpb.Plan{
+		&config.Plan{
 			CriticalActions: []string{
 				"a1",
 			},
-			Actions: map[string]*planpb.Action{
+			Actions: map[string]*config.Action{
 				"a1": {
 					ExecName:     exec_pass,
 					Conditions:   []string{"c1"},
@@ -158,11 +158,11 @@ var planTestCases = []struct {
 	},
 	{
 		"skip fail action when allowed to fail",
-		&planpb.Plan{
+		&config.Plan{
 			CriticalActions: []string{
 				"a1",
 			},
-			Actions: map[string]*planpb.Action{
+			Actions: map[string]*config.Action{
 				"a1": {
 					ExecName:               exec_fail,
 					AllowFailAfterRecovery: true,
@@ -173,11 +173,11 @@ var planTestCases = []struct {
 	},
 	{
 		"skip fail action by dependencies when allowed to fail",
-		&planpb.Plan{
+		&config.Plan{
 			CriticalActions: []string{
 				"a1",
 			},
-			Actions: map[string]*planpb.Action{
+			Actions: map[string]*config.Action{
 				"a1": {
 					ExecName:               exec_pass,
 					Dependencies:           []string{"d1"},
@@ -220,9 +220,9 @@ func TestRunPlanDoNotRunActionAsResultInCache(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	r := recoveryEngine{
-		plan: &planpb.Plan{
+		plan: &config.Plan{
 			CriticalActions: []string{"a"},
-			Actions: map[string]*planpb.Action{
+			Actions: map[string]*config.Action{
 				"a": {},
 			},
 		},
@@ -238,12 +238,12 @@ func TestRunPlanDoNotRunActionAsResultInCache(t *testing.T) {
 
 var recoveryTestCases = []struct {
 	name         string
-	got          map[string]*planpb.Action
+	got          map[string]*config.Action
 	expStartOver bool
 }{
 	{
 		"no recoveries",
-		map[string]*planpb.Action{
+		map[string]*config.Action{
 			"a": {
 				RecoveryActions: nil,
 			},
@@ -252,7 +252,7 @@ var recoveryTestCases = []struct {
 	},
 	{
 		"recoveries stopped on passed r2 and create request to start over",
-		map[string]*planpb.Action{
+		map[string]*config.Action{
 			"a": {
 				RecoveryActions: []string{"r1", "r2", "r3"},
 			},
@@ -268,7 +268,7 @@ var recoveryTestCases = []struct {
 	},
 	{
 		"recoveries fail but the process still pass",
-		map[string]*planpb.Action{
+		map[string]*config.Action{
 			"a": {
 				RecoveryActions: []string{"r1", "r2", "r3"},
 			},
@@ -293,7 +293,7 @@ func TestRunRecovery(t *testing.T) {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
 			r := recoveryEngine{
-				plan: &planpb.Plan{
+				plan: &config.Plan{
 					Actions: c.got,
 				},
 			}
@@ -315,14 +315,14 @@ func TestRunRecovery(t *testing.T) {
 var runExecTestCases = []struct {
 	name           string
 	enableRecovery bool
-	got            map[string]*planpb.Action
+	got            map[string]*config.Action
 	expError       bool
 	expStartOver   bool
 }{
 	{
 		"do not start recovery flow if action passed",
 		true,
-		map[string]*planpb.Action{
+		map[string]*config.Action{
 			"a": {
 				ExecName: exec_pass,
 				// Will fail if reached any recovery actions.
@@ -335,7 +335,7 @@ var runExecTestCases = []struct {
 	{
 		"do not start recovery flow if it is not allowed",
 		false,
-		map[string]*planpb.Action{
+		map[string]*config.Action{
 			"a": {
 				ExecName: exec_fail,
 				// Will fail if reached any recovery actions.
@@ -348,7 +348,7 @@ var runExecTestCases = []struct {
 	{
 		"receive start over request after run successful recovery action",
 		true,
-		map[string]*planpb.Action{
+		map[string]*config.Action{
 			"a": {
 				ExecName:        exec_fail,
 				RecoveryActions: []string{"r31"},
@@ -363,7 +363,7 @@ var runExecTestCases = []struct {
 	{
 		"receive error after try recovery action",
 		true,
-		map[string]*planpb.Action{
+		map[string]*config.Action{
 			"a": {
 				ExecName:        exec_fail,
 				RecoveryActions: []string{"r41"},
@@ -384,7 +384,7 @@ func TestActionExec(t *testing.T) {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
 			r := recoveryEngine{
-				plan: &planpb.Plan{
+				plan: &config.Plan{
 					Actions: c.got,
 				},
 			}
@@ -409,13 +409,13 @@ func TestActionExec(t *testing.T) {
 
 var actionResultsCacheTestCases = []struct {
 	name       string
-	got        map[string]*planpb.Action
+	got        map[string]*config.Action
 	expInCashe bool
 	expError   bool
 }{
 	{
 		"set pass to the cache",
-		map[string]*planpb.Action{
+		map[string]*config.Action{
 			"a": {
 				ExecName: exec_pass,
 			},
@@ -425,10 +425,10 @@ var actionResultsCacheTestCases = []struct {
 	},
 	{
 		"do not set pass to the cache when run_control:run_always",
-		map[string]*planpb.Action{
+		map[string]*config.Action{
 			"a": {
 				ExecName:   exec_pass,
-				RunControl: planpb.RunControl_ALWAYS_RUN,
+				RunControl: config.RunControl_ALWAYS_RUN,
 			},
 		},
 		false,
@@ -436,7 +436,7 @@ var actionResultsCacheTestCases = []struct {
 	},
 	{
 		"set fail to the cache",
-		map[string]*planpb.Action{
+		map[string]*config.Action{
 			"a": {
 				ExecName: exec_fail,
 			},
@@ -446,7 +446,7 @@ var actionResultsCacheTestCases = []struct {
 	},
 	{
 		"do not set if recovery finished with success",
-		map[string]*planpb.Action{
+		map[string]*config.Action{
 			"a": {
 				ExecName:        exec_fail,
 				RecoveryActions: []string{"r"},
@@ -460,7 +460,7 @@ var actionResultsCacheTestCases = []struct {
 	},
 	{
 		"set fail when all recoveries failed",
-		map[string]*planpb.Action{
+		map[string]*config.Action{
 			"a": {
 				ExecName:        exec_fail,
 				RecoveryActions: []string{"r"},
@@ -474,11 +474,11 @@ var actionResultsCacheTestCases = []struct {
 	},
 	{
 		"do not set pass to cache when all recoveries failed and action has run_control:run_always",
-		map[string]*planpb.Action{
+		map[string]*config.Action{
 			"a": {
 				ExecName:        exec_fail,
 				RecoveryActions: []string{"r"},
-				RunControl:      planpb.RunControl_ALWAYS_RUN,
+				RunControl:      config.RunControl_ALWAYS_RUN,
 			},
 			"r": {
 				ExecName: exec_fail,
@@ -496,7 +496,7 @@ func TestActionExecCache(t *testing.T) {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
 			r := recoveryEngine{
-				plan: &planpb.Plan{
+				plan: &config.Plan{
 					Actions: c.got,
 				},
 			}
@@ -523,28 +523,28 @@ func TestActionExecCache(t *testing.T) {
 
 var resetCacheTestCases = []struct {
 	name    string
-	got     map[string]planpb.RunControl
+	got     map[string]config.RunControl
 	present []string
 	removed []string
 }{
 	{
 		"clean all",
-		map[string]planpb.RunControl{
-			"a1": planpb.RunControl_RERUN_AFTER_RECOVERY,
-			"a2": planpb.RunControl_RERUN_AFTER_RECOVERY,
-			"a3": planpb.RunControl_RERUN_AFTER_RECOVERY,
-			"a4": planpb.RunControl_RERUN_AFTER_RECOVERY,
+		map[string]config.RunControl{
+			"a1": config.RunControl_RERUN_AFTER_RECOVERY,
+			"a2": config.RunControl_RERUN_AFTER_RECOVERY,
+			"a3": config.RunControl_RERUN_AFTER_RECOVERY,
+			"a4": config.RunControl_RERUN_AFTER_RECOVERY,
 		},
 		nil,
 		[]string{"a1", "a2", "a3", "a4"},
 	},
 	{
 		"partially clean up",
-		map[string]planpb.RunControl{
-			"a1": planpb.RunControl_RUN_ONCE,
-			"a2": planpb.RunControl_RUN_ONCE,
-			"a3": planpb.RunControl_RERUN_AFTER_RECOVERY,
-			"a4": planpb.RunControl_RERUN_AFTER_RECOVERY,
+		map[string]config.RunControl{
+			"a1": config.RunControl_RUN_ONCE,
+			"a2": config.RunControl_RUN_ONCE,
+			"a3": config.RunControl_RERUN_AFTER_RECOVERY,
+			"a4": config.RunControl_RERUN_AFTER_RECOVERY,
 		},
 		[]string{"a1", "a2"},
 		[]string{"a3", "a4"},
@@ -556,14 +556,14 @@ func TestResetCacheAfterSuccessfulRecoveryAction(t *testing.T) {
 	for _, c := range resetCacheTestCases {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
-			actions := make(map[string]*planpb.Action)
+			actions := make(map[string]*config.Action)
 			for name, rc := range c.got {
-				actions[name] = &planpb.Action{
+				actions[name] = &config.Action{
 					RunControl: rc,
 				}
 			}
 			r := recoveryEngine{
-				plan: &planpb.Plan{
+				plan: &config.Plan{
 					Actions: actions,
 				},
 			}
@@ -588,22 +588,22 @@ func TestResetCacheAfterSuccessfulRecoveryAction(t *testing.T) {
 
 var setCacheTestCases = []struct {
 	name string
-	got  planpb.RunControl
+	got  config.RunControl
 	exp  bool
 }{
 	{
 		"run once",
-		planpb.RunControl_RUN_ONCE,
+		config.RunControl_RUN_ONCE,
 		true,
 	},
 	{
 		"rerun after recovery",
-		planpb.RunControl_RERUN_AFTER_RECOVERY,
+		config.RunControl_RERUN_AFTER_RECOVERY,
 		true,
 	},
 	{
 		"always run",
-		planpb.RunControl_ALWAYS_RUN,
+		config.RunControl_ALWAYS_RUN,
 		false,
 	},
 }
@@ -614,8 +614,8 @@ func TestCacheActionResult(t *testing.T) {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
 			r := recoveryEngine{
-				plan: &planpb.Plan{
-					Actions: map[string]*planpb.Action{
+				plan: &config.Plan{
+					Actions: map[string]*config.Action{
 						"a": {
 							RunControl: c.got,
 						},
@@ -692,8 +692,8 @@ func TestRecoveryCachePersistence(t *testing.T) {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
 			r := recoveryEngine{
-				plan: &planpb.Plan{
-					Actions: map[string]*planpb.Action{
+				plan: &config.Plan{
+					Actions: map[string]*config.Action{
 						"a": {},
 						"b": {},
 						"r": {},
@@ -748,8 +748,8 @@ func TestCallMetricsInSimplePlan(t *testing.T) {
 			},
 		},
 	}
-	r.plan = &planpb.Plan{
-		Actions: map[string]*planpb.Action{
+	r.plan = &config.Plan{
+		Actions: map[string]*config.Action{
 			"a": {},
 			"b": {},
 			"r": {},
