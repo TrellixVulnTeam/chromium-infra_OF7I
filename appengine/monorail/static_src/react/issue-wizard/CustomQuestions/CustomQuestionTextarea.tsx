@@ -7,8 +7,15 @@ import OutlinedInput from "@material-ui/core/OutlinedInput";
 import {makeStyles} from '@material-ui/styles';
 
 const userStyles = makeStyles({
+  head: {
+    marginTop: '1.5rem',
+    fontSize: '1rem'
+  },
   inputArea: {
     width: '100%',
+  },
+  tip: {
+    margin: '0.5rem 0'
   },
 });
 
@@ -38,8 +45,8 @@ export default function CustomQuestionTextarea(props: Props): React.ReactElement
   }
   return (
     <>
-      <h3 dangerouslySetInnerHTML={getQuestionInnerHtml()}/>
-      {tip? <div dangerouslySetInnerHTML={getTipInnerHtml()}/> : null}
+      <h3 dangerouslySetInnerHTML={getQuestionInnerHtml()} className={classes.head}/>
+      {tip? <div dangerouslySetInnerHTML={getTipInnerHtml()} className={classes.tip}/> : null}
       <OutlinedInput
         multiline={true}
         rows={3}

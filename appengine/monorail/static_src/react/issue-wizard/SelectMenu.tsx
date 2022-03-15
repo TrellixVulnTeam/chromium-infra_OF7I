@@ -16,10 +16,10 @@ const useStyles = makeStyles((theme: Theme) => ({
     display: 'flex',
     flexWrap: 'wrap',
     maxWidth: '65%',
+    marginRight: '1rem',
   },
   textField: {
-    marginLeft: theme.spacing(1),
-    marginRight: theme.spacing(1),
+    margin: '0',
   },
   menu: {
     width: '100%',

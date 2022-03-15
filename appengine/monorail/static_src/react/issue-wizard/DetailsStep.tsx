@@ -24,25 +24,29 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
       '& > *': {
-        margin: theme.spacing(1),
         width: '100%',
       },
     },
     head: {
-        marginTop: '25px',
+      marginTop: '1.5rem',
+      fontSize: '1rem'
     },
     red: {
         color: red[600],
     },
-    grey: {
-        color: grey[600],
+    pageHeader: {
+      color: grey[600],
+      fontSize: '1.5rem',
+      margin: '1rem 0',
     },
     inlineStyle: {
       display: 'inline-flex',
       alignItems: 'center',
+      marginTop: '1.5rem',
     },
     inlineTitle: {
       marginRight: '10px',
+      fontSize: '1rem',
     }
   }), {defaultTheme: theme}
 );
@@ -94,7 +98,7 @@ export default function DetailsStep(props: Props): React.ReactElement {
   }
   return (
     <>
-        <h2 className={classes.grey}>Details for problems with {category}</h2>
+        <h2 className={classes.pageHeader}>Details for problems with {category}</h2>
 
         <form className={classes.root} noValidate autoComplete="off">
           <div dangerouslySetInnerHTML={getTipInnerHtml()}/>

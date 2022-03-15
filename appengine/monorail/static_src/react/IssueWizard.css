@@ -1,6 +1,7 @@
 .container {
   margin-left: 50px;
   max-width: 70vw;
+  min-width: 300px;
   width: 100%;
   font-family: 'Poppins', serif;
 }

@@ -55,7 +55,7 @@ export default function DotsMobileStepper(props: Props) : React.ReactElement {
     }
   }
 
-  const onBrowserBackButtonEvent = (e: MouseEvent|SubmitEvent|KeyboardEvent) => {
+  const onBrowserBackButtonEvent = (e: Event) => {
     e.preventDefault();
     if (activeStep === 0) {
       window.history.back();
@@ -66,7 +66,6 @@ export default function DotsMobileStepper(props: Props) : React.ReactElement {
 
   useEffect(() => {
     window.history.pushState(null, '', window.location.pathname);
-    console.log(window.history);
     window.addEventListener('popstate', onBrowserBackButtonEvent);
     return () => {
       window.removeEventListener('popstate', onBrowserBackButtonEvent);

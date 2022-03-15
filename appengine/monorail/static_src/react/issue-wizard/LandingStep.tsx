@@ -40,7 +40,7 @@ const useStyles = makeStyles({
     borderRadius: '8px',
     background: yellow[50],
     padding: '0px 20px 1em',
-    margin: '30px 0px'
+    margin: '1rem 0'
   },
   warningHeader: {
     color: yellow[800],
@@ -55,13 +55,13 @@ const useStyles = makeStyles({
   },
   header: {
     color: grey[900],
-    fontSize: '28px',
-    marginTop: '6vh',
+    fontSize: '1.5rem',
+    margin: '1rem 0',
   },
   subheader: {
     color: grey[700],
-    fontSize: '18px',
-    lineHeight: '32px',
+    fontSize: '1.125rem',
+    margin: '1rem 0',
   },
   alertDetail: {
     fontSize: '16px',
@@ -74,6 +74,11 @@ const useStyles = makeStyles({
   red: {
     color: red[600],
   },
+  line: {
+    color: grey[200],
+    marginTop: '1.5rem',
+    minWidth: '360px',
+  }
 });
 
 type Props = {

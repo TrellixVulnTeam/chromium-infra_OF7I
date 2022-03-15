@@ -7,6 +7,10 @@ import OutlinedInput from "@material-ui/core/OutlinedInput";
 import {makeStyles} from '@material-ui/styles';
 
 const userStyles = makeStyles({
+  head: {
+    marginTop: '1.5rem',
+    fontSize: '1rem'
+  },
   inputArea: {
     width: '100%',
   },
@@ -32,7 +36,7 @@ export default function CustomQuestionInput(props: Props): React.ReactElement {
   }
   return (
     <>
-      <h3 dangerouslySetInnerHTML={getInnerHtml()}/>
+      <h3 dangerouslySetInnerHTML={getInnerHtml()} className={classes.head}/>
       <OutlinedInput
         value={answer}
         onChange={handleChange}

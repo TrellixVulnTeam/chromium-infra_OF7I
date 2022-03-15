@@ -10,7 +10,8 @@ import Radio, { RadioProps } from '@material-ui/core/Radio';
 const useStyles = makeStyles({
   container: {
     width: '320px',
-    height: '150px',
+    minWidth: '140px',
+    height: '160px',
     position: 'relative',
     display: 'inline-block',
     cursor: 'pointer',
@@ -18,15 +19,14 @@ const useStyles = makeStyles({
   text: {
     position: 'absolute',
     display: 'inline-block',
-    left: '55px',
   },
   title: {
-    marginTop: '7px',
-    fontSize: '20px',
+    margin: '0.5rem 0',
+    fontSize: '1.125rem',
     color: grey[900],
   },
   subheader: {
-    fontSize: '16px',
+    fontSize: '0.875rem',
     color: grey[800],
   },
   line: {

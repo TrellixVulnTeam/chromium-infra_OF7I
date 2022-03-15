@@ -11,8 +11,15 @@ import CustomQuestionTextarea from './CustomQuestionTextarea.tsx';
 import {GetSelectMenuOptions} from '../IssueWizardUtils.tsx';
 
 const userStyles = makeStyles({
+  head: {
+    marginTop: '1.5rem',
+    fontSize: '1rem'
+  },
   inputArea: {
     width: '100%',
+  },
+  tip: {
+    margin: '0.5rem 0',
   },
 });
 
@@ -85,8 +92,8 @@ export default function CustomQuestionSelector(props: Props): React.ReactElement
   }
   return (
     <>
-      <h3 dangerouslySetInnerHTML={getQuestionInnerHtml()}/>
-      {tip? <div dangerouslySetInnerHTML={getTipInnerHtml()}/> : null}
+      <h3 dangerouslySetInnerHTML={getQuestionInnerHtml()} className={classes.head}/>
+      {tip? <div dangerouslySetInnerHTML={getTipInnerHtml()} className={classes.tip}/> : null}
       <SelectMenu
         optionsList={optionList}
         selectedOption={selectedOption}
