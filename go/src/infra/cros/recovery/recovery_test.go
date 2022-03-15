@@ -195,7 +195,7 @@ func TestRunDUTPlan(t *testing.T) {
 		})
 		Convey("fail when one plan fail of plans fail", func() {
 			c.Plans = map[string]*config.Plan{
-				PlanServo: {
+				config.PlanServo: {
 					CriticalActions: []string{"sample_fail"},
 					Actions: map[string]*config.Action{
 						"sample_fail": {
@@ -203,7 +203,7 @@ func TestRunDUTPlan(t *testing.T) {
 						},
 					},
 				},
-				PlanCrOS: {
+				config.PlanCrOS: {
 					CriticalActions: []string{"sample_pass"},
 					Actions: map[string]*config.Action{
 						"sample_pass": {
@@ -212,7 +212,7 @@ func TestRunDUTPlan(t *testing.T) {
 					},
 				},
 			}
-			c.PlanNames = []string{PlanServo, PlanCrOS}
+			c.PlanNames = []string{config.PlanServo, config.PlanCrOS}
 			err := runDUTPlans(ctx, dut, c, args)
 			if err == nil {
 				t.Errorf("Expected fail but passed")
@@ -230,7 +230,7 @@ func TestRunDUTPlan(t *testing.T) {
 					},
 				},
 			}
-			err := runDUTPlanPerResource(ctx, "test_dut", PlanCrOS, plan, execArgs)
+			err := runDUTPlanPerResource(ctx, "test_dut", config.PlanCrOS, plan, execArgs)
 			if err == nil {
 				t.Errorf("Expected fail but passed")
 			} else {
@@ -262,14 +262,14 @@ func TestRunDUTPlan(t *testing.T) {
 					},
 				},
 			}
-			if err := runDUTPlanPerResource(ctx, "DUT3", PlanCrOS, plan, execArgs); err != nil {
+			if err := runDUTPlanPerResource(ctx, "DUT3", config.PlanCrOS, plan, execArgs); err != nil {
 				t.Errorf("Expected pass but failed: %s", err)
 			}
 		})
 		Convey("Run all good plans", func() {
 			c := &config.Configuration{
 				Plans: map[string]*config.Plan{
-					PlanCrOS: {
+					config.PlanCrOS: {
 						CriticalActions: []string{"sample_pass"},
 						Actions: map[string]*config.Action{
 							"sample_pass": {
@@ -277,7 +277,7 @@ func TestRunDUTPlan(t *testing.T) {
 							},
 						},
 					},
-					PlanServo: {
+					config.PlanServo: {
 						CriticalActions: []string{"sample_pass"},
 						Actions: map[string]*config.Action{
 							"sample_pass": {
@@ -294,7 +294,7 @@ func TestRunDUTPlan(t *testing.T) {
 		Convey("Run all plans even one allow to fail", func() {
 			c := &config.Configuration{
 				Plans: map[string]*config.Plan{
-					PlanCrOS: {
+					config.PlanCrOS: {
 						CriticalActions: []string{"sample_fail"},
 						Actions: map[string]*config.Action{
 							"sample_fail": {
@@ -303,7 +303,7 @@ func TestRunDUTPlan(t *testing.T) {
 						},
 						AllowFail: true,
 					},
-					PlanServo: {
+					config.PlanServo: {
 						CriticalActions: []string{"sample_pass"},
 						Actions: map[string]*config.Action{
 							"sample_pass": {
@@ -320,13 +320,13 @@ func TestRunDUTPlan(t *testing.T) {
 		Convey("Do not fail even if closing plan failed", func() {
 			c := &config.Configuration{
 				Plans: map[string]*config.Plan{
-					PlanCrOS: {
+					config.PlanCrOS: {
 						CriticalActions: []string{},
 					},
-					PlanServo: {
+					config.PlanServo: {
 						CriticalActions: []string{},
 					},
-					PlanClosing: {
+					config.PlanClosing: {
 						CriticalActions: []string{"sample_fail"},
 						Actions: map[string]*config.Action{
 							"sample_fail": {

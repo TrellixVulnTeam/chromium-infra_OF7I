@@ -2,18 +2,16 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package recovery
+package config
 
 import (
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
-
-	"infra/cros/recovery/config"
 )
 
-var labstationRepairConfig = &config.Configuration{
+var labstationRepairConfig = &Configuration{
 	PlanNames: []string{PlanCrOS},
-	Plans: map[string]*config.Plan{
+	Plans: map[string]*Plan{
 		PlanCrOS: {
 			AllowFail: false,
 			CriticalActions: []string{
@@ -27,7 +25,7 @@ var labstationRepairConfig = &config.Configuration{
 				"reboot_by_request",
 				"dut_state_ready",
 			},
-			Actions: map[string]*config.Action{
+			Actions: map[string]*Action{
 				"dut_state_repair_failed": {
 					RunControl: 2,
 				},
@@ -188,9 +186,9 @@ var labstationRepairConfig = &config.Configuration{
 	},
 }
 
-var labstationDeployConfig = &config.Configuration{
+var labstationDeployConfig = &Configuration{
 	PlanNames: []string{PlanCrOS},
-	Plans: map[string]*config.Plan{
+	Plans: map[string]*Plan{
 		PlanCrOS: {
 			AllowFail: false,
 			CriticalActions: []string{
@@ -205,7 +203,7 @@ var labstationDeployConfig = &config.Configuration{
 				"validate_rpm",
 				"dut_state_ready",
 			},
-			Actions: map[string]*config.Action{
+			Actions: map[string]*Action{
 				"check_host_info": {
 					Docs: []string{
 						"Check basic info for deployment.",
@@ -273,11 +271,11 @@ var labstationDeployConfig = &config.Configuration{
 }
 
 // LabstationRepairConfig provides config for repair labstation task.
-func LabstationRepairConfig() *config.Configuration {
-	return proto.Clone(labstationRepairConfig).(*config.Configuration)
+func LabstationRepairConfig() *Configuration {
+	return proto.Clone(labstationRepairConfig).(*Configuration)
 }
 
 // LabstationDeployConfig provides config for deploy labstation task.
-func LabstationDeployConfig() *config.Configuration {
-	return proto.Clone(labstationDeployConfig).(*config.Configuration)
+func LabstationDeployConfig() *Configuration {
+	return proto.Clone(labstationDeployConfig).(*Configuration)
 }

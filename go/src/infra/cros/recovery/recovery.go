@@ -220,7 +220,7 @@ func defaultConfiguration(tn tasknames.TaskName, ds tlw.DUTSetupType) (*config.C
 		case tlw.DUTSetupTypeCros:
 			return CrosRepairConfig(), nil
 		case tlw.DUTSetupTypeLabstation:
-			return LabstationRepairConfig(), nil
+			return config.LabstationRepairConfig(), nil
 		default:
 			return nil, errors.Reason("Setup type: %q is not supported for task: %q!", ds, tn).Err()
 		}
@@ -229,7 +229,7 @@ func defaultConfiguration(tn tasknames.TaskName, ds tlw.DUTSetupType) (*config.C
 		case tlw.DUTSetupTypeCros:
 			return CrosDeployConfig(), nil
 		case tlw.DUTSetupTypeLabstation:
-			return LabstationDeployConfig(), nil
+			return config.LabstationDeployConfig(), nil
 		default:
 			return nil, errors.Reason("Setup type: %q is not supported for task: %q!", ds, tn).Err()
 		}
@@ -299,21 +299,21 @@ func logDUTInfo(ctx context.Context, resource string, dut *tlw.Dut, msg string) 
 }
 
 // runDUTPlans executes single DUT against task's plans.
-func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *config.Configuration, args *RunArgs) error {
+func runDUTPlans(ctx context.Context, dut *tlw.Dut, c *config.Configuration, args *RunArgs) error {
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
 		defer args.Logger.DedentLogging()
 	}
 	log.Info(ctx, "Run DUT %q: starting...", dut.Name)
-	planNames := config.GetPlanNames()
+	planNames := c.GetPlanNames()
 	log.Debug(ctx, "Run DUT %q plans: will use %s.", dut.Name, planNames)
 	hasClosingPlan := false
 	for _, planName := range planNames {
-		if planName == PlanClosing {
+		if planName == config.PlanClosing {
 			// The Closing plan will be added by default and it i sok if it missed.
 			hasClosingPlan = true
 		}
-		if _, ok := config.GetPlans()[planName]; !ok {
+		if _, ok := c.GetPlans()[planName]; !ok {
 			return errors.Reason("run dut %q plans: plan %q not found in configuration", dut.Name, planName).Err()
 		}
 	}
@@ -351,22 +351,22 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *config.Configuration
 	defer func() {
 		// If closing plan provided by configuration then we do not need run it here.
 		if !hasClosingPlan {
-			plan, ok := config.GetPlans()[PlanClosing]
+			plan, ok := c.GetPlans()[config.PlanClosing]
 			if !ok {
-				log.Info(ctx, "Run plans: plan %q not found in configuration.", PlanClosing)
+				log.Info(ctx, "Run plans: plan %q not found in configuration.", config.PlanClosing)
 			} else {
 				// Closing plan always allowed to fail.
 				plan.AllowFail = true
-				if err := runSinglePlan(ctx, PlanClosing, plan, execArgs); err != nil {
-					log.Debug(ctx, "Run plans: plan %q for %q finished with error: %s", PlanClosing, dut.Name, err)
+				if err := runSinglePlan(ctx, config.PlanClosing, plan, execArgs); err != nil {
+					log.Debug(ctx, "Run plans: plan %q for %q finished with error: %s", config.PlanClosing, dut.Name, err)
 				} else {
-					log.Debug(ctx, "Run plans: plan %q for %q finished successfully", PlanClosing, dut.Name)
+					log.Debug(ctx, "Run plans: plan %q for %q finished successfully", config.PlanClosing, dut.Name)
 				}
 			}
 		}
 	}()
 	for _, planName := range planNames {
-		plan, ok := config.GetPlans()[planName]
+		plan, ok := c.GetPlans()[planName]
 		if !ok {
 			return errors.Reason("run plans: plan %q: not found in configuration", planName).Err()
 		}
@@ -424,25 +424,25 @@ func runDUTPlanPerResource(ctx context.Context, resource, planName string, plan 
 // resources and then we will run the same plan for each resource.
 func collectResourcesForPlan(planName string, dut *tlw.Dut) []string {
 	switch planName {
-	case PlanCrOS, PlanClosing:
+	case config.PlanCrOS, config.PlanClosing:
 		if dut.Name != "" {
 			return []string{dut.Name}
 		}
-	case PlanServo:
+	case config.PlanServo:
 		if dut.ServoHost != nil {
 			return []string{dut.ServoHost.Name}
 		}
-	case PlanBluetoothPeer:
+	case config.PlanBluetoothPeer:
 		var resources []string
 		for _, bp := range dut.BluetoothPeerHosts {
 			resources = append(resources, bp.Name)
 		}
 		return resources
-	case PlanChameleon:
+	case config.PlanChameleon:
 		if dut.ChameleonHost != nil {
 			return []string{dut.ChameleonHost.Name}
 		}
-	case PlanWifiRouter:
+	case config.PlanWifiRouter:
 		var resources []string
 		for _, router := range dut.WifiRouterHosts {
 			resources = append(resources, router.GetName())
@@ -505,16 +505,3 @@ func (a *RunArgs) verify() error {
 	fmt.Fprintf(os.Stderr, "log root is %q\n", a.LogRoot)
 	return nil
 }
-
-// List of predefined plans.
-const (
-	PlanCrOS          = "cros"
-	PlanServo         = "servo"
-	PlanChameleon     = "chameleon"
-	PlanBluetoothPeer = "bluetooth_peer"
-	PlanWifiRouter    = "wifi_router"
-	// That is final plan which will run always if present in configuration.
-	// The goal is execution final step to clean up stages if something left
-	// over in the devices.
-	PlanClosing = "close"
-)

@@ -21,20 +21,20 @@ func copyPlan(plan *config.Plan, allowFail bool) *config.Plan {
 func CrosRepairConfig() *config.Configuration {
 	return &config.Configuration{
 		PlanNames: []string{
-			PlanServo,
-			PlanCrOS,
-			PlanChameleon,
-			PlanBluetoothPeer,
-			PlanWifiRouter,
-			PlanClosing,
+			config.PlanServo,
+			config.PlanCrOS,
+			config.PlanChameleon,
+			config.PlanBluetoothPeer,
+			config.PlanWifiRouter,
+			config.PlanClosing,
 		},
 		Plans: map[string]*config.Plan{
-			PlanServo:         copyPlan(servoRepairPlan, true),
-			PlanCrOS:          copyPlan(crosRepairPlan, false),
-			PlanChameleon:     copyPlan(chameleonPlan, true),
-			PlanBluetoothPeer: copyPlan(btpeerRepairPlan, true),
-			PlanWifiRouter:    copyPlan(wifiRouterRepairPlan, true),
-			PlanClosing:       copyPlan(crosClosePlan, true),
+			config.PlanServo:         copyPlan(servoRepairPlan, true),
+			config.PlanCrOS:          copyPlan(crosRepairPlan, false),
+			config.PlanChameleon:     copyPlan(chameleonPlan, true),
+			config.PlanBluetoothPeer: copyPlan(btpeerRepairPlan, true),
+			config.PlanWifiRouter:    copyPlan(wifiRouterRepairPlan, true),
+			config.PlanClosing:       copyPlan(crosClosePlan, true),
 		}}
 }
 
@@ -42,20 +42,20 @@ func CrosRepairConfig() *config.Configuration {
 func CrosDeployConfig() *config.Configuration {
 	return &config.Configuration{
 		PlanNames: []string{
-			PlanServo,
-			PlanCrOS,
-			PlanChameleon,
-			PlanBluetoothPeer,
-			PlanWifiRouter,
-			PlanClosing,
+			config.PlanServo,
+			config.PlanCrOS,
+			config.PlanChameleon,
+			config.PlanBluetoothPeer,
+			config.PlanWifiRouter,
+			config.PlanClosing,
 		},
 		Plans: map[string]*config.Plan{
-			PlanServo:         copyPlan(servoRepairPlan, false),
-			PlanCrOS:          copyPlan(crosDeployPlan, false),
-			PlanChameleon:     copyPlan(chameleonPlan, true),
-			PlanBluetoothPeer: copyPlan(btpeerRepairPlan, true),
-			PlanWifiRouter:    copyPlan(wifiRouterRepairPlan, true),
-			PlanClosing:       copyPlan(crosClosePlan, true),
+			config.PlanServo:         copyPlan(servoRepairPlan, false),
+			config.PlanCrOS:          copyPlan(crosDeployPlan, false),
+			config.PlanChameleon:     copyPlan(chameleonPlan, true),
+			config.PlanBluetoothPeer: copyPlan(btpeerRepairPlan, true),
+			config.PlanWifiRouter:    copyPlan(wifiRouterRepairPlan, true),
+			config.PlanClosing:       copyPlan(crosClosePlan, true),
 		},
 	}
 }

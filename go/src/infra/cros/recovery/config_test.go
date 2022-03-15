@@ -12,6 +12,8 @@ import (
 	"infra/cros/recovery/internal/execs"
 )
 
+// Testing plans here as that required access to execs and we try to avoid extra linking.
+
 // verifyConfig verifies that configuration can be parsed and contains all execs present in library.
 // Fail if:
 // 1) Cannot parse by loader,
@@ -31,13 +33,13 @@ func verifyConfig(name string, t *testing.T, c *config.Configuration) {
 // TestLabstationRepairConfig verifies the labstation repair configuration.
 func TestLabstationRepairConfig(t *testing.T) {
 	t.Parallel()
-	verifyConfig("labstation-repair", t, LabstationRepairConfig())
+	verifyConfig("labstation-repair", t, config.LabstationRepairConfig())
 }
 
 // TestLabstationDeployConfig verifies the labstation deploy configuration.
 func TestLabstationDeployConfig(t *testing.T) {
 	t.Parallel()
-	verifyConfig("labstation-deploy", t, LabstationDeployConfig())
+	verifyConfig("labstation-deploy", t, config.LabstationDeployConfig())
 }
 
 // TestCrosRepairConfig verifies the cros repair configuration.

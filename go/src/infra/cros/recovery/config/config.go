@@ -28,15 +28,19 @@ func Load(ctx context.Context, r io.Reader, execsExit ExecsExist) (*Configuratio
 		return nil, errors.Annotate(err, "load configuration").Err()
 	}
 	if len(data) == 0 {
-		return nil, errors.Reason("load configuration: configuration is empty").Err()
+		return nil, errors.Reason("load configuration: is empty").Err()
 	}
 	c := &Configuration{}
 	if err := json.Unmarshal(data, c); err != nil {
 		return nil, errors.Annotate(err, "load configuration").Err()
 	}
-	c, err = Validate(ctx, c, execsExit)
-	if err != nil {
-		return nil, errors.Annotate(err, "load configuration").Err()
+	if execsExit == nil {
+		log.Info(ctx, "Load configuration: validation skipped!")
+	} else {
+		c, err = Validate(ctx, c, execsExit)
+		if err != nil {
+			return nil, errors.Annotate(err, "load configuration").Err()
+		}
 	}
 	log.Debug(ctx, "Load configuration: finished successfully.")
 	return c, nil
