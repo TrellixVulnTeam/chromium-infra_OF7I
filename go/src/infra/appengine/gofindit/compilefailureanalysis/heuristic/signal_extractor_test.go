@@ -146,4 +146,55 @@ D:\\x\\y.cc[line 456]
 			})
 		})
 	})
+
+	Convey("Extract Stdout Log", t, func() {
+		Convey("Stdout", func() {
+			failureLog := &model.CompileLogs{
+				NinjaLog: nil,
+				StdOutLog: `
+[1832/2467 | 117.498] CXX obj/a/b/test.file.o
+blabla...
+FAILED: obj/a/b/test.c.o 
+/b/build/goma/gomacc blabla ... -c ../../a/b/c.cc -o obj/a/b/test.c.o
+../../a/b/c.cc:307:44: error: no member 'kEnableExtensionInfoDialog' ...
+1 error generated.
+x/y/not_in_signal.cc
+FAILED: obj/a/b/test.d.o 
+/b/build/goma/gomacc blabla ... -c ../../a/b/d.cc -o obj/a/b/test.d.o
+../../a/b/d.cc:123:44: error: no member 'kEnableExtensionInfoDialog' ...
+blabla...
+1 error generated.
+FAILED: obj/a/b/test.e.o "another node 1" obj/a/b/test.f.o "another node 2" "another node 3"
+/b/build/goma/gomacc ... ../../a/b/e.cc ... obj/a/b/test.e.o
+../../a/b/e.cc:79:44: error: no member 'kEnableExtensionInfoDialog' ...
+blabla...
+ninja: build stopped: subcommand failed.
+
+/b/build/goma/goma_ctl.sh stat
+blabla...
+				`,
+			}
+			signal, e := ExtractSignals(c, failureLog)
+			So(e, ShouldBeNil)
+			So(signal, ShouldResemble, &model.CompileFailureSignal{
+				Files: map[string][]int{
+					"a/b/c.cc":         {307},
+					"a/b/d.cc":         {123},
+					"a/b/e.cc":         {79},
+					"obj/a/b/test.c.o": {},
+					"obj/a/b/test.d.o": {},
+					"obj/a/b/test.e.o": {},
+				},
+				Nodes: []string{
+					"obj/a/b/test.c.o",
+					"obj/a/b/test.d.o",
+					"obj/a/b/test.e.o",
+					"another node 1",
+					"obj/a/b/test.f.o",
+					"another node 2",
+					"another node 3",
+				},
+			})
+		})
+	})
 }
