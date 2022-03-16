@@ -426,13 +426,16 @@ func UpdateActionEntity(ctx context.Context, entity *ActionEntity, fieldMask []s
 		// TODO(gregorynisbet): Remove call to status.Errorf. See b/200578943 for details.
 		return nil, status.Errorf(codes.InvalidArgument, "entity cannot be nil")
 	}
+	if entity.ID == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "entity ID cannot be zero")
+	}
 
 	// Read the current entity as fullEntity, modify the fields in it that are indicated by fieldMask, and
 	// then insert it back into datastore.
 	fullEntity, err := GetActionEntityByID(ctx, entity.ID)
 	if err != nil {
 		logging.Errorf(ctx, "update action entity: datastore error: %s", err)
-		return nil, errors.Annotate(err, "update action entity: datastore err").Err()
+		return nil, status.Errorf(codes.Aborted, "update action entity: datastore err: %s", err)
 	}
 
 	sealTime := fullEntity.SealTime
