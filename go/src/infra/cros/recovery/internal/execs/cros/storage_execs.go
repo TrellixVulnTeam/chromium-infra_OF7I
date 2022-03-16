@@ -65,7 +65,7 @@ func auditStorageSMARTExec(ctx context.Context, info *execs.ExecInfo) error {
 // x is the number of GB of the disk space.
 // input will only consist of one path and its corresponding value for storage.
 func hasEnoughStorageSpaceExec(ctx context.Context, info *execs.ExecInfo) error {
-	// TODO: recheck it and simplify.
+	// TODO: recheck it and simplify. Also do it for hasEnoughStoragePercentageExec
 	if len(info.ActionArgs) != 1 {
 		return errors.Reason("has enough storage space: input in wrong format").Err()
 	}
@@ -106,8 +106,32 @@ func hasEnoughInodesExec(ctx context.Context, info *execs.ExecInfo) error {
 	return errors.Annotate(err, "has enough storage inodes").Err()
 }
 
+// hasEnoughStorageSpacePercentageExec confirms the given path has at least the percentage of free space specified by the actionArgs arguments.
+// provides arguments should be in the formart of:
+// ["path:x"]
+// x is the percentage of the disk space.
+// input will only consist of one path and its corresponding percentage for storage.
+func hasEnoughStorageSpacePercentageExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
+	path := argsMap.AsString(ctx, "path", "")
+	pathMinSpaceInPercentage := argsMap.AsFloat64(ctx, "expected", -1)
+	if path == "" {
+		return errors.Reason("has enough storage space percentage: missing path argument").Err()
+	}
+	if pathMinSpaceInPercentage < 0 || pathMinSpaceInPercentage > 100 {
+		return errors.Reason("has enough storage space percentage: invalid value for expected argument %e", pathMinSpaceInPercentage).Err()
+	}
+	if occupiedSpacePercentage, err := linux.PathOccupiedSpacePercentage(ctx, info.DefaultRunner(), path); err != nil {
+		return errors.Annotate(err, "has enough storage space percentage").Err()
+	} else if actualFreePercentage := (100 - occupiedSpacePercentage); pathMinSpaceInPercentage > actualFreePercentage {
+		return errors.Reason("path have enough free space percentage: %s/%s, expect %v%%, actual %v%%", info.RunArgs.ResourceName, path, pathMinSpaceInPercentage, actualFreePercentage).Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_audit_storage_smart", auditStorageSMARTExec)
 	execs.Register("cros_has_enough_storage_space", hasEnoughStorageSpaceExec)
+	execs.Register("cros_has_enough_storage_space_percentage", hasEnoughStorageSpacePercentageExec)
 	execs.Register("cros_has_enough_inodes", hasEnoughInodesExec)
 }

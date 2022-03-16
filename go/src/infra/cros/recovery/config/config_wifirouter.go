@@ -25,6 +25,7 @@ func wifiRouterRepairPlan() *Plan {
 			"cros_ssh",
 			"Device is on stable-version",
 			"is_wifirouter_tools_present",
+			"Device has 50 percent tmp diskspace",
 			"wifirouter_state_working",
 		},
 		Actions: map[string]*Action{
@@ -69,6 +70,24 @@ func wifiRouterRepairPlan() *Plan {
 				ExecName:      "cros_provision",
 				ExecExtraArgs: []string{osNameArg},
 				ExecTimeout:   &durationpb.Duration{Seconds: 3600},
+			},
+			"Device has 50 percent tmp diskspace": {
+				Docs: []string{
+					"Check if there are more than 50 percent of diskspace in /tmp",
+				},
+				Dependencies:    []string{"Device is on stable-version"},
+				ExecName:        "cros_has_enough_storage_space_percentage",
+				ExecExtraArgs:   []string{"path:/tmp", "expected:50"},
+				RecoveryActions: []string{"Clean up tmp space"},
+			},
+			"Clean up tmp space": {
+				Docs: []string{
+					"Clean up tmp space",
+				},
+				ExecName: "cros_run_shell_command",
+				ExecExtraArgs: []string{
+					"rm -Rf /tmp/*",
+				},
 			},
 		},
 	}

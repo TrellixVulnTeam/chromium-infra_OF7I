@@ -131,7 +131,7 @@ func runShellCommandExec(ctx context.Context, info *execs.ExecInfo) error {
 	if len(actionArgs) > 0 {
 		log.Debug(ctx, "Run shell command: arguments %s.", actionArgs)
 		run := info.DefaultRunner()
-		if out, err := run(ctx, -1, actionArgs[0], actionArgs[1:]...); err != nil {
+		if out, err := run(ctx, info.ActionTimeout, actionArgs[0], actionArgs[1:]...); err != nil {
 			return errors.Annotate(err, "run shell command").Err()
 		} else {
 			log.Debug(ctx, "Run shell command: output: %s", out)
