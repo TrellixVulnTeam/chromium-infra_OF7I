@@ -151,13 +151,13 @@ lib_files="
     lib/libapr-1.0.dylib
     lib/libaprutil-1.0.dylib
     lib/libcrypto.1.1.dylib
-    lib/libexpat.1.8.7.dylib
+    lib/libexpat.1.dylib
     lib/libpcre.1.dylib
     lib/libpcrecpp.0.dylib
     lib/libpcreposix.0.dylib
     lib/libssl.1.1.dylib
     lib/libxml2.2.dylib
-    lib/libz.1.2.11.dylib"
+    lib/libz.1.dylib"
 libexec_files="
     libexec/apache2/libphp7.so
     libexec/apache2/mod_access_compat.so
@@ -232,4 +232,12 @@ for f in ${lib_files}; do
 done
 for f in ${libexec_files}; do
   install_name_tool -id "@rpath/../libexec/$(basename "${f}")" "${out}/${f}"
+done
+
+# Verify that no absolute build paths have leaked into the output.
+for f in ${bin_files} ${lib_files} ${libexec_files}; do
+  if otool -l "${out}/${f}" | grep ${build}; then
+    echo "ERROR: Absolute path found in binary ${f}"
+    exit 1
+  fi
 done
