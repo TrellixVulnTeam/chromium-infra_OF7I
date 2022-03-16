@@ -152,6 +152,10 @@ func (fs *FleetServerImpl) UpdateDutState(ctx context.Context, req *api.UpdateDu
 
 // UpdateDeviceRecoveryData update device configs for a DUT
 func (fs *FleetServerImpl) UpdateDeviceRecoveryData(ctx context.Context, req *api.UpdateDeviceRecoveryDataRequest) (rsp *api.UpdateDeviceRecoveryDataResponse, err error) {
+	if err := req.Validate(); err != nil {
+		logging.Errorf(ctx, "UpdateDeviceRecoverData request validate fail - %s", err.Error())
+		return nil, err
+	}
 	return &api.UpdateDeviceRecoveryDataResponse{}, nil
 }
 

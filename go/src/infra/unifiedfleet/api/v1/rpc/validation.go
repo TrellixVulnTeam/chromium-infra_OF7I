@@ -751,6 +751,65 @@ func (r *UpdateDutStateRequest) Validate() error {
 	return nil
 }
 
+// Validate validates input requests of UpdateDeviceRecoveryData
+func (r *UpdateDeviceRecoveryDataRequest) Validate() error {
+	if r.DutState == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	if err := r.validateDutId(); err != nil {
+		return err
+	}
+	if err := r.validateHostnames(); err != nil {
+		return err
+	}
+	if err := r.validateDutWifiRouterHostnames(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *UpdateDeviceRecoveryDataRequest) validateHostnames() error {
+	dutHostname := strings.TrimSpace(r.GetDutState().GetHostname())
+	// Hostnames are required. And request hostname should match dut state hostname
+	if r.GetHostname() == "" {
+		return status.Errorf(codes.InvalidArgument, "Empty request hostname (%q)", r.GetHostname())
+	}
+	if dutHostname == "" {
+		return status.Errorf(codes.InvalidArgument, "Empty dut state hostname (%q)", dutHostname)
+	}
+	if r.GetHostname() != dutHostname {
+		return status.Errorf(codes.InvalidArgument, "Mismatched request hostname (%q) with dut state hostname %q", r.GetHostname(), dutHostname)
+	}
+	return nil
+}
+
+func (r *UpdateDeviceRecoveryDataRequest) validateDutId() error {
+	dutID := strings.TrimSpace(r.GetDutState().GetId().GetValue())
+	if dutID == "" {
+		return status.Errorf(codes.InvalidArgument, "Empty dut state id. %s", EmptyID)
+	} else if dutID != r.GetChromeosDeviceId() {
+		return status.Errorf(codes.InvalidArgument, "Mismatched chromeos device id(%q) with dut state id: %q", r.GetChromeosDeviceId(), dutID)
+	}
+	if !IDRegex.MatchString(dutID) {
+		return status.Errorf(codes.InvalidArgument, "Invalid dut state id(%q). %s ", dutID, InvalidCharacters)
+	}
+	return nil
+}
+
+func (r *UpdateDeviceRecoveryDataRequest) validateDutWifiRouterHostnames() error {
+	if r.GetLabData() != nil {
+		// check no duplicate wifi routers
+		var routerMap map[string]bool
+		for _, router := range r.GetLabData().GetWifiRouters() {
+			if routerMap[router.GetHostname()] {
+				return status.Errorf(codes.InvalidArgument, "Duplicate wifi router (%q) in labdata.wifirouters %q", router.GetHostname(), r.GetLabData().GetWifiRouters())
+			}
+			routerMap[router.GetHostname()] = true
+		}
+	}
+	return nil
+}
+
 // Validate validates input requests of GetDutStateRequest.
 func (r *GetDutStateRequest) Validate() error {
 	if r == nil {
