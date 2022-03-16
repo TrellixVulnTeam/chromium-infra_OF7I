@@ -161,20 +161,6 @@ func WaitUntilSSHable(ctx context.Context, run execs.Runner, waitTime time.Durat
 	}, "wait to ssh access")
 }
 
-// matchCrosSystemValueToExpectation reads value from crossystem and compared to expected value.
-// TODO: Migrate usage from components.
-func matchCrosSystemValueToExpectation(ctx context.Context, run execs.Runner, subcommand string, expectedValue string) error {
-	out, err := run(ctx, time.Minute, "crossystem "+subcommand)
-	if err != nil {
-		return errors.Annotate(err, "match crossystem value to expectation: fail read %s", subcommand).Err()
-	}
-	actualValue := strings.TrimSpace(out)
-	if actualValue != expectedValue {
-		return errors.Reason("match crossystem value to expectation: %q, found: %q", expectedValue, actualValue).Err()
-	}
-	return nil
-}
-
 // hasOnlySingleLine determines if the given string is only one single line.
 func hasOnlySingleLine(ctx context.Context, s string) bool {
 	if s == "" {

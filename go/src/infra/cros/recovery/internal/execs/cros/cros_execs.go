@@ -101,27 +101,15 @@ func notOnStableVersionExec(ctx context.Context, info *execs.ExecInfo) error {
 // isDefaultBootFromDiskExec confirms the resource is set to boot from disk by default.
 func isDefaultBootFromDiskExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.DefaultRunner()
-	defaultBoot, err := run(ctx, time.Minute, "crossystem dev_default_boot")
-	if err != nil {
-		return errors.Annotate(err, "default boot from disk").Err()
-	}
-	if defaultBoot != "disk" {
-		return errors.Reason("default boot from disk: failed, expected: disk, but got: %q", defaultBoot).Err()
-	}
-	return nil
+	err := cros.MatchCrossystemValueToExpectation(ctx, run, "dev_default_boot", "disk")
+	return errors.Annotate(err, "default boot from disk").Err()
 }
 
 // isNotInDevModeExec confirms that the host is not in dev mode.
 func isNotInDevModeExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.DefaultRunner()
-	devModeResult, err := run(ctx, time.Minute, "crossystem devsw_boot")
-	if err != nil {
-		return errors.Annotate(err, "not in dev mode").Err()
-	}
-	if devModeResult != "0" {
-		return errors.Reason("not in dev mode: failed").Err()
-	}
-	return nil
+	err := cros.MatchCrossystemValueToExpectation(ctx, run, "devsw_boot", "0")
+	return errors.Annotate(err, "not in dev mode").Err()
 }
 
 // runShellCommandExec runs a given action exec arguments in shell.
@@ -381,6 +369,24 @@ func enrollmentCleanupExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+// updateCrossystemExec update the value of the command to the value passed in from the config file.
+//
+// the actionArgs should be in the format of ["command:....", "value:....", "check_after_update:true/false"]
+func updateCrossystemExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
+	command := argsMap.AsString(ctx, "command", "")
+	if command == "" {
+		return errors.Reason("update crossystem: command cannot be empty").Err()
+	}
+	val := argsMap.AsString(ctx, "value", "")
+	if val == "" {
+		return errors.Reason("update crossystem: value cannot be empty").Err()
+	}
+	checkAfterUpdate := argsMap.AsBool(ctx, "check_after_update", false)
+	run := info.NewRunner(info.RunArgs.DUT.Name)
+	return errors.Annotate(cros.UpdateCrossystem(ctx, run, command, val, checkAfterUpdate), "update crossystem").Err()
+}
+
 func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
@@ -402,4 +408,5 @@ func init() {
 	execs.Register("cros_set_gbb_flags", crosSetGbbFlagsExec)
 	execs.Register("cros_switch_to_secure_mode", crosSwitchToSecureModeExec)
 	execs.Register("cros_enrollment_cleanup", enrollmentCleanupExec)
+	execs.Register("cros_update_crossystem", updateCrossystemExec)
 }

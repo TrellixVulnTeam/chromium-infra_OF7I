@@ -423,6 +423,9 @@ func crosRepairActions() map[string]*Action {
 			ExecName: "cros_match_dev_tpm_kernel_version",
 		},
 		"cros_default_boot": {
+			Docs: []string{
+				"Check if the default boot drive is disk.",
+			},
 			Dependencies: []string{
 				"cros_storage_writing",
 			},
@@ -430,9 +433,10 @@ func crosRepairActions() map[string]*Action {
 				"is_not_flex_board",
 			},
 			RecoveryActions: []string{
-				"Install OS in recovery mode by booting from servo USB-drive",
+				"Set default boot as disk",
 				"Quick provision OS",
 				"Repair by powerwash",
+				"Install OS in recovery mode by booting from servo USB-drive",
 			},
 			ExecName: "cros_is_default_boot_from_disk",
 		},
@@ -995,8 +999,12 @@ func crosRepairActions() map[string]*Action {
 			Docs: []string{
 				"Set default boot from disk by crossystem.",
 			},
-			ExecName:      "cros_run_shell_command",
-			ExecExtraArgs: []string{"crossystem dev_default_boot=disk"},
+			ExecExtraArgs: []string{
+				"command:dev_default_boot",
+				"value:disk",
+				"check_after_update:true",
+			},
+			ExecName: "cros_update_crossystem",
 		},
 		"Device NOT booted from USB-drive": {
 			Docs: []string{

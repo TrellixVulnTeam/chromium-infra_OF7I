@@ -10,6 +10,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/components/cros"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
 )
@@ -31,7 +32,7 @@ const (
 // crossystem should always be 0x10001. Firmware update on DUTs with
 // incorrect tpm_kernver may fail due to firmware rollback protection.
 func matchDevTPMKernelVersionExec(ctx context.Context, info *execs.ExecInfo) error {
-	if err := matchCrosSystemValueToExpectation(ctx, info.DefaultRunner(), tpmKernelVersionCommand, devTPMKernelVersion); err != nil {
+	if err := cros.MatchCrossystemValueToExpectation(ctx, info.DefaultRunner(), tpmKernelVersionCommand, devTPMKernelVersion); err != nil {
 		return errors.Annotate(err, "match dev tpm kernel version").Err()
 	}
 	return nil
@@ -43,7 +44,7 @@ func matchDevTPMKernelVersionExec(ctx context.Context, info *execs.ExecInfo) err
 // crossystem should always be 0x10001. Firmware update on DUTs with
 // incorrect tmp_fwver may fail due to firmware rollback protection.
 func matchDevTPMFirmwareVersionExec(ctx context.Context, info *execs.ExecInfo) error {
-	if err := matchCrosSystemValueToExpectation(ctx, info.DefaultRunner(), tpmFirmwareVersionCommand, devTpmFirmwareVersion); err != nil {
+	if err := cros.MatchCrossystemValueToExpectation(ctx, info.DefaultRunner(), tpmFirmwareVersionCommand, devTpmFirmwareVersion); err != nil {
 		return errors.Annotate(err, "match dev tpm firmware version").Err()
 	}
 	return nil

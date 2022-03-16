@@ -11,6 +11,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/components/cros"
 	"infra/cros/recovery/internal/components/cros/firmware"
 	"infra/cros/recovery/internal/execs"
 )
@@ -56,7 +57,7 @@ func isOnRWFirmwareStableVersionExec(ctx context.Context, info *execs.ExecInfo) 
 	if err != nil {
 		return errors.Annotate(err, "on rw firmware stable version").Err()
 	}
-	err = matchCrosSystemValueToExpectation(ctx, info.DefaultRunner(), "fwid", sv.FwVersion)
+	err = cros.MatchCrossystemValueToExpectation(ctx, info.DefaultRunner(), "fwid", sv.FwVersion)
 	return errors.Annotate(err, "on rw firmware stable version").Err()
 }
 
