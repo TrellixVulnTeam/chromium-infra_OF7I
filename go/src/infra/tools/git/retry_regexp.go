@@ -115,6 +115,7 @@ var defaultGitRetryRegexpSource = []string{
 	`fatal: .*: Empty reply from server`,
 	`fatal: early EOF`,
 	`fatal: error processing wanted refs`,
+	`fatal: .*: Server aborted the SSL handshake`,
 
 	// fxbug.dev/91419
 	`fatal: .* trying to write ref .* with nonexistent object`,
