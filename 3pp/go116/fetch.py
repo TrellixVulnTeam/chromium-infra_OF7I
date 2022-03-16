@@ -15,7 +15,7 @@ from pkg_resources import parse_version
 def do_latest():
   versions = []
   for release in json.load(
-      urllib.request.urlopen('https://golang.org/dl/?mode=json')):
+      urllib.request.urlopen('https://golang.org/dl/?mode=json&include=all')):
     ver = parse_version(release['version'].replace('go', ''))
     if ver < parse_version('1.17a0'):
       versions.append(ver)
