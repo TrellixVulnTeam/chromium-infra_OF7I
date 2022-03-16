@@ -9,6 +9,7 @@ import (
 	"time"
 
 	cloudBQ "cloud.google.com/go/bigquery"
+	"github.com/golang/protobuf/jsonpb"
 	luciBQ "go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
@@ -199,6 +200,13 @@ func (k *karteFrontend) ListObservations(ctx context.Context, req *kartepb.ListO
 
 // UpdateAction updates an action in datastore and creates it if necessary when allow_missing is set.
 func (k *karteFrontend) UpdateAction(ctx context.Context, req *kartepb.UpdateActionRequest) (*kartepb.Action, error) {
+	// TODO(gregorynisbet): Remove json logging.
+	str, mErr := (&jsonpb.Marshaler{Indent: "  "}).MarshalToString(req)
+	if mErr == nil {
+		logging.Infof(ctx, "Update action request: %s", str)
+	} else {
+		logging.Errorf(ctx, "Failed to marshal action request: %s", mErr)
+	}
 	reqActionEntity, err := convertActionToActionEntity(req.GetAction())
 	if err != nil {
 		return nil, errors.Annotate(err, "update action").Err()
