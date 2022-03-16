@@ -322,6 +322,7 @@ class BouncedEmail(BounceNotificationHandler):
     if '@intel' in email_addr:  # both intel.com and intel-partner.
       logging.info(
           'bounce message: %s', bounce_message.notification.get('text'))
+      logging.info('bounce message original: %r', bounce_message.original)
 
     app_config = webapp2.WSGIApplication.app.config
     services = app_config['services']
