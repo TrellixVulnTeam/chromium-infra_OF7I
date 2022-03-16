@@ -270,13 +270,24 @@ func (p *provisionState) installPartitions(ctx context.Context, pi partitionInfo
 }
 
 func (p *provisionState) postInstall(pi partitionInfo) error {
-	return runCmd(p.c, strings.Join([]string{
-		"tmpmnt=$(mktemp -d)",
-		fmt.Sprintf("mount -o ro %s ${tmpmnt}", pi.inactiveRoot),
-		fmt.Sprintf("${tmpmnt}/postinst %s", pi.inactiveRoot),
-		"umount ${tmpmnt}",
-		"rmdir ${tmpmnt}",
-	}, "; "))
+	tmpMnt, err := runCmdOutput(p.c, "mktemp -d")
+	if err != nil {
+		return fmt.Errorf("postInstall: failed to create temporary directory, %s", err)
+	}
+	tmpMnt = strings.TrimSpace(tmpMnt)
+	if err := runCmd(p.c, fmt.Sprintf("mount -o ro %s %s", pi.inactiveRoot, tmpMnt)); err != nil {
+		return fmt.Errorf("postInstall: failed to mount inactive root, %s", err)
+	}
+	if err := runCmd(p.c, fmt.Sprintf("%s/postinst %s", tmpMnt, pi.inactiveRoot)); err != nil {
+		return fmt.Errorf("postInstall: failed to postinst from inactive root, %s", err)
+	}
+	if err := runCmd(p.c, fmt.Sprintf("umount %s", tmpMnt)); err != nil {
+		return fmt.Errorf("postInstall: failed to umount temporary directory, %s", err)
+	}
+	if err := runCmd(p.c, fmt.Sprintf("rmdir %s", tmpMnt)); err != nil {
+		return fmt.Errorf("postInstall: failed to remove temporary directory, %s", err)
+	}
+	return nil
 }
 
 func (p *provisionState) revertStatefulInstall() {
