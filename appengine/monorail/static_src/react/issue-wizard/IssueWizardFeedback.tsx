@@ -64,10 +64,11 @@ export function IssueWizardFeedback(props: Props): React.ReactElement {
         'description': feedback
       }
     });
+    setEnable(false);
   }
 
   return (
-      <Dialog open={enable} className={classes.root}>
+      <Dialog open={enable}>
         <DialogTitle className={classes.title}>Send Feedback</DialogTitle>
           <Input
             placeholder="Have Feedback? We'd love to hear it, but please don't share sensitive informations. Have questions? Try help or support."

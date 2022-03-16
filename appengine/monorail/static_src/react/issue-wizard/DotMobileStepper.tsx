@@ -9,6 +9,7 @@ import MobileStepper from '@material-ui/core/MobileStepper';
 import Button from '@material-ui/core/Button';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
+import {ConfirmBackModal} from './ConfirmBackModal.tsx';
 
 const theme: Theme = createTheme();
 
@@ -41,12 +42,18 @@ export default function DotsMobileStepper(props: Props) : React.ReactElement {
   const {nextEnabled, activeStep, setActiveStep, onSubmit}  = props;
   const classes = useStyles();
 
+  const [showConfirmModal, setShowConfirmModal] = React.useState(false);
+
   const handleNext = () => {
-    setActiveStep((prevActiveStep: number) => prevActiveStep + 1);
+    setActiveStep(activeStep + 1);
   };
 
   const handleBack = () => {
-    setActiveStep((prevActiveStep: number) => prevActiveStep - 1);
+    if (activeStep === 2) {
+      setShowConfirmModal(true);
+    } else {
+      setActiveStep(activeStep - 1);
+    }
   };
 
   const onSubmitIssue = () => {
@@ -90,15 +97,22 @@ export default function DotsMobileStepper(props: Props) : React.ReactElement {
     </Button>);
 
   return (
-    <MobileStepper
-      id="mobile-stepper"
-      variant="dots"
-      steps={3}
-      position="static"
-      activeStep={activeStep}
-      className={classes.root}
-      nextButton={nextButton}
-      backButton={backButton}
-    />
+    <>
+      <MobileStepper
+        id="mobile-stepper"
+        variant="dots"
+        steps={3}
+        position="static"
+        activeStep={activeStep}
+        className={classes.root}
+        nextButton={nextButton}
+        backButton={backButton}
+      />
+      <ConfirmBackModal
+        enable={showConfirmModal}
+        setEnable={setShowConfirmModal}
+        confirmBack={()=>{setActiveStep(activeStep-1);}}
+      />
+    </>
   );
 }

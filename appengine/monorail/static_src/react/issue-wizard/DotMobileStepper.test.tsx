@@ -8,7 +8,7 @@ import {assert} from 'chai';
 
 import DotMobileStepper from './DotMobileStepper.tsx';
 
-describe.only('DotMobileStepper', () => {
+describe('DotMobileStepper', () => {
   let container: HTMLElement;
 
   afterEach(cleanup);
