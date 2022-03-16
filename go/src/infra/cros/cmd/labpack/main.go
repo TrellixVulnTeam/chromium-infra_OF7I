@@ -15,14 +15,17 @@ import (
 	b64 "encoding/base64"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/golang/protobuf/jsonpb"
-	"go.chromium.org/luci/auth"
+	luciauth "go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/errors"
+	lucigs "go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/luciexe/build"
 
 	"infra/cros/cmd/labpack/internal/site"
@@ -34,6 +37,7 @@ import (
 	"infra/cros/recovery/logger"
 	"infra/cros/recovery/logger/metrics"
 	"infra/cros/recovery/tasknames"
+	"infra/cros/recovery/upload"
 )
 
 // LuciexeProtocolPassthru should always be set to false in checked-in code.
@@ -60,7 +64,6 @@ func main() {
 		log.Printf("Bypassing luciexe.")
 		log.Fatalf("Bypassing luciexe not yet supported.")
 	}
-
 	build.Main(
 		input,
 		&writeOutputProps,
@@ -88,6 +91,15 @@ func makeBuildEntrypoint(params *makeBuildEntrypointParams) buildEntrypoint {
 		// TODO(otabek@): Add custom logger.
 		lg := logger.NewLogger()
 
+		// TODO(gregorynisbet): Remove canary.
+		// Write a labpack canary file with contents that are unique.
+		err := ioutil.WriteFile("./_labpack_canary", []byte("46182c32-2c9d-4abd-a029-54a71c90261e"), 0b110_110_110)
+		if err == nil {
+			lg.Info("Successfully wrote canary file")
+		} else {
+			lg.Error("Failed to write canary file: %s", err)
+		}
+
 		// Right after instantiating the logger, but inside build.Main's callback,
 		// make sure that we log what our environment looks like.
 		if DescribeMyDirectoryAndEnvironment {
@@ -102,13 +114,65 @@ func makeBuildEntrypoint(params *makeBuildEntrypointParams) buildEntrypoint {
 		log.SetOutput(os.Stderr)
 
 		res := &steps.LabpackResponse{Success: true}
-		err := internalRun(ctx, params.input, state, lg)
+		err = internalRun(ctx, params.input, state, lg)
 		if err != nil {
 			res.Success = false
 			res.FailReason = err.Error()
 			lg.Debug("Finished with err: %s", err)
 		}
 		params.writeOutputProps(res)
+
+		// Construct the client that we will need to push the logs first.
+		// Eventually, we will make this error fatal. However, for right now, we will
+		// just log whether we succeeded or failed to build the client.
+		authenticator := luciauth.NewAuthenticator(ctx, luciauth.SilentLogin, luciauth.Options{})
+		if authenticator != nil {
+			lg.Info("NewAuthenticator(...): successfully authed!")
+		} else {
+			lg.Error("NewAuthenticator(...): did not successfully auth!")
+		}
+		rt, err := authenticator.Transport()
+		if err == nil {
+			lg.Info("authenticator.Transport(): successfully authed!")
+		} else {
+			lg.Error("authenticator.Transport(...): error: %s", err)
+		}
+		client, err := lucigs.NewProdClient(ctx, rt)
+		if err == nil {
+			lg.Info("Successfully created client")
+		} else {
+			lg.Error("Failed to create client: %s", err)
+		}
+
+		// Actually persist the logs
+		swarmingTaskID := state.Infra().GetSwarming().GetTaskId()
+		if swarmingTaskID == "" {
+			// Failed to get the swarming task, since this is the last thing.
+			lg.Error("Swarming task is empty!")
+			return err
+		} else {
+			// upload.Upload can potentially run for a long time. Set a timeout of 30s.
+			//
+			// upload.Upload does respond to cancellation (which callFuncWithTimeout uses internally), but
+			// the correct of this code does not and should not depend on this fact.
+			//
+			// callFuncWithTimeout synchronously calls a function with a timeout and then unconditionally hands control
+			// back to its caller. The goroutine that's created in the background will not by itself keep the process alive.
+			status, err := callFuncWithTimeout(ctx, 30*time.Second, func(ctx context.Context) error {
+				return upload.Upload(ctx, client, &upload.Params{
+					// TODO(gregorynisbet): Change this to the log root.
+					SourceDir: ".",
+					// TODO(gregorynisbet): Allow this parameter to be overridden from outside.
+					GSURL:             fmt.Sprintf("gs://chromeos-autotest-results/swarming-%s", swarmingTaskID),
+					MaxConcurrentJobs: 10,
+				})
+			})
+			lg.Info("Upload log subtask status: %s", status)
+			if err != nil {
+				lg.Error("Upload task error: %s", err)
+			}
+		}
+
 		// if err is nil then will marked as SUCCESS
 		return err
 	}
@@ -140,7 +204,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	var metrics metrics.Metrics
 	if !in.GetNoMetrics() {
 		var err error
-		metrics, err = karte.NewMetrics(ctx, kclient.ProdConfig(auth.Options{}))
+		metrics, err = karte.NewMetrics(ctx, kclient.ProdConfig(luciauth.Options{}))
 		if err == nil {
 			lg.Info("internal run: metrics client successfully created.")
 		} else {

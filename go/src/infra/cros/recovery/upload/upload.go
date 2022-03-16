@@ -35,6 +35,9 @@ type gsClient interface {
 
 // Upload a list of directories to Google Storage.
 func Upload(ctx context.Context, gsClient gsClient, params *Params) error {
+	if gsClient == nil {
+		return errors.Reason("upload: client cannot be nil").Err()
+	}
 	if params == nil {
 		return errors.Reason("upload: params cannot be nil").Err()
 	}
