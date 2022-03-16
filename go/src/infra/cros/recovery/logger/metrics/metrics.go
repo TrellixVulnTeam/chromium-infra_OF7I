@@ -119,7 +119,7 @@ type Query struct {
 	OrderDescending bool
 }
 
-// NewLastActoinQuery returns a query for the last record of a given kind for the asset in question.
+// NewLastActionQuery returns a query for the last record of a given kind for the asset in question.
 func NewLastActionQuery(assetTag string, kind string) *Query {
 	return &Query{
 		AssetTag:   assetTag,
