@@ -29,9 +29,9 @@ func NewLogMetrics(l logger.Logger) Metrics {
 	}
 }
 
-// Create marshals an action as JSON and logs it at the debug level.
+// CreateOld marshals an action as JSON and logs it at the debug level.
 // If the method receiver is nil, the behavior is undefined.
-func (m *metrics) Create(ctx context.Context, action *Action) (*Action, error) {
+func (m *metrics) CreateOld(ctx context.Context, action *Action) (*Action, error) {
 	if m == nil {
 		return nil, errors.Reason("metrics create: metrics cannot be nil").Err()
 	}
@@ -44,10 +44,10 @@ func (m *metrics) Create(ctx context.Context, action *Action) (*Action, error) {
 	return action, nil
 }
 
-// Update marshals an action as JSON and logs it at the debug level.
+// UpdateOld marshals an action as JSON and logs it at the debug level.
 // TODO(gregorynisbet): Consider replacing the default implementation with an in-memory implementation of Karte.
 // If the method receiver is nil, the behavior is undefined.
-func (m *metrics) Update(ctx context.Context, action *Action) (*Action, error) {
+func (m *metrics) UpdateOld(ctx context.Context, action *Action) (*Action, error) {
 	if m == nil {
 		return nil, errors.Reason("metrics update: metrics cannot be nil").Err()
 	}

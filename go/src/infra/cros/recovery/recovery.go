@@ -73,7 +73,7 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 			}
 			// Keep this call up to date with NewMetric in execs.go.
 			if args.Metrics != nil { // Guard against incorrectly setting up Karte client. See b:217746479 for details.
-				_, mErr := args.Metrics.Create(
+				_, mErr := args.Metrics.CreateOld(
 					ctx,
 					&metrics.Action{
 						ActionKind:     "run_recovery",

@@ -180,12 +180,12 @@ type QueryResult struct {
 // Metrics is a simple interface for logging
 // structured events and metrics.
 type Metrics interface {
-	// Create records an action with observations. It returns the created observation
+	// CreateOld records an action with observations. It returns the created observation
 	// and a token that can be used to modify future observations.
-	Create(ctx context.Context, action *Action) (*Action, error)
+	CreateOld(ctx context.Context, action *Action) (*Action, error)
 
-	// Update an action with observations.
-	Update(ctx context.Context, action *Action) (*Action, error)
+	// UpdateOld an action with observations.
+	UpdateOld(ctx context.Context, action *Action) (*Action, error)
 
 	// Search lists all the actions matching a set of constraints, up to
 	// a limit on the number of returned actions.

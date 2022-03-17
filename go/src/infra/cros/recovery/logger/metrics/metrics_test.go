@@ -59,7 +59,7 @@ func TestNewMetrics(t *testing.T) {
 	l := newFakeLogger().(*fakeLogger)
 	m := NewLogMetrics(l)
 
-	m.Create(
+	m.CreateOld(
 		ctx,
 		&Action{
 			SwarmingTaskID: "a",

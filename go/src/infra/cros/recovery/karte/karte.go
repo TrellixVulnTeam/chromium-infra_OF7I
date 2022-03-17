@@ -28,10 +28,12 @@ func NewMetrics(ctx context.Context, c *kclient.Config, o ...kclient.Option) (me
 	return &client{impl: innerClient}, nil
 }
 
-// Create creates an action and returns the action that was just created.
+// CreateOld creates an action and returns the action that was just created.
 // Note that an action contains zero or more observations in it and that observations are not
 // separate.
-func (c *client) Create(ctx context.Context, action *metrics.Action) (*metrics.Action, error) {
+//
+// CreateOld does NOT modify its arguments.
+func (c *client) CreateOld(ctx context.Context, action *metrics.Action) (*metrics.Action, error) {
 	karteResp, err := c.impl.CreateAction(
 		ctx,
 		&kartepb.CreateActionRequest{
@@ -44,10 +46,12 @@ func (c *client) Create(ctx context.Context, action *metrics.Action) (*metrics.A
 	return convertKarteActionToAction(karteResp), nil
 }
 
-// Update takes an action and updates the entry in the Karte service, the source of truth.
+// UpdateOld takes an action and updates the entry in the Karte service, the source of truth.
 // TODO(gregorynisbet): This implementation is not complete. A metrics action has observations attached to it.
 // Updating Karte will require inspecting those observations and potentially updating or replacing them.
-func (c *client) Update(ctx context.Context, action *metrics.Action) (*metrics.Action, error) {
+//
+// UpdateOld does NOT modify its arguments.
+func (c *client) UpdateOld(ctx context.Context, action *metrics.Action) (*metrics.Action, error) {
 	a := convertActionToKarteAction(action)
 	karteResp, err := c.impl.UpdateAction(
 		ctx,

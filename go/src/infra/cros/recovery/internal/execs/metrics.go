@@ -76,7 +76,7 @@ func createMetric(ctx context.Context, m metrics.Metrics, action *metrics.Action
 	if m == nil {
 		return nil, nil
 	}
-	a, err := m.Create(ctx, action)
+	a, err := m.CreateOld(ctx, action)
 	if err != nil {
 		log.Error(ctx, err.Error())
 	}
@@ -99,7 +99,7 @@ func createMetric(ctx context.Context, m metrics.Metrics, action *metrics.Action
 			a.Status = metrics.ActionStatusSuccess
 			log.Debug(ctx, "Updating action %q of kind %q during close was successful", action.Name, action.ActionKind)
 		}
-		_, err := m.Update(ctx, a)
+		_, err := m.UpdateOld(ctx, a)
 		if err != nil {
 			log.Error(ctx, "Updating action %q during close had error during upload: %s", action.Name, err.Error())
 		}

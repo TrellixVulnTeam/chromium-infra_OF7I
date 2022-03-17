@@ -29,14 +29,14 @@ func newFakeMetrics() *fakeMetrics {
 	return &fakeMetrics{}
 }
 
-// Create a new action by appending it.
-func (m *fakeMetrics) Create(ctx context.Context, action *metrics.Action) (*metrics.Action, error) {
+// CreateOld a new action by appending it.
+func (m *fakeMetrics) CreateOld(ctx context.Context, action *metrics.Action) (*metrics.Action, error) {
 	m.actions = append(m.actions, action)
 	return action, nil
 }
 
-// Update an action by appending it. Do not remove the original.
-func (m *fakeMetrics) Update(ctx context.Context, action *metrics.Action) (*metrics.Action, error) {
+// UpdateOld an action by appending it. Do not remove the original.
+func (m *fakeMetrics) UpdateOld(ctx context.Context, action *metrics.Action) (*metrics.Action, error) {
 	m.actions = append(m.actions, action)
 	return action, nil
 }
