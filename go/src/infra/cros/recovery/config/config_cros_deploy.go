@@ -18,7 +18,8 @@ func crosDeployPlan() *Plan {
 			"Servo has USB-key with require image",
 			"Device is pingable before deploy",
 			"DUT has expected OS version",
-			"DUT has expected test firmware",
+			"DUT has expected dev firmware",
+			"Switch to secure-mode and reboot",
 			"Collect DUT labels",
 			"Deployment checks",
 			"DUT verify",
@@ -92,7 +93,7 @@ func deployActions() map[string]*Action {
 				"Install OS in DEV mode",
 			},
 		},
-		"DUT has expected test firmware": {
+		"DUT has expected dev firmware": {
 			Docs:         []string{"Verify that FW on the DUT has dev keys."},
 			Dependencies: []string{"cros_ssh"},
 			ExecName:     "cros_has_dev_signed_firmware",

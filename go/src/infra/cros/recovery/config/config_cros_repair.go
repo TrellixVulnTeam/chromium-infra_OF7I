@@ -449,7 +449,7 @@ func crosRepairActions() map[string]*Action {
 				"cros_storage_writing",
 			},
 			RecoveryActions: []string{
-				"cros_switch_to_secure_mode_and_reboot",
+				"Switch to secure-mode and reboot",
 			},
 			ExecName: "cros_is_not_in_dev_mode",
 		},
@@ -484,7 +484,7 @@ func crosRepairActions() map[string]*Action {
 				"cros_ssh",
 			},
 			RecoveryActions: []string{
-				"cros_switch_to_secure_mode_and_reboot",
+				"Switch to secure-mode and reboot",
 				"Install OS in recovery mode by booting from servo USB-drive",
 				"Quick provision OS",
 				"Repair by powerwash",
@@ -674,7 +674,7 @@ func crosRepairActions() map[string]*Action {
 			},
 			ExecName: "sample_pass",
 		},
-		"cros_switch_to_secure_mode_and_reboot": {
+		"Switch to secure-mode and reboot": {
 			Docs: []string{
 				"This repair action utilizes the dependent actions to set the",
 				" GBB flags and disable booting into dev-mode. Then it reboots",
@@ -682,15 +682,15 @@ func crosRepairActions() map[string]*Action {
 			},
 			Conditions: []string{"Pools required to be in Secure mode"},
 			Dependencies: []string{
-				"Reset GBB flags",
+				"Reset GBB flags by host",
 				"cros_switch_to_secure_mode",
 				"cros_reboot",
 			},
 			ExecName: "sample_pass",
 		},
-		"Reset GBB flags": {
+		"Reset GBB flags by host": {
 			Docs: []string{
-				"This action sets the GBB flags.",
+				"This action sets the GBB flags to 0x0.",
 			},
 			ExecName:               "cros_set_gbb_flags",
 			ExecTimeout:            &durationpb.Duration{Seconds: 3600},
