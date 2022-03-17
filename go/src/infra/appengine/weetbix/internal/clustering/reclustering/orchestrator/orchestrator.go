@@ -234,7 +234,7 @@ func orchestrateProject(ctx context.Context, project string, attemptStart, attem
 	}
 
 	// Export metrics.
-	progressGauge.Set(ctx, float64(metrics.progress)/1000.0, project)
+	progressGauge.Set(ctx, float64(metrics.progress), project)
 	workersGauge.Set(ctx, int64(workers), project)
 	if metrics.lastCompleted != runs.StartingEpoch {
 		// Only report time since last completion once there is a last completion.
