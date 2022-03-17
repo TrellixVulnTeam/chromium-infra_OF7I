@@ -172,9 +172,8 @@ var (
 	// gtransitRegex regular expression to identify a gTransit DUT hostname.
 	gtransitRegex = regexp.MustCompile(`^cros-mtv1950-144-rack[\d]+`)
 
-	// dcLabRegex is the regular expression to identify DUTs in the data center
-	// like labs, e.g. SFO36. The DUT name is in pattern of 'cr<SITE>-xxx'.
-	dcLabRegex = regexp.MustCompile(`^cr[^-]+`)
+	// Lab SFO36_OS will start with the DUT naming of 'chromeos8-...'.
+	sfo36OSRegex = regexp.MustCompile(`^chromeos8-`)
 )
 
 // gtransitHive hive value for a gTransit DUT.
@@ -188,9 +187,9 @@ func GetHiveForDut(hostname string) string {
 	if gtransitRegex.MatchString(hostname) {
 		return gtransitHive
 	}
-	if h := dcLabRegex.FindString(hostname); h != "" {
-		// We use the part of 'cr<SITE>' as the hive.
-		return h
+	if sfo36OSRegex.MatchString(hostname) {
+		// 'e' is site site letter assigned to SFO36.
+		return "e"
 	}
 	// Satlab DUTs.
 	if satlabRegex.MatchString(hostname) {
