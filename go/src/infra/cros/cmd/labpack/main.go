@@ -59,59 +59,39 @@ func main() {
 	if LuciexeProtocolPassthru {
 		log.Printf("Bypassing luciexe.")
 		log.Fatalf("Bypassing luciexe not yet supported.")
-	}
+	} else {
+		build.Main(input, &writeOutputProps, &mergeOutputProps,
+			func(ctx context.Context, args []string, state *build.State) error {
+				// TODO(otabek@): Add custom logger.
+				lg := logger.NewLogger()
 
-	build.Main(
-		input,
-		&writeOutputProps,
-		&mergeOutputProps,
-		makeBuildEntrypoint(&makeBuildEntrypointParams{
-			input:            input,
-			writeOutputProps: writeOutputProps,
-		}),
-	)
+				// Right after instantiating the logger, but inside build.Main's callback,
+				// make sure that we log what our environment looks like.
+				if DescribeMyDirectoryAndEnvironment {
+					describeEnvironment(os.Stderr)
+					// Describe the contents of the directory once on the way out too.
+					// We will use this information to decide what to persist.
+					defer describeEnvironment(os.Stderr)
+				}
+
+				// Set the log (via the Go standard library's log package) to Stderr, since we know that stderr is collected
+				// for the process as a whole. This will also indirectly influence lg.
+				log.SetOutput(os.Stderr)
+
+				res := &steps.LabpackResponse{Success: true}
+				err := internalRun(ctx, input, state, lg)
+				if err != nil {
+					res.Success = false
+					res.FailReason = err.Error()
+					lg.Debug("Finished with err: %s", err)
+				}
+				writeOutputProps(res)
+				// if err is nil then will marked as SUCCESS
+				return err
+			},
+		)
+	}
 	log.Printf("Exited successfully")
-}
-
-// buildEntrypoint is the type of a build entrypoint.
-type buildEntrypoint func(context.Context, []string, *build.State) error
-
-type makeBuildEntrypointParams struct {
-	input            *steps.LabpackInput
-	writeOutputProps func(*steps.LabpackResponse)
-}
-
-// makeBuildEntrypoint produces an entrypoint to the build, which is handed control only after
-// the luciexe lib has finished its setup.
-func makeBuildEntrypoint(params *makeBuildEntrypointParams) buildEntrypoint {
-	return func(ctx context.Context, args []string, state *build.State) error {
-		// TODO(otabek@): Add custom logger.
-		lg := logger.NewLogger()
-
-		// Right after instantiating the logger, but inside build.Main's callback,
-		// make sure that we log what our environment looks like.
-		if DescribeMyDirectoryAndEnvironment {
-			describeEnvironment(os.Stderr)
-			// Describe the contents of the directory once on the way out too.
-			// We will use this information to decide what to persist.
-			defer describeEnvironment(os.Stderr)
-		}
-
-		// Set the log (via the Go standard library's log package) to Stderr, since we know that stderr is collected
-		// for the process as a whole. This will also indirectly influence lg.
-		log.SetOutput(os.Stderr)
-
-		res := &steps.LabpackResponse{Success: true}
-		err := internalRun(ctx, params.input, state, lg)
-		if err != nil {
-			res.Success = false
-			res.FailReason = err.Error()
-			lg.Debug("Finished with err: %s", err)
-		}
-		params.writeOutputProps(res)
-		// if err is nil then will marked as SUCCESS
-		return err
-	}
 }
 
 // internalRun main entry point to execution received request.
