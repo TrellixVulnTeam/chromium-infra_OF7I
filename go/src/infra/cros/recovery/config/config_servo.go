@@ -459,8 +459,13 @@ func servoRepairPlan() *Plan {
 					"commands:ec_system_powerstate,ec_board",
 					"any_one:true",
 				},
-				RecoveryActions: []string{"servo_host_servod_stop"},
-				ExecName:        "servod_can_read_all",
+				RecoveryActions: []string{
+					"servo_reboot_ec_on_dut",
+					"reboot_dut_by_power_state:reset",
+					"reflash_cr_50_fw_on_dut",
+					"reset_ec_on_dut",
+				},
+				ExecName: "servod_can_read_all",
 			},
 			"battery_last_charge_readable": {
 				ExecExtraArgs: []string{"command:battery_full_charge_mah"},
@@ -501,8 +506,13 @@ func servoRepairPlan() *Plan {
 				ExecName: "servo_check_servod_control",
 			},
 			"servo_lid_open": {
-				RecoveryActions: []string{"servo_host_servod_stop"},
-				ExecName:        "sample_pass",
+				RecoveryActions: []string{
+					"servo_reboot_ec_on_dut",
+					"reboot_dut_by_power_state:reset",
+					"reflash_cr_50_fw_on_dut",
+					"reset_ec_on_dut",
+				},
+				ExecName: "servod_lidopen",
 			},
 			"is_not_servo_v3": {
 				Conditions: []string{"is_servo_v3"},
