@@ -5,6 +5,7 @@
 package services
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
@@ -12,6 +13,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	build_api "go.chromium.org/chromiumos/config/go/build/api"
@@ -19,6 +21,7 @@ import (
 	lab_api "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/cmd/cros-tool-runner/internal/common"
 	"infra/cros/cmd/cros-tool-runner/internal/docker"
 )
 
@@ -38,6 +41,9 @@ const (
 
 	// Default dut address port
 	DefaultDutAddressPort = "22"
+
+	// Default dut server port in non-host network
+	DefaultDutServerPort = 80
 
 	// Root directory for the cros-test artifacts inside docker.
 	CrosTestRootDirInsideDocker = "/tmp/test"
@@ -60,37 +66,43 @@ func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, 
 	if err != nil {
 		log.Printf("create cros-dut service: %s", err)
 	}
+	return startDutService(ctx, p, r, dutName, networkName, cacheServer, dutSshInfo, DefaultDutServerPort, dir, t)
+}
 
+// startDutService starts cros-dut service.
+func startDutService(ctx context.Context, imagePath, registerName, dutName, networkName string, cacheServer *lab_api.CacheServer, dutSshInfo *lab_api.IpEndpoint, port int, dir string, t string) (*docker.Docker, error) {
 	crosDutResultDirName := "/tmp/cros-dut"
 	d := &docker.Docker{
 		Name:               fmt.Sprintf(crosDutContainerNameTemplate, dutName),
-		RequestedImageName: p,
-		Registry:           r,
+		RequestedImageName: imagePath,
+		Registry:           registerName,
 		Token:              t,
 		// Fallback version used in case when main image fail to pull.
-		FallbackImageName: "gcr.io/chromeos-bot/cros-dut:fallback",
+		// FallbackImageName: "gcr.io/chromeos-bot/cros-dut:fallback",
+		// TODO: discuss whether we should have fallback.
 		ExecCommand: []string{
 			"cros-dut",
 			"-dut_address", endPointToString(dutSshInfo),
 			"-cache_address", endPointToString(cacheServer.GetAddress()),
-			"-port", "80",
+			"-port", strconv.Itoa(port),
 		},
 		Volumes: []string{
 			fmt.Sprintf("%s:%s", dir, crosDutResultDirName),
 		},
-		ServicePort: 80,
+		ServicePort: port,
 		Detach:      true,
 		Network:     networkName,
 	}
 	return startService(ctx, d, false)
 }
 
+type DutServerInfo struct {
+	Docker *docker.Docker
+	Port   int32
+}
+
 // CreateDutServicesForHostNetwork pulls and starts cros-dut services in host network.
-func CreateDutServicesForHostNetwork(ctx context.Context, image *build_api.ContainerImageInfo, duts []*lab_api.Dut, dir, t string) ([]*docker.Docker, error) {
-	const (
-		DutServerPortRangeStart = 12300
-		DutServerPortRangeEnd   = 12400
-	)
+func CreateDutServicesForHostNetwork(ctx context.Context, image *build_api.ContainerImageInfo, duts []*lab_api.Dut, dir, t string) ([]*DutServerInfo, error) {
 	p, err := createImagePath(image)
 	if err != nil {
 		return nil, errors.Annotate(err, "create dut services for host network: failed to create image path").Err()
@@ -100,8 +112,8 @@ func CreateDutServicesForHostNetwork(ctx context.Context, image *build_api.Conta
 		return nil, errors.Annotate(err, "create dut services for host network: failed to create registry name").Err()
 	}
 
-	currentPort := DutServerPortRangeStart
 	var dockerContainers []*docker.Docker
+	var dutServers []*DutServerInfo
 	defer func() {
 		for _, d := range dockerContainers {
 			log.Printf("Removing container %s", d.Name)
@@ -109,53 +121,41 @@ func CreateDutServicesForHostNetwork(ctx context.Context, image *build_api.Conta
 		}
 	}()
 
-	crosDutResultDirName := "/tmp/cros-dut"
 	for _, dut := range duts {
 		dutID := dut.Id.GetValue()
-
-		containerName := fmt.Sprintf(crosDutContainerNameTemplate, dutID)
 		if dut.CacheServer == nil {
-			return nil, errors.Annotate(err, "create dut services for host network: cache server must be specified in DUT").Err()
+			return nil, errors.Annotate(err, "create dut services for host network: cache server must be specified in DUT %s", dutID).Err()
 		}
-		success := false
-		for port := currentPort; port < DutServerPortRangeEnd; port++ {
-			d := &docker.Docker{
-				Name:               containerName,
-				RequestedImageName: p,
-				Registry:           r,
-				Token:              t,
-				ExecCommand: []string{
-					"cros-dut",
-					"-dut_address", dutAddress(dut),
-					"-cache_address", endPointToString(dut.CacheServer.GetAddress()),
-					"-port", strconv.Itoa(port),
-				},
-				ServicePort: port,
-				Detach:      true,
-				Network:     "host",
-				Volumes: []string{
-					fmt.Sprintf("%s:%s", path.Join(dir, dutID), crosDutResultDirName),
-				},
-			}
-			log.Printf("start cros-dut service for container %s at port %v", containerName, port)
-			_, err = startService(ctx, d, true)
-			// Keep trying until we find a port to start.
-			if err == nil {
-				success = true
-				dockerContainers = append(dockerContainers, d)
-				break
-			}
-		}
+		logDir := path.Join(dir, dutID)
+		d, err := startDutService(ctx, p, r, dutID, "host", dut.CacheServer, dutEndPoint(dut), 0, logDir, t)
 		if err != nil {
 			return nil, errors.Annotate(err, "create dut services: failed to run cros-dut").Err()
 		}
-		if !success {
-			return nil, errors.Reason("create dut services: no port available to run cros-dut").Err()
+		dockerContainers = append(dockerContainers, d)
+
+		var dsPort int
+		err = common.Poll(ctx, func(ctx context.Context) error {
+			var err error
+			var filePath string
+			filePath, err = common.FindFile("log.txt", logDir)
+			if err != nil {
+				return errors.Annotate(err, "failed to find file cros-dut log file").Err()
+			}
+			dsPort, err = dutServerPort(filePath)
+			if err != nil {
+				return errors.Annotate(err, "failed to extract dut server port from %s", filePath).Err()
+			}
+			return nil
+		}, &common.PollOptions{Timeout: time.Minute, Interval: time.Second})
+		if err != nil {
+			return nil, errors.Annotate(err, "create dut services: failed to extract dut server port").Err()
 		}
+		dutServers = append(dutServers, &DutServerInfo{Docker: d, Port: int32(dsPort)})
+
 	}
-	result := dockerContainers
+	// There are no errors so don't clean up existing dockers.
 	dockerContainers = nil
-	return result, nil
+	return dutServers, nil
 }
 
 // RunProvisionCLI pulls and starts cros-provision as CLI.
@@ -273,6 +273,17 @@ func RunTestFinderCLI(ctx context.Context, image *build_api.ContainerImageInfo, 
 	return err
 }
 
+func dutEndPoint(dut *lab_api.Dut) *lab_api.IpEndpoint {
+	if dut == nil {
+		return nil
+	}
+	chromeOS := dut.GetChromeos()
+	if chromeOS == nil {
+		return nil
+	}
+	return chromeOS.GetSsh()
+}
+
 func dutAddress(dut *lab_api.Dut) string {
 	if dut == nil {
 		return ""
@@ -293,4 +304,37 @@ func endPointToString(endPoint *lab_api.IpEndpoint) string {
 		return fmt.Sprintf("%s:%v", endPoint.GetAddress(), DefaultDutAddressPort)
 	}
 	return fmt.Sprintf("%s:%v", endPoint.GetAddress(), endPoint.GetPort())
+}
+
+// dutServerPort extracts dut server end point from dut server log file.
+// TODO: b/225046577 -- Find a more robust way to get the DUT server port.
+func dutServerPort(dutServerLogFileName string) (int, error) {
+	file, err := os.Open(dutServerLogFileName)
+	if err != nil {
+		return 0, errors.Annotate(err, "failed to open cros-dut log file %s", dutServerLogFileName).Err()
+	}
+	defer file.Close()
+
+	// Example of the line with dutservice port number.
+	// "Starting dutservice on port 12300"
+	const searchStr = "Started server on address"
+	s := bufio.NewScanner(file)
+	for s.Scan() {
+		line := s.Text()
+		// Example Input: "2022/03/15 23:38:47 Started server on address  [::]:39115".
+		index := strings.Index(line, searchStr)
+		if index < 0 {
+			continue
+		}
+		// Find last ":".
+		address := line[index+len(searchStr):]
+		index = strings.LastIndex(address, ":")
+		if index < 0 {
+			return 0, errors.Annotate(err, "fail to get port from line %q in file %s", line, dutServerLogFileName).Err()
+		}
+		portStr := address[index+1:]
+		return strconv.Atoi(portStr)
+	}
+	return 0, errors.Reason("failed to extract port from %s", dutServerLogFileName).Err()
+
 }

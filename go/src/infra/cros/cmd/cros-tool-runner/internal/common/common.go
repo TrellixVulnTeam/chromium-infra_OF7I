@@ -57,7 +57,7 @@ func PrintToLog(cmd string, stdout string, stderr string) {
 
 // AddContentsToLog adds contents of the file of fileName to log
 func AddContentsToLog(fileName string, rootDir string, msgToAdd string) error {
-	filePath, err := findFile(fileName, rootDir)
+	filePath, err := FindFile(fileName, rootDir)
 	if err != nil {
 		log.Printf("%s finding file '%s' at '%s' failed:%s", msgToAdd, fileName, filePath, err)
 		return err
@@ -71,8 +71,8 @@ func AddContentsToLog(fileName string, rootDir string, msgToAdd string) error {
 	return nil
 }
 
-// findFile finds file path in rootDir of fileName
-func findFile(fileName string, rootDir string) (string, error) {
+// FindFile finds file path in rootDir of fileName
+func FindFile(fileName string, rootDir string) (string, error) {
 	filePath := ""
 	filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {

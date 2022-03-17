@@ -83,17 +83,17 @@ func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContai
 	}
 	defer func() {
 		for _, d := range dutServices {
-			d.Remove(ctx)
+			d.Docker.Remove(ctx)
 		}
 	}()
 	for i, c := range companions {
-		c.DutServer = &lab_api.IpEndpoint{Address: "localhost", Port: int32(dutServices[i+1].ServicePort)}
+		c.DutServer = &lab_api.IpEndpoint{Address: "localhost", Port: dutServices[i+1].Port}
 	}
 	testReq := &api.CrosTestRequest{
 		TestSuites: req.GetTestSuites(),
 		Primary: &api.CrosTestRequest_Device{
 			Dut:       req.PrimaryDut.GetDut(),
-			DutServer: &lab_api.IpEndpoint{Address: "localhost", Port: int32(dutServices[0].ServicePort)},
+			DutServer: &lab_api.IpEndpoint{Address: "localhost", Port: dutServices[0].Port},
 		},
 		Companions: companions,
 	}
