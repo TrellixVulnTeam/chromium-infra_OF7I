@@ -59,24 +59,27 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (rErr error) {
 	newCtx := ctx
 	log.Info(newCtx, "Plan %q: started", r.planName)
 
-	var metricAction *metrics.Action
 	var restartTally int64
 	var forgivenFailureTally int64
+	action := &metrics.Action{}
 
 	if r.args != nil && r.args.Metrics != nil {
 		var mErr error
 		var closer execs.CloserFunc
-		metricAction, closer, mErr = r.args.NewMetric(
+		closer, mErr = r.args.NewMetric(
 			newCtx,
 			fmt.Sprintf("plan:%s", r.planName),
+			action,
 		)
 		if mErr == nil {
 			defer func() {
-				metricAction.Observations = append(
-					metricAction.Observations,
-					metrics.NewInt64Observation("restarts", restartTally),
-					metrics.NewInt64Observation("forgiven_failures", forgivenFailureTally),
-				)
+				if action != nil {
+					action.Observations = append(
+						action.Observations,
+						metrics.NewInt64Observation("restarts", restartTally),
+						metrics.NewInt64Observation("forgiven_failures", forgivenFailureTally),
+					)
+				}
 				closer(ctx, rErr)
 			}()
 		}
@@ -123,15 +126,17 @@ func (r *recoveryEngine) runActions(ctx context.Context, actions []string, enabl
 // 3) Run dependencies of the action. Fail if any fails.
 // 4) Run action exec function. Fail if any fail.
 func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enableRecovery bool) (rErr error) {
+	action := &metrics.Action{}
 	newCtx := ctx
 	if r.args != nil {
 		if r.args.Metrics != nil {
 			log.Debug(ctx, "Recording metrics for action %q", actionName)
-			_, closer, err := r.args.NewMetric(
+			closer, err := r.args.NewMetric(
 				newCtx,
 				// TODO(gregorynisbet): Consider adding a new field to Karte to explicitly track the name
 				//                      assigned to an action by recoverylib.
 				fmt.Sprintf("action:%s", actionName),
+				action,
 			)
 			if err == nil {
 				defer func() {

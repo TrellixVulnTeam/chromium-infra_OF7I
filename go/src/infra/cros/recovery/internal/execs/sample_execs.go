@@ -47,7 +47,8 @@ func sampleMetricsAction(ctx context.Context, ei *ExecInfo) error {
 	action := &metrics.Action{}
 	if ei.RunArgs.Metrics != nil {
 		action.StartTime = time.Now()
-		action, _ = ei.RunArgs.Metrics.CreateOld(ctx, action)
+		// TODO(gregorynisbet): Don't ignore error here.
+		ei.RunArgs.Metrics.Create(ctx, action)
 		// TODO(gregorynisbet): Uncomment when update lands.
 		// defer func() { args.Metrics.Update(ctx, action) }()
 	}

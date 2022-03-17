@@ -29,10 +29,10 @@ func newFakeMetrics() *fakeMetrics {
 	return &fakeMetrics{}
 }
 
-// CreateOld a new action by appending it.
-func (m *fakeMetrics) CreateOld(ctx context.Context, action *metrics.Action) (*metrics.Action, error) {
+// Create a new action by appending it.
+func (m *fakeMetrics) Create(ctx context.Context, action *metrics.Action) error {
 	m.actions = append(m.actions, action)
-	return action, nil
+	return nil
 }
 
 // UpdateOld an action by appending it. Do not remove the original.

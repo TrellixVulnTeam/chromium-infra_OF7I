@@ -180,9 +180,10 @@ type QueryResult struct {
 // Metrics is a simple interface for logging
 // structured events and metrics.
 type Metrics interface {
-	// CreateOld records an action with observations. It returns the created observation
-	// and a token that can be used to modify future observations.
-	CreateOld(ctx context.Context, action *Action) (*Action, error)
+	// Create takes an action and creates it on the Karte side.
+	// On success, it updates its action argument to reflect the Karte state.
+	// Local versions of Create should emulate this.
+	Create(ctx context.Context, action *Action) error
 
 	// UpdateOld an action with observations.
 	UpdateOld(ctx context.Context, action *Action) (*Action, error)

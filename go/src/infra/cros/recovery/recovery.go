@@ -41,6 +41,7 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 	if args.Logger == nil {
 		args.Logger = logger.NewLogger()
 	}
+	action := &metrics.Action{}
 	ctx = log.WithLogger(ctx, args.Logger)
 	if !args.EnableRecovery {
 		log.Info(ctx, "Recovery actions is blocker by run arguments.")
@@ -73,21 +74,18 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 			}
 			// Keep this call up to date with NewMetric in execs.go.
 			if args.Metrics != nil { // Guard against incorrectly setting up Karte client. See b:217746479 for details.
-				_, mErr := args.Metrics.CreateOld(
-					ctx,
-					&metrics.Action{
-						ActionKind:     "run_recovery",
-						StartTime:      start,
-						StopTime:       stop,
-						SwarmingTaskID: args.SwarmingTaskID,
-						BuildbucketID:  args.BuildbucketID,
-						Hostname:       args.UnitName,
-						// TODO(gregorynisbet): add status and FailReason.
-						Status:     status,
-						FailReason: failReason,
-					},
-				)
-				if mErr != nil {
+				*action = metrics.Action{
+					ActionKind:     "run_recovery",
+					StartTime:      start,
+					StopTime:       stop,
+					SwarmingTaskID: args.SwarmingTaskID,
+					BuildbucketID:  args.BuildbucketID,
+					Hostname:       args.UnitName,
+					Status:         status,
+					FailReason:     failReason,
+				}
+
+				if mErr := args.Metrics.Create(ctx, action); mErr != nil {
 					args.Logger.Error("Metrics error during teardown: %s", err)
 				}
 			}

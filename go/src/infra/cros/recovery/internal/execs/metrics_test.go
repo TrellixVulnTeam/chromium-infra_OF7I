@@ -21,12 +21,13 @@ func TestNewMetric(t *testing.T) {
 		ctx := context.Background()
 		// Create a harmless metrics implementation using the logger.
 		lg := logger.NewLogger()
-		metrics := metrics.NewLogMetrics(lg)
+		m := metrics.NewLogMetrics(lg)
 		a := &RunArgs{
-			Metrics:        metrics,
+			Metrics:        m,
 			SwarmingTaskID: "f2ef3b36-1985-4b11-9381-f7de82c49bd6",
 		}
-		action, closer, err := a.NewMetric(ctx, "ssh-attempt")
+		action := &metrics.Action{}
+		closer, err := a.NewMetric(ctx, "ssh-attempt", action)
 		So(err, ShouldBeNil)
 		So(action, ShouldNotBeNil)
 		if action != nil {
@@ -38,12 +39,13 @@ func TestNewMetric(t *testing.T) {
 		ctx := context.Background()
 		// Create a harmless metrics implementation using the logger.
 		lg := logger.NewLogger()
-		metrics := metrics.NewLogMetrics(lg)
+		m := metrics.NewLogMetrics(lg)
 		a := &RunArgs{
-			Metrics:       metrics,
+			Metrics:       m,
 			BuildbucketID: "35510b33-5c0e-44ef-a81d-9bce1ed4137e",
 		}
-		action, closer, err := a.NewMetric(ctx, "ssh-attempt")
+		action := &metrics.Action{}
+		closer, err := a.NewMetric(ctx, "ssh-attempt", action)
 		So(err, ShouldBeNil)
 		So(action, ShouldNotBeNil)
 		if action != nil {

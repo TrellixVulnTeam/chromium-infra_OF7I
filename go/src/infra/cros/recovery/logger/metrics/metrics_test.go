@@ -59,18 +59,16 @@ func TestNewMetrics(t *testing.T) {
 	l := newFakeLogger().(*fakeLogger)
 	m := NewLogMetrics(l)
 
-	m.CreateOld(
-		ctx,
-		&Action{
-			SwarmingTaskID: "a",
-			ActionKind:     "b",
-			Observations: []*Observation{
-				{
-					MetricKind: "c",
-				},
+	action := &Action{
+		SwarmingTaskID: "a",
+		ActionKind:     "b",
+		Observations: []*Observation{
+			{
+				MetricKind: "c",
 			},
 		},
-	)
+	}
+	m.Create(ctx, action)
 
 	actual := l.messages["debug"]
 

@@ -29,19 +29,19 @@ func NewLogMetrics(l logger.Logger) Metrics {
 	}
 }
 
-// CreateOld marshals an action as JSON and logs it at the debug level.
+// Create marshals an action as JSON and logs it at the debug level.
 // If the method receiver is nil, the behavior is undefined.
-func (m *metrics) CreateOld(ctx context.Context, action *Action) (*Action, error) {
+func (m *metrics) Create(ctx context.Context, action *Action) error {
 	if m == nil {
-		return nil, errors.Reason("metrics create: metrics cannot be nil").Err()
+		return errors.Reason("metrics create: metrics cannot be nil").Err()
 	}
 	a, err := json.MarshalIndent(action, "", "    ")
 	if err != nil {
 		// TODO(gregorynisbet): Check if action is nil.
-		return nil, errors.Annotate(err, "record action for asset %q", action.AssetTag).Err()
+		return errors.Annotate(err, "record action for asset %q", action.AssetTag).Err()
 	}
 	m.logger.Debug("Create action %q: %s\n", action.ActionKind, string(a))
-	return action, nil
+	return nil
 }
 
 // UpdateOld marshals an action as JSON and logs it at the debug level.
