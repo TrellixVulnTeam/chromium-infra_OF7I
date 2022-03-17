@@ -146,8 +146,8 @@ func getIntEnv(key string, defaultValue int) int {
 
 // dcLabRegex is the regular expression to identify the Drone server is in a
 // data center like lab, e.g. SFO36, in which the server name is like
-// 'cr<SITE>-xxx'. If matched, we use the part of 'cr<SITE>' as the hive.
-var dcLabRegex = regexp.MustCompile(`^cr[^-]+`)
+// 'kube<N>-<SITE>'. If matched, we use the part of '<SITE>' as the hive.
+var dcLabRegex = regexp.MustCompile(`^kube[0-9]+-([a-z]+)`)
 
 // initializeHive returns the hive for the agent.
 // If hive is not specified, we try to guess it from the hostname.
@@ -159,5 +159,8 @@ func initializeHive(explicitHive, hostname string) string {
 		return explicitHive
 	}
 	log.Printf("Hive not explicitly specified, now guess it by hostname %q", hostname)
-	return dcLabRegex.FindString(hostname)
+	if m := dcLabRegex.FindStringSubmatch(hostname); m != nil {
+		return m[1]
+	}
+	return ""
 }
