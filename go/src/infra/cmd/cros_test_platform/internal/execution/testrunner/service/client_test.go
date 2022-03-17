@@ -305,16 +305,14 @@ func TestCompletedTaskMissingResults(t *testing.T) {
 			gomock.Any(),
 		).Return(&buildbucket_pb.Build{
 			Id:     42,
-			Status: buildbucket_pb.Status_SUCCESS,
+			Status: buildbucket_pb.Status_INFRA_FAILURE,
 		}, nil)
 
 		task, err := tf.skylab.LaunchTask(tf.ctx, newArgs())
 		So(err, ShouldBeNil)
-		Convey("an error is returned.", func() {
+		Convey("an error is not returned.", func() {
 			_, err := tf.skylab.FetchResults(tf.ctx, task)
-			// This error is bubbled up as a non-zero exit code of the binary
-			// which is interpreted as an INFRA_FAILURE by the recipe.
-			So(err, ShouldNotBeNil)
+			So(err, ShouldBeNil)
 		})
 	})
 }

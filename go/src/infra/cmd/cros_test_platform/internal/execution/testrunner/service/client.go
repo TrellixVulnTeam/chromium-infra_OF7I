@@ -280,11 +280,11 @@ var bbStatusToLifeCycle = map[buildbucketpb.Status]test_platform.TaskState_LifeC
 func extractResult(from *buildbucketpb.Build) (*skylab_test_runner.Result, error) {
 	op := from.GetOutput().GetProperties().GetFields()
 	if op == nil {
-		return nil, fmt.Errorf("extract results from build %d: missing output properties", from.Id)
+		return nil, nil
 	}
 	cr := op["compressed_result"].GetStringValue()
 	if cr == "" {
-		return nil, fmt.Errorf("extract results from build %d: missing result output property", from.Id)
+		return nil, nil
 	}
 	pb, err := decompress(cr)
 	if err != nil {
