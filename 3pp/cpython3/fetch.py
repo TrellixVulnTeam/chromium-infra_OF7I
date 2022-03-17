@@ -51,23 +51,24 @@ urllib.request.install_opener(
             context=ssl.create_default_context(cafile=certifi.where()))))
 
 
-def get_webinstaller_suffix(platform):
+def get_installer_suffix(platform):
   if platform == 'windows-386':
-    return '-webinstall.exe'
+    return '.exe'
   if platform == 'windows-amd64':
-    return '-amd64-webinstall.exe'
+    return '-amd64.exe'
   raise ValueError('fetch.py is only supported for windows-386, windows-amd64')
 
 
 # Only look at versions in 3.9.x for now.
-_VERSION_LIMIT = parse_version("3.10.0a0")
+# TODO: Change back to 3.10.0a0 once 3.9.11 has launcher.msi present.
+_VERSION_LIMIT = parse_version("3.9.11")
 
 
 def do_latest(platform):
   """This is pretty janky, but the apache generic Index page hasn't changed
   since forever. It contains links (a tags with href's) to the different
   version folders."""
-  suf = get_webinstaller_suffix(platform)
+  suf = get_installer_suffix(platform)
   # Find the highest version e.g. 3.8.0.
   page_data = urllib.request.urlopen('https://www.python.org/ftp/python/')
   highest = None
