@@ -26,6 +26,7 @@ func wifiRouterRepairPlan() *Plan {
 			"Device is on stable-version",
 			"is_wifirouter_tools_present",
 			"Device has 50 percent tmp diskspace",
+			"Device has 50 percent stateful partition diskspace",
 			"wifirouter_state_working",
 		},
 		Actions: map[string]*Action{
@@ -75,10 +76,14 @@ func wifiRouterRepairPlan() *Plan {
 				Docs: []string{
 					"Check if there are more than 50 percent of diskspace in /tmp",
 				},
-				Dependencies:    []string{"Device is on stable-version"},
-				ExecName:        "cros_has_enough_storage_space_percentage",
-				ExecExtraArgs:   []string{"path:/tmp", "expected:50"},
-				RecoveryActions: []string{"Clean up tmp space"},
+				Dependencies: []string{"Device is on stable-version"},
+				ExecName:     "cros_has_enough_storage_space_percentage",
+				ExecExtraArgs: []string{
+					"path:/tmp",
+					"expected:50"},
+				RecoveryActions: []string{
+					"Clean up tmp space",
+					"install_wifirouter_gale_gale_os"},
 			},
 			"Clean up tmp space": {
 				Docs: []string{
@@ -87,6 +92,28 @@ func wifiRouterRepairPlan() *Plan {
 				ExecName: "cros_run_shell_command",
 				ExecExtraArgs: []string{
 					"rm -Rf /tmp/*",
+				},
+			},
+			"Device has 50 percent stateful partition diskspace": {
+				Docs: []string{
+					"Check if there are more than 50 percent of diskspace in /mnt/stateful_partition",
+				},
+				Dependencies: []string{"Device is on stable-version"},
+				ExecName:     "cros_has_enough_storage_space_percentage",
+				ExecExtraArgs: []string{
+					"path:/mnt/stateful_partition",
+					"expected:50"},
+				RecoveryActions: []string{
+					"Clean up stateful sub space",
+					"install_wifirouter_gale_gale_os"},
+			},
+			"Clean up stateful sub space": {
+				Docs: []string{
+					"Clean up  /mnt/stateful_partition/home/.shadow ,/mnt/stateful_partition/dev_image/telemetry space",
+				},
+				ExecName: "cros_run_shell_command",
+				ExecExtraArgs: []string{
+					"rm -Rf /mnt/stateful_partition/home/.shadow /mnt/stateful_partition/dev_image/telemetry",
 				},
 			},
 		},
