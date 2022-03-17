@@ -499,5 +499,9 @@ func appendAndroidLabels(attrMap map[string]string, labels []string, dut *labapi
 	if board := dut.GetDutModel().GetBuildTarget(); board != "" {
 		labels = append(labels, "board:"+strings.ToLower(board))
 	}
+	// We need to add os label for Android device in legacy workflow
+	// as tests access device metadata through host-info instead of
+	// dut topology directly, so they don't know the device type.
+	labels = append(labels, "os:android")
 	return attrMap, labels
 }
