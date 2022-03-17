@@ -216,8 +216,8 @@ type Metrics interface {
 	// Local versions of Create should emulate this.
 	Create(ctx context.Context, action *Action) error
 
-	// UpdateOld an action with observations.
-	UpdateOld(ctx context.Context, action *Action) (*Action, error)
+	// Update an action with observations.
+	Update(ctx context.Context, action *Action) error
 
 	// Search lists all the actions matching a set of constraints, up to
 	// a limit on the number of returned actions.

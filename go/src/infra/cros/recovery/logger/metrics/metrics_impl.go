@@ -44,20 +44,23 @@ func (m *metrics) Create(ctx context.Context, action *Action) error {
 	return nil
 }
 
-// UpdateOld marshals an action as JSON and logs it at the debug level.
+// Update marshals an action as JSON and logs it at the debug level.
 // TODO(gregorynisbet): Consider replacing the default implementation with an in-memory implementation of Karte.
 // If the method receiver is nil, the behavior is undefined.
-func (m *metrics) UpdateOld(ctx context.Context, action *Action) (*Action, error) {
+func (m *metrics) Update(ctx context.Context, action *Action) error {
 	if m == nil {
-		return nil, errors.Reason("metrics update: metrics cannot be nil").Err()
+		return errors.Reason("metrics update: metrics cannot be nil").Err()
+	}
+	if action == nil {
+		return errors.Reason("metrics update: action cannot be nil").Err()
 	}
 	a, err := json.MarshalIndent(action, "", "    ")
 	if err != nil {
 		// TODO(gregorynisbet): Check if action is nil.
-		return nil, errors.Annotate(err, "record action for asset %q", action.AssetTag).Err()
+		return errors.Annotate(err, "record action for asset %q", action.AssetTag).Err()
 	}
 	m.logger.Debug("Update action %q: %s\n", action.ActionKind, string(a))
-	return action, nil
+	return nil
 }
 
 // Search lists the actions matching a given criterion.

@@ -47,12 +47,10 @@ func (c *client) Create(ctx context.Context, action *metrics.Action) error {
 	return errors.Annotate(err, "create").Err()
 }
 
-// UpdateOld takes an action and updates the entry in the Karte service, the source of truth.
+// Update takes an action and updates the entry in the Karte service, the source of truth.
 // TODO(gregorynisbet): This implementation is not complete. A metrics action has observations attached to it.
 // Updating Karte will require inspecting those observations and potentially updating or replacing them.
-//
-// UpdateOld does NOT modify its arguments.
-func (c *client) UpdateOld(ctx context.Context, action *metrics.Action) (*metrics.Action, error) {
+func (c *client) Update(ctx context.Context, action *metrics.Action) error {
 	a := convertActionToKarteAction(action)
 	karteResp, err := c.impl.UpdateAction(
 		ctx,
@@ -62,9 +60,10 @@ func (c *client) UpdateOld(ctx context.Context, action *metrics.Action) (*metric
 		},
 	)
 	if err != nil {
-		return nil, errors.Annotate(err, "karte update").Err()
+		return errors.Annotate(err, "karte update").Err()
 	}
-	return convertKarteActionToAction(karteResp), nil
+	*action = *convertKarteActionToAction(karteResp)
+	return nil
 }
 
 // defaultResultSetSize is the number of records to return by default from Karte.

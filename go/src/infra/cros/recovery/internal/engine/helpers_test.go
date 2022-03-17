@@ -35,10 +35,10 @@ func (m *fakeMetrics) Create(ctx context.Context, action *metrics.Action) error 
 	return nil
 }
 
-// UpdateOld an action by appending it. Do not remove the original.
-func (m *fakeMetrics) UpdateOld(ctx context.Context, action *metrics.Action) (*metrics.Action, error) {
+// Update an action by appending it. Do not remove the original.
+func (m *fakeMetrics) Update(ctx context.Context, action *metrics.Action) error {
 	m.actions = append(m.actions, action)
-	return action, nil
+	return nil
 }
 
 // Search is not implemented.
