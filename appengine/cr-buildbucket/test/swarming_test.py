@@ -365,6 +365,50 @@ class TaskDefTest(BaseTest):
         'git-version-canary',
     )
 
+  def test_compute_cipd_input_bbagent_cipd_handling(self):
+    build = self._test_build(
+        input=dict(
+            experiments=[
+                experiments.BBAGENT_DOWNLOAD_CIPD, experiments.USE_BBAGENT
+            ],
+        ),
+    )
+    cipd_input = swarming._compute_cipd_input(build, self.settings)
+    self.assertEqual(
+        test_util.ununicode(cipd_input), {
+            'packages': [{
+                'package_name': 'infra/tools/bbagent',
+                'path': '.',
+                'version': 'luci-runner-version',
+            }]
+        }
+    )
+
+  def test_compute_env_prefixes_bbagent_cipd_handling(self):
+    build = self._test_build(
+        input=dict(
+            experiments=[
+                experiments.BBAGENT_DOWNLOAD_CIPD, experiments.USE_BBAGENT
+            ],
+        ),
+        infra=dict(
+            swarming=dict(
+                caches=[
+                    dict(
+                        path='vpython',
+                        name='vpython',
+                        env_var='VPYTHON_VIRTUALENV_ROOT'
+                    ),
+                ],
+            ),
+        ),
+    )
+    env_prefixes = swarming._compute_env_prefixes(build, self.settings)
+    self.assertEqual(
+        test_util.ununicode(env_prefixes),
+        [{'key': 'VPYTHON_VIRTUALENV_ROOT', 'value': ['cache/vpython']}]
+    )
+
   def test_properties(self):
     self.patch(
         'components.auth.get_current_identity',

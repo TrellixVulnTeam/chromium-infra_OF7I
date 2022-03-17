@@ -51,6 +51,7 @@ from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import config
 import errors
 import events
+import experiments
 import model
 import resultdb
 import tokens
@@ -288,19 +289,23 @@ def _compute_task_slices(build, settings, fake_build):
 
 def _compute_env_prefixes(build, settings):
   """Returns env_prefixes key in swarming properties."""
-  env_prefixes = {
-      'PATH': [
-          USER_PACKAGE_DIR,
-          posixpath.join(USER_PACKAGE_DIR, 'bin'),
-      ],
-  }
-  extra_paths = set()
-  for up in settings.swarming.user_packages:
-    if up.subdir:
-      path = posixpath.join(USER_PACKAGE_DIR, up.subdir)
-      extra_paths.add(path)
-      extra_paths.add(posixpath.join(path, 'bin'))
-  env_prefixes['PATH'].extend(sorted(extra_paths))
+  env_prefixes = {}
+  if (experiments.BBAGENT_DOWNLOAD_CIPD not in build.proto.input.experiments or
+      experiments.USE_BBAGENT not in build.proto.input.experiments):
+    env_prefixes = {
+        'PATH': [
+            USER_PACKAGE_DIR,
+            posixpath.join(USER_PACKAGE_DIR, 'bin'),
+        ],
+    }
+    extra_paths = set()
+    for up in settings.swarming.user_packages:
+      if up.subdir:
+        path = posixpath.join(USER_PACKAGE_DIR, up.subdir)
+        extra_paths.add(path)
+        extra_paths.add(posixpath.join(path, 'bin'))
+    env_prefixes['PATH'].extend(sorted(extra_paths))
+
   for c in build.proto.infra.swarming.caches:
     if c.env_var:
       prefixes = env_prefixes.setdefault(c.env_var, [])
@@ -325,6 +330,10 @@ def _compute_cipd_input(build, settings):
         'path': path,
         'version': version,
     }
+
+  if (experiments.BBAGENT_DOWNLOAD_CIPD in build.proto.input.experiments and
+      experiments.USE_BBAGENT in build.proto.input.experiments):
+    return {'packages': [convert('.', settings.swarming.bbagent_package)]}
 
   packages = [
       convert('.', settings.swarming.bbagent_package),
