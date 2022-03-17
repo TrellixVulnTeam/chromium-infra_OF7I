@@ -62,7 +62,43 @@ func (c *client) Update(ctx context.Context, action *metrics.Action) (*metrics.A
 	return convertKarteActionToAction(karteResp), nil
 }
 
+// defaultResultSetSize is the number of records to return by default from Karte.
+const defaultResultSetSize = 1000
+
 // Search takes a query struct and produces a resultset.
 func (c *client) Search(ctx context.Context, q *metrics.Query) (*metrics.QueryResult, error) {
-	panic("not implemented")
+	filter, lErr := q.Lower()
+	if lErr != nil {
+		return nil, errors.Annotate(lErr, "karte search").Err()
+	}
+	pageSize := q.Limit
+	if pageSize <= 0 {
+		pageSize = defaultResultSetSize
+	}
+	karteResp, kErr := c.impl.ListActions(
+		ctx,
+		&kartepb.ListActionsRequest{
+			PageSize: defaultResultSetSize,
+			// We explicitly do not set a page token so that we get
+			// the most recent results first.
+			PageToken: "",
+			Filter:    filter,
+		},
+	)
+	if kErr != nil {
+		return nil, errors.Annotate(kErr, "karte search").Err()
+	}
+
+	var actions []*metrics.Action
+	for _, a := range karteResp.GetActions() {
+		action := convertKarteActionToAction(a)
+		if action != nil {
+			actions = append(actions, action)
+		}
+	}
+
+	return &metrics.QueryResult{
+		PageToken: karteResp.GetNextPageToken(),
+		Actions:   actions,
+	}, nil
 }

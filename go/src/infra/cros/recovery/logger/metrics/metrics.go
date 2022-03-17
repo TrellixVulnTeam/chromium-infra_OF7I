@@ -8,6 +8,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"go.chromium.org/luci/common/errors"
 )
 
 // ActionStatus is the status of an action.
@@ -117,6 +119,11 @@ type Query struct {
 	PageToken string
 	// OrderDescending controls how the result set should be ordered by time
 	OrderDescending bool
+}
+
+// Lower takes a query and lowers it to a string using the filter syntax that Karte accepts.
+func (q *Query) Lower() (string, error) {
+	return "", errors.Reason("lower: not yet implemented").Err()
 }
 
 // NewLastActionQuery returns a query for the last record of a given kind for the asset in question.
