@@ -7,6 +7,7 @@ package metrics
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
@@ -111,6 +112,10 @@ type Query struct {
 	StopTime time.Time
 	// AssetTag is the asset tag for the DUT in question.
 	AssetTag string
+	// Hostname is the hostname for the DUT in question.
+	// The hostname is less reliable than the asset tag because
+	// it identifies a location rather than a device per se.
+	Hostname string
 	// Kind filters the actions by the "ActionKind" field.
 	ActionKind string
 	// Limit imposes a limit on the total number of actions returned.
@@ -122,8 +127,34 @@ type Query struct {
 }
 
 // Lower takes a query and lowers it to a string using the filter syntax that Karte accepts.
+// See karte/api/filter_syntax.md for more information.
 func (q *Query) Lower() (string, error) {
-	return "", errors.Reason("lower: not yet implemented").Err()
+	if q == nil {
+		return "", nil
+	}
+	var out []string
+	// Keep this list of if-statements up-to-date with the
+	if !q.StartTime.IsZero() {
+		return "", errors.Reason("lower: not yet implemented").Err()
+	}
+	if !q.StopTime.IsZero() {
+		return "", errors.Reason("lower: not yet implemented").Err()
+	}
+	if q.AssetTag != "" {
+		return "", errors.Reason("lower: not yet implemented").Err()
+	}
+	if q.Hostname != "" {
+		out = append(out, fmt.Sprintf(`hostname == %q`, q.Hostname))
+	}
+	if q.ActionKind != "" {
+		out = append(out, fmt.Sprintf(`kind == %q`, q.ActionKind))
+	}
+	// q.Limit is intentionally ignored for the purposes of generating a query.
+	if q.PageToken != "" {
+		return "", errors.Reason("lower: not yet implemented").Err()
+	}
+	filter := strings.Join(out, " && ")
+	return filter, nil
 }
 
 // NewLastActionQuery returns a query for the last record of a given kind for the asset in question.
