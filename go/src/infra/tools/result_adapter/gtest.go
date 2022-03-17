@@ -87,6 +87,38 @@ var (
 	// significantly.
 	checkFailedRE = regexp.MustCompile(`.*?([a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+\([0-9]+\))]? (Check failed:.*)`)
 
+	// Extracts failed Google Test expectations from test snippets.
+	// Used as a fallback where result parts are not available
+	// (such as when the test crashes.)
+	//
+	// Example (from a Ubuntu machine):
+	// ../../content/public/test/browser_test_base.cc:718: Failure
+	// Expected equality of these values:
+	//   expected_exit_code_
+	// 	Which is: 0
+	//   ContentMain(std::move(params))
+	// 	Which is: 1
+	// Stack trace:
+	// #0 0x5640a41b448b content::BrowserTestBase::SetUp()
+	//
+	// Note that gtest can produce different kinds of expectation
+	// failures that do not start with
+	// "Expected equality of these values:", so no attempt was made
+	// to match on this part of the text.
+	gtestExpectationRE = regexp.MustCompile(`(?s)[a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+:[0-9]+: Failure\n(.*?)Stack trace:`)
+
+	// As above, but for output generated on Windows machines.
+	// Example:
+	// ../../chrome/browser/net/network_context_configuration_browsertest.cc(984): error: Expected equality of these values:
+	//   net::ERR_CONNECTION_REFUSED
+	//     Which is: -102
+	//   simple_loader2->NetError()
+	//     Which is: -21
+	// Stack trace:
+	// Backtrace:
+	//         std::__1::unique_ptr<network::ResourceRequest,std::__1::default_delete<network::ResourceRequest> >::reset [0x007A3C5B+7709]
+	gtestExpectationWindowsRE = regexp.MustCompile(`(?s)[a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+\([0-9]+\): error: (.*?)Stack trace:`)
+
 	// googleTestTraceRE identifies output from SCOPED_TRACE calls in GTest
 	// so that they can be removed from the primary error message.
 	googleTestTraceRE = regexp.MustCompile(`(?s)Google Test trace:.*$`)
@@ -365,6 +397,10 @@ func extractPrimaryFailure(ctx context.Context, parts []*GTestRunResultPart) *GT
 	return primaryFailure
 }
 
+// extractFailureReasonFromResultParts identifies a test failure reason from
+// structured test result output provided by Google Test. This is the
+// preferred way of identifying a test's failure reason, but this way may not
+// always be possible (e.g. if the test crashed).
 func extractFailureReasonFromResultParts(ctx context.Context, parts []*GTestRunResultPart) *pb.FailureReason {
 	f := extractPrimaryFailure(ctx, parts)
 	if f == nil {
@@ -385,7 +421,7 @@ func extractFailureReasonFromResultParts(ctx context.Context, parts []*GTestRunR
 		logging.Warningf(ctx, "SummaryBase64 is not valid UTF-8 %q", f.SummaryBase64)
 		return nil
 	}
-	summary := string(summaryBytes)
+	summary := strings.TrimSpace(string(summaryBytes))
 	return &pb.FailureReason{
 		PrimaryErrorMessage: truncateString(trimGoogleTestTrace(summary), maxPrimaryErrorBytes),
 	}
@@ -395,22 +431,50 @@ func trimGoogleTestTrace(message string) string {
 	return googleTestTraceRE.ReplaceAllString(message, "")
 }
 
+// extractFailureReasonFromSnippet implements a fallback approach to
+// extracting test failure reasons, based on analysing the test snippet.
+// It tries to identify fatal log messages (including DCheck failures)
+// and failed GTest expectations. This fallback is usually used if
+// the test crashed and GTest does not report structured failure data.
 func extractFailureReasonFromSnippet(ctx context.Context, snippet string) *pb.FailureReason {
+	// Try to find fatal log messages.
 	match := fatalMessageRE.FindStringSubmatchIndex(snippet)
 	checkFailedMatch := checkFailedRE.FindStringSubmatchIndex(snippet)
+	// Pick whichever match exists, or the first (if both matched).
 	if match == nil || (checkFailedMatch != nil && checkFailedMatch[0] < match[0]) {
 		match = checkFailedMatch
+	}
+	// A fatal error was found. Return it.
+	if match != nil {
+		// File name and line, e.g. "tls_handshaker.cc(123)".
+		fileName := snippet[match[2]:match[3]]
+		// The failure message, e.g. "Check failed: !condition. "
+		message := strings.TrimSpace(snippet[match[4]:match[5]])
+
+		// Include the location of the fatal error as sometimes "Check failed: "
+		// errors are non specific. E.g. "Check failed: false".
+		primaryError := fmt.Sprintf("%v: %v", fileName, message)
+		return &pb.FailureReason{
+			PrimaryErrorMessage: truncateString(primaryError, maxPrimaryErrorBytes),
+		}
+	}
+	// As a second approach, we will try to extract GTest expectation failures.
+	// Normally if these were fatal (i.e. GTest assertion failures), the test
+	// would have failed immediately and returned them to as the result parts
+	// (without crashing). The fact we haven't suggests they were non-fatal
+	// failures, or something went wrong in between the fatal error and
+	// returning them to us. Nonetheless, any failure is more useful than none
+	// in terms of investigating the cause of a test failure.
+	match = gtestExpectationRE.FindStringSubmatchIndex(snippet)
+	windowsMatch := gtestExpectationWindowsRE.FindStringSubmatchIndex(snippet)
+	if match == nil || (windowsMatch != nil && windowsMatch[0] < match[0]) {
+		match = windowsMatch
 	}
 	if match == nil {
 		return nil
 	}
-	// File name and line, e.g. "tls_handshaker.cc(123)".
-	fileName := snippet[match[2]:match[3]]
-	// The failure message, e.g. "Check failed: !condition. "
-	message := strings.TrimSpace(snippet[match[4]:match[5]])
-	// Include the location of the fatal error as sometimes "Check failed: "
-	// errors are non specific. E.g. "Check failed: false".
-	primaryError := fmt.Sprintf("%v: %v", fileName, message)
+	message := strings.TrimSpace(snippet[match[2]:match[3]])
+	primaryError := trimGoogleTestTrace(message)
 	return &pb.FailureReason{
 		PrimaryErrorMessage: truncateString(primaryError, maxPrimaryErrorBytes),
 	}
@@ -453,7 +517,8 @@ func (r *GTestResults) convertTestResult(ctx context.Context, buf *bytes.Buffer,
 			// convert a summary.
 			logging.Warningf(ctx, "Failed to convert OutputSnippetBase64 %q", result.OutputSnippetBase64)
 		} else {
-			if tr.FailureReason == nil {
+			failed := status == pb.TestStatus_FAIL || status == pb.TestStatus_CRASH || status == pb.TestStatus_ABORT
+			if tr.FailureReason == nil && failed {
 				tr.FailureReason = extractFailureReasonFromSnippet(ctx, string(outputBytes))
 			}
 			tr.Artifacts = map[string]*sinkpb.Artifact{"snippet": {
