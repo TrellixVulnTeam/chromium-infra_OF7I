@@ -129,8 +129,7 @@ message ListActionsRequest {
   // Filter is a query using an expression syntax described in
   // filter_syntax.md.
   //
-  // Currently supported filterable fields for actions are:
-  // - kind
+  // Currently, every field is filterable.
   string filter = 3;
 }
 

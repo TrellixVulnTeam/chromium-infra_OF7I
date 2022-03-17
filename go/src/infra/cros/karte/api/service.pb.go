@@ -277,8 +277,7 @@ type ListActionsRequest struct {
 	// Filter is a query using an expression syntax described in
 	// filter_syntax.md.
 	//
-	// Currently supported filterable fields for actions are:
-	// - kind
+	// Currently, every field is filterable.
 	Filter string `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
 }
 
