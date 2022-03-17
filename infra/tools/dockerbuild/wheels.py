@@ -1548,6 +1548,7 @@ SPECS.update({
         Universal('paramiko', '2.7.2'),
         Universal('pathlib2', '2.3.3'),
         Universal('pbr', '3.0.0'),
+        Universal('pexpect', '4.8.0'),
         Universal('pipenv', '2018.11.26', pyversions=['py2']),
         Universal('pipenv', '2018.11.26', pyversions=['py3']),
         Universal('pluggy', '0.6.0', pyversions=['py2']),

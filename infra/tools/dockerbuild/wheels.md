@@ -4973,6 +4973,20 @@ wheel: <
 
 * *universal*
 
+## **pexpect**
+
+### 4.8.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pexpect-py2_py3"
+  version: "version:4.8.0"
+>
+```
+
+
+* *universal*
+
 ## **pillow**
 
 ### 5.2.0
