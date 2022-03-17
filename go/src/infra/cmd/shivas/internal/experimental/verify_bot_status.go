@@ -6,6 +6,7 @@ package experimental
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/maruel/subcommands"
 
@@ -137,19 +138,20 @@ func (c *verifyBotStatusRun) innerRun(a subcommands.Application, args []string, 
 	return nil
 }
 
+var excludeBotIDSubstr = []string{"flutter-", "skia-"}
+
 func excludeBot(b *swarmingAPI.SwarmingRpcsBotInfo) bool {
+	for _, s := range excludeBotIDSubstr {
+		if strings.HasPrefix(b.BotId, s) {
+			return true
+		}
+	}
+	var hasZone bool
 	for _, d := range b.Dimensions {
 		if d.Key == "os" && len(d.Value) > 0 {
-			// Exclude android bots
-			if d.Value[0] == "Android" {
-				return true
-			}
-			// Exclude ChromeOS bots
-			if d.Value[0] == "ChromeOS" {
-				return true
-			}
-			// Exclude Fuchsia bots
-			if d.Value[0] == "Fuchsia" {
+			switch d.Value[0] {
+			// Exclude android, ChromeOS, Fuchsia bots
+			case "Android", "ChromeOS", "Fuchsia":
 				return true
 			}
 		}
@@ -157,6 +159,18 @@ func excludeBot(b *swarmingAPI.SwarmingRpcsBotInfo) bool {
 		if d.Key == "inside_docker" && len(d.Value) > 0 {
 			return true
 		}
+		if d.Key == "zone" {
+			hasZone = true
+			for _, v := range d.Value {
+				if v == "us-atl" || v == "us-iad" || v == "us-mtv" {
+					return false
+				}
+			}
+			return true
+		}
+	}
+	if !hasZone {
+		return true
 	}
 	return false
 }
