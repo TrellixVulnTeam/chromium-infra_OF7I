@@ -69,7 +69,6 @@ var defaultConfig = application.Config{
 		Name:    "infra/3pp/tools/virtualenv",
 		Version: "version:2@16.7.10.chromium.7",
 	},
-	VENVOmitUseWheel:        true,
 	PruneThreshold:          7 * 24 * time.Hour, // One week.
 	MaxPrunesPerSweep:       3,
 	DefaultVerificationTags: verificationScenarios,
