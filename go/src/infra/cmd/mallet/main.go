@@ -48,6 +48,7 @@ func getApplication() *cli.Application {
 			tasks.LocalRecovery,
 			tasks.RecoveryConfig,
 			tasks.CustomProvision,
+			tasks.DownloadToUsbDrive,
 		},
 	}
 }
