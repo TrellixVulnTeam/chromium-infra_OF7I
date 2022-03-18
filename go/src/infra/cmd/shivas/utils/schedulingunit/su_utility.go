@@ -22,6 +22,7 @@ var dutStateWeights = map[string]int{
 	"needs_manual_repair": 4,
 	"needs_replacement":   4,
 	"needs_deploy":        4,
+	"reserved":            5,
 }
 
 var suStateMap = map[int]string{
@@ -30,6 +31,7 @@ var suStateMap = map[int]string{
 	2: "needs_repair",
 	3: "repair_failed",
 	4: "needs_manual_attention",
+	5: "reserved",
 }
 
 func schedulingUnitDutState(states []string) string {

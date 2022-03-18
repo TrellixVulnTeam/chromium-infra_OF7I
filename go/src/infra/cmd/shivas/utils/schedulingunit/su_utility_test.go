@@ -47,6 +47,11 @@ func TestSchedulingUnitDutState(t *testing.T) {
 		So(schedulingUnitDutState(s), ShouldEqual, "needs_manual_attention")
 	})
 
+	Convey("Test when where one child DUT in reserved.", t, func() {
+		s := []string{"ready", "reserved", "needs_deploy", "needs_repair", "repair_failed"}
+		So(schedulingUnitDutState(s), ShouldEqual, "reserved")
+	})
+
 	Convey("Test when input is an empty slice", t, func() {
 		var s []string
 		So(schedulingUnitDutState(s), ShouldEqual, "unknown")
