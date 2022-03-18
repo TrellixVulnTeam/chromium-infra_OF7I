@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	cloud.google.com/go v0.100.2
+	cloud.google.com/go/appengine v1.2.0
 	cloud.google.com/go/bigquery v1.28.0
 	cloud.google.com/go/cloudtasks v0.1.0
 	cloud.google.com/go/compute v1.3.0
@@ -77,10 +78,10 @@ require (
 	golang.org/x/tools/gopls v0.7.3
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	gonum.org/v1/gonum v0.9.3
-	google.golang.org/api v0.69.0
+	google.golang.org/api v0.70.0
 	google.golang.org/appengine v1.6.7
 	google.golang.org/appengine/v2 v2.0.1
-	google.golang.org/genproto v0.0.0-20220218161850-94dd64e39d7c
+	google.golang.org/genproto v0.0.0-20220222213610-43724f9ea8cf
 	google.golang.org/grpc v1.40.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.27.1

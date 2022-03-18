@@ -7,10 +7,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/maruel/subcommands"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
@@ -43,6 +46,7 @@ type commandBase struct {
 	tarballSHA256 string         // -tarball-sha256 flag (optional for local files)
 	cacheDir      string         // -cache-dir flag (optional, has default)
 	dryRun        bool           // -dry-run flag
+	jsonOutput    string         // -json-output flag
 
 	source source.Source // initialized in handleArgsAndFlags
 	cache  *cache.Cache  // initialized in handleArgsAndFlags
@@ -50,10 +54,11 @@ type commandBase struct {
 
 // extraFlags indicates what CLI flags to register.
 type extraFlags struct {
-	appID    bool // -app-id
-	tarball  bool // -tarball-*
-	cacheDir bool // -cache-dir
-	dryRun   bool // -dry-run
+	appID      bool // -app-id
+	tarball    bool // -tarball-*
+	cacheDir   bool // -cache-dir
+	dryRun     bool // -dry-run
+	jsonOutput bool // -json-output
 }
 
 // init register base flags. Must be called.
@@ -76,6 +81,9 @@ func (c *commandBase) init(exec execCb, extraFlags extraFlags) {
 	}
 	if extraFlags.dryRun {
 		c.Flags.BoolVar(&c.dryRun, "dry-run", false, "Just print gcloud commands that modify state without executing them.")
+	}
+	if extraFlags.jsonOutput {
+		c.Flags.StringVar(&c.jsonOutput, "json-output", "-", "Where to write the JSON output or - for stdout.")
 	}
 }
 
@@ -174,4 +182,21 @@ func handleErr(ctx context.Context, err error) int {
 		errors.Log(ctx, err)
 		return 1
 	}
+}
+
+// writeOutput writes a JSONPB-serialized message to the given file or stdout.
+func writeOutput(path string, msg proto.Message) error {
+	blob, err := (protojson.MarshalOptions{
+		Multiline:      true,
+		Indent:         "  ",
+		UseEnumNumbers: true,
+	}).Marshal(msg)
+	if err != nil {
+		return err
+	}
+	if path == "-" {
+		_, err := os.Stdout.Write(blob)
+		return err
+	}
+	return ioutil.WriteFile(path, blob, 0666)
 }

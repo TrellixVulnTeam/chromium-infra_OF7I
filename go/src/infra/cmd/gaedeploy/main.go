@@ -20,7 +20,7 @@ import (
 
 const (
 	// Version is the version of gaedeploy tool.
-	Version = "1.1.2"
+	Version = "1.1.3"
 	// UserAgent is used in HTTP headers of requests from cloudbuildhelper.
 	UserAgent = "gaedeploy v" + Version
 )
@@ -49,6 +49,7 @@ func getApplication() *cli.Application {
 
 			// Advanced.
 			cmdCacheTrim,
+			cmdCaptureState,
 		},
 	}
 }
