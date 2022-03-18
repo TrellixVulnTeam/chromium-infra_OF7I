@@ -185,13 +185,19 @@ func InstallFwFromFwImage(ctx context.Context, req *InstallFwFromFwImageRequest,
 		// Specify the name used for download file.
 		downloadFilename = "fw_image.tar.bz2"
 	)
+	clearDirectory := func() {
+		_, err := run(ctx, time.Minute, "rm", "-rf", req.DownloadDir)
+		log.Debug("Failed to remove download directory %q, Error: %s", req.DownloadDir, err)
+	}
+	// Remove directory in case something left from last times.
+	clearDirectory()
+	if _, err := run(ctx, time.Minute, "mkdir", "-p", req.DownloadDir); err != nil {
+		return errors.Annotate(err, "install fw from fw-image").Err()
+	}
+	// Always clean up after creating folder as host has limit storage space.
+	defer func() { clearDirectory() }()
+	// Spicily filename for file to download.
 	tarballPath := filepath.Join(req.DownloadDir, downloadFilename)
-	defer func() {
-		// Remove dir before finish the action to avoidcases when we left something extra after execution.
-		if _, err := run(ctx, time.Minute, "rm", "-rf", req.DownloadDir); err != nil {
-			log.Debug("Failed to remove download directory %q, Error: %s", req.DownloadDir, err)
-		}
-	}()
 	if out, err := run(ctx, req.DownloadImageTimeout, "curl", req.DownloadImagePath, "--output", tarballPath); err != nil {
 		log.Debug("Output to download fw-image: %s", out)
 		return errors.Annotate(err, "install fw from fw-image").Err()

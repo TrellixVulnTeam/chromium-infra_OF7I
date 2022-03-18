@@ -113,6 +113,9 @@ func setGbbFlagsByServoExec(ctx context.Context, info *execs.ExecInfo) error {
 }
 
 func updateFwWithFwImageByServo(ctx context.Context, info *execs.ExecInfo) error {
+	const (
+		firmwareTarName = "firmware_from_source.tar.bz2"
+	)
 	sv, err := info.Versioner().Cros(ctx, info.RunArgs.DUT.Name)
 	if err != nil {
 		return errors.Annotate(err, "cros provision").Err()
@@ -128,13 +131,15 @@ func updateFwWithFwImageByServo(ctx context.Context, info *execs.ExecInfo) error
 	fwDownloadDir := am.AsString(ctx, "fw_download_dir", defaultFwFolderPath(info.RunArgs.DUT))
 	log.Debug(ctx, "Used fw image path: %s", gsImagePath)
 	// Requesting convert GC path to caches service path.
-	// Example: `http://Addr:8082/download/chromeos-image-archive/board-release/R99-XXXXX.XX.0/firmware_from_source.tar.bz2`
+	// Example: `http://Addr:8082/download/chromeos-image-archive/board-release/R99-XXXXX.XX.0`
 	downloadPath, err := info.RunArgs.Access.GetCacheUrl(ctx, info.RunArgs.DUT.Name, gsImagePath)
 	if err != nil {
 		return errors.Annotate(err, mn).Err()
 	}
+	fwFileName := am.AsString(ctx, "fw_filename", firmwareTarName)
+	downloadFilename := fmt.Sprintf("%s/%s", downloadPath, fwFileName)
 	req := &firmware.InstallFwFromFwImageRequest{
-		DownloadImagePath:    downloadPath,
+		DownloadImagePath:    downloadFilename,
 		DownloadImageTimeout: am.AsDuration(ctx, "download_timeout", 600, time.Second),
 		DownloadDir:          fwDownloadDir,
 		Board:                am.AsString(ctx, "dut_board", info.RunArgs.DUT.Board),

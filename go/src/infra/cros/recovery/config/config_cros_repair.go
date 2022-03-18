@@ -44,8 +44,11 @@ func crosRepairActions() map[string]*Action {
 				"dut_has_board_name",
 				"dut_has_model_name",
 			},
-			RecoveryActions: []string{"Restore AC detection by EC console"},
-			ExecName:        "cros_ping",
+			RecoveryActions: []string{
+				"Restore AC detection by EC console",
+				"Update FW from fw-image by servo",
+			},
+			ExecName: "cros_ping",
 			ExecTimeout: &durationpb.Duration{
 				Seconds: 15,
 			},
@@ -62,6 +65,7 @@ func crosRepairActions() map[string]*Action {
 				"Trigger kernel panic to reset the whole board and try ssh to DUT",
 				"cros_servo_cr50_reboot_repair",
 				"Install OS in recovery mode by booting from servo USB-drive",
+				"Update FW from fw-image by servo",
 			},
 		},
 		"internal_storage": {
@@ -193,6 +197,7 @@ func crosRepairActions() map[string]*Action {
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
 				"Quick provision OS",
+				"Update FW from fw-image by servo",
 			},
 			ExecName: "cros_is_firmware_in_good_state",
 		},
@@ -1038,6 +1043,31 @@ func crosRepairActions() map[string]*Action {
 				"Quick provision OS",
 			},
 			ExecName: "sample_pass",
+		},
+		"Update FW from fw-image by servo": {
+			Docs: []string{
+				"Download fw-image specified in stable version and flash EC/AP to the DUT by servo",
+				"Set timeout for 100 minutes for now as = 10m(download)+ 7*3m(extraction-file)+10m(ec-update)+30m(ap-update).",
+				"The time will be updated later based on collected metrics",
+				"Each operation with extraction files can take up to a few minutes.",
+				"Ap update on the DUT can take up to 30 minutes",
+			},
+			Conditions: []string{
+				"dut_servo_host_present",
+				"servo_state_is_working",
+			},
+			Dependencies: []string{
+				"has_stable_version_fw_version",
+			},
+			ExecName: "cros_update_fw_with_fw_image_by_servo_from",
+			ExecExtraArgs: []string{
+				"update_ec:true",
+				"update_ap:true",
+				"download_timeout:600",
+			},
+			ExecTimeout: &durationpb.Duration{
+				Seconds: 6000,
+			},
 		},
 	}
 }
