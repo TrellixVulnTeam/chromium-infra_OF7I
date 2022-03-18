@@ -334,17 +334,22 @@ func processMachineLSEUpdateMask(ctx context.Context, oldMachinelse *ufspb.Machi
 		case "mlseprototype":
 			oldMachinelse.MachineLsePrototype = machinelse.GetMachineLsePrototype()
 		case "osVersion":
-			if oldMachinelse.GetChromeBrowserMachineLse() == nil {
-				oldMachinelse.Lse = &ufspb.MachineLSE_ChromeBrowserMachineLse{
-					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{},
+			if oldMachinelse.GetChromeBrowserMachineLse() != nil {
+				if oldMachinelse.GetChromeBrowserMachineLse().GetOsVersion() == nil {
+					oldMachinelse.GetChromeBrowserMachineLse().OsVersion = &ufspb.OSVersion{
+						Value: machinelse.GetChromeBrowserMachineLse().GetOsVersion().GetValue(),
+					}
+				} else {
+					oldMachinelse.GetChromeBrowserMachineLse().GetOsVersion().Value = machinelse.GetChromeBrowserMachineLse().GetOsVersion().GetValue()
 				}
-			}
-			if oldMachinelse.GetChromeBrowserMachineLse().GetOsVersion() == nil {
-				oldMachinelse.GetChromeBrowserMachineLse().OsVersion = &ufspb.OSVersion{
-					Value: machinelse.GetChromeBrowserMachineLse().GetOsVersion().GetValue(),
+			} else if oldMachinelse.GetAttachedDeviceLse() != nil {
+				if oldMachinelse.GetAttachedDeviceLse().GetOsVersion() == nil {
+					oldMachinelse.GetAttachedDeviceLse().OsVersion = &ufspb.OSVersion{
+						Value: machinelse.GetAttachedDeviceLse().GetOsVersion().GetValue(),
+					}
+				} else {
+					oldMachinelse.GetAttachedDeviceLse().GetOsVersion().Value = machinelse.GetAttachedDeviceLse().GetOsVersion().GetValue()
 				}
-			} else {
-				oldMachinelse.GetChromeBrowserMachineLse().GetOsVersion().Value = machinelse.GetChromeBrowserMachineLse().GetOsVersion().GetValue()
 			}
 		case "osImage":
 			if oldMachinelse.GetChromeBrowserMachineLse() == nil {
@@ -374,6 +379,12 @@ func processMachineLSEUpdateMask(ctx context.Context, oldMachinelse *ufspb.Machi
 			oldMachinelse.Description = machinelse.Description
 		case "deploymentTicket":
 			oldMachinelse.DeploymentTicket = machinelse.GetDeploymentTicket()
+		case "assocHostname":
+			oldMachinelse.GetAttachedDeviceLse().AssociatedHostname = machinelse.GetAttachedDeviceLse().GetAssociatedHostname()
+		case "assocHostPort":
+			oldMachinelse.GetAttachedDeviceLse().AssociatedHostPort = machinelse.GetAttachedDeviceLse().GetAssociatedHostPort()
+		case "schedulable":
+			oldMachinelse.Schedulable = machinelse.GetSchedulable()
 		}
 	}
 	// return existing/old machinelse with new updated values
@@ -1440,16 +1451,26 @@ func validateMachineLSEUpdateMask(machinelse *ufspb.MachineLSE, mask *field_mask
 			case "osImage":
 				fallthrough
 			case "osVersion":
-				if machinelse.GetChromeBrowserMachineLse() == nil {
-					return status.Error(codes.InvalidArgument, "validateMachineLSEUpdateMask - browser machine lse cannot be empty/nil.")
+				if machinelse.GetChromeBrowserMachineLse() == nil && machinelse.GetAttachedDeviceLse() == nil {
+					return status.Error(codes.InvalidArgument, "validateMachineLSEUpdateMask - browser / attached device machine lse cannot be empty/nil.")
 				}
-				if machinelse.GetChromeBrowserMachineLse().GetOsVersion() == nil {
-					return status.Error(codes.InvalidArgument, "validateMachineLSEUpdateMask - Osverison cannot be empty/nil.")
+				if (machinelse.GetChromeBrowserMachineLse() != nil && machinelse.GetChromeBrowserMachineLse().GetOsVersion() == nil) ||
+					(machinelse.GetAttachedDeviceLse() != nil && machinelse.GetAttachedDeviceLse().GetOsVersion() == nil) {
+					return status.Error(codes.InvalidArgument, "validateMachineLSEUpdateMask - OsVersion cannot be empty/nil.")
 				}
 			case "vmCapacity":
 				if machinelse.GetChromeBrowserMachineLse() == nil {
 					return status.Error(codes.InvalidArgument, "validateMachineLSEUpdateMask - browser machine lse cannot be empty/nil.")
 				}
+			case "assocHostname":
+				if machinelse.GetAttachedDeviceLse() == nil {
+					return status.Error(codes.InvalidArgument, "validateMachineLSEUpdateMask - machine is not an attached device")
+				}
+			case "assocHostPort":
+				if machinelse.GetAttachedDeviceLse() == nil {
+					return status.Error(codes.InvalidArgument, "validateMachineLSEUpdateMask - machine is not an attached device")
+				}
+			case "schedulable":
 			case "deploymentTicket":
 			case "tags":
 			case "description":

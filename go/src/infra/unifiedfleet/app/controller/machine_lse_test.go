@@ -1340,6 +1340,67 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(resp.GetTags(), ShouldResemble, []string{"tag-1", "tag-2"})
 			So(resp.GetMachines(), ShouldResemble, []string{"machine-7"})
 		})
+
+		Convey("Partial Update attached device host", func() {
+			machine := &ufspb.Machine{
+				Name: "adm-1",
+				Device: &ufspb.Machine_AttachedDevice{
+					AttachedDevice: &ufspb.AttachedDevice{
+						DeviceType:   ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_APPLE_PHONE,
+						Manufacturer: "test-man",
+						BuildTarget:  "test-target",
+						Model:        "test-model",
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			lse := &ufspb.MachineLSE{
+				Name:     "adh-lse-1",
+				Machines: []string{"adm-1"},
+				Lse: &ufspb.MachineLSE_AttachedDeviceLse{
+					AttachedDeviceLse: &ufspb.AttachedDeviceLSE{
+						OsVersion: &ufspb.OSVersion{
+							Value: "test-os",
+						},
+						AssociatedHostname: "adm-1",
+						AssociatedHostPort: "test-port-1",
+					},
+				},
+				Schedulable: false,
+			}
+			_, err = inventory.CreateMachineLSE(ctx, lse)
+			So(err, ShouldBeNil)
+
+			lse1 := &ufspb.MachineLSE{
+				Name:     "adh-lse-1",
+				Machines: []string{"adm-1"},
+				Lse: &ufspb.MachineLSE_AttachedDeviceLse{
+					AttachedDeviceLse: &ufspb.AttachedDeviceLSE{
+						OsVersion: &ufspb.OSVersion{
+							Value: "test-os-2",
+						},
+						AssociatedHostname: "adm-1",
+						AssociatedHostPort: "test-port-2",
+					},
+				},
+				Schedulable: true,
+			}
+			resp, err := UpdateMachineLSE(ctx, lse1, &field_mask.FieldMask{Paths: []string{
+				"osVersion",
+				"assocHostname",
+				"assocHostPort",
+				"schedulable",
+			}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetMachines(), ShouldResemble, []string{"adm-1"})
+			So(resp.GetAttachedDeviceLse().GetOsVersion().GetValue(), ShouldEqual, "test-os-2")
+			So(resp.GetAttachedDeviceLse().GetAssociatedHostname(), ShouldEqual, "adm-1")
+			So(resp.GetAttachedDeviceLse().GetAssociatedHostPort(), ShouldEqual, "test-port-2")
+			So(resp.GetSchedulable(), ShouldBeTrue)
+		})
 	})
 }
 

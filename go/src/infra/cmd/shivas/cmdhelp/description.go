@@ -2094,6 +2094,28 @@ shivas get adh {name1} {name2}
 shivas get adh -state serving -state needs_repair -zone atl97
 
 Gets the attached device host and prints the output in user format.`
+
+	// UpdateADHText long description for UpdateAttachedDeviceHostCmd and UpdateADHCmd
+	UpdateADHText string = `Update an attached device host by name to UFS.
+
+This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
+default to operate in the browser lab namespace.
+
+'shivas update adh ...' is an alias of 'shivas update attached-device-host...'
+
+Examples:
+shivas update adh -f adhrequest.json
+Update an attached device host by reading a JSON file input.
+
+shivas update adh -name host1 -machine machine2
+Update machine the attached device host is connected to.
+
+shivas update adh -name host1 -os ios_13.2 -associated-hostname adm1
+Update the os version and associated hostname of the host.
+
+shivas update adh -name host1 -tags -
+Delete tags of an existing adh entry.
+`
 )
 
 func CronTriggerAvailableJobsString() string {

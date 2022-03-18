@@ -189,6 +189,26 @@ func PrintExistingHost(ctx context.Context, ic ufsAPI.FleetClient, name string) 
 	return nil
 }
 
+// PrintExistingAttachedDeviceHost prints the old attached device host in update/delete operations.
+func PrintExistingAttachedDeviceHost(ctx context.Context, ic ufsAPI.FleetClient, name string) (*ufspb.MachineLSE, error) {
+	res, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, name),
+	})
+	if err != nil {
+		return nil, errors.Annotate(err, "Failed to get attached device host").Err()
+	}
+	if res == nil {
+		return nil, errors.Reason("The returned resp is empty").Err()
+	}
+	if res.GetAttachedDeviceLse() == nil {
+		return nil, errors.Reason("Host %s is not an attached device host.", name).Err()
+	}
+	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The attached device host before delete/update:")
+	PrintProtoJSON(res, !NoEmitMode(false))
+	return res, nil
+}
+
 // PrintExistingLSEDeploymentRecord prints the old deployment record in update/delete operations
 func PrintExistingLSEDeploymentRecord(ctx context.Context, ic ufsAPI.FleetClient, name string) {
 	res, err := ic.GetMachineLSEDeployment(ctx, &ufsAPI.GetMachineLSEDeploymentRequest{
