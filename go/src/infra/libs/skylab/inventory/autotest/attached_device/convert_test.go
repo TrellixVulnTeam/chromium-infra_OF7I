@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/google/go-cmp/cmp"
 
+	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
 )
 
@@ -38,19 +39,28 @@ var attachedDeviceLabels = []string{
 	"serial_number:1234567890",
 	"model:dummy_model",
 	"board:dummy_board",
+	"os:android",
+}
+
+func getEmptyAttachedDeviceMachine() *ufspb.Machine {
+	return &ufspb.Machine{
+		Device: &ufspb.Machine_AttachedDevice{
+			AttachedDevice: &ufspb.AttachedDevice{},
+		},
+	}
 }
 
 func TestConvertEmptyAttachedDeviceData(t *testing.T) {
 	t.Parallel()
 	data := ufsapi.AttachedDeviceData{}
 	got := Convert(&data)
-	var want []string
+	want := []string{"os:unknown"}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("Empty attached device labels mismatch (-want +got):\n%s", diff)
 	}
 }
 
-func TestConvertAttachedDeviceData(t *testing.T) {
+func TestConvertFullAttachedDeviceData(t *testing.T) {
 	t.Parallel()
 	var data ufsapi.AttachedDeviceData
 	if err := proto.UnmarshalText(attachedDeviceDataProto, &data); err != nil {
@@ -58,6 +68,58 @@ func TestConvertAttachedDeviceData(t *testing.T) {
 	}
 	got := Convert(&data)
 	if diff := cmp.Diff(attachedDeviceLabels, got); diff != "" {
-		t.Errorf("Empty attached device labels mismatch (-want +got):\n%s", diff)
+		t.Errorf("Attached device labels mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestConvertOsTypeAndroidPhone(t *testing.T) {
+	t.Parallel()
+	data := ufsapi.AttachedDeviceData{
+		Machine: getEmptyAttachedDeviceMachine(),
+	}
+	data.GetMachine().GetAttachedDevice().DeviceType = ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_ANDROID_PHONE
+	got := Convert(&data)
+	want := []string{"os:android"}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("Attached device labels mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestConvertOsTypeAndroidTablet(t *testing.T) {
+	t.Parallel()
+	data := ufsapi.AttachedDeviceData{
+		Machine: getEmptyAttachedDeviceMachine(),
+	}
+	data.GetMachine().GetAttachedDevice().DeviceType = ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_ANDROID_TABLET
+	got := Convert(&data)
+	want := []string{"os:android"}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("Attached device labels mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestConvertOsTypeApplePhone(t *testing.T) {
+	t.Parallel()
+	data := ufsapi.AttachedDeviceData{
+		Machine: getEmptyAttachedDeviceMachine(),
+	}
+	data.GetMachine().GetAttachedDevice().DeviceType = ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_APPLE_PHONE
+	got := Convert(&data)
+	want := []string{"os:ios"}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("Attached device labels mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestConvertOsTypeAppleTablet(t *testing.T) {
+	t.Parallel()
+	data := ufsapi.AttachedDeviceData{
+		Machine: getEmptyAttachedDeviceMachine(),
+	}
+	data.GetMachine().GetAttachedDevice().DeviceType = ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_APPLE_TABLET
+	got := Convert(&data)
+	want := []string{"os:ios"}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("Attached device labels mismatch (-want +got):\n%s", diff)
 	}
 }

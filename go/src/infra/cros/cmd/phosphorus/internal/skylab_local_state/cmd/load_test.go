@@ -305,6 +305,7 @@ func TestConvertAttachedDeviceInfoToHostInfo(t *testing.T) {
 				"model:" + model,
 				"name:" + hostname,
 				"serial_number:" + serialNumber,
+				"os:android",
 			},
 			SerializerVersion: 1,
 		}
