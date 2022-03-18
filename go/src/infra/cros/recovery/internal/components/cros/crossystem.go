@@ -12,11 +12,11 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
-	"infra/cros/recovery/internal/execs"
+	"infra/cros/recovery/internal/components"
 )
 
 // MatchCrossystemValueToExpectation reads value from crossystem and compared to expected value.
-func MatchCrossystemValueToExpectation(ctx context.Context, run execs.Runner, subcommand string, expectedValue string) error {
+func MatchCrossystemValueToExpectation(ctx context.Context, run components.Runner, subcommand string, expectedValue string) error {
 	out, err := run(ctx, time.Minute, "crossystem", subcommand)
 	if err != nil {
 		return errors.Annotate(err, "match crossystem value to expectation: fail read %s", subcommand).Err()
@@ -31,7 +31,7 @@ func MatchCrossystemValueToExpectation(ctx context.Context, run execs.Runner, su
 // UpdateCrossystem sets value of the subcommand to the value passed in.
 //
 // @params: check: bool value to check whether the crossystem command is being updated successfully.
-func UpdateCrossystem(ctx context.Context, run execs.Runner, cmd string, val string, check bool) error {
+func UpdateCrossystem(ctx context.Context, run components.Runner, cmd string, val string, check bool) error {
 	if _, err := run(ctx, time.Minute, fmt.Sprintf("crossystem %s=%s", cmd, val)); err != nil {
 		return errors.Annotate(err, "update crossystem value").Err()
 	}

@@ -110,8 +110,41 @@ func osInstallRepairExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+// verifyBootInRecoveryModeExec verify that device can boot in recovery mode and reboot to normal mode again.
+func verifyBootInRecoveryModeExec(ctx context.Context, info *execs.ExecInfo) error {
+	am := info.GetActionArgs(ctx)
+	dut := info.RunArgs.DUT
+	dutRun := info.NewRunner(dut.Name)
+	dutBackgroundRun := info.NewBackgroundRunner(dut.Name)
+	dutPing := info.NewPinger(dut.Name)
+	servod := info.NewServod()
+	// Flag to notice when device booted and sshable.
+	var successBooted bool
+	callback := func(_ context.Context) error {
+		successBooted = true
+		return nil
+	}
+	req := &cros.BootInRecoveryRequest{
+		DUT:          dut,
+		BootTimeout:  am.AsDuration(ctx, "boot_timeout", 480, time.Second),
+		BootInterval: am.AsDuration(ctx, "boot_interval", 10, time.Second),
+		// Register that device booted and sshable.
+		Callback:            callback,
+		HaltTimeout:         am.AsDuration(ctx, "halt_timeout", 120, time.Second),
+		IgnoreRebootFailure: am.AsBool(ctx, "ignore_reboot_failure", false),
+	}
+	if err := cros.BootInRecoveryMode(ctx, req, dutRun, dutBackgroundRun, dutPing, servod, info.NewLogger()); err != nil {
+		return errors.Annotate(err, "verify boot in recovery mode").Err()
+	}
+	if !successBooted {
+		return errors.Reason("verify boot in recovery mode: did not booted").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_dev_mode_boot_from_servo_usb_drive", devModeBootFromServoUSBDriveExec)
 	execs.Register("cros_run_chromeos_install_command_after_boot_usbdrive", runChromeosInstallCommandWhenBootFromUSBDriveExec)
 	execs.Register("os_install_repair", osInstallRepairExec)
+	execs.Register("cros_verify_boot_in_recovery_mode", verifyBootInRecoveryModeExec)
 }
