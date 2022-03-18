@@ -149,6 +149,16 @@ else
   SETUP_LOCAL_ATTACH+=("$DEPS_PREFIX/lib/libffi.a")
 fi
 
+# Avoid querying altstack size dynamically on armv6l because the dockcross
+# image we are using don't have the sys/auxv.h in glibc. The autoconf doesn't
+# take sys/auxv.h into account so we need to manually disable the detection of
+# linux/auxvec.h. This can be removed when we move to a newer version of the
+# glibc.
+# See also: https://github.com/python/cpython/pull/31789
+if [[ $_3PP_PLATFORM  == "linux-armv6l" ]]; then
+  export ac_cv_header_linux_auxvec_h=n
+fi
+
 # Python tends to hard-code /usr/include and /usr/local/include in its setup.py
 # file which can end up picking up headers and stuff from wherever.
 sed -i \
