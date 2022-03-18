@@ -121,24 +121,27 @@ func (c *loadRun) innerRun(a subcommands.Application, args []string, env subcomm
 	}
 
 	resultsDir := location.ResultsDir(request.Config.AutotestDir, request.RunId, request.TestId)
+	var labDutTopologies []*labapi.DutTopology
 
 	for _, deviceInfo := range deviceInfos {
 		deviceState, err := getDeviceState(request.Config.AutotestDir, deviceInfo)
 		if err != nil {
 			return err
 		}
-		hostInfo, err := getFullHostInfo(ctx, deviceInfo, deviceState)
+		hostInfo, labDutTopo, err := getFullHostInfo(ctx, deviceInfo, deviceState)
 		if err != nil {
 			return err
 		}
+		labDutTopologies = append(labDutTopologies, labDutTopo)
 		if err := writeHostInfo(resultsDir, getHostname(deviceInfo), hostInfo); err != nil {
 			return err
 		}
 	}
 
 	response := skylab_local_state.LoadResponse{
-		ResultsDir:  resultsDir,
-		DutTopology: createDutTopology(deviceInfos),
+		ResultsDir:     resultsDir,
+		DutTopology:    createDutTopology(deviceInfos),
+		LabDutTopology: labDutTopologies,
 	}
 
 	return writeJSONPb(c.outputPath, &response)
@@ -298,23 +301,25 @@ func writeHostInfo(resultsDir string, dutName string, i *skylab_local_state.Auto
 }
 
 // getFullHostInfo aggregates data from local and admin services state into one hostinfo object
-func getFullHostInfo(ctx context.Context, deviceInfo *ufsapi.GetDeviceDataResponse, deviceState *lab_platform.DutState) (*skylab_local_state.AutotestHostInfo, error) {
+func getFullHostInfo(ctx context.Context, deviceInfo *ufsapi.GetDeviceDataResponse, deviceState *lab_platform.DutState) (*skylab_local_state.AutotestHostInfo, *labapi.DutTopology, error) {
 	var hostInfo *skylab_local_state.AutotestHostInfo
+	var labDutTopo *labapi.DutTopology
+	var err error
 	useDutTopo := os.Getenv("USE_DUT_TOPO")
 	if strings.ToLower(useDutTopo) == "true" {
 		hostname := getHostname(deviceInfo)
-		dutTopo, err := getDUTTopology(ctx, hostname)
-		// Output dutTopo to stdout during development
-		log.Printf(proto.MarshalTextString(dutTopo))
+		labDutTopo, err = getDUTTopology(ctx, hostname)
+		// Output labDutTopo to stdout during development
+		log.Printf(proto.MarshalTextString(labDutTopo))
 		if err != nil {
 			// Output error to stdout during testing
 			fmt.Println("Error getting DUT topology: ", err.Error())
-			return nil, errors.Annotate(err, "get dut topology").Err()
+			return nil, nil, errors.Annotate(err, "get dut topology").Err()
 		}
 
-		hostInfo, err = convertDutTopologyToHostInfo(dutTopo)
+		hostInfo, err = convertDutTopologyToHostInfo(labDutTopo)
 		if err != nil {
-			return nil, errors.Annotate(err, "convert dut topology to host info").Err()
+			return nil, labDutTopo, errors.Annotate(err, "convert dut topology to host info").Err()
 		}
 		// Output hostInfo to stdout during development
 		log.Printf("Host info from DutTopology:\n")
@@ -330,7 +335,7 @@ func getFullHostInfo(ctx context.Context, deviceInfo *ufsapi.GetDeviceDataRespon
 		hostInfo = hostInfoFromDeviceInfo(deviceInfo)
 		addDeviceStateToHostInfo(hostInfo, deviceState)
 	}
-	return hostInfo, nil
+	return hostInfo, labDutTopo, nil
 }
 
 // getHostname returns a hostname extracted from GetDeviceDataResponse proto
