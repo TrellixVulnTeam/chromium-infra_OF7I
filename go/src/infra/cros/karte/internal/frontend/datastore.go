@@ -33,6 +33,8 @@ const ActionKind = "ActionKind"
 const ObservationKind = "ObservationKind"
 
 // ActionEntity is the datastore entity for actions.
+//
+// Remember to check the setActionEntityFields function.
 type ActionEntity struct {
 	_kind          string    `gae:"$kind,ActionKind"`
 	ID             string    `gae:"$id"`
@@ -386,6 +388,8 @@ func PutObservationEntities(ctx context.Context, entities ...*ObservationEntity)
 // If fields is empty, copy all fields that are eligible for copying.
 // Unrecognized fields are silently ignored.
 // Neither left nor right can be nil or else the behavior of this function is undefined.
+//
+// Keep this function up to date with ActionEntity.
 func setActionEntityFields(fields []string, src *ActionEntity, dst *ActionEntity) {
 	if src == nil || dst == nil {
 		return
@@ -404,6 +408,9 @@ func setActionEntityFields(fields []string, src *ActionEntity, dst *ActionEntity
 	if addAll || m["swarming_task_id"] {
 		dst.SwarmingTaskID = src.SwarmingTaskID
 	}
+	if addAll || m["BuildbucketID"] {
+		dst.BuildbucketID = src.BuildbucketID
+	}
 	if addAll || m["asset_tag"] {
 		dst.AssetTag = src.AssetTag
 	}
@@ -417,7 +424,13 @@ func setActionEntityFields(fields []string, src *ActionEntity, dst *ActionEntity
 	if addAll || m["status"] {
 		dst.Status = src.Status
 	}
+	if addAll || m["fail_reason"] {
+		dst.FailReason = src.FailReason
+	}
 	// ModificationCount is managed by Karte internally and thus ineligible for copying.
+	if addAll || m["error_reason"] {
+		dst.ErrorReason = src.ErrorReason
+	}
 }
 
 // UpdateActionEntity updates an entity according to the field mask.
