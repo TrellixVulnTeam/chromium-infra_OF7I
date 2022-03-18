@@ -156,6 +156,10 @@ func (fs *FleetServerImpl) UpdateDeviceRecoveryData(ctx context.Context, req *ap
 		logging.Errorf(ctx, "UpdateDeviceRecoverData request validate fail - %s", err.Error())
 		return nil, err
 	}
+	if err := controller.UpdateRecoveryData(ctx, req); err != nil {
+		logging.Errorf(ctx, "fail to update device recovery data: %s", err.Error())
+		return nil, err
+	}
 	return &api.UpdateDeviceRecoveryDataResponse{}, nil
 }
 

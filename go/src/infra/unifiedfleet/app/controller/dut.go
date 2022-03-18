@@ -25,6 +25,7 @@ import (
 	ufsdevice "infra/unifiedfleet/api/v1/models/chromeos/device"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsmanufacturing "infra/unifiedfleet/api/v1/models/chromeos/manufacturing"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/model/configuration"
@@ -1056,4 +1057,15 @@ func GetDUTConnectedToServo(ctx context.Context, servo *chromeosLab.Servo) (*ufs
 		return nil, status.Errorf(codes.Internal, "Misconfigured DUTs. Muiltple DUTS(%d) found with same servo config", len(dut))
 	}
 	return nil, nil
+}
+
+// UpdateRecoveryData updates data from recovery
+//
+// It updates machine/asset, Peripherals(servo, wifirouter,...) and Dut's resourceState
+func UpdateRecoveryData(ctx context.Context, req *ufsAPI.UpdateDeviceRecoveryDataRequest) error {
+	if err := updateRecoveryDutData(ctx, req.GetChromeosDeviceId(), req.GetDutData()); err != nil {
+		logging.Errorf(ctx, "UpdateRecoveryData unable to update dut data", err.Error())
+		return err
+	}
+	return nil
 }

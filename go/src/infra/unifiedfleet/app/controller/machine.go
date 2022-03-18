@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
@@ -284,6 +285,97 @@ func UpdateDutMeta(ctx context.Context, meta *ufspb.DutMeta) error {
 		return err
 	}
 	return nil
+}
+
+// updateRecoveryDutData is a duplicate of UpdateDutMeta with new request API
+// Remove UpdateDutMeta when recovery tool migrate to updateRecoveryDutData and no other tools is using it.
+//
+// It's a temporary method to correct serial number & HWID.
+// Will remove once HaRT could provide us the correct info.
+func updateRecoveryDutData(ctx context.Context, dutId string, dutData *ufsAPI.UpdateDeviceRecoveryDataRequest_DutData) error {
+	if dutData == nil {
+		logging.Warningf(ctx, "Empty dut data (%s)", dutId)
+		return nil
+	}
+	f := func(ctx context.Context) error {
+		machine, err := registration.GetMachine(ctx, dutId)
+		if err != nil {
+			logging.Errorf(ctx, "updateRecoveryMachineHelper machine not found(%s) - %s", dutId, err.Error())
+			return err
+		}
+		osMachine := machine.GetChromeosMachine()
+		if osMachine == nil {
+			logging.Warningf(ctx, "updateRecoveryMachineHelper %s is not a valid Chromeos machine", dutId)
+			return nil
+		}
+		if err := updateRecoveryMachineHelper(ctx, machine, dutData); err != nil {
+			logging.Errorf(ctx, "updateRecoveryDutData fail update machine(%s) - %s", dutId, err.Error())
+			return err
+		}
+		asset, err := registration.GetAsset(ctx, dutId)
+		if err != nil {
+			logging.Errorf(ctx, "updateRecoveryAssetData Asset not found", dutId)
+			return err
+		}
+		if err := updateRecoveryAssetHelper(ctx, asset, dutData); err != nil {
+			logging.Errorf(ctx, "updateRecoveryDutData fail update asset(%s) - %s", dutId, err.Error())
+			return err
+		}
+		return nil
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return errors.Annotate(err, "updatRecoveryeDutData (%s),  ", dutId).Err()
+	}
+	return nil
+}
+
+// updateRecoveryMachineHelper is a helper function to update machine
+func updateRecoveryMachineHelper(ctx context.Context, machine *ufspb.Machine, dutData *ufsAPI.UpdateDeviceRecoveryDataRequest_DutData) error {
+	hc := GetMachineHistoryClient(machine)
+	// Copy for logging
+	oldMachine := proto.Clone(machine).(*ufspb.Machine)
+
+	if machine.GetSerialNumber() == dutData.GetSerialNumber() &&
+		machine.GetChromeosMachine().GetHwid() == dutData.GetHwID() &&
+		machine.GetChromeosMachine().GetSku() == dutData.GetDeviceSku() {
+		logging.Warningf(ctx, "nothing to update: old serial number %q, old hwid %q, old device-sku %q", dutData.GetSerialNumber(), dutData.GetHwID(), dutData.GetDeviceSku())
+		return nil
+	}
+
+	machine.SerialNumber = dutData.GetSerialNumber()
+	machine.GetChromeosMachine().Hwid = dutData.GetHwID()
+	machine.GetChromeosMachine().Sku = dutData.GetDeviceSku()
+	if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+		return errors.Annotate(err, "Unable to update dut dutData for %s", machine.Name).Err()
+	}
+	hc.LogMachineChanges(oldMachine, machine)
+	return hc.SaveChangeEvents(ctx)
+
+}
+
+// updateRecoveryAssetHelper is a helper function to update asset
+func updateRecoveryAssetHelper(ctx context.Context, asset *ufspb.Asset, dutData *ufsAPI.UpdateDeviceRecoveryDataRequest_DutData) error {
+	hc := &HistoryClient{}
+	// Copy for logging
+	oldAsset := proto.Clone(asset).(*ufspb.Asset)
+	if asset.GetInfo() == nil {
+		asset.Info = &ufspb.AssetInfo{}
+	}
+	if asset.GetInfo().GetSerialNumber() == dutData.GetSerialNumber() &&
+		asset.GetInfo().GetHwid() == dutData.GetHwID() &&
+		asset.GetInfo().GetSku() == dutData.GetDeviceSku() {
+		logging.Warningf(ctx, "nothing to update: old serial number %q, old hwid %q, old device-sku %q", dutData.GetSerialNumber(), dutData.GetHwID(), dutData.GetDeviceSku())
+		return nil
+	}
+	asset.GetInfo().SerialNumber = dutData.GetSerialNumber()
+	asset.GetInfo().Hwid = dutData.GetHwID()
+	asset.GetInfo().Sku = dutData.GetDeviceSku()
+	// Update the asset
+	if _, err := registration.BatchUpdateAssets(ctx, []*ufspb.Asset{asset}); err != nil {
+		return errors.Annotate(err, "Unable to update dut asset for %s", asset.Name).Err()
+	}
+	hc.LogAssetChanges(oldAsset, asset)
+	return hc.SaveChangeEvents(ctx)
 }
 
 // processMachineUpdateMask process update field mask to get only specific update
