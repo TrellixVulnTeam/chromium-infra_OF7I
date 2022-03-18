@@ -25,7 +25,7 @@ import (
 var DeleteAttachedDeviceMachineCmd = &subcommands.Command{
 	UsageLine:  "attached-device-machine ...",
 	ShortDesc:  "Delete an attached device machine (Hardware asset: Android Phone, iPad, etc.)",
-	LongDesc:   cmdhelp.DeleteAttachedDeviceMachineText,
+	LongDesc:   cmdhelp.DeleteADMText,
 	CommandRun: deleteADMCommandRun,
 }
 

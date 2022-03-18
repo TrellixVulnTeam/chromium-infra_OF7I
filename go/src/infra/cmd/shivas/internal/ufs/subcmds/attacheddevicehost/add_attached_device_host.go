@@ -28,7 +28,7 @@ import (
 var AddAttachedDeviceHostCmd = &subcommands.Command{
 	UsageLine:  "attached-device-host ...",
 	ShortDesc:  "Add an attached device host on a machine",
-	LongDesc:   cmdhelp.AddADHLongDesc,
+	LongDesc:   cmdhelp.AddADHText,
 	CommandRun: addADHCommandRun,
 }
 
@@ -36,7 +36,7 @@ var AddAttachedDeviceHostCmd = &subcommands.Command{
 var AddADHCmd = &subcommands.Command{
 	UsageLine:  "adh ...",
 	ShortDesc:  "Add an attached device host on a machine",
-	LongDesc:   cmdhelp.AddADHLongDesc,
+	LongDesc:   cmdhelp.AddADHText,
 	CommandRun: addADHCommandRun,
 }
 

@@ -1867,27 +1867,13 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/uni
 
 	TriggerCronDescription string = `Triggers a cron job on UFS. Available jobs: ` + CronTriggerAvailableJobsString()
 
-	// GetAttachedDeviceMachineText description for GetAttachedDeviceMachineCmd
-	GetAttachedDeviceMachineText string = `Get attached device machine details by filters.
-
-This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
-default to operate in the browser lab namespace.
-
-Example:
-
-shivas get attached-device-machine {name1} {name2}
-shivas get attached-device-machine -devicetype apple_phone -model model1
-shivas get attached-device-machine -state serving -state needs_repair -zone atl97
-
-Also aliased as 'shivas get adm'.
-
-Gets the attached device machine and prints the output in user format.`
-
-	// GetADMText description for GetADMCmd
+	// GetADMText description for GetAttachedDeviceMachineCmd and GetADMCmd
 	GetADMText string = `Get attached device machine details by filters.
 
 This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
 default to operate in the browser lab namespace.
+
+'shivas get adm ...' is an alias of 'shivas get attached-device-machine...'
 
 Example:
 
@@ -1899,24 +1885,13 @@ Also aliased as 'shivas get attached-device-machine'.
 
 Gets the attached device machine and prints the output in user format.`
 
-	// AddAttachedDeviceMachineText long description for AddAttachedDeviceMachineCmd
-	AddAttachedDeviceMachineText string = `Create an attached device (Hardware asset: Android phone, iOS tablet, etc.) to UFS.
-
-This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
-default to operate in the browser lab namespace.
-
-Examples:
-
-shivas add attached-device-machine -name machine1 -zone mtv97 -rack rack1 -serial XXX -man manufacturer1 -devicetype apple_phone -target board1 -model model1
-
-shivas add attached-device-machine -f admrequest.json
-Creates an attached device machine by reading a JSON file input.`
-
-	// AddADMText long description for AddADMCmd
+	// AddADMText description for AddAttachedDeviceMachineCmd and AddADMCmd
 	AddADMText string = `Create an attached device (Hardware asset: Android phone, iOS tablet, etc.) to UFS.
 
 This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
 default to operate in the browser lab namespace.
+
+'shivas add adm ...' is an alias of 'shivas add attached-device-machine...'
 
 Examples:
 
@@ -1956,31 +1931,13 @@ The protobuf definition can be found here:
 Machine:
 https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine.proto`
 
-	// UpdateAttachedDeviceMachineText long description for UpdateADMCmd
-	UpdateAttachedDeviceMachineText string = `Update an attached device machine by name to UFS.
-
-This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
-default to operate in the browser lab namespace.
-
-Examples:
-shivas update attached-device-machine -f admrequest.json
-Update an attached device machine by reading a JSON file input.
-
-shivas update attached-device-machine -name machine1 -serial XXX_NEW
-Update serial number connected to the attached device machine.
-
-shivas update attached-device-machine -name machine1 -devicetype android_phone -man manufacturer_new
-Update device type and manufacturer of the attached device machine.
-
-shivas update attached-device-machine -name machine1 -tags -
-Delete tags of an existing attached-device-machine entry.
-`
-
-	// UpdateADMText long description for UpdateADMCmd
+	// UpdateADMText description for UpdateAttachedDeviceMachineCmd and UpdateADMCmd
 	UpdateADMText string = `Update an attached device machine by name to UFS.
 
 This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
 default to operate in the browser lab namespace.
+
+'shivas update adm ...' is an alias of 'shivas update attached-device-machine...'
 
 Examples:
 shivas update adm -f admrequest.json
@@ -2026,23 +1983,24 @@ Example attached device machine:
 The protobuf definition of machine is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine.proto`
 
-	// DeleteAttachedDeviceMachineText long description for DeleteADMCmd
-	DeleteAttachedDeviceMachineText string = `Delete an attached device machine (Hardware asset: Android Phone, iPad, etc.).
-
-Example:
-shivas delete attached-device-machine {Machine Name}
-Deletes the given attached device machine based on machine name.
-`
-	// DeleteADMText long description for DeleteADMCmd
+	// DeleteADMText long description for DeleteAttachedDeviceMachineCmd and DeleteADMCmd
 	DeleteADMText string = `Delete an attached device machine (Hardware asset: Android Phone, iPad, etc.).
+
+This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
+default to operate in the browser lab namespace.
+
+'shivas delete adm ...' is an alias of 'shivas delete attached-device-machine...'
 
 Example:
 shivas delete adm {Machine Name}
 Deletes the given attached device machine based on machine name.
 `
 
-	// AddADHLongDesc long description for AddAttachedDeviceHostCmd and AddADHCmd
-	AddADHLongDesc string = `Add an attached device host on an attached device machine
+	// AddADHText description for AddAttachedDeviceHostCmd and AddADHCmd
+	AddADHText string = `Add an attached device host on an attached device machine
+
+This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
+default to operate in the browser lab namespace.
 
 'shivas add adh ...' is an alias of 'shivas add attached-device-host...'
 
@@ -2095,7 +2053,7 @@ shivas get adh -state serving -state needs_repair -zone atl97
 
 Gets the attached device host and prints the output in user format.`
 
-	// UpdateADHText long description for UpdateAttachedDeviceHostCmd and UpdateADHCmd
+	// UpdateADHText description for UpdateAttachedDeviceHostCmd and UpdateADHCmd
 	UpdateADHText string = `Update an attached device host by name to UFS.
 
 This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
@@ -2119,6 +2077,9 @@ Delete tags of an existing adh entry.
 
 	// DeleteADHText long description for DeleteAttachedDeviceHostCmd and DeleteADHCmd
 	DeleteADHText string = `Delete an attached device host.
+
+This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
+default to operate in the browser lab namespace.
 
 'shivas delete adh ...' is an alias of 'shivas delete attached-device-host...'
 

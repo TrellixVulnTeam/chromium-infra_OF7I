@@ -26,7 +26,7 @@ import (
 var AddAttachedDeviceMachineCmd = &subcommands.Command{
 	UsageLine:  "attached-device-machine ...",
 	ShortDesc:  "Add attached device machine details by filters",
-	LongDesc:   cmdhelp.AddAttachedDeviceMachineText,
+	LongDesc:   cmdhelp.AddADMText,
 	CommandRun: addADMCommandRun,
 }
 
