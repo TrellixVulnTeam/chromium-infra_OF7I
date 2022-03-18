@@ -112,10 +112,51 @@ func setGbbFlagsByServoExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+func updateFwWithFwImageByServo(ctx context.Context, info *execs.ExecInfo) error {
+	sv, err := info.Versioner().Cros(ctx, info.RunArgs.DUT.Name)
+	if err != nil {
+		return errors.Annotate(err, "cros provision").Err()
+	}
+	mn := "update fw with fw-image by servo"
+	am := info.GetActionArgs(ctx)
+	imageName := am.AsString(ctx, "version_name", sv.FwImage)
+	log.Debug(ctx, "Used fw image name: %s", imageName)
+	gsBucket := am.AsString(ctx, "gs_bucket", gsCrOSImageBucket)
+	log.Debug(ctx, "Used gs bucket name: %s", gsBucket)
+	gsImagePath := am.AsString(ctx, "gs_image_path", fmt.Sprintf("%s/%s", gsBucket, imageName))
+	log.Debug(ctx, "Used fw image path: %s", gsImagePath)
+	fwDownloadDir := am.AsString(ctx, "fw_download_dir", defaultFwFolderPath(info.RunArgs.DUT))
+	log.Debug(ctx, "Used fw image path: %s", gsImagePath)
+	// Requesting convert GC path to caches service path.
+	// Example: `http://Addr:8082/download/chromeos-image-archive/board-release/R99-XXXXX.XX.0/firmware_from_source.tar.bz2`
+	downloadPath, err := info.RunArgs.Access.GetCacheUrl(ctx, info.RunArgs.DUT.Name, gsImagePath)
+	if err != nil {
+		return errors.Annotate(err, mn).Err()
+	}
+	req := &firmware.InstallFwFromFwImageRequest{
+		DownloadImagePath:    downloadPath,
+		DownloadImageTimeout: info.ActionTimeout,
+		DownloadDir:          fwDownloadDir,
+		Board:                am.AsString(ctx, "dut_board", info.RunArgs.DUT.Board),
+		Model:                am.AsString(ctx, "dut_model", info.RunArgs.DUT.Model),
+		UpdateEC:             am.AsBool(ctx, "update_ec", false),
+		UpdateAP:             am.AsBool(ctx, "update_ap", false),
+	}
+	servod := info.NewServod()
+	run := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
+	err = firmware.InstallFwFromFwImage(ctx, req, run, servod, info.NewLogger())
+	return errors.Annotate(err, mn).Err()
+}
+
 // DefaultAPFilePath provides default path to AP file.
 // Path used to minimize cycle to read AP from the DUT and other operation over it.
 func defaultAPFilePath(d *tlw.Dut) string {
 	return fmt.Sprintf("/tmp/bios_%v.bin", d.Name)
+}
+
+// defaultFwFolderPath provides default path to directory used for firmware extraction.
+func defaultFwFolderPath(d *tlw.Dut) string {
+	return fmt.Sprintf("/tmp/fw_%v", d.Name)
 }
 
 func init() {
@@ -123,4 +164,5 @@ func init() {
 	execs.Register("cros_ap_is_dev_signed_by_servo", checkIfApHasDevSignedImageExec)
 	execs.Register("cros_set_gbb_by_servo", setGbbFlagsByServoExec)
 	execs.Register("cros_remove_default_ap_file_servo_host", removeAPFileFromServoHostExec)
+	execs.Register("cros_update_fw_with_fw_image_by_servo_from", updateFwWithFwImageByServo)
 }

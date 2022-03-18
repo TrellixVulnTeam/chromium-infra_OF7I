@@ -113,7 +113,7 @@ func readAPKeysFromFile(ctx context.Context, filePath string, run components.Run
 	return strings.Split(out, "\n"), nil
 }
 
-// SetApInfoByServoRequest hols and provides info to update AP.
+// SetApInfoByServoRequest holds and provides info to update AP.
 type SetApInfoByServoRequest struct {
 	// Path to where AP used or will be extracted
 	FilePath string
@@ -154,6 +154,50 @@ const (
 	extractFileTimeout = 300 * time.Second
 	ecMonitorFileName  = "npcx_monitor.bin"
 )
+
+// InstallFwFromFwImageRequest holds info for InstallFwFromFwImage method to flash EC/AP on the DUT.
+type InstallFwFromFwImageRequest struct {
+	// Board and model of the DUT.
+	Board string
+	Model string
+
+	// Dir where we download the fw image file and then extracted.
+	DownloadDir string
+	// Path to the fw-Image file and timeout to download it.
+	DownloadImagePath    string
+	DownloadImageTimeout time.Duration
+
+	// Specify that Update EC is is requested.
+	UpdateEC bool
+	// Specify that Update AP is is requested.
+	UpdateAP bool
+}
+
+// InstallFwFromFwImage updates EC/AP on the DUT by servo from fw-image.
+func InstallFwFromFwImage(ctx context.Context, req *InstallFwFromFwImageRequest, run components.Runner, servod components.Servod, log logger.Logger) error {
+	if req == nil || req.Board == "" || req.Model == "" {
+		return errors.Reason("install fw from fw-image: request missed board/model data").Err()
+	} else if !req.UpdateEC && !req.UpdateAP {
+		return errors.Reason("install fw from fw-image: at least ec or ap update need to be requested").Err()
+	}
+	const (
+		// Specify the name used for download file.
+		downloadFilename = "fw_image.tar.bz2"
+	)
+	downloadImagePath := filepath.Join(req.DownloadDir, downloadFilename)
+	defer func() {
+		// Remove dir before finish the action to avoidcases when we left something extra after execution.
+		if _, err := run(ctx, time.Minute, "rm", "-rf", req.DownloadDir); err != nil {
+			log.Debug("Failed to remove download directory %q, Error: %s", req.DownloadDir, err)
+		}
+	}()
+	if out, err := run(ctx, req.DownloadImageTimeout, "curl", req.DownloadImagePath, "--output", downloadImagePath); err != nil {
+		log.Debug("Output to download fw-image: %s", out)
+		return errors.Annotate(err, "install fw from fw-image").Err()
+	}
+	log.Info("Download the file successful %q", downloadImagePath)
+	return errors.Reason("install fw from fw-image: Not implemented yet!").Err()
+}
 
 // Helper function to extract EC image from downloaded tarball.
 func extractECImage(ctx context.Context, tarballPath string, run components.Runner, log logger.Logger, board, model string) (string, error) {
