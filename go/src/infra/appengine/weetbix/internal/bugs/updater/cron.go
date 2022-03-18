@@ -10,6 +10,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/tsmon"
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/common/tsmon/types"
@@ -51,6 +52,15 @@ type AnalysisClient interface {
 	ReadImpactfulClusters(ctx context.Context, opts analysis.ImpactfulClusterReadOptions) ([]*analysis.ClusterSummary, error)
 }
 
+func init() {
+	// Register metrics as global metrics, which has the effort of
+	// resetting them after every flush.
+	tsmon.RegisterGlobalCallback(func(ctx context.Context) {
+		// Do nothing -- the metrics will be populated by the cron
+		// job itself and does not need to be triggered externally.
+	}, statusGauge, durationGauge)
+}
+
 // UpdateAnalysisAndBugs updates BigQuery analysis, and then updates bugs
 // to reflect this analysis.
 // Simulate, if true, avoids any changes being applied to monorail and logs
@@ -59,7 +69,7 @@ type AnalysisClient interface {
 // on monorail as the developer themselves rather than the Weetbix service.
 // This leads to bugs errounously being detected as having manual priority
 // changes.
-func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, gcpProject string, simulate bool) (retErr error) {
+func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, gcpProject string, simulate, enable bool) (retErr error) {
 	projectCfg, err := config.Projects(ctx)
 	if err != nil {
 		return err
@@ -75,6 +85,14 @@ func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, gcpProject string,
 			statusGauge.Set(ctx, status, project)
 		}
 	}()
+
+	if !enable {
+		// Report that bug updates are disabled.
+		for project := range statusByProject {
+			statusByProject[project] = "disabled"
+		}
+		return
+	}
 
 	mc, err := monorail.NewClient(ctx, monorailHost)
 	if err != nil {

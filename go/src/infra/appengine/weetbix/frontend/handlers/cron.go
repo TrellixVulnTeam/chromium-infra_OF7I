@@ -20,7 +20,8 @@ func (h *Handlers) UpdateAnalysisAndBugs(ctx context.Context) error {
 		return errors.Annotate(err, "get config").Err()
 	}
 	simulate := !h.prod
-	err = updater.UpdateAnalysisAndBugs(ctx, cfg.MonorailHostname, h.cloudProject, simulate)
+	enabled := cfg.BugUpdatesEnabled
+	err = updater.UpdateAnalysisAndBugs(ctx, cfg.MonorailHostname, h.cloudProject, simulate, enabled)
 	if err != nil {
 		return errors.Annotate(err, "update bugs").Err()
 	}
