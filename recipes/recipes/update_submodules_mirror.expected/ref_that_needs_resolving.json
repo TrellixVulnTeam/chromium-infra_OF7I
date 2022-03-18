@@ -200,6 +200,8 @@
     "cmd": [
       "git",
       "push",
+      "-o",
+      "nokeycheck",
       "--tags",
       "https://chromium.googlesource.com/codesearch/src_mirror"
     ],

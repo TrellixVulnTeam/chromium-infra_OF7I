@@ -167,7 +167,8 @@ def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays,
 
   # You can't use --all and --tags at the same time for some reason.
   # --mirror pushes both, but it also pushes remotes, which we don't want.
-  api.git('push', '--tags', target_repo, name='git push --tags')
+  api.git(
+      'push', '-o', 'nokeycheck', '--tags', target_repo, name='git push --tags')
 
 
 def RefToRemoteRef(ref):
