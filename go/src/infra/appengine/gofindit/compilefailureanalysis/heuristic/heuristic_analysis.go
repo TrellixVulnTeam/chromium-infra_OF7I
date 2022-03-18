@@ -51,8 +51,20 @@ func Analyze(
 		return nil, fmt.Errorf("Failed getting compile log: %w", err)
 	}
 	logging.Infof(c, "Compile log: %v", compileLogs)
+	signal, err := ExtractSignals(c, compileLogs)
+	if err != nil {
+		return nil, fmt.Errorf("Error extracting signals %w", err)
+	}
 
-	// TODO (nqmtuan) implement heuristic analysis
+	justificationMap, err := AnalyzeChangeLogs(c, signal, changelogs)
+	if err != nil {
+		return nil, fmt.Errorf("Error in justifying changelogs %w", err)
+	}
+	for commit, justification := range justificationMap {
+		logging.Infof(c, "Justification for commit %s", commit)
+		logging.Infof(c, "Score: %d", justification.GetScore())
+		logging.Infof(c, "Reasons: %s", justification.GetReasons())
+	}
 	return heuristic_analysis, nil
 }
 
