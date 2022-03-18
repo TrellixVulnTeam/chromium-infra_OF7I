@@ -28,7 +28,7 @@ This bug has been automatically filed by Weetbix in response to a cluster of tes
 const (
 	manualPriorityLabel = "Weetbix-Manual-Priority"
 	restrictViewLabel   = "Restrict-View-Google"
-	managedLabel        = "Weetbix-Managed"
+	autoFiledLabel      = "Weetbix-Auto-Filed"
 )
 
 // whitespaceRE matches blocks of whitespace, including new lines tabs and
@@ -88,7 +88,7 @@ func (g *Generator) PrepareNew(description *clustering.ClusterDescription) *mpb.
 		Labels: []*mpb.Issue_LabelValue{{
 			Label: restrictViewLabel,
 		}, {
-			Label: managedLabel,
+			Label: autoFiledLabel,
 		}},
 	}
 	for _, fv := range g.monorailCfg.DefaultFieldValues {

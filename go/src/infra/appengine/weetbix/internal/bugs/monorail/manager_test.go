@@ -81,7 +81,7 @@ func TestManager(t *testing.T) {
 					Labels: []*mpb.Issue_LabelValue{{
 						Label: "Restrict-View-Google",
 					}, {
-						Label: "Weetbix-Managed",
+						Label: "Weetbix-Auto-Filed",
 					}},
 				})
 				So(len(issue.Comments), ShouldEqual, 2)
@@ -122,7 +122,7 @@ func TestManager(t *testing.T) {
 					Labels: []*mpb.Issue_LabelValue{{
 						Label: "Restrict-View-Google",
 					}, {
-						Label: "Weetbix-Managed",
+						Label: "Weetbix-Auto-Filed",
 					}},
 				})
 				So(len(issue.Comments), ShouldEqual, 2)
