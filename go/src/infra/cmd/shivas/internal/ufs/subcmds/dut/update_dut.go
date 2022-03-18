@@ -25,6 +25,7 @@ import (
 	"infra/cmd/shivas/utils"
 	suUtil "infra/cmd/shivas/utils/schedulingunit"
 	"infra/cmdsupport/cmdlib"
+	"infra/libs/skylab/buildbucket"
 	"infra/libs/skylab/common/heuristics"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -117,6 +118,7 @@ var UpdateDUTCmd = &subcommands.Command{
 		c.commonFlags.Register(&c.Flags)
 
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.DUTUpdateFileText)
+		c.Flags.BoolVar(&c.paris, "paris", false, "Use PARIS rather than legacy flow (dogfood).")
 
 		c.Flags.StringVar(&c.hostname, "name", "", "hostname of the DUT.")
 		c.Flags.StringVar(&c.machine, "asset", "", "asset tag of the DUT.")
@@ -169,6 +171,9 @@ type updateDUT struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
+
+	// TODO(b/225378510): Remove and make paris logic as default for scheduling.
+	paris bool
 
 	// DUT specification inputs.
 	newSpecsFile             string
@@ -298,12 +303,21 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 
 	}
 
-	tc, err := swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService)
-	if err != nil {
-		return err
+	var bc buildbucket.Client
+	var tc *swarming.TaskCreator
+	if c.paris {
+		fmt.Fprintf(a.GetErr(), "Using PARIS flow for repair\n")
+		if bc, err = buildbucket.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, "chromeos", "labpack", "labpack"); err != nil {
+			return err
+		}
+	} else {
+		fmt.Fprintf(a.GetErr(), "Using PARIS flow for repair\n")
+		if tc, err = swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService); err != nil {
+			return err
+		}
+		tc.LogdogService = e.LogdogService
+		tc.SwarmingServiceAccount = e.SwarmingServiceAccount
 	}
-	tc.LogdogService = e.LogdogService
-	tc.SwarmingServiceAccount = e.SwarmingServiceAccount
 	for _, req := range requests {
 		// Check if the deployment is needed.
 		actions, ok := deployTasks[req.MachineLSE.GetName()]
@@ -318,12 +332,16 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 				actions = partialUpdateDeployActions
 			}
 
-			// Include any enforced actions.
-			actions = c.updateDeployActions(actions)
-			// Start a swarming deploy task for the DUT.
-			if err := c.deployDUTToSwarming(ctx, tc, req.GetMachineLSE(), actions); err != nil {
-				// Print err and continue to trigger next one
-				fmt.Printf("[%s] Failed to deploy task. %s", req.GetMachineLSE().GetName(), err.Error())
+			if c.paris {
+				utils.ScheduleDeployTask(ctx, bc, e, req.GetMachineLSE().GetHostname())
+			} else {
+				// Include any enforced actions.
+				actions = c.updateDeployActions(actions)
+				// Start a swarming deploy task for the DUT.
+				if err := c.deployDUTToSwarming(ctx, tc, req.GetMachineLSE(), actions); err != nil {
+					// Print err and continue to trigger next one
+					fmt.Printf("[%s] Failed to deploy task. %s", req.GetMachineLSE().GetName(), err.Error())
+				}
 			}
 			resTable.RecordResult(swarmOp, req.MachineLSE.GetName(), err)
 
@@ -332,7 +350,7 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 		}
 	}
 
-	if resTable.IsSuccessForAny(swarmOp) {
+	if !c.paris && resTable.IsSuccessForAny(swarmOp) {
 		// Display URL for all tasks if there are more than one.
 		fmt.Printf("\nTriggered deployment task(s). Follow at: %s\n", tc.SessionTasksURL())
 	}

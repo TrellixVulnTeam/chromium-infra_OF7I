@@ -22,6 +22,7 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
+	"infra/libs/skylab/buildbucket"
 	"infra/libs/skylab/common/heuristics"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -62,6 +63,7 @@ var AddDUTCmd = &subcommands.Command{
 		c.commonFlags.Register(&c.Flags)
 
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.DUTRegistrationFileText)
+		c.Flags.BoolVar(&c.paris, "paris", false, "Use PARIS rather than legacy flow (dogfood).")
 
 		// Asset location fields
 		c.Flags.StringVar(&c.zone, "zone", "", "Zone that the asset is in. "+cmdhelp.ZoneFilterHelpText)
@@ -123,6 +125,9 @@ type addDUT struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
+
+	// TODO(b/225378510): Remove and make paris logic as default for scheduling.
+	paris bool
 
 	newSpecsFile             string
 	hostname                 string
@@ -246,8 +251,17 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 	if err != nil {
 		return err
 	}
-
-	c.updateDeployActions()
+	var bc buildbucket.Client
+	if c.paris {
+		var err error
+		fmt.Fprintf(a.GetErr(), "Using PARIS flow for repair\n")
+		bc, err = buildbucket.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, "chromeos", "labpack", "labpack")
+		if err != nil {
+			return err
+		}
+	} else {
+		c.updateDeployActions()
+	}
 
 	// Update the UFS database if enabled.
 	if !c.ignoreUFS {
@@ -267,7 +281,11 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 				// skip deployment
 				continue
 			}
-			c.deployDutToSwarming(ctx, tc, param.DUT)
+			if c.paris {
+				utils.ScheduleDeployTask(ctx, bc, e, param.DUT.GetName())
+			} else {
+				c.deployDutToSwarming(ctx, tc, param.DUT)
+			}
 		}
 		if len(dutParams) > 1 {
 			fmt.Fprintf(a.GetOut(), "\nBatch tasks URL: %s\n\n", tc.SessionTasksURL())
@@ -277,7 +295,11 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 
 	// Run the deployment task
 	for _, param := range dutParams {
-		c.deployDutToSwarming(ctx, tc, param.DUT)
+		if c.paris {
+			utils.ScheduleDeployTask(ctx, bc, e, param.DUT.GetName())
+		} else {
+			c.deployDutToSwarming(ctx, tc, param.DUT)
+		}
 	}
 	return nil
 }
@@ -433,7 +455,6 @@ func (c *addDUT) addDutToUFS(ctx context.Context, ic ufsAPI.FleetClient, param *
 func (c *addDUT) deployDutToSwarming(ctx context.Context, tc *swarming.TaskCreator, lse *ufspb.MachineLSE) error {
 	deployActions := c.deployActions
 	if !isUsingServo(lse) {
-
 		deployActions = getServolessFilteredDeployActions(deployActions)
 		if c.commonFlags.Verbose() {
 			fmt.Printf("Host %q use servoless deployment\n", lse.Name)
