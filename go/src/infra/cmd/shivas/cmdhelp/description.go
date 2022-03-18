@@ -2116,6 +2116,16 @@ Update the os version and associated hostname of the host.
 shivas update adh -name host1 -tags -
 Delete tags of an existing adh entry.
 `
+
+	// DeleteADHText long description for DeleteAttachedDeviceHostCmd and DeleteADHCmd
+	DeleteADHText string = `Delete an attached device host.
+
+'shivas delete adh ...' is an alias of 'shivas delete attached-device-host...'
+
+Example:
+shivas delete adh {Host Name}
+Deletes the given attached device host based on host name.
+`
 )
 
 func CronTriggerAvailableJobsString() string {
