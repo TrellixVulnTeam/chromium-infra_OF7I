@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/recovery/internal/components"
+	"infra/cros/recovery/internal/components/servo"
 	"infra/cros/recovery/logger"
 )
 
@@ -184,19 +185,47 @@ func InstallFwFromFwImage(ctx context.Context, req *InstallFwFromFwImageRequest,
 		// Specify the name used for download file.
 		downloadFilename = "fw_image.tar.bz2"
 	)
-	downloadImagePath := filepath.Join(req.DownloadDir, downloadFilename)
+	tarballPath := filepath.Join(req.DownloadDir, downloadFilename)
 	defer func() {
 		// Remove dir before finish the action to avoidcases when we left something extra after execution.
 		if _, err := run(ctx, time.Minute, "rm", "-rf", req.DownloadDir); err != nil {
 			log.Debug("Failed to remove download directory %q, Error: %s", req.DownloadDir, err)
 		}
 	}()
-	if out, err := run(ctx, req.DownloadImageTimeout, "curl", req.DownloadImagePath, "--output", downloadImagePath); err != nil {
+	if out, err := run(ctx, req.DownloadImageTimeout, "curl", req.DownloadImagePath, "--output", tarballPath); err != nil {
 		log.Debug("Output to download fw-image: %s", out)
 		return errors.Annotate(err, "install fw from fw-image").Err()
 	}
-	log.Info("Download the file successful %q", downloadImagePath)
-	return errors.Reason("install fw from fw-image: Not implemented yet!").Err()
+	p, err := NewProgrammer(ctx, run, servod, log)
+	if err != nil {
+		return errors.Annotate(err, "install fw from fw-image").Err()
+	}
+	log.Info("Successful download tarbar %q from %q", tarballPath, req.DownloadImagePath)
+	if req.UpdateEC {
+		log.Debug("Start extraction EC image from %q", tarballPath)
+		ecImage, err := extractECImage(ctx, tarballPath, run, log, req.Board, req.Model)
+		if err != nil {
+			return errors.Annotate(err, "install fw from fw-image").Err()
+		}
+		log.Debug("Start program EC image %q", ecImage)
+		if err := p.ProgramEC(ctx, ecImage); err != nil {
+			return errors.Annotate(err, "install fw from fw-image").Err()
+		}
+		log.Info("Finished program EC image %q", ecImage)
+	}
+	if req.UpdateAP {
+		log.Debug("Start extraction AP image from %q", tarballPath)
+		apImage, err := extractAPImage(ctx, tarballPath, run, servod, log, req.Board, req.Model)
+		if err != nil {
+			return errors.Annotate(err, "install fw from fw-image").Err()
+		}
+		log.Debug("Start program AP image %q", apImage)
+		if err := p.ProgramAP(ctx, apImage, ""); err != nil {
+			return errors.Annotate(err, "install fw from fw-image").Err()
+		}
+		log.Info("Finished program AP image %q", apImage)
+	}
+	return nil
 }
 
 // Helper function to extract EC image from downloaded tarball.
@@ -227,16 +256,26 @@ func extractECImage(ctx context.Context, tarballPath string, run components.Runn
 }
 
 // Helper function to extract BIOS image from downloaded tarball.
-func extractAPImage(ctx context.Context, tarballPath string, run components.Runner, log logger.Logger, board, model string) (string, error) {
+func extractAPImage(ctx context.Context, tarballPath string, run components.Runner, servod components.Servod, log logger.Logger, board, model string) (string, error) {
 	if board == "" || model == "" {
 		return "", errors.Reason("extract ap files: board or model is not provided").Err()
 	}
 	destDir := filepath.Join(filepath.Dir(tarballPath), "AP")
 	candidatesFiles := []string{
-		"image.bin",
 		fmt.Sprintf("image-%s.bin", model),
-		fmt.Sprintf("image-%s.bin", board),
 	}
+	if servod != nil {
+		fwTarget, err := servo.GetString(ctx, servod, "ec_board")
+		if err != nil {
+			log.Debug("Fail to read `ec_board` value from servo. Skipping.")
+		} else {
+			candidatesFiles = append(candidatesFiles, fmt.Sprintf("image-%s.bin", fwTarget))
+		}
+	}
+	candidatesFiles = append(candidatesFiles,
+		fmt.Sprintf("image-%s.bin", board),
+		"image.bin",
+	)
 	imagePath, err := extractFromTarball(ctx, tarballPath, destDir, candidatesFiles, run, log)
 	if err != nil {
 		return "", errors.Annotate(err, "extract ec files").Err()
@@ -244,20 +283,23 @@ func extractAPImage(ctx context.Context, tarballPath string, run components.Runn
 	return filepath.Join(destDir, imagePath), nil
 }
 
-const (
-	tarballListTheFileGlob    = "tar tf %s"
-	tarballExtractTheFileGlob = "tar xf %s -C %s %s"
-)
-
 // Try extracting the image_candidates from the tarball.
 func extractFromTarball(ctx context.Context, tarballPath, destDirPath string, candidates []string, run components.Runner, log logger.Logger) (string, error) {
+	const (
+		// Extract list of files present in archive.
+		// To avoid extraction of all files we can limit it t the list of files we interesting in by provide them as arguments at the end.
+		tarballListTheFileGlob = "tar tf %s %s"
+		// Extract file from the archive.
+		tarballExtractTheFileGlob = "tar xf %s -C %s %s"
+	)
 	// Create the firmware_name subdirectory if it doesn't exist
 	if _, err := run(ctx, extractFileTimeout, "mkdir", "-p", destDirPath); err != nil {
 		return "", errors.Annotate(err, "extract from tarball: fail to create a destination directory %s", destDirPath).Err()
 	}
 	// Generate a list of all tarball files
 	tarballFiles := make(map[string]bool, 50)
-	if out, err := run(ctx, extractFileTimeout, fmt.Sprintf(tarballListTheFileGlob, tarballPath)); err != nil {
+	cmd := fmt.Sprintf(tarballListTheFileGlob, tarballPath, strings.Join(candidates, " "))
+	if out, err := run(ctx, extractFileTimeout, cmd); err != nil {
 		return "", errors.Annotate(err, "extract from tarball").Err()
 	} else {
 		for _, fn := range strings.Split(out, "\n") {

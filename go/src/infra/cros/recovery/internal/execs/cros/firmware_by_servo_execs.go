@@ -135,7 +135,7 @@ func updateFwWithFwImageByServo(ctx context.Context, info *execs.ExecInfo) error
 	}
 	req := &firmware.InstallFwFromFwImageRequest{
 		DownloadImagePath:    downloadPath,
-		DownloadImageTimeout: info.ActionTimeout,
+		DownloadImageTimeout: am.AsDuration(ctx, "download_timeout", 600, time.Second),
 		DownloadDir:          fwDownloadDir,
 		Board:                am.AsString(ctx, "dut_board", info.RunArgs.DUT.Board),
 		Model:                am.AsString(ctx, "dut_model", info.RunArgs.DUT.Model),
