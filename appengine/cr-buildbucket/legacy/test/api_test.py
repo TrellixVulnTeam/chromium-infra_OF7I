@@ -1016,20 +1016,6 @@ class V1ApiTest(testing.EndpointsTestCase):
     # pylint: disable=no-value-for-parameter
     self.error_test(errors.LeaseExpiredError, 'LEASE_EXPIRED')
 
-  ####### BACKFILL_TAG_INDEX ###################################################
-
-  @mock.patch('backfill_tag_index.launch')
-  def test_backfill_tag_index(self, launch_tag_index_backfilling):
-    auth.bootstrap_group(auth.ADMIN_GROUP, [auth.Anonymous])
-    req = {'tag_key': 'buildset'}
-    self.call_api('backfill_tag_index', req, status=(200, 204))
-    launch_tag_index_backfilling.assert_called_once_with('buildset')
-
-  def test_backfill_tag_index_fails(self):
-    auth.bootstrap_group(auth.ADMIN_GROUP, [auth.Anonymous])
-    self.call_api('backfill_tag_index', {}, status=400)
-    self.call_api('backfill_tag_index', {'tag_key': 'a:b'}, status=400)
-
 
 class ConvertBucketTest(testing.AppengineTestCase):
 

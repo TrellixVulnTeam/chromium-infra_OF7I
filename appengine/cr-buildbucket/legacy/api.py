@@ -23,12 +23,10 @@ from components import utils
 import gae_ts_mon
 
 from legacy import api_common
-from go.chromium.org.luci.buildbucket.proto import build_pb2
 from go.chromium.org.luci.buildbucket.proto import builder_pb2
 from go.chromium.org.luci.buildbucket.proto import builds_service_pb2 as rpc_pb2
 from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
-import backfill_tag_index
 import bbutil
 import buildtags
 import config
@@ -1088,23 +1086,6 @@ class BuildBucketApi(remote.Service):
         config_file_rev=rev,
         config_file_url=config.get_buildbucket_cfg_url(project_id),
     )
-
-  ####### BULK PROCESSING ######################################################
-
-  @buildbucket_api_method(
-      endpoints.ResourceContainer(
-          message_types.VoidMessage,
-          tag_key=messages.StringField(1, required=True),
-      ),
-      message_types.VoidMessage,
-  )
-  @auth.require(auth.is_admin)
-  def backfill_tag_index(self, request):
-    """Backfills TagIndex entities from builds."""
-    if ':' in request.tag_key:
-      raise endpoints.BadRequestException('invalid tag_key')
-    backfill_tag_index.launch(request.tag_key)
-    return message_types.VoidMessage()
 
 
 @contextlib.contextmanager

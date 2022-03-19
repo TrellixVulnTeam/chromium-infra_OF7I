@@ -12,7 +12,6 @@ import posixpath
 
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
-import webapp2
 
 from components import utils
 
@@ -29,32 +28,6 @@ PROCESSOR_REGISTRY = {}
 
 # Chunk all builds into segments each worth of 6h
 SEGMENT_SIZE = model.ONE_MS_BUILD_ID_RANGE * 1000 * 60 * 60 * 6
-
-
-def register(name, processor, entity_kind='Build', keys_only=False):
-  """Registers a processor.
-
-  Args:
-    name: identifies the processor.
-    entity_kind: kind of the entity to process, a string. Must be "Build"
-      or its descendant.
-    processor: functiton (results, payload),
-      where results is an iterable of entities or their keys
-      and payload is the payload specified in start().
-      Entities not read from the iterable will be rescheduled for processing in
-      a separate job.
-      processor is eventually executed on all entities of the kind that exist in
-      the datastore.
-    keys_only: whether the results passed to processor are only a ndb key, not
-      entire entity.
-  """
-
-  assert name not in PROCESSOR_REGISTRY
-  PROCESSOR_REGISTRY[name] = {
-      'func': processor,
-      'entity_kind': entity_kind,
-      'keys_only': keys_only,
-  }
 
 
 def start(name, payload=None):  # pragma: no cover
