@@ -917,34 +917,6 @@ class V1ApiTest(testing.EndpointsTestCase):
     res = self.call_api('cancel', req).json_body
     self.assertEqual(res['error']['reason'], 'INVALID_INPUT')
 
-  ####### CANCEL_BATCH #########################################################
-
-  @mock.patch('service.cancel_async')
-  def test_cancel_batch(self, cancel):
-    props = {'p': 0}
-    build = test_util.build(
-        id=1, output=dict(properties=bbutil.dict_to_struct(props))
-    )
-    cancel.side_effect = [
-        future(build),
-        future_exception(errors.BuildIsCompletedError()),
-    ]
-    req = {
-        'build_ids': ['1', '2'],
-        'result_details_json': json.dumps(build.result_details),
-    }
-    res = self.call_api('cancel_batch', req).json_body
-
-    res0 = res['results'][0]
-    self.assertEqual(res0['build_id'], '1')
-    self.assertEqual(res0['build']['id'], '1')
-    cancel.assert_any_call(1, result_details=build.result_details)
-
-    res1 = res['results'][1]
-    self.assertEqual(res1['build_id'], '2')
-    self.assertEqual(res1['error']['reason'], 'BUILD_IS_COMPLETED')
-    cancel.assert_any_call(2, result_details=build.result_details)
-
   ####### PAUSE ################################################################
 
   @mock.patch('service.pause', autospec=True)
