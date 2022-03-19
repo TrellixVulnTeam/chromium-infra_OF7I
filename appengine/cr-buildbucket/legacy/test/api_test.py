@@ -945,24 +945,6 @@ class V1ApiTest(testing.EndpointsTestCase):
     self.assertEqual(res1['error']['reason'], 'BUILD_IS_COMPLETED')
     cancel.assert_any_call(2, result_details=build.result_details)
 
-  ####### DELETE_MANY_BUILDS ###################################################
-
-  @mock.patch('service.delete_many_builds', autospec=True)
-  def test_delete_many_builds(self, delete_many_builds):
-    req = {
-        'bucket': 'luci.chromium.try',
-        'status': 'SCHEDULED',
-        'tag': ['tag:0'],
-        'created_by': 'nodir@google.com',
-    }
-    self.call_api('delete_many_builds', req)
-    delete_many_builds.assert_called_once_with(
-        'chromium/try',
-        model.BuildStatus.SCHEDULED,
-        tags=['tag:0'],
-        created_by='nodir@google.com'
-    )
-
   ####### PAUSE ################################################################
 
   @mock.patch('service.pause', autospec=True)

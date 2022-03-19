@@ -558,65 +558,6 @@ def cancel_async(build_id, summary_markdown='', result_details=None):
   raise ndb.Return(bundle.build)
 
 
-def delete_many_builds(bucket_id, status, tags=None, created_by=None):
-  if status not in (model.BuildStatus.SCHEDULED, model.BuildStatus.STARTED):
-    raise errors.InvalidInputError(
-        'status can be STARTED or SCHEDULED, not %s' % status
-    )
-  if not user.has_perm(user.PERM_BUCKETS_DELETE_BUILDS, bucket_id):
-    raise user.current_identity_cannot('delete builds of %s', bucket_id)
-  # Validate created_by prior scheduled a push task.
-  created_by = user.parse_identity(created_by)
-  deferred.defer(
-      _task_delete_many_builds,
-      bucket_id,
-      status,
-      tags=tags,
-      created_by=created_by,
-      # Schedule it on the backend module of the same version.
-      # This assumes that both frontend and backend are uploaded together.
-      _target='%s.backend' % modules.get_current_version_name(),
-      # Retry immediatelly.
-      _retry_options=taskqueue.TaskRetryOptions(
-          min_backoff_seconds=0,
-          max_backoff_seconds=1,
-      ),
-  )
-
-
-def _task_delete_many_builds(bucket_id, status, tags=None, created_by=None):
-
-  @ndb.transactional_tasklet
-  def txn(key):
-    bundle = yield model.BuildBundle.get_async(key.id(), infra=True)
-    if not bundle or bundle.build.status_legacy != status:  # pragma: no cover
-      raise ndb.Return(False)
-    futs = [key.delete_async()]
-
-    sw = bundle.infra.parse().swarming
-    if sw.hostname and sw.task_id:  # pragma: no branch
-      futs.append(swarming.cancel_task_transactionally_async(bundle.build, sw))
-    yield futs
-    raise ndb.Return(True)
-
-  @ndb.tasklet
-  def del_if_unchanged(key):
-    if (yield txn(key)):  # pragma: no branch
-      logging.debug('Deleted %s', key.id())
-
-  assert status in (model.BuildStatus.SCHEDULED, model.BuildStatus.STARTED)
-  tags = tags or []
-  created_by = user.parse_identity(created_by)
-  q = model.Build.query(
-      model.Build.bucket_id == bucket_id, model.Build.status_legacy == status
-  )
-  for t in tags:
-    q = q.filter(model.Build.tags == t)
-  if created_by:
-    q = q.filter(model.Build.created_by == created_by)
-  q.map(del_if_unchanged, keys_only=True)
-
-
 def _reject_swarming_bucket(bucket_id):
   config.validate_bucket_id(bucket_id)
   _, cfg = config.get_bucket(bucket_id)

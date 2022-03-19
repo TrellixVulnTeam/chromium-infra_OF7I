@@ -1042,36 +1042,6 @@ class BuildBucketApi(remote.Service):
       res.results.append(one_res)
     return res
 
-  ####### DELETE_MANY_BUILDS ###################################################
-
-  class DeleteManyBuildsResponse(messages.Message):
-    # set by buildbucket_api_method
-    error = messages.MessageField(ErrorMessage, 1)
-
-  @buildbucket_api_method(
-      endpoints.ResourceContainer(
-          message_types.VoidMessage,
-          bucket=messages.StringField(1, required=True),
-          status=messages.EnumField(model.BuildStatus, 2, required=True),
-          # All specified tags must be present in a build.
-          tag=messages.StringField(3, repeated=True),
-          created_by=messages.StringField(4),
-      ),
-      DeleteManyBuildsResponse,
-      path='bucket/{bucket}/delete',
-      http_method='POST'
-  )
-  @auth.public
-  def delete_many_builds(self, request):
-    """Deletes scheduled or started builds in a bucket."""
-    service.delete_many_builds(
-        convert_bucket(request.bucket),
-        request.status,
-        tags=request.tag[:],
-        created_by=request.created_by
-    )
-    return self.DeleteManyBuildsResponse()
-
   ####### PAUSE ################################################################
 
   class PauseResponse(messages.Message):
