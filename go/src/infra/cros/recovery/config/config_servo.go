@@ -850,11 +850,11 @@ func servoRepairPlan() *Plan {
 					"is_servo_type_ccd",
 					"is_time_to_reflash_cr50_fw",
 				},
-				Dependencies: []string{"reflash_cr_50_fw"},
+				Dependencies: []string{"cros_reflash_cr50_fw"},
 				RunControl:   1,
 				ExecName:     "servo_host_servod_stop",
 			},
-			"reflash_cr_50_fw": {
+			"cros_reflash_cr50_fw": {
 				Docs: []string{
 					"Try to reflash cr50 firmware and reboot AP from DUT side to wake it up.",
 					"Reboot after the fw flash is successful.",
@@ -865,7 +865,6 @@ func servoRepairPlan() *Plan {
 					"wait_timeout:30",
 				},
 				ExecTimeout: &durationpb.Duration{Seconds: 150},
-				RunControl:  1,
 			},
 			"is_time_to_reflash_cr50_fw": {
 				Docs: []string{

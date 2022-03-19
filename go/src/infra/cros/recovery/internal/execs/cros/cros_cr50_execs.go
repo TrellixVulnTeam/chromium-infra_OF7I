@@ -94,7 +94,7 @@ const (
 // Ex: ["flash_timeout:x", "wait_timeout:x"]
 func reflashCr50FwExec(ctx context.Context, info *execs.ExecInfo) error {
 	argsMap := info.GetActionArgs(ctx)
-	// Timeout for executing the cr 50 fw flash command on the DUT. Default to be 120s.
+	// Timeout for executing the cr50 fw flash command on the DUT. Default to be 120s.
 	flashTimeout := argsMap.AsDuration(ctx, "flash_timeout", 120, time.Second)
 	// Delay to wait for the fw flash command to be efftive. Default to be 30s.
 	waitTimeout := argsMap.AsDuration(ctx, "wait_timeout", 30, time.Second)
@@ -115,18 +115,18 @@ func reflashCr50FwExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err != nil {
 		errorCode, ok := errors.TagValueIn(execs.ErrCodeTag, err)
 		if !ok {
-			return errors.Annotate(err, "reflash cr 50 fw: cannot find error code").Err()
+			return errors.Annotate(err, "reflash cr50 fw: cannot find error code").Err()
 		}
 		if errorCode != 1 {
-			return errors.Annotate(err, "reflash cr 50 fw: fail to flash %q", info.RunArgs.DUT.Cr50Phase).Err()
+			return errors.Annotate(err, "reflash cr50 fw: fail to flash %q", info.RunArgs.DUT.Cr50Phase).Err()
 		}
 	}
-	log.Debug(ctx, "cr 50 fw update successfully.")
-	// reboot the DUT for the reflash of the cr 50 fw to be effective.
+	log.Debug(ctx, "cr50 fw update successfully.")
+	// reboot the DUT for the reflash of the cr50 fw to be effective.
 	if out, err := run(ctx, 30*time.Second, "reboot && exit"); err != nil {
 		// Client closed connected as rebooting.
 		log.Debug(ctx, "Client exit as device rebooted: %s", err)
-		return errors.Annotate(err, "reflash cr 50 fw").Err()
+		return errors.Annotate(err, "reflash cr50 fw").Err()
 	} else {
 		log.Debug(ctx, "Stdout: %s", out)
 	}
@@ -140,5 +140,5 @@ func reflashCr50FwExec(ctx context.Context, info *execs.ExecInfo) error {
 func init() {
 	execs.Register("cros_update_cr50_label", updateCr50LabelExec)
 	execs.Register("cros_update_cr50_key_id_label", updateCr50KeyIdLabelExec)
-	execs.Register("reflash_cr_50_fw", reflashCr50FwExec)
+	execs.Register("cros_reflash_cr50_fw", reflashCr50FwExec)
 }
