@@ -4,6 +4,8 @@
 
 package model
 
+import "sort"
+
 // SuspectJustification represents the heuristic analysis of a CL.
 // It how likely the suspect is the real culprit and also the reason for suspecting.
 type SuspectJustification struct {
@@ -47,4 +49,11 @@ func (justification *SuspectJustification) AddItem(score int, filePath string, r
 		justification.Items = []*SuspectJustificationItem{}
 	}
 	justification.Items = append(justification.Items, item)
+}
+
+// Sort sorts the items descendingly based on score
+func (justification *SuspectJustification) Sort() {
+	sort.Slice(justification.Items, func(i, j int) bool {
+		return justification.Items[i].Score > justification.Items[j].Score
+	})
 }

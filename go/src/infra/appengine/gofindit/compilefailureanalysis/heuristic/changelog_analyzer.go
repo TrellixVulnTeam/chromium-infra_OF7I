@@ -84,6 +84,7 @@ func AnalyzeOneChangeLog(c context.Context, signal *gfim.CompileFailureSignal, c
 		}
 	}
 
+	justification.Sort()
 	return justification, nil
 }
 
