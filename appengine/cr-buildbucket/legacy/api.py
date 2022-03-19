@@ -1061,32 +1061,6 @@ class BuildBucketApi(remote.Service):
     service.pause(convert_bucket(request.bucket), request.is_paused)
     return self.PauseResponse()
 
-  ####### GET_BUCKET ###########################################################
-
-  @buildbucket_api_method(
-      endpoints.ResourceContainer(
-          message_types.VoidMessage,
-          bucket=messages.StringField(1, required=True),
-      ),
-      BucketMessage,
-      path='buckets/{bucket}',
-      http_method='GET'
-  )
-  @auth.public
-  def get_bucket(self, request):
-    """Returns bucket information."""
-    bucket_id = convert_bucket(request.bucket)  # checks access
-    project_id, _ = config.parse_bucket_id(bucket_id)
-    rev, bucket_cfg = config.get_bucket(bucket_id)
-    assert bucket_cfg  # access check would have failed.
-    return BucketMessage(
-        name=request.bucket,
-        project_id=project_id,
-        config_file_content=protobuf.text_format.MessageToString(bucket_cfg),
-        config_file_rev=rev,
-        config_file_url=config.get_buildbucket_cfg_url(project_id),
-    )
-
 
 @contextlib.contextmanager
 def _wrap_validation_error():

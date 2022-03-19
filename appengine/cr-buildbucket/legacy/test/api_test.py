@@ -957,46 +957,6 @@ class V1ApiTest(testing.EndpointsTestCase):
     pause.assert_called_once_with('chromium/try', True)
     self.assertEqual(res, {})
 
-  ####### GET_BUCKET ###########################################################
-
-  @mock.patch('config.get_buildbucket_cfg_url', autospec=True)
-  def test_get_bucket(self, get_buildbucket_cfg_url):
-    get_buildbucket_cfg_url.return_value = 'https://example.com/buildbucket.cfg'
-
-    bucket_cfg = test_util.parse_bucket_cfg('name: "buildbot.readonly"')
-    config.put_bucket('chromium', 'deadbeef', bucket_cfg)
-    self.perms['chromium/buildbot.readonly'] = [user.PERM_BUCKETS_GET]
-
-    req = {
-        'bucket': 'buildbot.readonly',
-    }
-    res = self.call_api('get_bucket', req).json_body
-    self.assertEqual(
-        res, {
-            'name': 'buildbot.readonly',
-            'project_id': 'chromium',
-            'config_file_content': text_format.MessageToString(bucket_cfg),
-            'config_file_url': 'https://example.com/buildbucket.cfg',
-            'config_file_rev': 'deadbeef',
-        }
-    )
-
-  def test_get_bucket_not_found(self):
-    req = {
-        'bucket': 'buildbot.not-found',
-    }
-    self.call_api('get_bucket', req, status=403)
-
-  def test_get_bucket_with_auth_error(self):
-    bucket_cfg = test_util.parse_bucket_cfg('name: "buildbot.hidden"')
-    config.put_bucket('chromium', 'deadbeef', bucket_cfg)
-    self.perms['chromium/buildbot.hidden'] = []
-
-    req = {
-        'bucket': 'buildbot.hidden',
-    }
-    self.call_api('get_bucket', req, status=403)
-
   ####### ERRORS ###############################################################
 
   @mock.patch('service.get_async', autospec=True)
