@@ -170,11 +170,27 @@ func deployActions() map[string]*Action {
 		},
 		"Verify boot in recovery mode": {
 			Docs: []string{
-				"TODO: Not implemented yet!",
-				"Allow to fail till it is ready",
+				"Devices deployed with servo in the pools required secure mode need to be able to be boot in recovery mode.",
 			},
-			ExecName:               "sample_fail",
-			AllowFailAfterRecovery: true,
+			Conditions: []string{
+				"Pools required to be in Secure mode",
+			},
+			Dependencies: []string{
+				"dut_servo_host_present",
+				"servo_state_is_working",
+			},
+			ExecName: "cros_verify_boot_in_recovery_mode",
+			ExecExtraArgs: []string{
+				"boot_timeout:480",
+				"boot_interval:10",
+				"halt_timeout:120",
+				"ignore_reboot_failure:false",
+			},
+			ExecTimeout: &durationpb.Duration{Seconds: 900},
+			RecoveryActions: []string{
+				// The only reason why it can fail on good DUT is that USB-key has not good image.
+				"Download stable image to USB-key",
+			},
 		},
 		"Verify RPM config (not critical)": {
 			Docs: []string{

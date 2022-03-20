@@ -34,7 +34,7 @@ const (
 
 const (
 	// Time to wait a rebooting ChromeOS, in seconds.
-	NormalBootingTime = 150
+	NormalBootingTime = 150 * time.Second
 	// Command to extract release builder path from device.
 	extactReleaseBuilderPathCommand = "cat /etc/lsb-release | grep CHROMEOS_RELEASE_BUILDER_PATH"
 )

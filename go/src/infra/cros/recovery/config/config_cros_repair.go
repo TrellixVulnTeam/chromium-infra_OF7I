@@ -690,6 +690,8 @@ func crosRepairActions() map[string]*Action {
 				"Reset GBB flags by host",
 				"cros_switch_to_secure_mode",
 				"cros_reboot",
+				// Waiting to boot to tell if switch was successful.
+				"Wait DUT to be pingable after reset",
 			},
 			ExecName: "sample_pass",
 		},
