@@ -130,8 +130,9 @@ CREATE TABLE Verdicts (
 INTERLEAVE IN PARENT AnalyzedTestVariants ON DELETE CASCADE;
 
 -- Used by finding most recent verdicts of a test variant to calculate status.
-CREATE NULL_FILTERED INDEX VerdictsByKeyAndIngestionTime
- ON Verdicts (Realm, TestId, VariantHash, IngestionTime DESC);
+CREATE NULL_FILTERED INDEX VerdictsByTestVariantAndIngestionTime
+ ON Verdicts (Realm, TestId, VariantHash, IngestionTime DESC),
+ INTERLEAVE IN AnalyzedTestVariants;
 
 -- FailureAssociationRules associate failures with bugs. When a rule
 -- is used to match incoming test failures, the resultant cluster is

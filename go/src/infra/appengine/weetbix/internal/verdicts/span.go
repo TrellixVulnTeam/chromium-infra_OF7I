@@ -9,10 +9,9 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/spanner"
+	"go.chromium.org/luci/server/span"
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/types/known/durationpb"
-
-	"go.chromium.org/luci/server/span"
 
 	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
@@ -31,7 +30,7 @@ func statusCalculationDuration(du *durationpb.Duration) int {
 func ComputeTestVariantStatusFromVerdicts(ctx context.Context, tvKey *taskspb.TestVariantKey, du *durationpb.Duration) (pb.AnalyzedTestVariantStatus, error) {
 	st := spanner.NewStatement(`
 		SELECT Status
-		FROM Verdicts@{FORCE_INDEX=VerdictsByKeyAndIngestionTime, spanner_emulator.disable_query_null_filtered_index_check=true}
+		FROM Verdicts@{FORCE_INDEX=VerdictsByTestVariantAndIngestionTime, spanner_emulator.disable_query_null_filtered_index_check=true}
 		WHERE Realm = @realm
 		AND TestId = @testID
 		AND VariantHash = @variantHash
