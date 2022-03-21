@@ -9,6 +9,7 @@ package docker
 import (
 	"context"
 	base_error "errors"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -240,4 +241,40 @@ func (d *dockerClient) IPAddress(ctx context.Context, containerName string) (str
 		log.Printf("IPAddress %q: %v", containerName, addr)
 	}
 	return addr, nil
+}
+
+// CopyTo copies a file from the host to the container.
+func (d *dockerClient) CopyTo(ctx context.Context, containerName string, sourcePath, destinationPath string) error {
+	// Using `docker cp -- src desc`  where `--` used to avoid interpret src as argument.
+	res, err := runWithTimeout(ctx, time.Minute, "docker", "cp", "--", sourcePath, fmt.Sprintf("%s:%s", containerName, destinationPath))
+	if enableDebugLogging {
+		log.Printf("Run docker copy to %q: exitcode: %v", containerName, res.ExitCode)
+		log.Printf("Run docker copy to %q: stdout: %v", containerName, res.Stdout)
+		log.Printf("Run docker copy to %q: stderr: %v", containerName, res.Stderr)
+		log.Printf("Run docker copy to %q: err: %v", containerName, err)
+	}
+	if err != nil {
+		return errors.Annotate(err, "copy to %q", containerName).Err()
+	} else if res.ExitCode != 0 {
+		return errors.Reason("copy to %q: fail with exit code %v", containerName, res.ExitCode).Err()
+	}
+	return nil
+}
+
+// CopyFrom copies a file from container to the host.
+func (d *dockerClient) CopyFrom(ctx context.Context, containerName string, sourcePath, destinationPath string) error {
+	// Using `docker cp -- src desc`  where `--` used to avoid interpret src as argument.
+	res, err := runWithTimeout(ctx, time.Minute, "docker", "cp", "--", fmt.Sprintf("%s:%s", containerName, sourcePath), destinationPath)
+	if enableDebugLogging {
+		log.Printf("Run docker copy from %q: exitcode: %v", containerName, res.ExitCode)
+		log.Printf("Run docker copy from %q: stdout: %v", containerName, res.Stdout)
+		log.Printf("Run docker copy from %q: stderr: %v", containerName, res.Stderr)
+		log.Printf("Run docker copy from %q: err: %v", containerName, err)
+	}
+	if err != nil {
+		return errors.Annotate(err, "copy from %q", containerName).Err()
+	} else if res.ExitCode != 0 {
+		return errors.Reason("copy from %q: fail with exit code %v", containerName, res.ExitCode).Err()
+	}
+	return nil
 }

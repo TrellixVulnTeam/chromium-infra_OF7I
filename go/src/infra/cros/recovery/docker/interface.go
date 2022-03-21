@@ -20,6 +20,8 @@ type Client interface {
 	Remove(ctx context.Context, containerName string, force bool) error
 	Exec(ctx context.Context, containerName string, req *ExecRequest) (*ExecResponse, error)
 	IPAddress(ctx context.Context, containerName string) (string, error)
+	CopyTo(ctx context.Context, containerName string, sourcePath, destinationPath string) error
+	CopyFrom(ctx context.Context, containerName string, sourcePath, destinationPath string) error
 	PrintAll(ctx context.Context) error
 }
 
