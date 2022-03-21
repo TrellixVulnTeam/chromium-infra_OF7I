@@ -15,6 +15,7 @@ import (
 
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
+	"infra/cros/recovery/logger/metrics"
 	"infra/cros/recovery/tlw"
 )
 
@@ -105,6 +106,25 @@ func reflashCr50FwExec(ctx context.Context, info *execs.ExecInfo) error {
 	} else {
 		updateCmd = fmt.Sprintf(updateCmd, "prod")
 	}
+	karteAction := &metrics.Action{
+		// TODO(@gregorynisbet): When karte' Search API is capable of taking in asset tag,
+		// change the query to use asset tag instead of using hostname.
+		Hostname:   info.RunArgs.DUT.Name,
+		ActionKind: metrics.Cr50FwReflashKind,
+		StartTime:  time.Now(),
+		Status:     metrics.ActionStatusFail,
+	}
+	if mErr := info.RunArgs.Metrics.Create(ctx, karteAction); mErr != nil {
+		log.Debug(ctx, "Reflash cr50 firmware: cannot create karte metrics: %s", mErr)
+	}
+	defer func() {
+		// Recoding cr 50 fw reflash to Karte.
+		log.Debug(ctx, "Updating cr 50 fw reflash record in Karte.")
+		karteAction.StopTime = time.Now()
+		if mErr := info.RunArgs.Metrics.Update(ctx, karteAction); mErr != nil {
+			log.Debug(ctx, "Reflash cr 50 fw: Metrics error: %s", mErr)
+		}
+	}()
 	run := info.NewRunner(info.RunArgs.DUT.Name)
 	// For "gsctool", we use the traditional runner because the exit code of both 0 and 1
 	// indicates successful execution of the command.
@@ -126,12 +146,12 @@ func reflashCr50FwExec(ctx context.Context, info *execs.ExecInfo) error {
 	if out, err := run(ctx, 30*time.Second, "reboot && exit"); err != nil {
 		// Client closed connected as rebooting.
 		log.Debug(ctx, "Client exit as device rebooted: %s", err)
+		karteAction.FailReason = fmt.Sprintf("%s : reflash cr50 fw", err)
 		return errors.Annotate(err, "reflash cr50 fw").Err()
 	} else {
 		log.Debug(ctx, "Stdout: %s", out)
 	}
-	// TODO: (@yunzhiyu & @gregorynisbet)
-	// Record cr50 fw update attempt along with time to Karte.
+	karteAction.Status = metrics.ActionStatusSuccess
 	log.Debug(ctx, "waiting for %d seconds to let cr50 fw reflash be effective.", waitTimeout)
 	time.Sleep(waitTimeout)
 	return nil

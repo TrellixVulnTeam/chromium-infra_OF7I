@@ -10,6 +10,7 @@ import (
 	_ "infra/cros/recovery/internal/execs/chameleon"
 	_ "infra/cros/recovery/internal/execs/cros"
 	_ "infra/cros/recovery/internal/execs/dut"
+	_ "infra/cros/recovery/internal/execs/metrics"
 	_ "infra/cros/recovery/internal/execs/rpm"
 	_ "infra/cros/recovery/internal/execs/servo"
 	_ "infra/cros/recovery/internal/execs/stableversion"

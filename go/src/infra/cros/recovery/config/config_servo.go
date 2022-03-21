@@ -848,7 +848,7 @@ func servoRepairPlan() *Plan {
 				Docs: []string{"Try to reflash cr50 firmware and reboot AP from DUT side to wake it up."},
 				Conditions: []string{
 					"is_servo_type_ccd",
-					"is_time_to_reflash_cr50_fw",
+					"cros_is_time_to_reflash_cr50_fw",
 				},
 				Dependencies: []string{"cros_reflash_cr50_fw"},
 				RunControl:   1,
@@ -866,14 +866,25 @@ func servoRepairPlan() *Plan {
 				},
 				ExecTimeout: &durationpb.Duration{Seconds: 150},
 			},
-			"is_time_to_reflash_cr50_fw": {
+			"cros_is_time_to_reflash_cr50_fw": {
 				Docs: []string{
 					"Verify that it is time when we can try to re-flash fw on cr50 (H1).",
 					"Re-flashing limited to once per once per day to avoid over-flashing the device.",
-					"TODO: (@gregorynisbet): Add and register exec function for this servo condition action.",
-					"b/216567871",
 				},
-				ExecName: "sample_pass",
+				Conditions: []string{
+					"cros_last_time_cr50_reflash_within_24hr",
+				},
+				ExecName: "sample_fail",
+			},
+			"cros_last_time_cr50_reflash_within_24hr": {
+				Docs: []string{
+					"Confirm that no cr50 reflash action has occurred in the past 24 hours.",
+				},
+				ExecExtraArgs: []string{
+					"metrics_kind:cr50_flash",
+					"time_frame_hours:24",
+				},
+				ExecName: "metrics_found_at_last_time",
 			},
 			"reset_ec_on_dut": {
 				Docs:         []string{"Try to reset EC from DUT side to wake CR50 up. And then restart the servod."},
