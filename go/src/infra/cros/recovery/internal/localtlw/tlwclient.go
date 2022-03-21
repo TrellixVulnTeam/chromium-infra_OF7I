@@ -362,9 +362,9 @@ func (c *tlwClient) startServodContainer(ctx context.Context, dut *tlw.Dut) erro
 // defaultDockerNetwork provides network in which docker need to run.
 func defaultDockerNetwork() string {
 	network := os.Getenv("DOCKER_DEFAULT_NETWORK")
-	// TODO(b/217258787): Remove check and default value.
+	// If not provided then use host network.
 	if network == "" {
-		network = "default_satlab"
+		network = "host"
 	}
 	return network
 }
