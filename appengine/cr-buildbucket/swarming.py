@@ -151,7 +151,14 @@ def compute_task_def(build, settings, fake_build):
   }
   if build.proto.number:  # pragma: no branch
     task['name'] += '-%d' % build.proto.number
-  if sw.parent_run_id:
+
+  # Only makes swarming to track the build's parent if Buildbucket doesn't
+  # track.
+  # Buildbucket should track the parent/child build relationships for all
+  # Buildbucket Builds.
+  # Except for children of led builds, whose parents are still tracked by
+  # swarming using sw.parent_run_id.
+  if sw.parent_run_id and not build.proto.ancestor_ids:
     # Semantically, it's a run id, but swarming API unfortunately called it
     # parent_task_id.
     task['parent_task_id'] = sw.parent_run_id
