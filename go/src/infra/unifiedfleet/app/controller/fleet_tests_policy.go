@@ -110,15 +110,15 @@ func getValidPublicTestNames() []string {
 }
 
 func getValidPublicBoards() []string {
-	return []string{"eve", "kevin"}
+	return []string{"eve", "octopus"}
 }
 
 func getValidPublictModels() []string {
-	return []string{"eve", "kevin"}
+	return []string{"eve", "octopus"}
 }
 
 func getValidPublicImages() []string {
-	return []string{"eve-full/R100-14495.0.0-rc1", "kevin-full/R100-14495.0.0-rc1"}
+	return []string{"eve-full/R100-14495.0.0-rc1", "octopus-full/R101-14543.0.0-rc1"}
 }
 
 func contains(listItems []string, name string) bool {
