@@ -144,7 +144,7 @@ func captureState(ctx context.Context, appID string) (*modelpb.AppengineState, e
 	state.CapturedState = &modelpb.AppengineState_CapturedState{
 		LocationId:      app.LocationId,
 		DefaultHostname: app.DefaultHostname,
-		DatabaseType:    modelpb.AppengineState_CapturedState_DatabaseType(app.DatabaseType.Number()),
+		DatabaseType:    modelpb.AppengineState_CapturedState_DatabaseType(app.DatabaseType),
 	}
 
 	logging.Infof(ctx, "Listing services")

@@ -187,9 +187,8 @@ func handleErr(ctx context.Context, err error) int {
 // writeOutput writes a JSONPB-serialized message to the given file or stdout.
 func writeOutput(path string, msg proto.Message) error {
 	blob, err := (protojson.MarshalOptions{
-		Multiline:      true,
-		Indent:         "  ",
-		UseEnumNumbers: true,
+		Multiline: true,
+		Indent:    "  ",
 	}).Marshal(msg)
 	if err != nil {
 		return err
