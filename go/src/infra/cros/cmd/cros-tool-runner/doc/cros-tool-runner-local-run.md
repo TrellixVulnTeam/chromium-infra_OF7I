@@ -30,6 +30,16 @@ $ ./cacheserver -port 3555
 2022/02/17 11:05:27 creating cache on location /tmp/cacheserver
 ```
 
+Note that you may need to first add default credentials to your chroot. If you
+get permission errors in this step, do the following:
+
+Either run `gcloud auth application-default login` or locate your existing
+.json credentials file.
+
+In your chroot, copy this file to an accessible location and update the env
+variable GOOGLE_APPLICATION_CREDENTIALS pointing to it.
+
+
 ## Remote Forward The Cache Server Port To Your DUT
 
 * In the example below, the DUT is 127.0.0.1:2223
@@ -98,6 +108,15 @@ Example:
 * The md_container.jsonpb is a container metadata file downloaded earlier.
 * The file cros_tool_test_request.json is the test request file.
 * If the run was successful, you should see the test result in test_result.json,
+
+Troubleshooting this step:
+
+* Make sure you have been granted permission to pull images from test-services.
+* Gcloud needs to be configured to run docker. Try `gcloud auth configure-docker us-docker.pkg.dev`.
+* Make sure the image on your DUT matches the metadata image (or is at
+  least close enough to avoid incompatibility).
+* You will need to `sudo rm -rf output_dir/` between consecutive runs
+of cros-tool-runner.
 
 # Screenshot Of The Example
 
