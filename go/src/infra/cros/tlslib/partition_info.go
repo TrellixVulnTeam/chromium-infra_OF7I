@@ -21,8 +21,10 @@ const (
 // partitionsInfo holds active/inactive root + kernel partition information.
 type partitionInfo struct {
 	// The active + inactive kernel device partitions (e.g. /dev/nvme0n1p2).
-	activeKernel   string
-	inactiveKernel string
+	activeKernel      string
+	activeKernelNum   string
+	inactiveKernel    string
+	inactiveKernelNum string
 	// The active + inactive root device partitions (e.g. /dev/nvme0n1p3).
 	activeRoot   string
 	inactiveRoot string
@@ -37,21 +39,25 @@ func getPartitionInfo(r rootDev) partitionInfo {
 	switch r.partNum {
 	case partitionNumRootA:
 		return partitionInfo{
-			activeKernel:   rootDiskPartDelim + partitionNumKernelA,
-			inactiveKernel: rootDiskPartDelim + partitionNumKernelB,
-			activeRoot:     rootDiskPartDelim + partitionNumRootA,
-			inactiveRoot:   rootDiskPartDelim + partitionNumRootB,
-			miniOSA:        rootDiskPartDelim + partitionNumMiniOSA,
-			miniOSB:        rootDiskPartDelim + partitionNumMiniOSB,
+			activeKernel:      rootDiskPartDelim + partitionNumKernelA,
+			activeKernelNum:   partitionNumKernelA,
+			inactiveKernel:    rootDiskPartDelim + partitionNumKernelB,
+			inactiveKernelNum: partitionNumKernelB,
+			activeRoot:        rootDiskPartDelim + partitionNumRootA,
+			inactiveRoot:      rootDiskPartDelim + partitionNumRootB,
+			miniOSA:           rootDiskPartDelim + partitionNumMiniOSA,
+			miniOSB:           rootDiskPartDelim + partitionNumMiniOSB,
 		}
 	case partitionNumRootB:
 		return partitionInfo{
-			activeKernel:   rootDiskPartDelim + partitionNumKernelB,
-			inactiveKernel: rootDiskPartDelim + partitionNumKernelA,
-			activeRoot:     rootDiskPartDelim + partitionNumRootB,
-			inactiveRoot:   rootDiskPartDelim + partitionNumRootA,
-			miniOSA:        rootDiskPartDelim + partitionNumMiniOSA,
-			miniOSB:        rootDiskPartDelim + partitionNumMiniOSB,
+			activeKernel:      rootDiskPartDelim + partitionNumKernelB,
+			activeKernelNum:   partitionNumKernelB,
+			inactiveKernel:    rootDiskPartDelim + partitionNumKernelA,
+			inactiveKernelNum: partitionNumKernelA,
+			activeRoot:        rootDiskPartDelim + partitionNumRootB,
+			inactiveRoot:      rootDiskPartDelim + partitionNumRootA,
+			miniOSA:           rootDiskPartDelim + partitionNumMiniOSA,
+			miniOSB:           rootDiskPartDelim + partitionNumMiniOSB,
 		}
 	default:
 		panic(fmt.Sprintf("Unexpected root partition number of %s", r.partNum))

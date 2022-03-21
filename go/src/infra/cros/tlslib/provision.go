@@ -29,6 +29,8 @@ const (
 	// we've tried and failed in a previous attempt to update.
 	// The file will be created every time a OS provision is kicked off.
 	provisionFailed = "/var/tmp/provision_failed"
+
+	verificationTimeout = 120 * time.Second
 )
 
 func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
@@ -176,7 +178,9 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 
 		if !req.PreventReboot {
 			t = time.Now()
-			if err := p.verifyOSProvision(); err != nil {
+			verifyCtx, cancel := context.WithTimeout(ctx, verificationTimeout)
+			defer cancel()
+			if err := p.verifyOSProvision(verifyCtx); err != nil {
 				setError(newOperationError(
 					codes.Aborted,
 					fmt.Sprintf("provision: failed to verify OS provision, %s", err),

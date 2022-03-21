@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
 	"golang.org/x/crypto/ssh"
@@ -178,16 +179,52 @@ func (p *provisionState) provisionStateful(ctx context.Context) error {
 	return nil
 }
 
-func (p *provisionState) verifyOSProvision() error {
+func (p *provisionState) verifyOSProvision(ctx context.Context) error {
+	if err := p.verifyBuilderPath(); err != nil {
+		return err
+	}
+	if err := p.verifyKernelState(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *provisionState) verifyBuilderPath() error {
 	actualBuilderPath, err := getBuilderPath(p.c)
 	if err != nil {
-		return fmt.Errorf("verify OS provision: failed to get builder path, %s", err)
+		return fmt.Errorf("verifyBuilderPath: failed to get builder path, %s", err)
 	}
 	if actualBuilderPath != p.targetBuilderPath {
-		return fmt.Errorf("verify OS provision: DUT is on builder path %s when expected builder path is %s",
+		return fmt.Errorf("verifyBuilderPath: DUT is on builder path %s when expected builder path is %s",
 			actualBuilderPath, p.targetBuilderPath)
 	}
 	return nil
+}
+
+func (p *provisionState) verifyKernelState(ctx context.Context) error {
+	r, err := getRootDev(p.c)
+	if err != nil {
+		return fmt.Errorf("verifyKernelState: failed to get root device from DUT, %s", err)
+	}
+	pi := getPartitionInfo(r)
+	for {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("verifyKernelState: timeout reached, %w", err)
+		default:
+			if kernelSuccess, err := runCmdOutput(p.c, fmt.Sprintf("cgpt show -S -i %s %s", pi.activeKernelNum, r.disk)); err != nil {
+				log.Printf("verifyKernelState: retrying, failed to read active kernel success attribute, %s", err)
+			} else {
+				kernelSuccess = strings.TrimSpace(kernelSuccess)
+				if kernelSuccess == "1" {
+					return nil
+				}
+				// Otherwise retry after a delay until timeout.
+				log.Printf("verifyKernelState: waiting for active kernel to be marked successful")
+			}
+			time.Sleep(2 * time.Second)
+		}
+	}
 }
 
 const (
