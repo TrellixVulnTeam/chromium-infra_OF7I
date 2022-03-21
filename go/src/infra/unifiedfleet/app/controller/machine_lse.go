@@ -1719,6 +1719,108 @@ func UpdateLabMeta(ctx context.Context, meta *ufspb.LabMeta) error {
 	return nil
 }
 
+// UpdateRecoveryLabdata updates only labdata and resource state for a given ChromeOS DUT.
+func updateRecoveryLabData(ctx context.Context, hostname string, resourceState ufspb.State, labData *ufsAPI.UpdateDeviceRecoveryDataRequest_LabData) error {
+	f := func(ctx context.Context) error {
+		lse, err := inventory.GetMachineLSE(ctx, hostname)
+		if err != nil {
+			return err
+		}
+		hc := getHostHistoryClient(lse)
+		oldLSE := proto.Clone(lse).(*ufspb.MachineLSE)
+
+		// Apply resource_state edits
+		lse.ResourceState = resourceState
+		if labData == nil {
+			// TODO add to Proto labdata - Not be updated if labdata is nil
+			logging.Warningf(ctx, "updateRecoveryLabData: empty labData(%q)", labData)
+		} else {
+			dut := lse.GetChromeosMachineLse().GetDeviceLse().GetDut()
+			if dut == nil {
+				logging.Warningf(ctx, "%s is not a valid Chromeos DUT", lse.GetName())
+				return nil
+			}
+			// Periphrals cannot be nil for valid DUT
+			if dut.GetPeripherals() == nil {
+				dut.Peripherals = &chromeosLab.Peripherals{}
+			}
+			peri := dut.GetPeripherals()
+			// Copy for logging
+			// Apply smart usb hub edits
+			peri.SmartUsbhub = labData.GetSmartUsbhub()
+
+			// Servo cannot be nil for valid DUT
+			if peri.GetServo() == nil {
+				peri.Servo = &chromeosLab.Servo{}
+			}
+			// Apply servo edits
+			if err = editRecoveryPeripheralServo(ctx, peri.GetServo(), labData); err != nil {
+				return err
+			}
+			// Wifi cannot be nil for valid DUT
+			if peri.GetWifi() == nil {
+				peri.Wifi = &chromeosLab.Wifi{}
+			}
+			// Apply wifirouters edits
+			if err = editRecoveryPeripheralWifi(ctx, peri.GetWifi(), labData); err != nil {
+				return err
+			}
+		}
+		if _, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
+			return errors.Annotate(err, "unable to update labData for %s", lse.Name).Err()
+		}
+		hc.LogMachineLSEChanges(oldLSE, lse)
+		return hc.SaveChangeEvents(ctx)
+
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "updateRecoveryDataDeviceLSE  (%s) - %s", hostname, err)
+		return err
+	}
+	return nil
+}
+
+// editRecoveryPeripheralServo edits peripherals servo
+func editRecoveryPeripheralServo(ctx context.Context, servo *chromeosLab.Servo, labData *ufsAPI.UpdateDeviceRecoveryDataRequest_LabData) error {
+	servo.ServoType = labData.GetServoType()
+	servo.ServoTopology = labData.GetServoTopology()
+	servo.ServoComponent = extractServoComponents(labData.GetServoType())
+	return nil
+}
+
+// editRecoveryPeripheralServo edits peripherals Wifi
+func editRecoveryPeripheralWifi(ctx context.Context, wifi *chromeosLab.Wifi, labData *ufsAPI.UpdateDeviceRecoveryDataRequest_LabData) error {
+	// labDataRouterMap is Wifirouters as hostname-> wifirouter hashmap for easier individual Wifirouter update
+	labDataRouterMap := make(map[string]*ufsAPI.UpdateDeviceRecoveryDataRequest_WifiRouter)
+	for _, labDataRouter := range labData.GetWifiRouters() {
+		labDataRouterMap[labDataRouter.GetHostname()] = labDataRouter
+	}
+	newRouters := []*chromeosLab.WifiRouter{}
+	for _, lseRouter := range wifi.GetWifiRouters() {
+		// edit wifirouter if router already exists in UFS
+		if labDataRouter, ok := labDataRouterMap[lseRouter.GetHostname()]; ok {
+			logging.Infof(ctx, "editRecoverPeripheralWifi - edit wifi router(%s), found in labdata.", lseRouter.GetHostname())
+			lseRouter.State = labDataRouter.GetState()
+			newRouters = append(newRouters, lseRouter)
+			delete(labDataRouterMap, lseRouter.GetHostname())
+		} else {
+			// remove from UFS if not in lab data
+			logging.Infof(ctx, "editRecoverPeripheralWifi - remove wifi router(%s), not found in labdata.", lseRouter.GetHostname())
+		}
+	}
+	// add new wifirouters to UFS
+	for hostname := range labDataRouterMap {
+		logging.Infof(ctx, "editRecoverPeripheralWifi - add wifi router(%s) new in labdata.", hostname)
+		newRouters = append(newRouters, &chromeosLab.WifiRouter{
+			Hostname: hostname,
+			State:    labDataRouterMap[hostname].GetState(),
+		})
+	}
+	// assign updated routers to Wifi
+	wifi.WifiRouters = newRouters
+	return nil
+}
+
 // extractServoComponents extracts servo components based on servo_type.
 // TODO(xianuowang): Move this function out of UFS since UFS doesn't have knowledge of
 // how this should works.

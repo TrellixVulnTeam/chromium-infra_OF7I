@@ -3156,3 +3156,18 @@ func TestRenameDUT(t *testing.T) {
 		})
 	})
 }
+
+func TestCheckDutIdAndHostnameAreAssociated(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	ctx = external.WithTestingContext(ctx)
+	Convey("Check DUT Id and Hostname", t, func() {
+		Convey("renameDUT - Rename a dut in scheduling unit", func() {
+			createValidDUTWithLabstation(ctx, "dut-1", "machine-20", "labstation-1", "machine-10")
+			err := checkDutIdAndHostnameAreAssociated(ctx, "machine-20", "dut-1")
+			So(err, ShouldBeNil)
+			err = checkDutIdAndHostnameAreAssociated(ctx, "machine-20", "dut-2")
+			So(err, ShouldNotBeNil)
+		})
+	})
+}
