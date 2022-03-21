@@ -7,6 +7,7 @@ import {createTheme} from '@material-ui/core/styles';
 import {makeStyles} from '@material-ui/styles';
 import MobileStepper from '@material-ui/core/MobileStepper';
 import Button from '@material-ui/core/Button';
+import Box from '@material-ui/core/Box';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import {ConfirmBackModal} from './ConfirmBackModal.tsx';
@@ -90,7 +91,7 @@ export default function DotsMobileStepper(props: Props) : React.ReactElement {
       </Button>);
   }
 
-  const backButton = activeStep === 0 ? <Button></Button> :
+  const backButton = activeStep === 0 ? <Box></Box> :
     (<Button aria-label="backButton" size="medium" onClick={handleBack} disabled={activeStep === 0} className={classes.back}>
       <KeyboardArrowLeft />
       Back
