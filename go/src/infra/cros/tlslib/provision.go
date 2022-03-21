@@ -127,6 +127,20 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		defer disconnect()
 		log.Printf("provision: time to provision OS took %v", time.Since(t))
 
+		// To be safe, wait for kernel to be "sticky" right after installing the new partitions and booting into it.
+		t = time.Now()
+		// Timeout is determined by 2x delay to mark new kernel successful + 10 seconds fuzz.
+		stickyKernelCtx, cancel := context.WithTimeout(ctx, 100*time.Second)
+		defer cancel()
+		if err := p.verifyKernelState(stickyKernelCtx); err != nil {
+			setError(newOperationError(
+				codes.Aborted,
+				fmt.Sprintf("provision: failed to wait for sticky kernel, %s", err),
+				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
+			return
+		}
+		log.Printf("provision: time to wait for sticky kernel %v", time.Since(t))
+
 		t = time.Now()
 		if !req.GetPreserveStateful() && !req.PreventReboot {
 			if err := p.wipeStateful(ctx); err != nil {
