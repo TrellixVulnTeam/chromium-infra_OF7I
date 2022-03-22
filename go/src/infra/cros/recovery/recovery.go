@@ -41,7 +41,7 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 	if args.Logger == nil {
 		args.Logger = logger.NewLogger()
 	}
-	action := &metrics.Action{}
+
 	ctx = log.WithLogger(ctx, args.Logger)
 	if !args.EnableRecovery {
 		log.Info(ctx, "Recovery actions is blocker by run arguments.")
@@ -56,41 +56,36 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 		step, ctx = build.StartStep(ctx, fmt.Sprintf("Start %s", args.TaskName))
 		defer func() { step.End(err) }()
 	}
+
 	if args.Metrics == nil {
 		log.Debug(ctx, "run: metrics is nil")
-	} else {
+	} else { // Guard against incorrectly setting up Karte client. See b:217746479 for details.
 		log.Debug(ctx, "run: metrics is non-nil")
 		start := time.Now()
 		// TODO(gregorynisbet): Create a helper function to make this more compact.
 		defer (func() {
-			stop := time.Now()
-			status := metrics.ActionStatusUnspecified
-			failReason := ""
-			if rErr == nil {
-				status = metrics.ActionStatusFail
-			} else {
-				status = metrics.ActionStatusSuccess
-				failReason = rErr.Error()
-			}
 			// Keep this call up to date with NewMetric in execs.go.
-			if args.Metrics != nil { // Guard against incorrectly setting up Karte client. See b:217746479 for details.
-				*action = metrics.Action{
-					ActionKind:     "run_recovery",
-					StartTime:      start,
-					StopTime:       stop,
-					SwarmingTaskID: args.SwarmingTaskID,
-					BuildbucketID:  args.BuildbucketID,
-					Hostname:       args.UnitName,
-					Status:         status,
-					FailReason:     failReason,
-				}
+			action := &metrics.Action{
+				ActionKind:     metrics.RunLibraryKind,
+				StartTime:      start,
+				StopTime:       time.Now(),
+				SwarmingTaskID: args.SwarmingTaskID,
+				BuildbucketID:  args.BuildbucketID,
+				Hostname:       args.UnitName,
+			}
+			if rErr == nil {
+				action.Status = metrics.ActionStatusSuccess
+			} else {
+				action.Status = metrics.ActionStatusFail
+				action.FailReason = rErr.Error()
+			}
 
-				if mErr := args.Metrics.Create(ctx, action); mErr != nil {
-					args.Logger.Error("Metrics error during teardown: %s", err)
-				}
+			if mErr := args.Metrics.Create(ctx, action); mErr != nil {
+				args.Logger.Error("Metrics error during teardown: %s", err)
 			}
 		})()
 	}
+
 	// Close all created local proxies.
 	defer func() {
 		localproxy.ClosePool()
@@ -102,14 +97,44 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 		if ir != 0 {
 			log.Debug(ctx, "Continue to the next resource.")
 		}
-		if err := runResource(ctx, resource, args); err != nil {
+		startTime := time.Now()
+		err := runResource(ctx, resource, args)
+		if err != nil {
 			errs = append(errs, errors.Annotate(err, "run recovery %q", resource).Err())
+		}
+		// Create karte metric
+		if createMetricErr := createTaskRunMetricsForResource(ctx, args, startTime, resource, err); createMetricErr != nil {
+			args.Logger.Error("Create metric for resource: %q with error: %s", resource, createMetricErr)
 		}
 	}
 	if len(errs) > 0 {
 		return errors.Annotate(errors.MultiError(errs), "run recovery").Err()
 	}
 	return nil
+}
+
+// createTaskRunMetricsForResource creates metric action for resource with reporting what is the tasking is running for it.
+func createTaskRunMetricsForResource(ctx context.Context, args *RunArgs, startTime time.Time, resource string, runResourceErr error) error {
+	if args.Metrics == nil {
+		log.Debug(ctx, "Create karte action for each resource: For resource %s: metrics is not provided.")
+		return nil
+	}
+	action := &metrics.Action{
+		ActionKind:     fmt.Sprintf(metrics.PerResourceTaskKindGlob, args.TaskName),
+		StartTime:      startTime,
+		StopTime:       time.Now(),
+		SwarmingTaskID: args.SwarmingTaskID,
+		BuildbucketID:  args.BuildbucketID,
+		Hostname:       resource,
+		Status:         metrics.ActionStatusSuccess,
+		FailReason:     "",
+	}
+	if runResourceErr != nil {
+		action.Status = metrics.ActionStatusFail
+		action.FailReason = runResourceErr.Error()
+	}
+	mErr := args.Metrics.Create(ctx, action)
+	return errors.Annotate(mErr, "create task run metrics for resource %s", resource).Err()
 }
 
 // runResource run single resource.
