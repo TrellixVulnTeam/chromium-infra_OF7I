@@ -379,6 +379,10 @@ export const OS_LIST = [
     description: '',
   },
   {
+  name: 'Chrome OS',
+  description: '',
+  },
+  {
     name: 'iOS',
     description: '',
   },
@@ -394,12 +398,10 @@ export const OS_LIST = [
     name: 'Windows',
     description: '',
   },
-
   {
     name: 'Unknown/Other',
     description: '',
   },
-
 ]
 
 // possible user os channel

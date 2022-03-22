@@ -65,6 +65,8 @@ export function GetSelectMenuOptions(optionsList: string[]): SelectMenuOption[] 
       return 'Android';
     } else if (/Linux/.test(platform)) {
       return 'Linux';
+    } else if (/\bCrOS\b/.test(userAgent)) {
+      return 'Chrome OS';
     }
 
     return 'Unknown / Other';
