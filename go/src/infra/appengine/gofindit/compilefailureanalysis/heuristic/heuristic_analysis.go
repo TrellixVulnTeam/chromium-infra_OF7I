@@ -56,14 +56,13 @@ func Analyze(
 		return nil, fmt.Errorf("Error extracting signals %w", err)
 	}
 
-	justificationMap, err := AnalyzeChangeLogs(c, signal, changelogs)
+	analysisResult, err := AnalyzeChangeLogs(c, signal, changelogs)
 	if err != nil {
 		return nil, fmt.Errorf("Error in justifying changelogs %w", err)
 	}
-	for commit, justification := range justificationMap {
-		logging.Infof(c, "Justification for commit %s", commit)
-		logging.Infof(c, "Score: %d", justification.GetScore())
-		logging.Infof(c, "Reasons: %s", justification.GetReasons())
+
+	for _, item := range analysisResult.Items {
+		logging.Infof(c, "Commit %s, with review URL %s, has score of %d", item.Commit, item.ReviewUrl, item.Justification.GetScore())
 	}
 	return heuristic_analysis, nil
 }

@@ -4,6 +4,11 @@
 
 package model
 
+import (
+	"fmt"
+	"regexp"
+)
+
 // ChangeLog represents the changes of a revision
 type ChangeLog struct {
 	Commit         string          `json:"commit"`
@@ -41,8 +46,18 @@ const (
 	ChangeType_DELETE = "delete"
 )
 
-// ChangeLogResponse represents the response from gitiles for changelog
+// ChangeLogResponse represents the response from gitiles for changelog.
 type ChangeLogResponse struct {
 	Log  []*ChangeLog `json:"log"`
 	Next string       `json:"next"` // From next revision
+}
+
+// GetReviewUrl returns the review URL of the changelog.
+func (cl *ChangeLog) GetReviewUrl() (string, error) {
+	pattern := regexp.MustCompile("\\nReviewed-on: (https://.+)\\n")
+	matches := pattern.FindStringSubmatch(cl.Message)
+	if matches == nil {
+		return "", fmt.Errorf("Could not find review CL. Message: %s", cl.Message)
+	}
+	return matches[1], nil
 }

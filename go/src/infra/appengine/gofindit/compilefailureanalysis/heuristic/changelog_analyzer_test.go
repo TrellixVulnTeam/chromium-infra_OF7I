@@ -136,4 +136,84 @@ func TestChangeLogAnalyzer(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("AnalyzeChangeLogs", t, func() {
+		c := context.Background()
+		signal := &gfim.CompileFailureSignal{
+			Files: map[string][]int{
+				"src/a/b/x.cc":       {27},
+				"obj/content/util.o": {},
+			},
+		}
+
+		Convey("Results should be sorted", func() {
+			cls := []*gfim.ChangeLog{
+				{
+					Commit:  "abcd",
+					Message: "blah blah\nReviewed-on: https://chromium-review.googlesource.com/c/chromium/src/+/123\n bla",
+					ChangeLogDiffs: []gfim.ChangeLogDiff{
+						{
+							Type:    gfim.ChangeType_MODIFY,
+							NewPath: "content/util.c",
+						},
+					},
+				},
+				{
+					Commit:  "efgh",
+					Message: "blah blah\nReviewed-on: https://chromium-review.googlesource.com/c/chromium/src/+/456\n bla",
+					ChangeLogDiffs: []gfim.ChangeLogDiff{
+						{
+							Type:    gfim.ChangeType_RENAME,
+							OldPath: "unrelated_file_1.cc",
+							NewPath: "unrelated_file_2.cc",
+						},
+					},
+				},
+				{
+					Commit:  "wxyz",
+					Message: "blah blah\nReviewed-on: https://chromium-review.googlesource.com/c/chromium/src/+/789\n bla",
+					ChangeLogDiffs: []gfim.ChangeLogDiff{
+						{
+							Type:    gfim.ChangeType_ADD,
+							NewPath: "dir/a/b/x.cc",
+						},
+					},
+				},
+			}
+
+			analysisResult, err := AnalyzeChangeLogs(c, signal, cls)
+			So(err, ShouldBeNil)
+			So(analysisResult, ShouldResemble, &gfim.HeuristicAnalysisResult{
+				Items: []*gfim.HeuristicAnalysisResultItem{
+					{
+						Commit:    "wxyz",
+						ReviewUrl: "https://chromium-review.googlesource.com/c/chromium/src/+/789",
+						Justification: &gfim.SuspectJustification{
+							Items: []*gfim.SuspectJustificationItem{
+								{
+									Score:    5,
+									FilePath: "dir/a/b/x.cc",
+									Reason:   `The file "dir/a/b/x.cc" was added and it was in the failure log.`,
+								},
+							},
+						},
+					},
+					{
+						Commit:    "abcd",
+						ReviewUrl: "https://chromium-review.googlesource.com/c/chromium/src/+/123",
+						Justification: &gfim.SuspectJustification{
+							Items: []*gfim.SuspectJustificationItem{
+								{
+									Score:    2,
+									FilePath: "content/util.c",
+									Reason:   "The file \"content/util.c\" was modified. It was related to the file obj/content/util.o which was in the failure log.",
+								},
+							},
+						},
+					},
+				},
+			})
+		})
+	})
+
 }

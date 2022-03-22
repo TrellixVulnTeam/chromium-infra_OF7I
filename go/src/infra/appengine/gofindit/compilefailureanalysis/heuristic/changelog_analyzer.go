@@ -26,8 +26,8 @@ type ScoringCriteria struct {
 
 // AnalyzeChangeLogs analyzes the changelogs based on the failure signals.
 // Returns a dictionary that maps the commits and the result found.
-func AnalyzeChangeLogs(c context.Context, signal *gfim.CompileFailureSignal, changelogs []*gfim.ChangeLog) (map[string]*gfim.SuspectJustification, error) {
-	result := map[string]*gfim.SuspectJustification{}
+func AnalyzeChangeLogs(c context.Context, signal *gfim.CompileFailureSignal, changelogs []*gfim.ChangeLog) (*gfim.HeuristicAnalysisResult, error) {
+	result := &gfim.HeuristicAnalysisResult{}
 	for _, changelog := range changelogs {
 		justification, err := AnalyzeOneChangeLog(c, signal, changelog)
 		commit := changelog.Commit
@@ -35,8 +35,18 @@ func AnalyzeChangeLogs(c context.Context, signal *gfim.CompileFailureSignal, cha
 			logging.Errorf(c, "Error analyze change log for commit %s. Error: %w", commit, err)
 			continue
 		}
-		result[commit] = justification
+		reviewUrl, err := changelog.GetReviewUrl()
+		if err != nil {
+			logging.Errorf(c, "Error getting reviewUrl for commit: %s. Error: %w", commit, err)
+			continue
+		}
+
+		// We only care about those relevant CLs
+		if justification.GetScore() > 0 {
+			result.AddItem(commit, reviewUrl, justification)
+		}
 	}
+	result.Sort()
 	return result, nil
 }
 
