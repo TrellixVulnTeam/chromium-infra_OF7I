@@ -27,6 +27,7 @@ func servoRepairPlan() *Plan {
 			"set_state_broken",
 			"has_enough_disk_space",
 			"set_state_not_connected",
+			"Cache latest servod start time",
 			"servo_root_check",
 			"set_state_servod_issue",
 			"servo_host_servod_start",
@@ -65,6 +66,17 @@ func servoRepairPlan() *Plan {
 			"set_state_working",
 		},
 		Actions: map[string]*Action{
+			"Cache latest servod start time": {
+				Docs: []string{
+					"Cache servod start time based on previous runs.",
+					"If we fail all logs will be collected",
+				},
+				Conditions: []string{
+					"is_not_servo_v3",
+				},
+				ExecName:               "cros_register_servod_logs_start",
+				AllowFailAfterRecovery: true,
+			},
 			"servo_host_servod_start": {
 				Conditions: []string{"is_not_container"},
 				RecoveryActions: []string{

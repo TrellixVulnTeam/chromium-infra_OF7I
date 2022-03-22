@@ -7,42 +7,39 @@ package cros
 import (
 	"context"
 	"fmt"
-	"infra/cros/recovery/internal/execs"
+	"io/fs"
 	"io/ioutil"
 	"path/filepath"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
+
+	"infra/cros/recovery/internal/execs"
 )
 
 // Permissions is the default file permissions for log files.
 // Currently, we allow everyone to read and write and nobody to execute.
-const permissions = 0b110_110_110
+const defaultFilePermissions fs.FileMode = 0666
 
 // DmesgExec grabs dmesg and persists the file into the log directory.
 // DmesgExec fails if and only if the dmesg executable doesn't exist or returns nonzero.
 func dmesgExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.DefaultRunner()
+	log := info.NewLogger()
+	logRoot := info.GetLogRoot()
 	output, err := run(ctx, time.Minute, `dmesg`)
-	switch {
-	case err == nil:
-		// Output is non-empty and dmesg ran successfully. This exec is successful
-		logRoot := info.RunArgs.LogRoot
-		// TODO(gregorynisbet): Pick a better path to write to.
-		// TODO(gregorynisbet): Don't ignore the error from writing the file locally.
-		//                      However, failing to write the file locally should not cause the exec to fail.
-		ioutil.WriteFile(filepath.Join(logRoot, "dmesg.txt"), []byte(output), permissions)
-		// Write the number of bytes we collected to a separate file alongside dmesg.txt.
-		// This allows us to know with complete certainty that we intentionally collected 0 bytes of output, for example.
-		ioutil.WriteFile(
-			filepath.Join(logRoot, "dmesg_bytes.txt"),
-			[]byte(fmt.Sprintf("%d", len(output))),
-			permissions,
-		)
-		return nil
-	default:
+	if err != nil {
 		return errors.Annotate(err, "dmesg exec").Err()
 	}
+	// Output is non-empty and dmesg ran successfully. This exec is successful
+	f := filepath.Join(logRoot, "dmesg")
+	log.Debug("dmesg path to safe: %s", f)
+	ioutil.WriteFile(f, []byte(output), defaultFilePermissions)
+	// Write the number of bytes we collected to a separate file alongside dmesg.txt.
+	// This allows us to know with complete certainty that we intentionally collected 0 bytes of output, for example.
+	fc := filepath.Join(logRoot, "dmesg_bytes_count")
+	ioutil.WriteFile(fc, []byte(fmt.Sprintf("%d", len(output))), defaultFilePermissions)
+	return nil
 }
 
 func init() {
