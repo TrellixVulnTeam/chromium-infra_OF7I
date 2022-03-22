@@ -1,0 +1,73 @@
+// Copyright 2022 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package chrome.dir_metadata;
+
+option go_package = "infra/tools/dirmd/proto;dirmdpb";
+
+import "google/protobuf/timestamp.proto";
+import "infra/tools/dirmd/proto/chromeos/chromeos.proto";
+import "infra/tools/dirmd/proto/dir_metadata.proto";
+
+// DirBQRow describes a row in BigQuery table for dir metadata.
+message DirBQRow {
+  // Information about the repository the directory was read from.
+  Source source = 1;
+
+  // Directory name, relative to the root.
+  // Examples:
+  // - If the root repo is "~/chromium/src" and it contains subrepo
+  //   "~/chromium/src/v8", then dir "foo/bar" will correspond to root repo,
+  //   while "v8/baz" will correspond to sub repo "v8".
+  string dir = 2;
+
+  // Monorail metadata. Its component field should always map to the same
+  // team_email field (see below) for every directory that it is listed in.
+  Monorail monorail = 3;
+
+  // The team responsible for the directory. Only a single email is allowed.
+  // For example, “team-email@chromium.org”.
+  string team_email = 4;
+
+  // The code in this directory is specific to this OS.
+  OS os = 5;
+
+  // Private buganizer metadata.
+  Buganizer buganizer = 6;
+
+  // Public buganizer metadata.
+  Buganizer buganizer_public = 7;
+
+  // Team specific metadata.
+  TeamSpecific team_specific_metadata = 8;
+
+  // Partition_time is used to partition the table.
+  // It is the time dirmd starts the BigQuery export process.
+  google.protobuf.Timestamp partition_time = 9;
+}
+
+// Information about where the directory was read from.
+message Source {
+  // Gitiles hostname, e.g. "chromium.googlesource.com".
+  string gitiles_host = 1;
+  // Root repository name on the host, e.g. "chromium/src".
+  string root_repo = 2;
+  // Sub repository name on the host, e.g. "v8".
+  string sub_repo= 3;
+  // Commit ref, e.g. "refs/heads/main".
+  string ref = 4;
+  // Commit HEX SHA1.
+  string revision = 5;
+}
+
+// Team specific metadata.
+message TeamSpecific {
+  // WPT-specific metadata.
+  WPT wpt = 1;
+
+  // ChromeOS specific metadata.
+  chrome.dir_metadata.chromeos.ChromeOS chromeos = 2;
+}
