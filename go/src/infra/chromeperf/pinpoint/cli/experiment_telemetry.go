@@ -342,12 +342,7 @@ func runBatchJob(e *experimentTelemetryRun,
 			}
 		}
 	})
-	fmt.Fprintf(o, "Scheduled the following jobs:\n")
 	for _, j := range jobs {
-		jobURL, err := render.JobURL(j)
-		if err == nil {
-			fmt.Fprintf(o, "%s\n", jobURL)
-		}
 		jobID, err := render.JobID(j)
 		if err == nil {
 			outfile.WriteString(jobID + "\n")

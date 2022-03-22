@@ -69,11 +69,10 @@ func waitAndDownloadJob(br *baseCommandRun,
 	if br.json {
 		return br.writeJSON(o, r)
 	}
-	d, err := yaml.Marshal(r)
+	_, err = yaml.Marshal(r)
 	if err != nil {
 		return errors.Annotate(err, "failed YAML export").Err()
 	}
-	o.Write(d)
 
 	return nil
 }
