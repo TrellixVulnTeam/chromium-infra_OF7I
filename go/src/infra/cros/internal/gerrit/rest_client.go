@@ -1,4 +1,4 @@
-// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Copyright 2022 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -21,6 +21,8 @@ import (
 	gerritapi "github.com/andygrunwald/go-gerrit"
 	"go.chromium.org/luci/common/errors"
 )
+
+// This file contains support for interacting with the Gerrit REST API client.
 
 type APIClient interface {
 	Projects() ([]string, error)
