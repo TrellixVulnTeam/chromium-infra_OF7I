@@ -15,8 +15,6 @@
         "chromeos-kevin-chrome-ltc",
         "chromeos-kevin-chrome-lts",
         "chromeos-kevin-chrome-stable",
-        "lacros-amd64-generic-chrome-skylab",
-        "lacros-arm-generic-chrome-skylab",
         "linux-chromeos-ltc",
         "linux-chromeos-lts",
         "linux-chromeos-stable",
