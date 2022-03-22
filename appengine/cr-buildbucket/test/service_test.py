@@ -334,38 +334,6 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
     with self.assertRaises(errors.InvalidInputError):
       self.lease(1)
 
-  ################################### UNELASE ##################################
-
-  def test_reset(self):
-    build = self.new_started_build(id=1)
-    build = service.reset(1)
-    self.assertEqual(build.proto.status, common_pb2.SCHEDULED)
-    self.assertEqual(build.status_changed_time, utils.utcnow())
-    self.assertIsNone(build.lease_key)
-    self.assertIsNone(build.lease_expiration_date)
-    self.assertIsNone(build.leasee)
-    self.lease(1)
-
-  def test_reset_is_idempotent(self):
-    self.new_leased_build(id=1)
-    service.reset(1)
-    service.reset(1)
-
-  def test_reset_completed_build(self):
-    self.classic_build(id=1, status=common_pb2.SUCCESS).put()
-    with self.assertRaises(errors.BuildIsCompletedError):
-      service.reset(1)
-
-  def test_cannot_reset_nonexistent_build(self):
-    with self.assertRaises(errors.BuildNotFoundError):
-      service.reset(123)
-
-  def test_reset_with_auth_error(self):
-    self.new_leased_build(id=1)
-    self.mock_no_perm(user.PERM_BUILDS_RESET)
-    with self.assertRaises(auth.AuthorizationError):
-      service.reset(1)
-
   #################################### START ###################################
 
   def test_validate_malformed_url(self):

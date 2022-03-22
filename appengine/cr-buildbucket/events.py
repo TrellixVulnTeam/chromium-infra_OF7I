@@ -79,15 +79,3 @@ def on_heartbeat_failure(build_id, ex):  # pragma: no cover
 def on_build_leased(build):  # pragma: no cover
   assert not ndb.in_transaction()
   metrics.inc_leases(build)
-
-
-def on_build_resetting_async(build):  # pragma: no cover
-  return notifications.enqueue_notifications_async(build)
-
-
-def on_build_reset(build):  # pragma: no cover
-  assert not ndb.in_transaction()
-  logging.info(
-      'Build %s was reset by %s', build.key.id(),
-      auth.get_current_identity().to_bytes()
-  )

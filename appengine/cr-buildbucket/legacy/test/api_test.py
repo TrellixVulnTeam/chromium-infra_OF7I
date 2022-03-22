@@ -565,20 +565,6 @@ class V1ApiTest(testing.EndpointsTestCase):
     }
     self.expect_error('lease', req, 'CANNOT_LEASE_BUILD')
 
-  ####### RESET ################################################################
-
-  @mock.patch('service.reset', autospec=True)
-  def test_reset(self, reset):
-    reset.return_value = test_util.build(id=1)
-    req = {
-        'id': '1',
-    }
-    res = self.call_api('reset', req).json_body
-    reset.assert_called_once_with(1)
-    self.assertIsNone(res.get('error'))
-    self.assertEqual(res['build']['id'], '1')
-    self.assertFalse('lease_key' in res['build'])
-
   ####### START ################################################################
 
   @mock.patch('service.start', autospec=True)

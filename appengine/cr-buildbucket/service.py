@@ -206,32 +206,6 @@ def _check_lease(build, lease_key):
     )
 
 
-def reset(build_id):
-  """Forcibly unleases the build and resets its state.
-
-  Resets status, url and lease_key.
-
-  Returns:
-    The reset Build.
-  """
-
-  @ndb.transactional
-  def txn():
-    build = _get_leasable_build(build_id, user.PERM_BUILDS_RESET)
-    if build.is_ended:
-      raise errors.BuildIsCompletedError('Cannot reset a completed build')
-    build.proto.status = common_pb2.SCHEDULED
-    build.status_changed_time = utils.utcnow()
-    build.clear_lease()
-    build.url = None
-    _fut_results(build.put_async(), events.on_build_resetting_async(build))
-    return build
-
-  build = txn()
-  events.on_build_reset(build)
-  return build
-
-
 def start(build_id, lease_key, url):
   """Marks build as STARTED. Idempotent.
 
