@@ -320,9 +320,14 @@ class BouncedEmail(BounceNotificationHandler):
     # but we are adding permanent logging so we don't have to keep adding
     # expriring logpoints.
     if '@intel' in email_addr:  # both intel.com and intel-partner.
-      logging.info(
-          'bounce message: %s', bounce_message.notification.get('text'))
+      logging.info('bounce notification: %r', bounce_message.notification)
       logging.info('bounce message original: %r', bounce_message.original)
+      # The original message's headers are the closest we get to the
+      # servers involved in the failed communication.
+      original_message = bounce_message.original_raw_message.original
+      if original_message is not None:
+        logging.info(
+            'bounce message original headers: %r', original_message.items())
 
     app_config = webapp2.WSGIApplication.app.config
     services = app_config['services']
