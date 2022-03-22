@@ -158,7 +158,12 @@ def compute_task_def(build, settings, fake_build):
   # Buildbucket Builds.
   # Except for children of led builds, whose parents are still tracked by
   # swarming using sw.parent_run_id.
-  if sw.parent_run_id and not build.proto.ancestor_ids:
+  # TODO(crbug.com/1031205): remove the check on
+  # luci.buildbucket.parent_tracking after this experiment is on globally and
+  # we're ready to remove it.
+  if sw.parent_run_id and (
+      not build.proto.ancestor_ids or
+      'luci.buildbucket.parent_tracking' not in build.proto.input.experiments):
     # Semantically, it's a run id, but swarming API unfortunately called it
     # parent_task_id.
     task['parent_task_id'] = sw.parent_run_id

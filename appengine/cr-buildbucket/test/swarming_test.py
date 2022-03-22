@@ -738,9 +738,19 @@ class TaskDefTest(BaseTest):
     build = self._test_build(
         infra=dict(swarming=dict(parent_run_id='deadbeef')),
         ancestor_ids=[123],
+        input=dict(experiments=['luci.buildbucket.parent_tracking']),
     )
     actual = self.compute_task_def(build)
     self.assertIsNone(actual.get('parent_task_id'))
+
+  def test_parent_no_exp(self):
+    # Even though the build has a parent,
+    build = self._test_build(
+        infra=dict(swarming=dict(parent_run_id='deadbeef')),
+        ancestor_ids=[123],
+    )
+    actual = self.compute_task_def(build)
+    self.assertEqual(actual['parent_task_id'], 'deadbeef')
 
   def test_generate_build_url(self):
     build = self._test_build(id=1)
