@@ -24,6 +24,7 @@ type provisionState struct {
 	dutName           string
 	imagePath         string
 	targetBuilderPath string
+	targetLsbHash     string
 	forceProvisionOs  bool
 	preventReboot     bool
 }
@@ -180,23 +181,23 @@ func (p *provisionState) provisionStateful(ctx context.Context) error {
 }
 
 func (p *provisionState) verifyOSProvision(ctx context.Context) error {
-	if err := p.verifyBuilderPath(); err != nil {
-		return err
+	sourceLsbHash, err := runCmdOutput(p.c, "sha256sum /etc/lsb-release")
+	if err != nil {
+		return fmt.Errorf("verify OS provision: failed to get /etc/lsb-release hash, %s", err)
 	}
+
+	shaFields := strings.Fields(sourceLsbHash)
+	if len(shaFields) < 1 {
+		return fmt.Errorf("verify OS provision: invalid output from sha256sum /etc/lsb-release call, %s", sourceLsbHash)
+	}
+	sourceLsbHash = shaFields[0]
+
+	if sourceLsbHash != p.targetLsbHash {
+		return fmt.Errorf("verify OS provision: /etc/lsb-release hashes differ, found %s, %s was expected", sourceLsbHash, p.targetLsbHash)
+	}
+
 	if err := p.verifyKernelState(ctx); err != nil {
 		return err
-	}
-	return nil
-}
-
-func (p *provisionState) verifyBuilderPath() error {
-	actualBuilderPath, err := getBuilderPath(p.c)
-	if err != nil {
-		return fmt.Errorf("verifyBuilderPath: failed to get builder path, %s", err)
-	}
-	if actualBuilderPath != p.targetBuilderPath {
-		return fmt.Errorf("verifyBuilderPath: DUT is on builder path %s when expected builder path is %s",
-			actualBuilderPath, p.targetBuilderPath)
 	}
 	return nil
 }
@@ -257,7 +258,11 @@ func (p *provisionState) installRoot(ctx context.Context, pi partitionInfo) erro
 	if err != nil {
 		return fmt.Errorf("install root: failed to get GS Cache URL, %s", err)
 	}
-	return runCmdRetry(ctx, p.c, 5, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.inactiveRoot))
+	err = runCmdRetry(ctx, p.c, 5, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.inactiveRoot))
+	if err != nil {
+		return fmt.Errorf("install root: download and copy to DUT failed, %s", err)
+	}
+	return nil
 }
 
 // installMiniOS updates miniOS Partitions on disk.
@@ -312,12 +317,29 @@ func (p *provisionState) postInstall(pi partitionInfo) error {
 		return fmt.Errorf("postInstall: failed to create temporary directory, %s", err)
 	}
 	tmpMnt = strings.TrimSpace(tmpMnt)
-	if err := runCmd(p.c, fmt.Sprintf("mount -o ro %s %s", pi.inactiveRoot, tmpMnt)); err != nil {
+
+	// Mount, get hash, unmount.
+	err = runCmd(p.c, fmt.Sprintf("mount -o ro %s %s", pi.inactiveRoot, tmpMnt))
+	if err != nil {
 		return fmt.Errorf("postInstall: failed to mount inactive root, %s", err)
 	}
-	if err := runCmd(p.c, fmt.Sprintf("%s/postinst %s", tmpMnt, pi.inactiveRoot)); err != nil {
+
+	targetLsbHash, err := runCmdOutput(p.c, fmt.Sprintf("sha256sum %s/etc/lsb-release", tmpMnt))
+	if err != nil {
+		return fmt.Errorf("postInstall: getting sha256 hash of /etc/lsb-release within tmp rootfs mount failed, %s", err)
+	}
+	shaFields := strings.Fields(targetLsbHash)
+	if len(shaFields) < 1 {
+		return fmt.Errorf("postInstall: invalid output from sha256sum /etc/lsb-release call, %s", targetLsbHash)
+	}
+	// Since 'sha256sum` includes the filename path we need to split the output.
+	p.targetLsbHash = shaFields[0]
+
+	err = runCmd(p.c, fmt.Sprintf("%s/postinst %s", tmpMnt, pi.inactiveRoot))
+	if err != nil {
 		return fmt.Errorf("postInstall: failed to postinst from inactive root, %s", err)
 	}
+
 	if err := runCmd(p.c, fmt.Sprintf("umount %s", tmpMnt)); err != nil {
 		return fmt.Errorf("postInstall: failed to umount temporary directory, %s", err)
 	}
