@@ -54,13 +54,13 @@ func PinManifestFromManifest(manifest, reference *repo.Manifest) error {
 	return nil
 }
 
-func fetchManifestRecursive(ctx context.Context, gerritClient *gerrit.Client, gc *bbproto.GitilesCommit, file string) (map[string]*repo.Manifest, error) {
+func fetchManifestRecursive(ctx context.Context, gerritClient gerrit.Client, gc *bbproto.GitilesCommit, file string) (map[string]*repo.Manifest, error) {
 	return LoadManifestTreeFromGitiles(ctx, gerritClient, gc.Host, gc.Project, gc.Id, file)
 }
 
 // GetRepoToRemoteBranchToSourceRootFromGitiles constructs a Gerrit project to path
 // mapping by fetching manifest XML files from Gitiles.
-func GetRepoToRemoteBranchToSourceRootFromGitiles(ctx context.Context, gerritClient *gerrit.Client, gc *bbproto.GitilesCommit) (map[string]map[string]string, error) {
+func GetRepoToRemoteBranchToSourceRootFromGitiles(ctx context.Context, gerritClient gerrit.Client, gc *bbproto.GitilesCommit) (map[string]map[string]string, error) {
 	manifests, err := LoadManifestTreeFromGitiles(ctx, gerritClient, gc.Host, gc.Project, gc.Id, rootXML)
 	if err != nil {
 		return nil, err

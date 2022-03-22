@@ -19,7 +19,7 @@ import (
 	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 )
 
-func testDownloadFileFromGitilesSetUp(t *testing.T) *Client {
+func testDownloadFileFromGitilesSetUp(t *testing.T) Client {
 	// Mock Gitiles controller
 	ctl := gomock.NewController(t)
 	t.Cleanup(ctl.Finish)
@@ -41,7 +41,10 @@ func testDownloadFileFromGitilesSetUp(t *testing.T) *Client {
 	mockMap := map[string]gitilespb.GitilesClient{
 		"host": gitilesMock,
 	}
-	return NewTestClient(mockMap)
+	return &ProdClient{
+		isTestClient:  true,
+		gitilesClient: mockMap,
+	}
 }
 
 func TestDownloadFileFromGitiles(t *testing.T) {
@@ -97,7 +100,10 @@ hTPnBcGXkjUAEgAA
 	mockMap := map[string]gitilespb.GitilesClient{
 		host: gitilesMock,
 	}
-	gc := NewTestClient(mockMap)
+	gc := &ProdClient{
+		isTestClient:  true,
+		gitilesClient: mockMap,
+	}
 
 	m, err := gc.FetchFilesFromGitiles(context.Background(), host, project, ref, paths)
 	if err != nil {
@@ -146,7 +152,10 @@ yZyOACgAAA==
 	mockMap := map[string]gitilespb.GitilesClient{
 		host: gitilesMock,
 	}
-	gc := NewTestClient(mockMap)
+	gc := &ProdClient{
+		isTestClient:  true,
+		gitilesClient: mockMap,
+	}
 
 	m, err := gc.FetchFilesFromGitiles(context.Background(), host, project, ref, paths)
 	if err != nil {
@@ -195,7 +204,10 @@ func TestBranches(t *testing.T) {
 	mockMap := map[string]gitilespb.GitilesClient{
 		host: gitilesMock,
 	}
-	gc := NewTestClient(mockMap)
+	gc := &ProdClient{
+		isTestClient:  true,
+		gitilesClient: mockMap,
+	}
 	m, err := gc.Branches(context.Background(), host, project)
 
 	assert.NilError(t, err)
@@ -219,7 +231,10 @@ func TestProjects(t *testing.T) {
 	mockMap := map[string]gitilespb.GitilesClient{
 		host: gitilesMock,
 	}
-	gc := NewTestClient(mockMap)
+	gc := &ProdClient{
+		isTestClient:  true,
+		gitilesClient: mockMap,
+	}
 	got, err := gc.Projects(context.Background(), host)
 
 	assert.NilError(t, err)
@@ -250,7 +265,10 @@ func TestList(t *testing.T) {
 	mockMap := map[string]gitilespb.GitilesClient{
 		host: gitilesMock,
 	}
-	gc := NewTestClient(mockMap)
+	gc := &ProdClient{
+		isTestClient:  true,
+		gitilesClient: mockMap,
+	}
 	got, err := gc.ListFiles(context.Background(), host, "project", "main", "path/to/files")
 
 	assert.NilError(t, err)

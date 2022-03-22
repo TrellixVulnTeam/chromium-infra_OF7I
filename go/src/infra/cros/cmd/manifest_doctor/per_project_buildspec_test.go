@@ -15,11 +15,7 @@ import (
 	gerrit "infra/cros/internal/gerrit"
 	"infra/cros/internal/gs"
 
-	"github.com/golang/mock/gomock"
 	lgs "go.chromium.org/luci/common/gcloud/gs"
-	gitpb "go.chromium.org/luci/common/proto/git"
-	gitilespb "go.chromium.org/luci/common/proto/gitiles"
-	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 )
 
@@ -81,48 +77,8 @@ type testConfig struct {
 	dryRun                  bool
 }
 
-func namesToFiles(files []string) []*gitpb.File {
-	res := make([]*gitpb.File, len(files))
-	for i, file := range files {
-		res[i] = &gitpb.File{
-			Path: file,
-		}
-	}
-	return res
-}
-
-func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client) {
+func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, gerrit.Client) {
 	t.Helper()
-	// Mock Gitiles controller
-	ctl := gomock.NewController(t)
-	t.Cleanup(ctl.Finish)
-	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
-
-	// Mock Projects request.
-	if tc.allProjects != nil {
-		gitilesMock.EXPECT().Projects(gomock.Any(), gomock.Any()).Return(
-			&gitilespb.ProjectsResponse{
-				Projects: tc.allProjects,
-			},
-			nil,
-		)
-	}
-
-	// Mock manifest-internal branches request.
-	request := &gitilespb.RefsRequest{
-		Project:  "chromeos/manifest-internal",
-		RefsPath: "refs/heads",
-	}
-	response := make(map[string]string)
-	response["refs/heads/main"] = "deadcafe"
-	response["refs/heads/release-R93-13816.B"] = "deadbeef"
-	response["refs/heads/release-R94-13904.B"] = "beefcafe"
-	gitilesMock.EXPECT().Refs(gomock.Any(), gerrit.RefsRequestEq(request)).Return(
-		&gitilespb.RefsResponse{
-			Revisions: response,
-		},
-		nil,
-	).AnyTimes()
 
 	projects := map[string]string{}
 	for prog, projs := range tc.projects {
@@ -135,40 +91,46 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 		projects[repo] = gsBuildspecPath(repo).Bucket()
 	}
 	// Mock tip-of-branch (branch) manifest file requests.
+	expectedDownloads := map[gerrit.ExpectedPathParams]*string{}
 	for project := range projects {
+		contents := unpinnedLocalManifestXML
 		for _, branch := range tc.branches {
-			reqLocalManifest := &gitilespb.DownloadFileRequest{
-				Project:    project,
-				Path:       "local_manifest.xml",
-				Committish: branch,
-			}
-			gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
-				&gitilespb.DownloadFileResponse{
-					Contents: unpinnedLocalManifestXML,
-				},
-				nil,
-			).AnyTimes()
+			expectedDownloads[gerrit.ExpectedPathParams{
+				Host:    chromeInternalHost,
+				Project: project,
+				Path:    "local_manifest.xml",
+				Ref:     branch,
+			}] = &contents
 		}
 	}
 	for _, project := range tc.noLocalManifestProjects {
 		for _, branch := range tc.branches {
-			reqLocalManifest := &gitilespb.DownloadFileRequest{
-				Project:    project,
-				Path:       "local_manifest.xml",
-				Committish: branch,
-			}
-			gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
-				nil,
-				fmt.Errorf("file does not exist"),
-			).AnyTimes()
+			expectedDownloads[gerrit.ExpectedPathParams{
+				Host:    chromeInternalHost,
+				Project: project,
+				Path:    "local_manifest.xml",
+				Ref:     branch,
+			}] = nil
 		}
 	}
 
-	mockMap := map[string]gitilespb.GitilesClient{
-		chromeInternalHost: gitilesMock,
-		chromeExternalHost: gitilesMock,
+	gc := &gerrit.MockClient{
+		T: t,
+		ExpectedProjects: map[string][]string{
+			chromeInternalHost: tc.allProjects,
+		},
+		ExpectedBranches: map[string]map[string]map[string]string{
+			// Mock manifest-internal branches request.
+			chromeInternalHost: {
+				"chromeos/manifest-internal": {
+					"refs/heads/main":                "deadcafe",
+					"refs/heads/release-R93-13816.B": "deadbeef",
+					"refs/heads/release-R94-13904.B": "beefcafe",
+				},
+			},
+		},
+		ExpectedDownloads: expectedDownloads,
 	}
-	gc := gerrit.NewTestClient(mockMap)
 
 	// Mock external and internal buildspec file requests.
 	expectedReads := map[string][]byte{}

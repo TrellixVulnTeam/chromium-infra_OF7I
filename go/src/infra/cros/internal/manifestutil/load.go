@@ -81,7 +81,7 @@ func loadManifestFromFile(file string, mergeManifests bool) (*repo.Manifest, err
 	return loadManifest(filepath.Base(file), getFile, mergeManifests)
 }
 
-func loadManifestFromGitiles(ctx context.Context, gerritClient *gerrit.Client, host, project, branch, file string, mergeManifests bool) (*repo.Manifest, error) {
+func loadManifestFromGitiles(ctx context.Context, gerritClient gerrit.Client, host, project, branch, file string, mergeManifests bool) (*repo.Manifest, error) {
 	getFile := loadFromGitilesInnerFunc(ctx, gerritClient, host, project, branch, file)
 	return loadManifest(file, getFile, mergeManifests)
 }
@@ -128,7 +128,7 @@ func LoadManifestFromFileRaw(file string) ([]byte, error) {
 	return data, nil
 }
 
-func loadFromGitilesInnerFunc(ctx context.Context, gerritClient *gerrit.Client, host, project, branch, file string) (getFile func(file string) ([]byte, error)) {
+func loadFromGitilesInnerFunc(ctx context.Context, gerritClient gerrit.Client, host, project, branch, file string) (getFile func(file string) ([]byte, error)) {
 	return func(f string) ([]byte, error) {
 		path := filepath.Join(filepath.Dir(file), filepath.Base(f))
 		data, err := gerritClient.DownloadFileFromGitiles(ctx, host, project, branch, f)
@@ -156,20 +156,20 @@ func loadFromGSInnerFunc(_ context.Context, gsClient gs.Client, path lgs.Path) (
 // LoadManifestTree loads the manifest from the specified remote location into
 // a Manifest struct. It also loads all included manifests.
 // Returns a map mapping manifest filenames to file contents.
-func LoadManifestTreeFromGitiles(ctx context.Context, gerritClient *gerrit.Client, host, project, branch, file string) (map[string]*repo.Manifest, error) {
+func LoadManifestTreeFromGitiles(ctx context.Context, gerritClient gerrit.Client, host, project, branch, file string) (map[string]*repo.Manifest, error) {
 	getFile := loadFromGitilesInnerFunc(ctx, gerritClient, host, project, branch, file)
 	return loadManifestTree(file, getFile, true)
 }
 
 // LoadManifestFromGitiles loads the manifest from the specified remote location
 // using the Gitiles API.
-func LoadManifestFromGitiles(ctx context.Context, gerritClient *gerrit.Client, host, project, branch, file string) (*repo.Manifest, error) {
+func LoadManifestFromGitiles(ctx context.Context, gerritClient gerrit.Client, host, project, branch, file string) (*repo.Manifest, error) {
 	return loadManifestFromGitiles(ctx, gerritClient, host, project, branch, file, false)
 }
 
 // LoadManifestFromGitilesWithIncludes loads the manifest from the specified remote location
 // using the Gitiles API and also calls MergeManifests to resolve includes.
-func LoadManifestFromGitilesWithIncludes(ctx context.Context, gerritClient *gerrit.Client, host, project, branch, file string) (*repo.Manifest, error) {
+func LoadManifestFromGitilesWithIncludes(ctx context.Context, gerritClient gerrit.Client, host, project, branch, file string) (*repo.Manifest, error) {
 	return loadManifestFromGitiles(ctx, gerritClient, host, project, branch, file, true)
 }
 

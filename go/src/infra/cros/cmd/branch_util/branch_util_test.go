@@ -32,8 +32,6 @@ import (
 	"infra/cros/cmd/branch_util/test"
 
 	"github.com/golang/mock/gomock"
-	gitilespb "go.chromium.org/luci/common/proto/gitiles"
-	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 )
 
@@ -490,7 +488,7 @@ func (f *fakeCreateRemoteBranchesAPI) CreateRemoteBranchesAPI(
 }
 
 // setUpCreate creates the necessary mocks we need to test the create function
-func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHarness, *branch.Client, *gerrit.Client, gs.Client, error) {
+func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHarness, *branch.Client, gerrit.Client, gs.Client, error) {
 	r := setUp(t, nil)
 
 	// Get manifest contents for return
@@ -529,22 +527,17 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 	}
 
 	// Mock version file request
-	reqVersionFile := &gitilespb.DownloadFileRequest{
-		Project:    "chromiumos/overlays/chromiumos-overlay",
-		Path:       "chromeos/config/chromeos_version.sh",
-		Committish: "refs/heads/" + versionBranch,
-	}
-
-	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
-	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqVersionFile)).Return(
-		&gitilespb.DownloadFileResponse{
-			Contents: string(crosVersionFile),
+	contents := string(crosVersionFile)
+	gc := &gerrit.MockClient{
+		T: t,
+		ExpectedDownloads: map[gerrit.ExpectedPathParams]*string{
+			{
+				Host:    "chromium.googlesource.com",
+				Project: "chromiumos/overlays/chromiumos-overlay",
+				Path:    "chromeos/config/chromeos_version.sh",
+				Ref:     "refs/heads/" + versionBranch,
+			}: &contents,
 		},
-		nil,
-	)
-	mockClientMap := map[string]gitilespb.GitilesClient{
-		internalGerritURL: gitilesMock,
-		externalGerritURL: gitilesMock,
 	}
 
 	// Mock out call to CreateRemoteBranchesAPI.
@@ -553,7 +546,7 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 		FakeCreateRemoteBranchesAPI: f.CreateRemoteBranchesAPI,
 	}
 
-	return r, bc, gerrit.NewTestClient(mockClientMap), fgs, nil
+	return r, bc, gc, fgs, nil
 }
 
 func TestCreate(t *testing.T) {
@@ -829,22 +822,17 @@ func TestCreate9496(t *testing.T) {
 	}
 
 	// Mock version file request
-	reqVersionFile := &gitilespb.DownloadFileRequest{
-		Project:    "chromiumos/overlays/chromiumos-overlay",
-		Path:       "chromeos/config/chromeos_version.sh",
-		Committish: "refs/heads/main",
-	}
-	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
-
-	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqVersionFile)).Return(
-		&gitilespb.DownloadFileResponse{
-			Contents: string(crosVersionFile),
+	contents := string(crosVersionFile)
+	gc := &gerrit.MockClient{
+		T: t,
+		ExpectedDownloads: map[gerrit.ExpectedPathParams]*string{
+			{
+				Host:    "chromium.googlesource.com",
+				Project: "chromiumos/overlays/chromiumos-overlay",
+				Path:    "chromeos/config/chromeos_version.sh",
+				Ref:     "refs/heads/main",
+			}: &contents,
 		},
-		nil,
-	)
-	mockClientMap := map[string]gitilespb.GitilesClient{
-		internalGerritURL: gitilesMock,
-		externalGerritURL: gitilesMock,
 	}
 
 	// Mock out call to CreateRemoteBranchesAPI.
@@ -853,7 +841,6 @@ func TestCreate9496(t *testing.T) {
 		FakeCreateRemoteBranchesAPI: f.CreateRemoteBranchesAPI,
 	}
 
-	gc := gerrit.NewTestClient(mockClientMap)
 	defer r.Teardown()
 
 	branch := "release-R94-3.B"

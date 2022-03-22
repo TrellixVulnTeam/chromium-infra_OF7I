@@ -25,7 +25,7 @@ const (
 )
 
 // CreateProjectBuildspec creates a public buildspec as outlined in go/per-project-buildspecs.
-func createPublicBuildspec(gsClient gs.Client, gerritClient *gerrit.Client, buildspec *repo.Manifest, uploadPath lgs.Path, push bool) error {
+func createPublicBuildspec(gsClient gs.Client, gerritClient gerrit.Client, buildspec *repo.Manifest, uploadPath lgs.Path, push bool) error {
 	remoteReference := buildspec
 	anyAnnotations := false
 	for _, remote := range buildspec.Remotes {

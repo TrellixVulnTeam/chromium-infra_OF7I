@@ -26,8 +26,17 @@ import (
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 )
 
+type Client interface {
+	FetchFilesFromGitiles(ctx context.Context, host, project, ref string, paths []string) (*map[string]string, error)
+	DownloadFileFromGitiles(ctx context.Context, host, project, ref, path string) (string, error)
+	DownloadFileFromGitilesToPath(ctx context.Context, host, project, ref, path, saveToPath string) error
+	Branches(ctx context.Context, host, project string) (map[string]string, error)
+	Projects(ctx context.Context, host string) ([]string, error)
+	ListFiles(ctx context.Context, host, project, ref, path string) ([]string, error)
+}
+
 // Client is a client for interacting with gerrit.
-type Client struct {
+type ProdClient struct {
 	isTestClient bool
 	authedClient *http.Client
 	// gitilesClient maps individual gerrit host to gitiles client.
@@ -35,8 +44,8 @@ type Client struct {
 }
 
 // NewClient returns a new Client object.
-func NewClient(authedClient *http.Client) (*Client, error) {
-	return &Client{
+func NewClient(authedClient *http.Client) (*ProdClient, error) {
+	return &ProdClient{
 		isTestClient:  false,
 		authedClient:  authedClient,
 		gitilesClient: map[string]gitilespb.GitilesClient{},
@@ -45,7 +54,7 @@ func NewClient(authedClient *http.Client) (*Client, error) {
 
 // getHostClient retrieves the inner gitilespb.GitilesClient for the specific
 // host if it exists and creates a new one if it does not.
-func (c *Client) getHostClient(host string) (gitilespb.GitilesClient, error) {
+func (c *ProdClient) getHostClient(host string) (gitilespb.GitilesClient, error) {
 	if client, ok := c.gitilesClient[host]; ok {
 		return client, nil
 	}
@@ -62,8 +71,8 @@ func (c *Client) getHostClient(host string) (gitilespb.GitilesClient, error) {
 
 // NewTestClient returns a new Client that uses the provided GitilesClient
 // objects.
-func NewTestClient(gcs map[string]gitilespb.GitilesClient) *Client {
-	return &Client{
+func NewTestClient(gcs map[string]gitilespb.GitilesClient) *ProdClient {
+	return &ProdClient{
 		isTestClient:  true,
 		gitilesClient: gcs,
 	}
@@ -77,7 +86,7 @@ func NewTestClient(gcs map[string]gitilespb.GitilesClient) *Client {
 //
 // fetchFilesFromGitiles returns a map from path in the git project to the
 // contents of the file at that path for each requested path.
-func (c *Client) FetchFilesFromGitiles(ctx context.Context, host, project, ref string, paths []string) (*map[string]string, error) {
+func (c *ProdClient) FetchFilesFromGitiles(ctx context.Context, host, project, ref string, paths []string) (*map[string]string, error) {
 	gc, err := c.getHostClient(host)
 	if err != nil {
 		return nil, err
@@ -90,7 +99,7 @@ func (c *Client) FetchFilesFromGitiles(ctx context.Context, host, project, ref s
 }
 
 // DownloadFileFromGitiles downloads a file from Gitiles.
-func (c *Client) DownloadFileFromGitiles(ctx context.Context, host, project, ref, path string) (string, error) {
+func (c *ProdClient) DownloadFileFromGitiles(ctx context.Context, host, project, ref, path string) (string, error) {
 	gc, err := c.getHostClient(host)
 	if err != nil {
 		return "", err
@@ -108,7 +117,7 @@ func (c *Client) DownloadFileFromGitiles(ctx context.Context, host, project, ref
 }
 
 // DownloadFileFromGitilesToPath downloads a file from Gitiles to a specified path.
-func (c *Client) DownloadFileFromGitilesToPath(ctx context.Context, host, project, ref, path, saveToPath string) error {
+func (c *ProdClient) DownloadFileFromGitilesToPath(ctx context.Context, host, project, ref, path, saveToPath string) error {
 	contents, err := c.DownloadFileFromGitiles(ctx, host, project, ref, path)
 	if err != nil {
 		return err
@@ -227,7 +236,7 @@ func extractGitilesArchive(ctx context.Context, data []byte, paths []string) (*m
 }
 
 // Branches returns a map of branches (to revisions) for a given repo.
-func (c *Client) Branches(ctx context.Context, host, project string) (map[string]string, error) {
+func (c *ProdClient) Branches(ctx context.Context, host, project string) (map[string]string, error) {
 	gc, err := c.getHostClient(host)
 	if err != nil {
 		return nil, err
@@ -244,7 +253,7 @@ func (c *Client) Branches(ctx context.Context, host, project string) (map[string
 }
 
 // Projects returns a list of projects for a given host.
-func (c *Client) Projects(ctx context.Context, host string) ([]string, error) {
+func (c *ProdClient) Projects(ctx context.Context, host string) ([]string, error) {
 	gc, err := c.getHostClient(host)
 	if err != nil {
 		return nil, err
@@ -258,7 +267,7 @@ func (c *Client) Projects(ctx context.Context, host string) ([]string, error) {
 }
 
 // ListFiles returns a list of files/directories for a given host/project/ref/path.
-func (c *Client) ListFiles(ctx context.Context, host, project, ref, path string) ([]string, error) {
+func (c *ProdClient) ListFiles(ctx context.Context, host, project, ref, path string) ([]string, error) {
 	gc, err := c.getHostClient(host)
 	if err != nil {
 		return nil, err

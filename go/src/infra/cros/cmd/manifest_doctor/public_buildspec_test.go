@@ -233,73 +233,50 @@ func TestPublicBuildspecNoAnnotations_missingAtToT(t *testing.T) {
 }
 
 func legacyTest(t *testing.T, externalList []string, externalDownloads map[string]string,
-	expectedGSWrites map[string][]byte) (*gs.FakeClient, *gerrit.Client) {
+	expectedGSWrites map[string][]byte) (*gs.FakeClient, gerrit.Client) {
 	t.Helper()
-	// Mock Gitiles controller
-	ctl := gomock.NewController(t)
-	t.Cleanup(ctl.Finish)
-	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
 
-	reqList := &gitilespb.ListFilesRequest{
-		Project:    "chromeos/manifest-versions",
-		Path:       "test/",
-		Committish: "HEAD",
+	contents := internalManifestXML
+	expectedDownloads := map[gerrit.ExpectedPathParams]*string{
+		{
+			Host:    chromeInternalHost,
+			Project: "chromeos/manifest-versions",
+			Path:    "test/foo.xml",
+			Ref:     "HEAD",
+		}: &contents,
 	}
-	gitilesMock.EXPECT().ListFiles(gomock.Any(), gerrit.ListFilesRequestEq(reqList)).Return(
-		&gitilespb.ListFilesResponse{
-			Files: namesToFiles([]string{"foo.xml"}),
-		},
-		nil,
-	)
-	reqList = &gitilespb.ListFilesRequest{
-		Project:    "chromiumos/manifest-versions",
-		Path:       "test/",
-		Committish: "HEAD",
-	}
-	if externalList == nil {
-		externalList = []string{}
-	}
-	gitilesMock.EXPECT().ListFiles(gomock.Any(), gerrit.ListFilesRequestEq(reqList)).Return(
-		&gitilespb.ListFilesResponse{
-			Files: namesToFiles(externalList),
-		},
-		nil,
-	)
-
-	reqLocalManifest := &gitilespb.DownloadFileRequest{
-		Project:    "chromeos/manifest-versions",
-		Path:       "test/foo.xml",
-		Committish: "HEAD",
-	}
-	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
-		&gitilespb.DownloadFileResponse{
-			Contents: internalManifestXML,
-		},
-		nil,
-	)
 	if externalDownloads != nil {
 		for path, contents := range externalDownloads {
-			req := &gitilespb.DownloadFileRequest{
-				Project:    "chromiumos/manifest-versions",
-				Path:       path,
-				Committish: "HEAD",
-			}
-			gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(req)).Return(
-				&gitilespb.DownloadFileResponse{
-					// Return something obviously wrong so we can check that this is
-					// the file being used.
-					Contents: contents,
-				},
-				nil,
-			)
+			expectedDownloads[gerrit.ExpectedPathParams{
+				Host:    chromeExternalHost,
+				Project: "chromiumos/manifest-versions",
+				Path:    path,
+				Ref:     "HEAD",
+			}] = &contents
 		}
 	}
 
-	mockMap := map[string]gitilespb.GitilesClient{
-		chromeInternalHost: gitilesMock,
-		chromeExternalHost: gitilesMock,
+	if externalList == nil {
+		externalList = []string{}
 	}
-	gc := gerrit.NewTestClient(mockMap)
+	gc := &gerrit.MockClient{
+		T: t,
+		ExpectedLists: map[gerrit.ExpectedPathParams][]string{
+			{
+				Host:    chromeInternalHost,
+				Project: "chromeos/manifest-versions",
+				Path:    "test/",
+				Ref:     "HEAD",
+			}: {"foo.xml"},
+			{
+				Host:    chromeExternalHost,
+				Project: "chromiumos/manifest-versions",
+				Path:    "test/",
+				Ref:     "HEAD",
+			}: externalList,
+		},
+		ExpectedDownloads: expectedDownloads,
+	}
 
 	expectedLists := map[string]map[string][]string{
 		"chromiumos-manifest-versions": {

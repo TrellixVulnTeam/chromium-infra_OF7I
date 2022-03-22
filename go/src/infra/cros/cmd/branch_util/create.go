@@ -155,7 +155,7 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 	return c.innerRun(ctx, bc, authedClient, gitilesClient, gsClient)
 }
 
-func (c *createBranch) innerRun(ctx context.Context, bc *branch.Client, authedClient *http.Client, gc *gerrit.Client, gsClient gs.Client) int {
+func (c *createBranch) innerRun(ctx context.Context, bc *branch.Client, authedClient *http.Client, gc gerrit.Client, gsClient gs.Client) int {
 	// Check if the user is in mdb/chromeos-branch-creators, unless SkipGroupCheck is set.
 	// This is not to say that an unauthorized user can simply call the tool with --skip-group-check;
 	// ACLs will still be enforced. Skipping this check is necessary for bot invocations,

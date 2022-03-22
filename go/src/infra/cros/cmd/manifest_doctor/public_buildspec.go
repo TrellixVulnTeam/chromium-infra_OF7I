@@ -102,7 +102,7 @@ func (b *publicBuildspec) Run(a subcommands.Application, args []string, env subc
 	return 0
 }
 
-func (b *publicBuildspec) copyExternalBuildspec(ctx context.Context, gsClient gs.Client, gerritClient *gerrit.Client, externalBuildspec string) error {
+func (b *publicBuildspec) copyExternalBuildspec(ctx context.Context, gsClient gs.Client, gerritClient gerrit.Client, externalBuildspec string) error {
 	data, err := gerritClient.DownloadFileFromGitiles(ctx, chromeExternalHost,
 		externalManifestVersionsProject, "HEAD", externalBuildspec)
 	if err != nil {
@@ -119,7 +119,7 @@ func (b *publicBuildspec) copyExternalBuildspec(ctx context.Context, gsClient gs
 
 // CreateProjectBuildspec creates a public buildspec as
 // outlined in go/per-project-buildspecs.
-func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient gs.Client, gerritClient *gerrit.Client) error {
+func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient gs.Client, gerritClient gerrit.Client) error {
 	errs := []error{}
 	for _, watchPath := range b.watchPaths {
 		var internalBuildspecs []string

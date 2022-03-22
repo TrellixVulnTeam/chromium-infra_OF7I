@@ -195,7 +195,7 @@ func parseProject(project string) (string, string, error) {
 // getProjects filters allProjects for only the projects associated with the
 // specified program. It also returns a bool specifying whether or not any of
 // the patterns included a wildcard, which is used later on in handling errors.
-func getProjects(ctx context.Context, gerritClient *gerrit.Client, projectPatterns []string) ([]string, bool, error) {
+func getProjects(ctx context.Context, gerritClient gerrit.Client, projectPatterns []string) ([]string, bool, error) {
 	// Only fetch all projects if we need to, i.e. if one or more pattern
 	// contains a wildcard.
 	hasWildcard := false
@@ -269,7 +269,7 @@ func (b *projectBuildspec) findBuildspecs(ctx context.Context, gsClient gs.Clien
 	return buildspecs, errors.NewMultiError(errs...)
 }
 
-func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *gerrit.Client) error {
+func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient gerrit.Client) error {
 	ctx := context.Background()
 	buildspecs, err := b.findBuildspecs(ctx, gsClient)
 	if err != nil {
@@ -349,7 +349,7 @@ type projectBuildspecConfig struct {
 // outlined in go/per-project-buildspecs.
 // Projects is a map between project name and config, e.g.
 // chromeos/project/galaxy/milkyway : {gs://chromeos-galaxy-milkyway/, true}
-func (b *projectBuildspec) CreateProjectBuildspecs(projects map[string]projectBuildspecConfig, buildspecs []string, push, force bool, ttl int, gsClient gs.Client, gerritClient *gerrit.Client) error {
+func (b *projectBuildspec) CreateProjectBuildspecs(projects map[string]projectBuildspecConfig, buildspecs []string, push, force bool, ttl int, gsClient gs.Client, gerritClient gerrit.Client) error {
 	// Aggregate buildspecs by milestone.
 	buildspecsByMilestone := make(map[int][]string)
 	for _, buildspec := range buildspecs {
