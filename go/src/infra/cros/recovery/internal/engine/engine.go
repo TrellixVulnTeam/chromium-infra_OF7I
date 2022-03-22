@@ -56,18 +56,16 @@ func (r *recoveryEngine) close() {
 
 // runPlan executes recovery plan with critical-actions.
 func (r *recoveryEngine) runPlan(ctx context.Context) (rErr error) {
-	newCtx := ctx
-	log.Info(newCtx, "Plan %q: started", r.planName)
+	log.Info(ctx, "Plan %q: started", r.planName)
 
 	var restartTally int64
 	var forgivenFailureTally int64
-	action := &metrics.Action{}
-
 	if r.args != nil && r.args.Metrics != nil {
 		var mErr error
 		var closer execs.CloserFunc
+		action := &metrics.Action{}
 		closer, mErr = r.args.NewMetric(
-			newCtx,
+			ctx,
 			fmt.Sprintf("plan:%s", r.planName),
 			action,
 		)
@@ -86,7 +84,7 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (rErr error) {
 	}
 
 	for {
-		if err := r.runActions(ctx, r.plan.GetCriticalActions(), r.args.EnableRecovery); err != nil {
+		if err := r.runCriticalActionAttempt(ctx, restartTally); err != nil {
 			if startOverTag.In(err) {
 				log.Info(ctx, "Plan %q for %s: received request to start over.", r.planName, r.args.ResourceName)
 				r.resetCacheAfterSuccessfulRecoveryAction()
@@ -107,6 +105,20 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (rErr error) {
 	log.Info(ctx, "Plan %q: recorded %d restarts during execution.", r.planName, restartTally)
 	log.Info(ctx, "Plan %q: recorded %d forgiven failures during execution.", r.planName, forgivenFailureTally)
 	return nil
+}
+
+// runCriticalActionAttempt runs critical action of the plan with wrapper step to show plan restart attempts.
+func (r *recoveryEngine) runCriticalActionAttempt(ctx context.Context, attempt int64) (err error) {
+	if r.args.ShowSteps {
+		var step *build.Step
+		stepName := fmt.Sprintf("First run of critical actions for %s", r.planName)
+		if attempt > 0 {
+			stepName = fmt.Sprintf("Attempt %d to run critical actions for %s", attempt, r.planName)
+		}
+		step, ctx = build.StartStep(ctx, stepName)
+		defer func() { step.End(err) }()
+	}
+	return r.runActions(ctx, r.plan.GetCriticalActions(), r.args.EnableRecovery)
 }
 
 // runActions runs actions in order.
