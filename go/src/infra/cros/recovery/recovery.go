@@ -51,12 +51,6 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 	if err != nil {
 		return errors.Annotate(err, "run recovery %q", args.UnitName).Err()
 	}
-	if args.ShowSteps {
-		var step *build.Step
-		step, ctx = build.StartStep(ctx, fmt.Sprintf("Start %s", args.TaskName))
-		defer func() { step.End(err) }()
-	}
-
 	if args.Metrics == nil {
 		log.Debug(ctx, "run: metrics is nil")
 	} else { // Guard against incorrectly setting up Karte client. See b:217746479 for details.
@@ -142,7 +136,7 @@ func runResource(ctx context.Context, resource string, args *RunArgs) (rErr erro
 	log.Info(ctx, "Resource %q: started", resource)
 	if args.ShowSteps {
 		var step *build.Step
-		step, ctx = build.StartStep(ctx, fmt.Sprintf("Resource %q", resource))
+		step, ctx = build.StartStep(ctx, fmt.Sprintf("Start %q for %q", args.TaskName, resource))
 		defer func() { step.End(rErr) }()
 	}
 	dut, err := readInventory(ctx, resource, args)
