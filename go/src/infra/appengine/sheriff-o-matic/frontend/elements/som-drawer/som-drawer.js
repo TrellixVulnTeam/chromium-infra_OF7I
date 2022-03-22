@@ -57,6 +57,10 @@ const ROTATIONS = {
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-build-eng',
     },
     {
+      name: 'ChromeOS Test Scheduling & Execution Team',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-ts-eng',
+    },
+    {
       name: 'ChromeOS Toolchain Team',
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-toolchain',
     },
