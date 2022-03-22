@@ -302,6 +302,12 @@ your changes locally with a few catches.
   error even if you are running both service and shivas locally. Contact your
   manager to get proper permissions if this happens.
 
+If this is your first time you will also need to provide creds to Shivas.
+
+```
+shivas login
+```
+
 ## Namespaces in UFS
 UFS differentiates between the `browser` or `os` namespace to perform updates to
 the relevant databases. This is done in shivas by setting `SHIVAS_NAMESPACE` to
