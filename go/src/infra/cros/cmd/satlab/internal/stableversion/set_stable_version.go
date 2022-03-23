@@ -20,6 +20,14 @@ import (
 	"infra/cros/cmd/satlab/internal/site"
 )
 
+// If allowSetModelBoard is true, then the user is allowed to create new entries for a host&model.
+// If allowSetModelBoard is false, then the user is blocked from creating new entries a host&model.
+//
+// We set this variable to false. We want to force users to use the per-host override so that it is
+// easier to replace the stable version implementation with a new service behind the scenes without
+// a change in user-facing behavior.
+const allowSetModelBoard = false
+
 var SetStableVersionCmd = &subcommands.Command{
 	UsageLine: `set-stable-version`,
 	ShortDesc: `Set the stable version using {board, model} or {hostname}.`,
@@ -30,8 +38,10 @@ var SetStableVersionCmd = &subcommands.Command{
 		r.envFlags.Register(&r.Flags)
 		r.commonFlags.Register(&r.Flags)
 
-		r.Flags.StringVar(&r.board, "board", "", `the board or build target (used with model)`)
-		r.Flags.StringVar(&r.model, "model", "", `the model (used with board)`)
+		if allowSetModelBoard {
+			r.Flags.StringVar(&r.board, "board", "", `the board or build target (used with model)`)
+			r.Flags.StringVar(&r.model, "model", "", `the model (used with board)`)
+		}
 		r.Flags.StringVar(&r.hostname, "hostname", "", `the hostname (used by itself)`)
 		r.Flags.StringVar(&r.os, "os", "", `the OS version to set (no change if empty)`)
 		r.Flags.StringVar(&r.fw, "fw", "", `the firmware version to set (no change if empty)`)
@@ -73,7 +83,7 @@ func (c *setStableVersionRun) Run(a subcommands.Application, args []string, env 
 func (c *setStableVersionRun) produceRequest(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) (*fleet.SetSatlabStableVersionRequest, error) {
 	req := &fleet.SetSatlabStableVersionRequest{}
 	useHostnameStrategy := c.hostname != ""
-	useBoardModelStrategy := (c.board != "") && (c.model != "")
+	useBoardModelStrategy := allowSetModelBoard && (c.board != "") && (c.model != "")
 
 	// Validate and populate the strategy field of the request.
 	if err := func() error {
@@ -89,7 +99,7 @@ func (c *setStableVersionRun) produceRequest(ctx context.Context, a subcommands.
 			return nil
 		} // Hostname strategy not set.
 		if !useBoardModelStrategy {
-			return errors.Reason("must use at least one of {board, model} or {hostname} strategy").Err()
+			return errors.Reason("must provide hostname").Err()
 		}
 		req.Strategy = &fleet.SetSatlabStableVersionRequest_SatlabBoardAndModelStrategy{
 			SatlabBoardAndModelStrategy: &fleet.SatlabBoardAndModelStrategy{
