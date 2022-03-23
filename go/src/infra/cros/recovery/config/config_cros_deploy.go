@@ -56,30 +56,6 @@ func deployActions() map[string]*Action {
 				"Install OS in DEV mode",
 			},
 		},
-		"Cold reset DUT by servo and wait to boot": {
-			Docs: []string{"Verify that device has stable version OS on it and version is match."},
-			Dependencies: []string{
-				"dut_servo_host_present",
-				"servo_state_is_working",
-				"Cold reset DUT by servo",
-				"Wait DUT to be pingable after reset",
-			},
-			ExecName:   "sample_pass",
-			RunControl: 1,
-		},
-		"Cold reset DUT by servo": {
-			Docs: []string{"Verify that device has stable version OS on it and version is match."},
-			Dependencies: []string{
-				"dut_servo_host_present",
-				"servo_state_is_working",
-			},
-			ExecName: "servo_set",
-			ExecExtraArgs: []string{
-				"command:power_state",
-				"string_value:reset",
-			},
-			RunControl: 1,
-		},
 		"DUT has expected OS version": {
 			Docs: []string{"Verify that device has stable version OS on it and version is match."},
 			Dependencies: []string{
@@ -223,23 +199,6 @@ func deployActions() map[string]*Action {
 				"Wait DUT to be SSHable after reset",
 			},
 			ExecName: "sample_pass",
-		},
-		"Boot DUT from USB in DEV mode": {
-			Docs: []string{
-				"Restart and try to boot from USB-drive",
-				"First boot in dev mode can take time so set boot time to 10 minutes.",
-			},
-			ExecName: "cros_dev_mode_boot_from_servo_usb_drive",
-			ExecExtraArgs: []string{
-				"boot_timeout:600",
-				"retry_interval:2",
-			},
-			ExecTimeout: &durationpb.Duration{Seconds: 900},
-		},
-		"Run install after boot from USB-drive": {
-			Docs:        []string{"Perform install process"},
-			ExecName:    "cros_run_chromeos_install_command_after_boot_usbdrive",
-			ExecTimeout: &durationpb.Duration{Seconds: 1200},
 		},
 		"Clean up": {
 			Docs:         []string{"Verify that device is set to boot in DEV mode and enabled to boot from USB-drive."},

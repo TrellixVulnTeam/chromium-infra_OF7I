@@ -962,6 +962,9 @@ func crosRepairActions() map[string]*Action {
 				"reovery mode with active PD, so we will change it to ",
 				"sink-mode if required.",
 			},
+			Conditions: []string{
+				"Pools required to be in Secure mode",
+			},
 			Dependencies: []string{
 				"Servo has USB-key with require image",
 				"cros_update_provision_os_version",
@@ -969,6 +972,47 @@ func crosRepairActions() map[string]*Action {
 			ExecName:      "os_install_repair",
 			ExecExtraArgs: []string{"halt_timeout:120"},
 			ExecTimeout:   &durationpb.Duration{Seconds: 3600},
+		},
+		"Install OS in dev mode by booting from servo USB-drive": {
+			Docs: []string{
+				"This action installs the test image on DUT after ",
+				"booking the DUT in dev mode.",
+			},
+			Conditions: []string{
+				"Pools allowed to stay in DEV mode",
+			},
+			Dependencies: []string{
+				"Boot DUT from USB in DEV mode",
+				"Device booted from USB-drive",
+				"Run install after boot from USB-drive",
+				"Cold reset DUT by servo and wait to boot",
+				"Wait DUT to be SSHable after reset",
+			},
+			ExecName: "sample_pass",
+		},
+		"Cold reset DUT by servo and wait to boot": {
+			Docs: []string{"Cold reset device by servo and wait for DUT to become ping-able."},
+			Dependencies: []string{
+				"dut_servo_host_present",
+				"servo_state_is_working",
+				"Cold reset DUT by servo",
+				"Wait DUT to be pingable after reset",
+			},
+			ExecName:   "sample_pass",
+			RunControl: 1,
+		},
+		"Cold reset DUT by servo": {
+			Docs: []string{"Cold reset device by servo and do not wait."},
+			Dependencies: []string{
+				"dut_servo_host_present",
+				"servo_state_is_working",
+			},
+			ExecName: "servo_set",
+			ExecExtraArgs: []string{
+				"command:power_state",
+				"string_value:reset",
+			},
+			RunControl: 1,
 		},
 		"Pools allowed to stay in DEV mode": {
 			Docs: []string{
@@ -1070,6 +1114,23 @@ func crosRepairActions() map[string]*Action {
 			ExecTimeout: &durationpb.Duration{
 				Seconds: 6000,
 			},
+		},
+		"Boot DUT from USB in DEV mode": {
+			Docs: []string{
+				"Restart and try to boot from USB-drive",
+				"First boot in dev mode can take time so set boot time to 10 minutes.",
+			},
+			ExecName: "cros_dev_mode_boot_from_servo_usb_drive",
+			ExecExtraArgs: []string{
+				"boot_timeout:600",
+				"retry_interval:2",
+			},
+			ExecTimeout: &durationpb.Duration{Seconds: 900},
+		},
+		"Run install after boot from USB-drive": {
+			Docs:        []string{"Perform install process"},
+			ExecName:    "cros_run_chromeos_install_command_after_boot_usbdrive",
+			ExecTimeout: &durationpb.Duration{Seconds: 1200},
 		},
 	}
 }
