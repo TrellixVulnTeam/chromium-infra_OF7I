@@ -206,7 +206,7 @@ func JoinPresubmitResult(ctx context.Context, buildIDs []string, presubmitProjec
 	}
 
 	// Export metrics.
-	cvPresubmitBuildInputCounter.Add(ctx, int64(len(buildIDs)-len(buildIDsSkipped)), cvPresubmitBuildInputCounter)
+	cvPresubmitBuildInputCounter.Add(ctx, int64(len(buildIDs)-len(buildIDsSkipped)), presubmitProject)
 	for buildProject, count := range buildsOutputByBuildProject {
 		bbPresubmitBuildOutputCounter.Add(ctx, count, buildProject)
 		cvPresubmitBuildOutputCounter.Add(ctx, count, presubmitProject)
