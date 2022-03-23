@@ -57,7 +57,7 @@ func CrosDeployConfig() *Configuration {
 func crosClosePlan() *Plan {
 	return &Plan{
 		CriticalActions: []string{
-			"Try to collect servod logs",
+			"Servo-host logs",
 			"Remove in-use flag on servo-host",
 			"Remove request to reboot is servo is good",
 		},
@@ -88,6 +88,13 @@ func crosClosePlan() *Plan {
 				},
 				ExecName: "dut_check_model",
 			},
+			"Servo-host logs": {
+				Dependencies: []string{
+					"Try copy messages from servo-host",
+					"Try to collect servod logs",
+				},
+				ExecName: "sample_pass",
+			},
 			"Try to collect servod logs": {
 				Docs: []string{
 					"Try to collect all servod logs since latest start time.",
@@ -97,6 +104,21 @@ func crosClosePlan() *Plan {
 					"is_not_servo_v3",
 				},
 				ExecName:               "cros_collect_servod_logs",
+				AllowFailAfterRecovery: true,
+			},
+			"Try copy messages from servo-host": {
+				Docs: []string{
+					"Try to collect /var/log/messages from servo-host.",
+				},
+				Conditions: []string{
+					"dut_servo_host_present",
+					"is_not_servo_v3",
+				},
+				ExecName: "cros_copy_file_to_log",
+				ExecExtraArgs: []string{
+					"filepath:/var/log/messages",
+					"use_host_dir:true",
+				},
 				AllowFailAfterRecovery: true,
 			},
 			"is_not_servo_v3": {
