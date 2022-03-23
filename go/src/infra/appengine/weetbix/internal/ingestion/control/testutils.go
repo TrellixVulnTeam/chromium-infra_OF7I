@@ -19,8 +19,6 @@ import (
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
-const testProject = "myproject"
-
 // EntryBuilder provides methods to build ingestion control records.
 type EntryBuilder struct {
 	record *Entry
@@ -30,18 +28,20 @@ type EntryBuilder struct {
 func NewEntry(uniqifier int) *EntryBuilder {
 	return &EntryBuilder{
 		record: &Entry{
-			Project: testProject,
-			BuildID: fmt.Sprintf("buildbucket-host/%v", uniqifier),
+			BuildID:      fmt.Sprintf("buildbucket-host/%v", uniqifier),
+			BuildProject: "build-project",
 			BuildResult: &controlpb.BuildResult{
 				Host:         "buildbucket-host",
 				Id:           int64(uniqifier),
 				CreationTime: timestamppb.New(time.Date(2025, time.December, 1, 1, 2, 3, uniqifier*1000, time.UTC)),
 			},
-			IsPresubmit: true,
+			BuildJoinedTime:  time.Date(2020, time.December, 11, 1, 1, 1, uniqifier*1000, time.UTC),
+			IsPresubmit:      true,
+			PresubmitProject: "presubmit-project",
 			PresubmitResult: &controlpb.PresubmitResult{
 				PresubmitRunId: &pb.PresubmitRunId{
 					System: "luci-cv",
-					Id:     fmt.Sprintf("%s/123123-%v", testProject, uniqifier),
+					Id:     fmt.Sprintf("%s/123123-%v", "presubmit-project", uniqifier),
 				},
 				PresubmitRunSucceeded: true,
 				Owner:                 "automation",
@@ -54,16 +54,10 @@ func NewEntry(uniqifier int) *EntryBuilder {
 				},
 				CreationTime: timestamppb.New(time.Date(2026, time.December, 1, 1, 2, 3, uniqifier*1000, time.UTC)),
 			},
-			LastUpdated:  time.Date(2020, time.December, 12, 1, 1, 1, uniqifier*1000, time.UTC),
-			CreationTime: time.Date(2020, time.December, 11, 1, 1, 1, uniqifier*1000, time.UTC),
+			PresubmitJoinedTime: time.Date(2020, time.December, 12, 1, 1, 1, uniqifier*1000, time.UTC),
+			LastUpdated:         time.Date(2020, time.December, 13, 1, 1, 1, uniqifier*1000, time.UTC),
 		},
 	}
-}
-
-// WithProject specifies the project to use on the ingestion control record.
-func (b *EntryBuilder) WithProject(project string) *EntryBuilder {
-	b.record.Project = project
-	return b
 }
 
 // WithBuildID specifies the build ID to use on the ingestion control record.
@@ -78,9 +72,27 @@ func (b *EntryBuilder) WithIsPresubmit(isPresubmit bool) *EntryBuilder {
 	return b
 }
 
+// WithBuildProject specifies the build project to use on the ingestion control record.
+func (b *EntryBuilder) WithBuildProject(project string) *EntryBuilder {
+	b.record.BuildProject = project
+	return b
+}
+
 // WithBuildResult specifies the build result for the entry.
 func (b *EntryBuilder) WithBuildResult(value *controlpb.BuildResult) *EntryBuilder {
 	b.record.BuildResult = value
+	return b
+}
+
+// WithBuildJoinedTime specifies the time the build result was populated.
+func (b *EntryBuilder) WithBuildJoinedTime(value time.Time) *EntryBuilder {
+	b.record.BuildJoinedTime = value
+	return b
+}
+
+// WithPresubmitProject specifies the presubmit project to use on the ingestion control record.
+func (b *EntryBuilder) WithPresubmitProject(project string) *EntryBuilder {
+	b.record.PresubmitProject = project
 	return b
 }
 
@@ -90,15 +102,9 @@ func (b *EntryBuilder) WithPresubmitResult(value *controlpb.PresubmitResult) *En
 	return b
 }
 
-// WithLastUpdated specifies the last updated time for the entry.
-func (b *EntryBuilder) WithLastUpdated(lastUpdated time.Time) *EntryBuilder {
-	b.record.LastUpdated = lastUpdated
-	return b
-}
-
-// WithCreationTime specifies the created time for the entry.
-func (b *EntryBuilder) WithCreationTime(value time.Time) *EntryBuilder {
-	b.record.CreationTime = value
+// WithPresubmitJoinedTime specifies the time the presubmit result was populated.
+func (b *EntryBuilder) WithPresubmitJoinedTime(lastUpdated time.Time) *EntryBuilder {
+	b.record.PresubmitJoinedTime = lastUpdated
 	return b
 }
 
@@ -110,18 +116,20 @@ func (b *EntryBuilder) Build() *Entry {
 // SetEntriesForTesting replaces the set of stored entries to match the given set.
 func SetEntriesForTesting(ctx context.Context, es []*Entry) (time.Time, error) {
 	testutil.MustApply(ctx,
-		spanner.Delete("IngestionControl", spanner.AllKeys()))
-	// Insert some IngestionControl records.
+		spanner.Delete("Ingestions", spanner.AllKeys()))
+	// Insert some Ingestion records.
 	commitTime, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 		for _, r := range es {
-			ms := spanutil.InsertMap("IngestionControl", map[string]interface{}{
-				"Project":         r.Project,
-				"BuildId":         r.BuildID,
-				"BuildResult":     r.BuildResult,
-				"IsPresubmit":     r.IsPresubmit,
-				"PresubmitResult": r.PresubmitResult,
-				"LastUpdated":     r.LastUpdated,
-				"CreationTime":    r.CreationTime,
+			ms := spanutil.InsertMap("Ingestions", map[string]interface{}{
+				"BuildId":             r.BuildID,
+				"BuildProject":        r.BuildProject,
+				"BuildResult":         r.BuildResult,
+				"BuildJoinedTime":     r.BuildJoinedTime,
+				"IsPresubmit":         r.IsPresubmit,
+				"PresubmitProject":    r.PresubmitProject,
+				"PresubmitResult":     r.PresubmitResult,
+				"PresubmitJoinedTime": r.PresubmitJoinedTime,
+				"LastUpdated":         r.LastUpdated,
 			})
 			span.BufferWrite(ctx, ms)
 		}

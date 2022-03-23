@@ -20,7 +20,6 @@ import (
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/cv"
 	ctlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 	pb "infra/appengine/weetbix/proto/v1"
@@ -93,19 +92,10 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (project st
 		return "unknown", false, errors.Annotate(err, "failed to parse run ID").Err()
 	}
 
-	if chromiumMilestoneProjectRE.MatchString(project) {
-		// Chromium milestone projects are currently not supported.
-		return project, false, nil
-	}
-
-	if _, err := config.Project(ctx, project); err != nil {
-		if err == config.NotExistsErr {
-			// Project not configured in Weetbix, ignore it.
-			return project, false, nil
-		} else {
-			return project, false, errors.Annotate(err, "get project config").Err()
-		}
-	}
+	// We do not check if the project is configured in Weetbix,
+	// as CV runs can include projects from other projects.
+	// It is the projects of these builds that the data
+	// gets ingested into.
 
 	run, err := getRun(ctx, psRun)
 	switch {
@@ -144,7 +134,7 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (project st
 		buildIDs = append(buildIDs, buildID(bbHost, b.Id))
 	}
 
-	if err := JoinPresubmitResult(ctx, project, buildIDs, pr); err != nil {
+	if err := JoinPresubmitResult(ctx, buildIDs, project, pr); err != nil {
 		return project, true, errors.Annotate(err, "joining presubmit results").Err()
 	}
 

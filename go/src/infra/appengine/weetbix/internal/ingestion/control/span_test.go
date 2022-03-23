@@ -23,114 +23,127 @@ func TestSpan(t *testing.T) {
 		Convey(`Read`, func() {
 			entriesToCreate := []*Entry{
 				NewEntry(0).WithBuildID("buildbucket-instance/1").Build(),
-				NewEntry(1).WithBuildID("buildbucket-instance/2").WithProject("otherproject").Build(),
-				NewEntry(2).WithBuildID("buildbucket-instance/3").WithBuildResult(nil).Build(),
-				NewEntry(3).WithBuildID("buildbucket-instance/4").WithPresubmitResult(nil).Build(),
+				NewEntry(2).WithBuildID("buildbucket-instance/2").WithBuildResult(nil).Build(),
+				NewEntry(3).WithBuildID("buildbucket-instance/3").WithPresubmitResult(nil).Build(),
 			}
 			_, err := SetEntriesForTesting(ctx, entriesToCreate)
 			So(err, ShouldBeNil)
 
 			Convey(`None exist`, func() {
-				buildIDs := []string{"buildbucket-instance/5"}
-				results, err := Read(span.Single(ctx), testProject, buildIDs)
+				buildIDs := []string{"buildbucket-instance/4"}
+				results, err := Read(span.Single(ctx), buildIDs)
 				So(err, ShouldBeNil)
 				So(len(results), ShouldEqual, 1)
 				So(results[0], ShouldResembleEntry, nil)
 			})
 			Convey(`Some exist`, func() {
-				buildIDs := []string{"buildbucket-instance/3", "buildbucket-instance/4", "buildbucket-instance/2", "buildbucket-instance/1"}
-				results, err := Read(span.Single(ctx), testProject, buildIDs)
+				buildIDs := []string{
+					"buildbucket-instance/3",
+					"buildbucket-instance/4",
+					"buildbucket-instance/2",
+					"buildbucket-instance/1",
+				}
+				results, err := Read(span.Single(ctx), buildIDs)
 				So(err, ShouldBeNil)
 				So(len(results), ShouldEqual, 4)
 				So(results[0], ShouldResembleEntry, entriesToCreate[2])
-				So(results[1], ShouldResembleEntry, entriesToCreate[3])
-				So(results[2], ShouldResembleEntry, nil)
+				So(results[1], ShouldResembleEntry, nil)
+				So(results[2], ShouldResembleEntry, entriesToCreate[1])
 				So(results[3], ShouldResembleEntry, entriesToCreate[0])
 			})
 		})
-		Convey(`Create`, func() {
-			testCreate := func(e *Entry) (time.Time, error) {
+		Convey(`SetBuildResult`, func() {
+			testSetBuildResult := func(e *Entry) (time.Time, error) {
 				commitTime, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
-					return Create(ctx, e)
+					return SetBuildResult(ctx, e)
 				})
 				return commitTime.In(time.UTC), err
 			}
 
-			e := NewEntry(100).WithPresubmitResult(nil).Build()
-			Convey(`Valid`, func() {
-				// Create for first time.
-				commitTime, err := testCreate(e)
-				So(err, ShouldBeNil)
-				e.CreationTime = commitTime
-				e.LastUpdated = commitTime
+			entriesToCreate := []*Entry{
+				NewEntry(0).Build(),
+			}
+			_, err := SetEntriesForTesting(ctx, entriesToCreate)
+			So(err, ShouldBeNil)
 
-				result, err := Read(span.Single(ctx), testProject, []string{e.BuildID})
-				So(err, ShouldBeNil)
-				So(len(result), ShouldEqual, 1)
-				So(result[0], ShouldResembleEntry, e)
+			e := NewEntry(1).Build()
+
+			Convey(`Valid`, func() {
+				Convey(`Create`, func() {
+					commitTime, err := testSetBuildResult(e)
+					So(err, ShouldBeNil)
+					e.BuildJoinedTime = commitTime
+					e.LastUpdated = commitTime
+
+					// SetBuildResult should not have set these fields.
+					e.PresubmitProject = ""
+					e.PresubmitResult = nil
+					e.PresubmitJoinedTime = time.Time{}
+
+					result, err := Read(span.Single(ctx), []string{e.BuildID})
+					So(err, ShouldBeNil)
+					So(len(result), ShouldEqual, 1)
+					So(result[0], ShouldResembleEntry, e)
+				})
+				Convey(`Update`, func() {
+					// Update the existing entry.
+					e.BuildID = entriesToCreate[0].BuildID
+
+					commitTime, err := testSetBuildResult(e)
+					So(err, ShouldBeNil)
+					e.BuildJoinedTime = commitTime
+					e.LastUpdated = commitTime
+
+					// SetBuildResult should not update these fields.
+					e.PresubmitProject = entriesToCreate[0].PresubmitProject
+					e.PresubmitResult = entriesToCreate[0].PresubmitResult
+					e.PresubmitJoinedTime = entriesToCreate[0].PresubmitJoinedTime
+
+					result, err := Read(span.Single(ctx), []string{e.BuildID})
+					So(err, ShouldBeNil)
+					So(len(result), ShouldEqual, 1)
+					So(result[0], ShouldResembleEntry, e)
+				})
 			})
-			Convey(`With invalid Project`, func() {
+			Convey(`With invalid Build Project`, func() {
 				Convey(`Missing`, func() {
-					e.Project = ""
-					_, err := testCreate(e)
-					So(err, ShouldErrLike, "project must be valid")
+					e.BuildProject = ""
+					_, err := testSetBuildResult(e)
+					So(err, ShouldErrLike, "build project must be valid")
 				})
 				Convey(`Invalid`, func() {
-					e.Project = "!"
-					_, err := testCreate(e)
-					So(err, ShouldErrLike, "project must be valid")
+					e.BuildProject = "!"
+					_, err := testSetBuildResult(e)
+					So(err, ShouldErrLike, "build project must be valid")
 				})
 			})
 			Convey(`With missing Build ID`, func() {
 				e.BuildID = ""
-				_, err := testCreate(e)
+				_, err := testSetBuildResult(e)
 				So(err, ShouldErrLike, "build ID must be specified")
 			})
 			Convey(`With invalid Build Result`, func() {
 				Convey(`Missing host`, func() {
 					e.BuildResult.Host = ""
-					_, err := testCreate(e)
+					_, err := testSetBuildResult(e)
 					So(err, ShouldErrLike, "host must be specified")
 				})
 				Convey(`Missing id`, func() {
 					e.BuildResult.Id = 0
-					_, err := testCreate(e)
+					_, err := testSetBuildResult(e)
 					So(err, ShouldErrLike, "id must be specified")
 				})
 				Convey(`Missing creation time`, func() {
 					e.BuildResult.CreationTime = nil
-					_, err := testCreate(e)
+					_, err := testSetBuildResult(e)
 					So(err, ShouldErrLike, "build result: creation time must be specified")
 				})
 			})
-			Convey(`With invalid Presubmit Result`, func() {
-				e = NewEntry(100).Build()
-				Convey(`Missing Presubmit run ID`, func() {
-					e.PresubmitResult.PresubmitRunId = nil
-					_, err := testCreate(e)
-					So(err, ShouldErrLike, "presubmit run ID must be specified")
-				})
-				Convey(`Invalid Presubmit run ID host`, func() {
-					e.PresubmitResult.PresubmitRunId.System = "!"
-					_, err := testCreate(e)
-					So(err, ShouldErrLike, "presubmit run system must be 'luci-cv'")
-				})
-				Convey(`Missing Presubmit run ID system-specific ID`, func() {
-					e.PresubmitResult.PresubmitRunId.Id = ""
-					_, err := testCreate(e)
-					So(err, ShouldErrLike, "presubmit run system-specific ID must be specified")
-				})
-				Convey(`Missing creation time`, func() {
-					e.PresubmitResult.CreationTime = nil
-					_, err := testCreate(e)
-					So(err, ShouldErrLike, "presubmit result: creation time must be specified")
-				})
-			})
 		})
-		Convey(`Update`, func() {
-			testUpdate := func(e *Entry) (time.Time, error) {
+		Convey(`SetPresubmitResult`, func() {
+			testSetPresubmitResult := func(e *Entry) (time.Time, error) {
 				commitTime, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
-					return Update(ctx, e)
+					return SetPresubmitResult(ctx, e)
 				})
 				return commitTime.In(time.UTC), err
 			}
@@ -141,106 +154,209 @@ func TestSpan(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			e := NewEntry(1).Build()
-			e.Project = entriesToCreate[0].Project
-			e.BuildID = entriesToCreate[0].BuildID
-			e.CreationTime = entriesToCreate[0].CreationTime
 
 			Convey(`Valid`, func() {
-				// Update.
-				commitTime, err := testUpdate(e)
-				So(err, ShouldBeNil)
-				e.LastUpdated = commitTime
+				Convey(`Create`, func() {
+					commitTime, err := testSetPresubmitResult(e)
+					So(err, ShouldBeNil)
+					e.PresubmitJoinedTime = commitTime
+					e.LastUpdated = commitTime
 
-				result, err := Read(span.Single(ctx), testProject, []string{e.BuildID})
-				So(err, ShouldBeNil)
-				So(len(result), ShouldEqual, 1)
-				So(result[0], ShouldResembleEntry, e)
+					// SetPresubmitResult should not have set these fields.
+					e.BuildProject = ""
+					e.BuildResult = nil
+					e.BuildJoinedTime = time.Time{}
+
+					result, err := Read(span.Single(ctx), []string{e.BuildID})
+					So(err, ShouldBeNil)
+					So(len(result), ShouldEqual, 1)
+					So(result[0], ShouldResembleEntry, e)
+				})
+				Convey(`Update`, func() {
+					// Update the existing entry.
+					e.BuildID = entriesToCreate[0].BuildID
+
+					commitTime, err := testSetPresubmitResult(e)
+					So(err, ShouldBeNil)
+					e.PresubmitJoinedTime = commitTime
+					e.LastUpdated = commitTime
+
+					// SetPresubmitResult should not update these fields.
+					e.BuildProject = entriesToCreate[0].BuildProject
+					e.BuildResult = entriesToCreate[0].BuildResult
+					e.BuildJoinedTime = entriesToCreate[0].BuildJoinedTime
+
+					result, err := Read(span.Single(ctx), []string{e.BuildID})
+					So(err, ShouldBeNil)
+					So(len(result), ShouldEqual, 1)
+					So(result[0], ShouldResembleEntry, e)
+				})
 			})
 			Convey(`Invalid`, func() {
-				// The validation implementation between Create() and Update()
-				// is shared. Rather than repeat all of the same test cases,
-				// we just repeat one test to ensure the method is invoked.
-
+				Convey(`With invalid Presubmit Project`, func() {
+					Convey(`Missing`, func() {
+						e.PresubmitProject = ""
+						_, err := testSetPresubmitResult(e)
+						So(err, ShouldErrLike, "presubmit project must be valid")
+					})
+					Convey(`Invalid`, func() {
+						e.PresubmitProject = "!"
+						_, err := testSetPresubmitResult(e)
+						So(err, ShouldErrLike, "presubmit project must be valid")
+					})
+				})
+				Convey(`With missing Build ID`, func() {
+					e.BuildID = ""
+					_, err := testSetPresubmitResult(e)
+					So(err, ShouldErrLike, "build ID must be specified")
+				})
 				Convey(`Missing Presubmit run ID`, func() {
 					e.PresubmitResult.PresubmitRunId = nil
-					_, err := testUpdate(e)
+					_, err := testSetPresubmitResult(e)
 					So(err, ShouldErrLike, "presubmit run ID must be specified")
+				})
+				Convey(`With invalid Presubmit Result`, func() {
+					e = NewEntry(100).Build()
+					Convey(`Missing Presubmit run ID`, func() {
+						e.PresubmitResult.PresubmitRunId = nil
+						_, err := testSetPresubmitResult(e)
+						So(err, ShouldErrLike, "presubmit run ID must be specified")
+					})
+					Convey(`Invalid Presubmit run ID host`, func() {
+						e.PresubmitResult.PresubmitRunId.System = "!"
+						_, err := testSetPresubmitResult(e)
+						So(err, ShouldErrLike, "presubmit run system must be 'luci-cv'")
+					})
+					Convey(`Missing Presubmit run ID system-specific ID`, func() {
+						e.PresubmitResult.PresubmitRunId.Id = ""
+						_, err := testSetPresubmitResult(e)
+						So(err, ShouldErrLike, "presubmit run system-specific ID must be specified")
+					})
+					Convey(`Missing creation time`, func() {
+						e.PresubmitResult.CreationTime = nil
+						_, err := testSetPresubmitResult(e)
+						So(err, ShouldErrLike, "presubmit result: creation time must be specified")
+					})
 				})
 			})
 		})
-		Convey(`ReadPresubmitJoinStatistics`, func() {
+		Convey(`ReadPresubmitRunJoinStatistics`, func() {
 			Convey(`No data`, func() {
 				_, err := SetEntriesForTesting(ctx, nil)
 				So(err, ShouldBeNil)
 
-				results, err := ReadPresubmitJoinStatistics(span.Single(ctx))
+				results, err := ReadPresubmitRunJoinStatistics(span.Single(ctx))
 				So(err, ShouldBeNil)
-				So(results, ShouldResemble, map[string]PresubmitJoinStatistics{})
+				So(results, ShouldResemble, map[string]JoinStatistics{})
 			})
 			Convey(`Data`, func() {
 				reference := time.Now().Add(-1 * time.Minute)
 				entriesToCreate := []*Entry{
 					// Setup following data:
 					// Project Alpha ("alpha") :=
-					//  ]-1 hour, now]: 3 presubmit builds, 2 of which without
-					//                  presubmit result.
+					//  ]-1 hour, now]: 4 presubmit builds, 2 of which without
+					//                  presubmit result, 1 of which without
+					//                  build result.
 					//                  1 non-presubmit build.
-					//  ]-3 hours, -2 hour]: 2 presubmit builds, 1 of which
-					//                       without build result.
-					//  ]-24 hours, -23 hours]: 1 presubmit build,
+					//  ]-36 hours, -35 hours]: 1 presubmit build,
 					//                          with all results.
-					//  ]-25 hours, -24 hours]: 1 presubmit build,
-					//                          without presubmit result.
+					//  ]-37 hours, -36 hours]: 1 presubmit build,
+					//                          with all results
+					//                         (should be ignored).
 					// Project Beta ("beta") :=
-					//  ]-18 hours, -17 hours]: 1 presubmit build whout build
-					//                          result.
-					// Project Gamma ("gamma") :=
-					//  ]-25 hours, -24 hours]: 1 presubmit build,
+					//  ]-37 hours, -36 hours]: 1 presubmit build,
 					//                          without presubmit result.
-					NewEntry(0).WithProject("alpha").WithCreationTime(reference).Build(),
-					NewEntry(1).WithProject("alpha").WithCreationTime(reference).WithPresubmitResult(nil).Build(),
-					NewEntry(2).WithProject("alpha").WithCreationTime(reference).WithPresubmitResult(nil).Build(),
-					NewEntry(4).WithProject("alpha").WithCreationTime(reference).WithIsPresubmit(false).WithPresubmitResult(nil).Build(),
-					NewEntry(5).WithProject("alpha").WithCreationTime(reference.Add(-2 * time.Hour)).Build(),
-					NewEntry(6).WithProject("alpha").WithCreationTime(reference.Add(-2 * time.Hour)).WithBuildResult(nil).Build(),
-					NewEntry(7).WithProject("alpha").WithCreationTime(reference.Add(-23 * time.Hour)).Build(),
-					NewEntry(8).WithProject("alpha").WithCreationTime(reference.Add(-24 * time.Hour)).WithPresubmitResult(nil).Build(),
-					NewEntry(9).WithProject("beta").WithCreationTime(reference.Add(-17 * time.Hour)).WithBuildResult(nil).Build(),
-					NewEntry(10).WithProject("gamma").WithCreationTime(reference.Add(-24 * time.Hour)).WithPresubmitResult(nil).Build(),
+					NewEntry(0).WithBuildProject("alpha").WithBuildJoinedTime(reference).Build(),
+					NewEntry(1).WithBuildProject("alpha").WithBuildJoinedTime(reference).WithPresubmitResult(nil).Build(),
+					NewEntry(2).WithBuildProject("alpha").WithBuildJoinedTime(reference).WithPresubmitResult(nil).Build(),
+					NewEntry(3).WithPresubmitProject("alpha").WithPresubmitJoinedTime(reference).WithBuildResult(nil).Build(),
+					NewEntry(4).WithBuildProject("alpha").WithBuildJoinedTime(reference).WithIsPresubmit(false).WithPresubmitResult(nil).Build(),
+					NewEntry(5).WithBuildProject("alpha").WithBuildJoinedTime(reference.Add(-35 * time.Hour)).Build(),
+					NewEntry(6).WithBuildProject("alpha").WithBuildJoinedTime(reference.Add(-36 * time.Hour)).Build(),
+					NewEntry(7).WithBuildProject("beta").WithBuildJoinedTime(reference.Add(-36 * time.Hour)).WithPresubmitResult(nil).Build(),
 				}
 				_, err := SetEntriesForTesting(ctx, entriesToCreate)
 				So(err, ShouldBeNil)
 
-				results, err := ReadPresubmitJoinStatistics(span.Single(ctx))
+				results, err := ReadPresubmitRunJoinStatistics(span.Single(ctx))
 				So(err, ShouldBeNil)
 
-				expectedAlpha := PresubmitJoinStatistics{
-					TotalBuildsByHour:             make([]int64, 24),
-					AwaitingBuildByHour:           make([]int64, 24),
-					AwaitingPresubmitResultByHour: make([]int64, 24),
+				expectedAlpha := JoinStatistics{
+					TotalByHour:  make([]int64, 36),
+					JoinedByHour: make([]int64, 36),
 				}
-				expectedAlpha.TotalBuildsByHour[0] = 3
-				expectedAlpha.AwaitingPresubmitResultByHour[0] = 2
-				expectedAlpha.TotalBuildsByHour[2] = 2
-				expectedAlpha.AwaitingBuildByHour[2] = 1
-				expectedAlpha.TotalBuildsByHour[23] = 1
-				// Only data in the last 24 hours is included, so the build
-				// older than 24 hours is excluded.
+				expectedAlpha.TotalByHour[0] = 3
+				expectedAlpha.JoinedByHour[0] = 1
+				expectedAlpha.TotalByHour[35] = 1
+				expectedAlpha.JoinedByHour[35] = 1
+				// Only data in the last 36 hours is included, so the build
+				// older than 36 hours is excluded.
 
-				expectedBeta := PresubmitJoinStatistics{
-					TotalBuildsByHour:             make([]int64, 24),
-					AwaitingBuildByHour:           make([]int64, 24),
-					AwaitingPresubmitResultByHour: make([]int64, 24),
-				}
-				expectedBeta.TotalBuildsByHour[17] = 1
-				expectedBeta.AwaitingBuildByHour[17] = 1
+				// Expect no entry to be returned for Project beta
+				// as all data is older than 36 hours.
 
-				// Expect no entry to be returned for Project gamma
-				// as all data is older than 24 hours.
-
-				So(results, ShouldResemble, map[string]PresubmitJoinStatistics{
+				So(results, ShouldResemble, map[string]JoinStatistics{
 					"alpha": expectedAlpha,
-					"beta":  expectedBeta,
+				})
+			})
+		})
+		Convey(`ReadBuildJoinStatistics`, func() {
+			Convey(`No data`, func() {
+				_, err := SetEntriesForTesting(ctx, nil)
+				So(err, ShouldBeNil)
+
+				results, err := ReadBuildJoinStatistics(span.Single(ctx))
+				So(err, ShouldBeNil)
+				So(results, ShouldResemble, map[string]JoinStatistics{})
+			})
+			Convey(`Data`, func() {
+				reference := time.Now().Add(-1 * time.Minute)
+				entriesToCreate := []*Entry{
+					// Setup following data:
+					// Project Alpha ("alpha") :=
+					//  ]-1 hour, now]: 4 presubmit builds, 2 of which without
+					//                  build result, 1 of which without
+					//                  presubmit result.
+					//                  1 non-presubmit build.
+					//  ]-36 hours, -35 hours]: 1 presubmit build,
+					//                          with all results.
+					//  ]-37 hours, -36 hours]: 1 presubmit build,
+					//                          with all results
+					//                          (should be ignored).
+					// Project Beta ("beta") :=
+					//  ]-37 hours, -36 hours]: 1 presubmit build,
+					//                          without build result.
+					NewEntry(0).WithPresubmitProject("alpha").WithPresubmitJoinedTime(reference).Build(),
+					NewEntry(1).WithPresubmitProject("alpha").WithPresubmitJoinedTime(reference).WithBuildResult(nil).Build(),
+					NewEntry(2).WithPresubmitProject("alpha").WithPresubmitJoinedTime(reference).WithBuildResult(nil).Build(),
+					NewEntry(3).WithBuildProject("alpha").WithBuildJoinedTime(reference).WithPresubmitResult(nil).Build(),
+					NewEntry(4).WithPresubmitProject("alpha").WithPresubmitJoinedTime(reference).WithIsPresubmit(false).WithBuildResult(nil).Build(),
+					NewEntry(5).WithPresubmitProject("alpha").WithPresubmitJoinedTime(reference.Add(-35 * time.Hour)).Build(),
+					NewEntry(6).WithPresubmitProject("alpha").WithPresubmitJoinedTime(reference.Add(-36 * time.Hour)).Build(),
+					NewEntry(7).WithPresubmitProject("beta").WithPresubmitJoinedTime(reference.Add(-36 * time.Hour)).WithBuildResult(nil).Build(),
+				}
+				_, err := SetEntriesForTesting(ctx, entriesToCreate)
+				So(err, ShouldBeNil)
+
+				results, err := ReadBuildJoinStatistics(span.Single(ctx))
+				So(err, ShouldBeNil)
+
+				expectedAlpha := JoinStatistics{
+					TotalByHour:  make([]int64, 36),
+					JoinedByHour: make([]int64, 36),
+				}
+				expectedAlpha.TotalByHour[0] = 3
+				expectedAlpha.JoinedByHour[0] = 1
+				expectedAlpha.TotalByHour[35] = 1
+				expectedAlpha.JoinedByHour[35] = 1
+				// Only data in the last 36 hours is included, so the build
+				// older than 36 hours is excluded.
+
+				// Expect no entry to be returned for Project beta
+				// as all data is older than 36 hours.
+
+				So(results, ShouldResemble, map[string]JoinStatistics{
+					"alpha": expectedAlpha,
 				})
 			})
 		})

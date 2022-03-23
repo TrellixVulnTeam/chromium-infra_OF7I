@@ -21,34 +21,45 @@ import (
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 )
 
-// For presubmit builds, proceeding to ingestion is not unconditional:
-// we must wait for the build to be notified over both a CV and Buildbucket.
+// For presubmit builds, proceeding to ingestion is conditional:
+// we must wait for the both the CV run and Buildbucket build to complete.
 // We define the following metrics to monitor the performance of that join.
 var (
-	cvPresubmitBuildCounter = metric.NewCounter(
+	cvPresubmitBuildInputCounter = metric.NewCounter(
 		"weetbix/ingestion/join/cv_presubmit_builds_input",
-		"The number of unique presubmit builds for which CV Run Completion was received.",
+		"The number of unique presubmit builds for which CV Run Completion was received."+
+			" Broken down by project of the CV run.",
 		nil,
-		// The LUCI Project.
+		// The LUCI Project of the CV run.
 		field.String("project"))
 
-	bbPresubmitBuildCounter = metric.NewCounter(
+	cvPresubmitBuildOutputCounter = metric.NewCounter(
+		"weetbix/ingestion/join/cv_presubmit_builds_output",
+		"The number of presubmit builds which were successfully joined and for which ingestion was queued."+
+			" Broken down by project of the CV run.",
+		nil,
+		// The LUCI Project of the CV run.
+		field.String("project"))
+
+	bbPresubmitBuildInputCounter = metric.NewCounter(
 		"weetbix/ingestion/join/bb_presubmit_builds_input",
-		"The number of unique presubmit build for which buildbucket build completion was received.",
+		"The number of unique presubmit build for which buildbucket build completion was received."+
+			" Broken down by project of the buildbucket build.",
 		nil,
-		// The LUCI Project.
+		// The LUCI Project of the buildbucket run.
 		field.String("project"))
 
-	outputPresubmitBuildCounter = metric.NewCounter(
-		"weetbix/ingestion/join/presubmit_builds_output",
-		"The number of presubmit builds which were successfully joined and for which ingestion was queued.",
+	bbPresubmitBuildOutputCounter = metric.NewCounter(
+		"weetbix/ingestion/join/bb_presubmit_builds_output",
+		"The number of presubmit builds which were successfully joined and for which ingestion was queued."+
+			" Broken down by project of the buildbucket build.",
 		nil,
-		// The LUCI Project.
+		// The LUCI Project of the buildbucket run.
 		field.String("project"))
 )
 
 // For CI builds, no actual join needs to occur. So it is sufficient to
-// monitor total flow.
+// monitor only the output flow (same as input flow).
 var (
 	outputCIBuildCounter = metric.NewCounter(
 		"weetbix/ingestion/join/ci_builds_output",
@@ -67,25 +78,28 @@ var (
 //
 // If the build result has already been provided for a build,
 // this method has no effect.
-func JoinBuildResult(ctx context.Context, project, buildID string, isPresubmit bool, br *ctlpb.BuildResult) error {
+func JoinBuildResult(ctx context.Context, buildID, buildProject string, isPresubmit bool, br *ctlpb.BuildResult) error {
 	if br == nil {
 		return errors.New("build result must be specified")
 	}
 	var saved bool
-	var joined bool
+	var taskCreated bool
+	var cvProject string
 	f := func(ctx context.Context) error {
+		// Clear variables to ensure nothing from a previous (failed)
+		// try of this transaction leaks out to the outer context.
 		saved = false
-		joined = false
-		entries, err := control.Read(ctx, project, []string{buildID})
+		taskCreated = false
+		cvProject = ""
+
+		entries, err := control.Read(ctx, []string{buildID})
 		if err != nil {
 			return err
 		}
 		entry := entries[0]
-		exists := entry != nil
 		// Record does not exist.
 		if entry == nil {
 			entry = &control.Entry{
-				Project:     project,
 				BuildID:     buildID,
 				IsPresubmit: isPresubmit,
 			}
@@ -98,18 +112,16 @@ func JoinBuildResult(ctx context.Context, project, buildID string, isPresubmit b
 			// create a duplicate ingestion.
 			return nil
 		}
+		entry.BuildProject = buildProject
 		entry.BuildResult = br
-		if exists {
-			if err := control.Update(ctx, entry); err != nil {
-				return err
-			}
-		} else {
-			if err := control.Create(ctx, entry); err != nil {
-				return err
-			}
+		if control.SetBuildResult(ctx, entry); err != nil {
+			return err
 		}
 		saved = true
-		joined = createTaskIfNeeded(ctx, entry)
+		taskCreated = createTaskIfNeeded(ctx, entry)
+
+		// Will only populated if IsPresubmit is not empty.
+		cvProject = entry.PresubmitProject
 		return nil
 	}
 	if _, err := span.ReadWriteTransaction(ctx, f); err != nil {
@@ -121,13 +133,14 @@ func JoinBuildResult(ctx context.Context, project, buildID string, isPresubmit b
 
 	// Export metrics.
 	if saved && isPresubmit {
-		bbPresubmitBuildCounter.Add(ctx, 1, project)
+		bbPresubmitBuildInputCounter.Add(ctx, 1, buildProject)
 	}
-	if joined {
+	if taskCreated {
 		if isPresubmit {
-			outputPresubmitBuildCounter.Add(ctx, 1, project)
+			bbPresubmitBuildOutputCounter.Add(ctx, 1, buildProject)
+			cvPresubmitBuildOutputCounter.Add(ctx, 1, cvProject)
 		} else {
-			outputCIBuildCounter.Add(ctx, 1, project)
+			outputCIBuildCounter.Add(ctx, 1, buildProject)
 		}
 	}
 	return nil
@@ -140,25 +153,26 @@ func JoinBuildResult(ctx context.Context, project, buildID string, isPresubmit b
 //
 // If the presubmit result has already been provided for a build,
 // this method has no effect.
-func JoinPresubmitResult(ctx context.Context, project string, buildIDs []string, pr *ctlpb.PresubmitResult) error {
+func JoinPresubmitResult(ctx context.Context, buildIDs []string, presubmitProject string, pr *ctlpb.PresubmitResult) error {
 	if pr == nil {
 		return errors.New("presubmit result must be specified")
 	}
 	var buildIDsSkipped []string
-	var buildsOutput int64
+	var buildsOutputByBuildProject map[string]int64
 	f := func(ctx context.Context) error {
+		// Clear variables to ensure nothing from a previous (failed)
+		// try of this transaction leaks out to the outer context.
 		buildIDsSkipped = nil
-		buildsOutput = 0
-		entries, err := control.Read(ctx, project, buildIDs)
+		buildsOutputByBuildProject = make(map[string]int64)
+
+		entries, err := control.Read(ctx, buildIDs)
 		if err != nil {
 			return err
 		}
 		for i, entry := range entries {
 			buildID := buildIDs[i]
-			exists := entry != nil
 			if entry == nil {
 				entry = &control.Entry{
-					Project:     project,
 					BuildID:     buildID,
 					IsPresubmit: true,
 				}
@@ -172,19 +186,14 @@ func JoinPresubmitResult(ctx context.Context, project string, buildIDs []string,
 				buildIDsSkipped = append(buildIDsSkipped, buildID)
 				return nil
 			}
+			entry.PresubmitProject = presubmitProject
 			entry.PresubmitResult = pr
-			if exists {
-				if err := control.Update(ctx, entry); err != nil {
-					return err
-				}
-			} else {
-				if err := control.Create(ctx, entry); err != nil {
-					return err
-				}
+			if err := control.SetPresubmitResult(ctx, entry); err != nil {
+				return err
 			}
 			created := createTaskIfNeeded(ctx, entry)
 			if created {
-				buildsOutput++
+				buildsOutputByBuildProject[entry.BuildProject]++
 			}
 		}
 		return nil
@@ -197,9 +206,10 @@ func JoinPresubmitResult(ctx context.Context, project string, buildIDs []string,
 	}
 
 	// Export metrics.
-	cvPresubmitBuildCounter.Add(ctx, int64(len(buildIDs)-len(buildIDsSkipped)), project)
-	if buildsOutput > 0 {
-		outputPresubmitBuildCounter.Add(ctx, buildsOutput, project)
+	cvPresubmitBuildInputCounter.Add(ctx, int64(len(buildIDs)-len(buildIDsSkipped)), cvPresubmitBuildInputCounter)
+	for buildProject, count := range buildsOutputByBuildProject {
+		bbPresubmitBuildOutputCounter.Add(ctx, count, buildProject)
+		cvPresubmitBuildOutputCounter.Add(ctx, count, presubmitProject)
 	}
 	return nil
 }

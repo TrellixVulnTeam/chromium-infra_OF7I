@@ -45,9 +45,13 @@ func TestHandleCVRun(t *testing.T) {
 		ctx, skdr := tq.TestingContext(ctx, nil)
 		ctx = memory.Use(ctx) // For test config.
 
-		projectCfg := config.CreatePlaceholderProjectConfig()
+		// Builds and CV runs can come from different projects
+		// and still join. We test this by using two projects,
+		// one for builds, one for cv runs. Only the project
+		// for builds needs to be configured, as that is the
+		// project where data is ingested into.
 		configs := map[string]*configpb.ProjectConfig{
-			"testproject": projectCfg,
+			"buildproject": config.CreatePlaceholderProjectConfig(),
 		}
 
 		err := config.SetTestProjectConfig(ctx, configs)
@@ -57,8 +61,8 @@ func TestHandleCVRun(t *testing.T) {
 		buildIDs := []int64{87654321, 87654322}
 		for _, buildID := range buildIDs {
 			buildExp := bbv1.LegacyApiCommonBuildMessage{
-				Project:   "testproject",
-				Bucket:    "luci.testproject.bucket",
+				Project:   "buildproject",
+				Bucket:    "luci.buildproject.bucket",
 				Id:        buildID,
 				Status:    bbv1.StatusCompleted,
 				CreatedTs: bbv1.FormatTimestamp(bbCreateTime),
@@ -68,38 +72,26 @@ func TestHandleCVRun(t *testing.T) {
 			project, processed, err := bbPubSubHandlerImpl(ctx, r)
 			So(err, ShouldBeNil)
 			So(processed, ShouldBeTrue)
-			So(project, ShouldEqual, "testproject")
+			So(project, ShouldEqual, "buildproject")
 		}
 		So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
 
-		Convey(`CV run from non-configured project is ignored`, func() {
-			psRun := &cvv1.PubSubRun{
-				Id:     "projects/fake/runs/run_id",
-				Status: cvv1.Run_SUCCEEDED,
-			}
-			r := &http.Request{Body: makeCVRunReq(psRun)}
-			project, processed, err := cvPubSubHandlerImpl(ctx, r)
-			So(err, ShouldBeNil)
-			So(processed, ShouldBeFalse)
-			So(project, ShouldEqual, "fake")
-			So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
-		})
-		Convey(`CV run from configured project is processed`, func() {
+		Convey(`CV run is processed`, func() {
 			ctx, skdr := tq.TestingContext(ctx, nil)
 			rID := "id_full_run"
-			fID := fullRunID("testproject", rID)
+			fullRunID := fullRunID("cvproject", rID)
 
 			processCVRun := func(run *cvv0.Run) (processed bool, tasks []*taskspb.IngestTestResults) {
 				existingTaskCount := len(skdr.Tasks().Payloads())
 
 				runs := map[string]*cvv0.Run{
-					fID: run,
+					fullRunID: run,
 				}
 				ctx = cv.UseFakeClient(ctx, runs)
-				r := &http.Request{Body: makeCVChromiumRunReq(fID)}
+				r := &http.Request{Body: makeCVChromiumRunReq(fullRunID)}
 				project, processed, err := cvPubSubHandlerImpl(ctx, r)
 				So(err, ShouldBeNil)
-				So(project, ShouldEqual, "testproject")
+				So(project, ShouldEqual, "cvproject")
 
 				tasks = make([]*taskspb.IngestTestResults, 0,
 					len(skdr.Tasks().Payloads())-existingTaskCount)
@@ -110,7 +102,7 @@ func TestHandleCVRun(t *testing.T) {
 			}
 
 			run := &cvv0.Run{
-				Id:         fID,
+				Id:         fullRunID,
 				Mode:       "FULL_RUN",
 				CreateTime: timestamppb.New(clock.Now(ctx)),
 				Owner:      "cl-owner@google.com",
@@ -133,7 +125,7 @@ func TestHandleCVRun(t *testing.T) {
 				PresubmitRun: &controlpb.PresubmitResult{
 					PresubmitRunId: &pb.PresubmitRunId{
 						System: "luci-cv",
-						Id:     "testproject/" + strings.Split(run.Id, "/")[3],
+						Id:     "cvproject/" + strings.Split(run.Id, "/")[3],
 					},
 					Cls: []*pb.Changelist{
 						{

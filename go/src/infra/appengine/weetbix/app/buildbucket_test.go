@@ -35,9 +35,13 @@ func TestHandleBuild(t *testing.T) {
 		ctx, skdr := tq.TestingContext(ctx, nil)
 		ctx = memory.Use(ctx) // For test config.
 
-		projectCfg := config.CreatePlaceholderProjectConfig()
+		// Builds and CV runs can come from different projects
+		// and still join. We test this by using two projects,
+		// one for builds, one for cv runs. Only the project
+		// for builds needs to be configured, as that is the
+		// project where data is ingested into.
 		configs := map[string]*configpb.ProjectConfig{
-			"testproject": projectCfg,
+			"buildproject": config.CreatePlaceholderProjectConfig(),
 		}
 
 		err := config.SetTestProjectConfig(ctx, configs)
@@ -65,8 +69,8 @@ func TestHandleBuild(t *testing.T) {
 				t := time.Now().Truncate(time.Nanosecond * 1000)
 
 				buildExp := bbv1.LegacyApiCommonBuildMessage{
-					Project:   "testproject",
-					Bucket:    "luci.testproject.bucket",
+					Project:   "buildproject",
+					Bucket:    "luci.buildproject.bucket",
 					Id:        87654321,
 					Status:    bbv1.StatusCompleted,
 					CreatedTs: bbv1.FormatTimestamp(t),
@@ -76,7 +80,7 @@ func TestHandleBuild(t *testing.T) {
 				project, processed, err := bbPubSubHandlerImpl(ctx, r)
 				So(err, ShouldBeNil)
 				So(processed, ShouldBeTrue)
-				So(project, ShouldEqual, "testproject")
+				So(project, ShouldEqual, "buildproject")
 
 				So(len(skdr.Tasks().Payloads()), ShouldEqual, 1)
 				task := skdr.Tasks().Payloads()[0].(*taskspb.IngestTestResults)
@@ -89,12 +93,12 @@ func TestHandleBuild(t *testing.T) {
 					},
 				})
 
-				Convey(`repeated processing does not lead to further ingestion tasks`, func() {
+				Convey(`Repeated processing does not lead to further ingestion tasks`, func() {
 					r := &http.Request{Body: makeBBReq(buildExp, "bb-hostname")}
 					project, processed, err := bbPubSubHandlerImpl(ctx, r)
 					So(err, ShouldBeNil)
 					So(processed, ShouldBeTrue)
-					So(project, ShouldEqual, "testproject")
+					So(project, ShouldEqual, "buildproject")
 					So(len(skdr.Tasks().Payloads()), ShouldEqual, 1)
 				})
 			})
@@ -103,8 +107,8 @@ func TestHandleBuild(t *testing.T) {
 				t := time.Date(2025, time.April, 1, 2, 3, 4, 0, time.UTC)
 
 				buildExp := bbv1.LegacyApiCommonBuildMessage{
-					Project:   "testproject",
-					Bucket:    "luci.testproject.bucket",
+					Project:   "buildproject",
+					Bucket:    "luci.buildproject.bucket",
 					Id:        14141414,
 					Status:    bbv1.StatusCompleted,
 					CreatedTs: bbv1.FormatTimestamp(t),
@@ -114,7 +118,7 @@ func TestHandleBuild(t *testing.T) {
 				Convey(`With presubmit run processed previously`, func() {
 					partitionTime := time.Now()
 					run := &cvv0.Run{
-						Id:         "projects/testproject/runs/123e4567-e89b-12d3-a456-426614174000",
+						Id:         "projects/cvproject/runs/123e4567-e89b-12d3-a456-426614174000",
 						Mode:       "FULL_RUN",
 						Owner:      "chromium-autoroll@skia-public.iam.gserviceaccount.com",
 						CreateTime: timestamppb.New(partitionTime),
@@ -140,7 +144,7 @@ func TestHandleBuild(t *testing.T) {
 					project, processed, err := cvPubSubHandlerImpl(ctx, r)
 					So(err, ShouldBeNil)
 					So(processed, ShouldBeTrue)
-					So(project, ShouldEqual, "testproject")
+					So(project, ShouldEqual, "cvproject")
 
 					So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
 
@@ -149,7 +153,7 @@ func TestHandleBuild(t *testing.T) {
 					project, processed, err = bbPubSubHandlerImpl(ctx, r)
 					So(err, ShouldBeNil)
 					So(processed, ShouldBeTrue)
-					So(project, ShouldEqual, "testproject")
+					So(project, ShouldEqual, "buildproject")
 
 					So(len(skdr.Tasks().Payloads()), ShouldEqual, 1)
 					task := skdr.Tasks().Payloads()[0].(*taskspb.IngestTestResults)
@@ -163,7 +167,7 @@ func TestHandleBuild(t *testing.T) {
 						PresubmitRun: &controlpb.PresubmitResult{
 							PresubmitRunId: &pb.PresubmitRunId{
 								System: "luci-cv",
-								Id:     "testproject/123e4567-e89b-12d3-a456-426614174000",
+								Id:     "cvproject/123e4567-e89b-12d3-a456-426614174000",
 							},
 							PresubmitRunSucceeded: false,
 							Owner:                 "automation",
@@ -184,7 +188,7 @@ func TestHandleBuild(t *testing.T) {
 					project, processed, err := bbPubSubHandlerImpl(ctx, r)
 					So(err, ShouldBeNil)
 					So(processed, ShouldBeTrue)
-					So(project, ShouldEqual, "testproject")
+					So(project, ShouldEqual, "buildproject")
 					So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
 				})
 			})

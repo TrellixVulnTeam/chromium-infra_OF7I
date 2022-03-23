@@ -292,7 +292,7 @@ CREATE TABLE ReclusteringRuns (
 -- but **should** be applied to real Spanner instances.
 --, ROW DELETION POLICY (OLDER_THAN(AttemptTimestamp, INTERVAL 90 DAY));
 
--- IngestionControl is used to synchronise and deduplicate the ingestion
+-- Ingestions is used to synchronise and deduplicate the ingestion
 -- of test results which require data from one or more sources.
 --
 -- Ingestion may only start after two events are received:
@@ -300,31 +300,37 @@ CREATE TABLE ReclusteringRuns (
 -- 2. The presubmit run has completed.
 -- These events may occur in either order (e.g. 2 can occur before 1 if the
 -- presubmit run fails before all builds are complete).
-CREATE TABLE IngestionControl (
-  -- The LUCI Project to which the ingestion relates.
-  Project STRING(40) NOT NULL,
+CREATE TABLE Ingestions (
   -- The unique key for the ingestion. The current scheme is:
   -- {buildbucket host name}/{build id}.
   BuildId STRING(1024) NOT NULL,
+  -- The LUCI Project to which the build belongs. Populated at the same
+  -- time as the build result.
+  BuildProject STRING(40),
   -- The build result.
   BuildResult BYTES(MAX),
   -- Whether the record has any build result.
   -- Used in index to speed-up to some statistical queries.
   HasBuildResult BOOL NOT NULL AS (BuildResult IS NOT NULL) STORED,
+  -- The Spanner commit time the build result was populated.
+  BuildJoinedTime TIMESTAMP OPTIONS (allow_commit_timestamp=true),
   -- Is the build part of a presubmit run? If yes, then ingestion should
   -- wait for the presubmit result to be populated before commencing ingestion.
   -- Use 'true' to indicate true and NULL to indicate false.
   IsPresubmit BOOL,
+  -- The LUCI Project to which the presubmit run belongs. Populated at the
+  -- same time as the presubmit run result.
+  PresubmitProject STRING(40),
   -- The presubmit result.
   PresubmitResult BYTES(MAX),
   -- Whether the record has any presubmit result.
   -- Used in index to speed-up to some statistical queries.
   HasPresubmitResult BOOL NOT NULL AS (PresubmitResult IS NOT NULL) STORED,
-  -- The Spanner commit time the row was last updated.
+  -- The Spanner commit time the presubmit result was populated.
+  PresubmitJoinedTime TIMESTAMP OPTIONS (allow_commit_timestamp=true),
+  -- The Spanner commit time the row last last updated.
   LastUpdated TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
-  -- The Spanner commit time the rule was created.
-  CreationTime TIMESTAMP OPTIONS (allow_commit_timestamp=true),
-) PRIMARY KEY (Project, BuildId)
+) PRIMARY KEY (BuildId)
 -- 90 days retention, plus some margin (10 days) to ensure ingestion records
 -- are always retained longer than the ingested results (acknowledging
 -- the partition time on ingested chunks may be later than the LastUpdated
@@ -336,9 +342,10 @@ CREATE TABLE IngestionControl (
 --, ROW DELETION POLICY (OLDER_THAN(LastUpdated, INTERVAL 100 DAY));
 
 -- Used to speed-up querying join statistics for presubmit runs.
-CREATE NULL_FILTERED INDEX IngestionControlByIsPresubmit
-  ON IngestionControl(IsPresubmit, Project, BuildId)
-  STORING (HasBuildResult, HasPresubmitResult, LastUpdated, CreationTime);
+CREATE NULL_FILTERED INDEX IngestionsByIsPresubmit
+  ON Ingestions(IsPresubmit, BuildId)
+  STORING (BuildProject,     HasBuildResult,     BuildJoinedTime,
+           PresubmitProject, HasPresubmitResult, PresubmitJoinedTime);
 
 -- Stores transactional tasks reminders.
 -- See https://go.chromium.org/luci/server/tq. Scanned by tq-sweeper-spanner.

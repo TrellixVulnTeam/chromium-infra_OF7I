@@ -155,7 +155,7 @@ func processBBMessage(ctx context.Context, message *buildBucketMessage) (process
 		},
 	}
 
-	if err := JoinBuildResult(ctx, build.project, build.id, build.isPresubmit, build.result); err != nil {
+	if err := JoinBuildResult(ctx, build.id, build.project, build.isPresubmit, build.result); err != nil {
 		return false, errors.Annotate(err, "joining build result").Err()
 	}
 	return true, nil

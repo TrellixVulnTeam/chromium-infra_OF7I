@@ -42,9 +42,20 @@ func TestGlobalMetrics(t *testing.T) {
 		// Create some ingestion control records.
 		reference := time.Now().Add(-1 * time.Minute)
 		entriesToCreate := []*control.Entry{
-			control.NewEntry(0).WithProject("project-b").WithCreationTime(reference).Build(),
-			control.NewEntry(1).WithProject("project-b").WithCreationTime(reference).WithPresubmitResult(nil).Build(),
-			control.NewEntry(2).WithProject("project-b").WithCreationTime(reference).WithBuildResult(nil).Build(),
+			control.NewEntry(0).
+				WithBuildProject("project-a").
+				WithPresubmitProject("project-b").
+				WithBuildJoinedTime(reference).
+				WithPresubmitJoinedTime(reference).
+				Build(),
+			control.NewEntry(1).
+				WithBuildProject("project-b").
+				WithBuildJoinedTime(reference).
+				WithPresubmitResult(nil).Build(),
+			control.NewEntry(2).
+				WithPresubmitProject("project-a").
+				WithPresubmitJoinedTime(reference).
+				WithBuildResult(nil).Build(),
 		}
 		_, err = control.SetEntriesForTesting(ctx, entriesToCreate)
 		So(err, ShouldBeNil)

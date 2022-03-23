@@ -6,6 +6,7 @@ package metrics
 
 import (
 	"context"
+	"fmt"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/tsmon"
@@ -17,6 +18,7 @@ import (
 
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/ingestion/control"
 )
 
@@ -28,18 +30,40 @@ var (
 		// The LUCI Project.
 		field.String("project"))
 
-	creationTimeStatusDist = metric.NewNonCumulativeDistribution(
-		"weetbix/ingestion/join/presubmit_creation_time_status",
-		"The distribution of creation times for presubmit build ingestion "+
-			"control records. "+
-			"Filtered to control records created in the last 24 hours, "+
-			"broken down by LUCI Project and join status.",
+	joinToBuildGauge = metric.NewNonCumulativeDistribution(
+		"weetbix/ingestion/join/to_build_result_by_hour",
+		fmt.Sprintf(
+			"The age distribution of presubmit builds with a presubmit"+
+				" result recorded, broken down by project of the presubmit "+
+				" run and whether the builds are joined to a buildbucket "+
+				" build result."+
+				" Age is measured as hours since the presubmit run result was"+
+				" recorded. Only recent data (age < %v hours) is included."+
+				" Used to measure Weetbix's performance joining to"+
+				" buildbucket builds.", control.JoinStatsHours),
 		&types.MetricMetadata{Units: "hours ago"},
-		distribution.FixedWidthBucketer(1, 24),
+		distribution.FixedWidthBucketer(1, control.JoinStatsHours),
 		// The LUCI Project.
 		field.String("project"),
-		// Status: "joined", "awaiting_presubmit", "awaiting_build".
-		field.String("status"))
+		field.Bool("joined"))
+
+	joinToPresubmitGauge = metric.NewNonCumulativeDistribution(
+		"weetbix/ingestion/join/to_presubmit_result_by_hour",
+		fmt.Sprintf(
+			"The age distribution of presubmit builds with a buildbucket"+
+				" build result recorded, broken down by project of the"+
+				" buildbucket build and whether the builds are joined to"+
+				" a presubmit run result."+
+				" Age is measured as hours since the buildbucket build"+
+				" result was recorded. Only recent data (age < %v hours)"+
+				" is included."+
+				" Used to measure Weetbix's performance joining to presubmit"+
+				" runs.", control.JoinStatsHours),
+		&types.MetricMetadata{Units: "hours ago"},
+		distribution.FixedWidthBucketer(1, control.JoinStatsHours),
+		// The LUCI Project.
+		field.String("project"),
+		field.Bool("joined"))
 )
 
 func init() {
@@ -48,7 +72,7 @@ func init() {
 	tsmon.RegisterGlobalCallback(func(ctx context.Context) {
 		// Do nothing -- the metrics will be populated by the cron
 		// job itself and does not need to be triggered externally.
-	}, activeRulesGauge, creationTimeStatusDist)
+	}, activeRulesGauge, joinToBuildGauge, joinToPresubmitGauge)
 }
 
 // GlobalMetrics handles the "global-metrics" cron job. It reports
@@ -74,37 +98,44 @@ func GlobalMetrics(ctx context.Context) error {
 		activeRulesGauge.Set(ctx, count, project)
 	}
 
-	// Performance joining presubmit (build + presubmit) completion data
-	// in ingestion.
-	joinStats, err := control.ReadPresubmitJoinStatistics(span.Single(ctx))
+	// Performance joining to buildbucket builds in ingestion.
+	buildJoinStats, err := control.ReadBuildJoinStatistics(span.Single(ctx))
 	if err != nil {
-		return errors.Annotate(err, "collect presubmit build join statistics").Err()
+		return errors.Annotate(err, "collect buildbucket build join statistics").Err()
 	}
-	for project := range projectConfigs {
-		joinedDist := distribution.New(creationTimeStatusDist.Bucketer())
-		awaitingBuildDist := distribution.New(creationTimeStatusDist.Bucketer())
-		awaitingPresubmitDist := distribution.New(creationTimeStatusDist.Bucketer())
+	reportJoinStats(ctx, joinToBuildGauge, projectConfigs, buildJoinStats)
 
-		if stats, ok := joinStats[project]; ok {
-			for hoursAgo := 0; hoursAgo < control.PresubmitJoinStatsHours; hoursAgo++ {
-				awaitingPresubmit := stats.AwaitingPresubmitResultByHour[hoursAgo]
-				awaitingBuild := stats.AwaitingBuildByHour[hoursAgo]
-				joinedBuilds := stats.TotalBuildsByHour[hoursAgo] - awaitingBuild - awaitingPresubmit
+	// Performance joining to presubmit runs in ingestion.
+	psRunJoinStats, err := control.ReadPresubmitRunJoinStatistics(span.Single(ctx))
+	if err != nil {
+		return errors.Annotate(err, "collect presubmit run join statistics").Err()
+	}
+	reportJoinStats(ctx, joinToPresubmitGauge, projectConfigs, psRunJoinStats)
+
+	return nil
+}
+
+func reportJoinStats(ctx context.Context, metric metric.NonCumulativeDistribution, projectConfigs map[string]*configpb.ProjectConfig, resultsByProject map[string]control.JoinStatistics) {
+	for project := range projectConfigs {
+		joinedDist := distribution.New(metric.Bucketer())
+		unjoinedDist := distribution.New(metric.Bucketer())
+
+		if stats, ok := resultsByProject[project]; ok {
+			for hoursAgo := 0; hoursAgo < control.JoinStatsHours; hoursAgo++ {
+				joinedBuilds := stats.JoinedByHour[hoursAgo]
+				unjoinedBuilds := stats.TotalByHour[hoursAgo] - joinedBuilds
 				for i := int64(0); i < joinedBuilds; i++ {
 					joinedDist.Add(float64(hoursAgo))
 				}
-				for i := int64(0); i < awaitingPresubmit; i++ {
-					awaitingPresubmitDist.Add(float64(hoursAgo))
-				}
-				for i := int64(0); i < awaitingBuild; i++ {
-					awaitingBuildDist.Add(float64(hoursAgo))
+				for i := int64(0); i < unjoinedBuilds; i++ {
+					unjoinedDist.Add(float64(hoursAgo))
 				}
 			}
 		}
 
-		creationTimeStatusDist.Set(ctx, joinedDist, project, "joined")
-		creationTimeStatusDist.Set(ctx, awaitingBuildDist, project, "awaiting_build")
-		creationTimeStatusDist.Set(ctx, awaitingPresubmitDist, project, "awaiting_presubmit")
+		joined := true
+		joinToPresubmitGauge.Set(ctx, joinedDist, project, joined)
+		joined = false
+		joinToPresubmitGauge.Set(ctx, unjoinedDist, project, joined)
 	}
-	return nil
 }
