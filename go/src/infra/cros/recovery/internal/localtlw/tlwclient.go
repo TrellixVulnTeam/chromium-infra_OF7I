@@ -851,7 +851,10 @@ func (c *tlwClient) UpdateDut(ctx context.Context, dut *tlw.Dut) error {
 	} else {
 		return errors.Reason("update DUT %q: dutstate.UFSClient interface is not implemented by client", dut.Name).Err()
 	}
-	return errors.Annotate(localinfo.UpdateProvisionInfo(ctx, dut), "udpate dut").Err()
+	if err := localinfo.UpdateProvisionInfo(ctx, dut); err != nil {
+		return errors.Annotate(err, "update dut").Err()
+	}
+	return nil
 }
 
 // Provision triggers provisioning of the device.

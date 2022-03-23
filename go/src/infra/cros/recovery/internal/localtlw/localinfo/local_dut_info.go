@@ -70,6 +70,12 @@ func (s *store) writeStore() error {
 	if err != nil {
 		return errors.Annotate(err, "write store").Err()
 	}
+	// Create directories if it is not exist.
+	// The directory need to be created with high permission to allowed to create files inside.
+	newpath := filepath.Dir(filePathForDut)
+	if err := os.MkdirAll(newpath, 0755); err != nil {
+		return errors.Annotate(err, "write store").Err()
+	}
 	// Write DUT state into a local file named by DUT's hostname.
 	if err := ioutil.WriteFile(filePathForDut, data, 0666); err != nil {
 		return errors.Annotate(err, "write store").Err()

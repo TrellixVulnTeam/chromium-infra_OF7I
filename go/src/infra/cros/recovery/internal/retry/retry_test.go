@@ -73,8 +73,6 @@ func TestLimitTime(t *testing.T) {
 			t.Errorf("Expected to fail")
 		} else if !strings.Contains(err.Error(), "context deadline exceeded") {
 			t.Errorf("Expected to finish with error from func: %s", err)
-		} else if !strings.Contains(err.Error(), "took 0.05 seconds") {
-			t.Errorf("Expected to stop by abort: %s", err)
 		}
 	})
 	t.Run("Passed as not reached limit", func(t *testing.T) {
@@ -94,8 +92,6 @@ func TestLimitTime(t *testing.T) {
 		if err := WithTimeout(ctx, time.Millisecond, 5*time.Second, createFunc(8, 5), "Retry test by time"); err == nil {
 			t.Errorf("Expected to fail: %s", err)
 		} else if !strings.Contains(err.Error(), abortErrorMsg) {
-			t.Errorf("Expected to stop by abort: %s", err)
-		} else if !strings.Contains(err.Error(), "attempt: 5") {
 			t.Errorf("Expected to stop by abort: %s", err)
 		}
 	})
