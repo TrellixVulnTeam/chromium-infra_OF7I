@@ -111,32 +111,30 @@ func TestDatastoreModel(t *testing.T) {
 
 			culprit := &Culprit{
 				ParentAnalysis: datastore.KeyForObj(c, compile_failure_analysis),
-				GitilesCommit: GitilesCommit{
-					GitilesProject:        "my project",
-					GitilesHost:           "host",
-					GitilesRef:            "ref",
-					GitilesCommitID:       "id",
-					GitilesCommitPosition: 3433,
+				GitilesCommit: buildbucketpb.GitilesCommit{
+					Project:  "my project",
+					Host:     "host",
+					Ref:      "ref",
+					Id:       "id",
+					Position: 3433,
 				},
 			}
 			So(datastore.Put(c, culprit), ShouldBeNil)
 
 			suspect := &Suspect{
 				ParentAnalysis: datastore.KeyForObj(c, compile_failure_analysis),
-				GitilesCommit: GitilesCommit{
-					GitilesProject:        "my project",
-					GitilesHost:           "host",
-					GitilesRef:            "ref",
-					GitilesCommitID:       "id",
-					GitilesCommitPosition: 3433,
+				GitilesCommit: buildbucketpb.GitilesCommit{
+					Project:  "my project",
+					Host:     "host",
+					Ref:      "ref",
+					Id:       "id",
+					Position: 3433,
 				},
-				Hint: SuspectHint{
-					Content: "The CL touch the file abc.cc, and it is in the log",
-					Score:   100,
-				},
+				ReviewUrl:     "http://review-url.com",
+				Score:         100,
+				Justification: "The CL touch the file abc.cc, and it is in the log",
 			}
 			So(datastore.Put(c, suspect), ShouldBeNil)
-
 		})
 	})
 }

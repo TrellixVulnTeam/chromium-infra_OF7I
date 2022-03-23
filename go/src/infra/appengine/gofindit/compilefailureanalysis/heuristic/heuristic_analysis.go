@@ -27,13 +27,13 @@ func Analyze(
 	cfa *gfim.CompileFailureAnalysis,
 	rr *gfipb.RegressionRange) (*gfim.CompileHeuristicAnalysis, error) {
 	// Create a new HeuristicAnalysis Entity
-	heuristic_analysis := &gfim.CompileHeuristicAnalysis{
+	heuristicAnalysis := &gfim.CompileHeuristicAnalysis{
 		ParentAnalysis: datastore.KeyForObj(c, cfa),
 		StartTime:      clock.Now(c),
 		Status:         gfipb.AnalysisStatus_CREATED,
 	}
 
-	if err := datastore.Put(c, heuristic_analysis); err != nil {
+	if err := datastore.Put(c, heuristicAnalysis); err != nil {
 		return nil, err
 	}
 
@@ -64,7 +64,44 @@ func Analyze(
 	for _, item := range analysisResult.Items {
 		logging.Infof(c, "Commit %s, with review URL %s, has score of %d", item.Commit, item.ReviewUrl, item.Justification.GetScore())
 	}
-	return heuristic_analysis, nil
+
+	// Updates heuristic analysis
+	if len(analysisResult.Items) > 0 {
+		heuristicAnalysis.Status = gfipb.AnalysisStatus_FOUND
+		err = saveResultsToDatastore(c, heuristicAnalysis, analysisResult, rr.LastPassed.Host, rr.LastPassed.Project, rr.LastPassed.Ref)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to store result in datastore: %w", err)
+		}
+	} else {
+		heuristicAnalysis.Status = gfipb.AnalysisStatus_NOTFOUND
+	}
+
+	heuristicAnalysis.EndTime = clock.Now(c)
+	if err := datastore.Put(c, heuristicAnalysis); err != nil {
+		return nil, fmt.Errorf("Failed to update heuristic analysis: %w", err)
+	}
+
+	return heuristicAnalysis, nil
+}
+
+func saveResultsToDatastore(c context.Context, analysis *gfim.CompileHeuristicAnalysis, result *gfim.HeuristicAnalysisResult, gitilesHost string, gitilesProject string, gitilesRef string) error {
+	suspects := make([]*gfim.Suspect, len(result.Items))
+	for i, item := range result.Items {
+		suspect := &gfim.Suspect{
+			ParentAnalysis: datastore.KeyForObj(c, analysis),
+			ReviewUrl:      item.ReviewUrl,
+			Score:          item.Justification.GetScore(),
+			Justification:  item.Justification.GetReasons(),
+			GitilesCommit: buildbucketpb.GitilesCommit{
+				Host:    gitilesHost,
+				Project: gitilesProject,
+				Ref:     gitilesRef,
+				Id:      item.Commit,
+			},
+		}
+		suspects[i] = suspect
+	}
+	return datastore.Put(c, suspects)
 }
 
 // getChangeLogs queries Gitiles for changelogs in the regression range

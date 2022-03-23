@@ -23,14 +23,6 @@ const (
 	BuildFailureType_Other   BuildFailureType = "Other"
 )
 
-type GitilesCommit struct {
-	GitilesProject        string `gae:"gitiles_project"`
-	GitilesHost           string `gae:"gitiles_host"`
-	GitilesRef            string `gae:"gitiles_ref"`
-	GitilesCommitID       string `gae:"gitiles_commit_id"`
-	GitilesCommitPosition int    `gae:"gitiles_commit_position"`
-}
-
 // LuciBuild represents one LUCI build
 type LuciBuild struct {
 	BuildId     int64  `gae:"build_id"`
@@ -38,7 +30,7 @@ type LuciBuild struct {
 	Bucket      string `gae:"bucket"`
 	Builder     string `gae:"builder"`
 	BuildNumber int    `gae:"build_number"`
-	GitilesCommit
+	buildbucketpb.GitilesCommit
 	CreateTime time.Time            `gae:"create_time"`
 	EndTime    time.Time            `gae:"end_time"`
 	StartTime  time.Time            `gae:"start_time"`
@@ -128,27 +120,29 @@ type CompileRerunBuild struct {
 type Culprit struct {
 	// Key to the CompileFailureAnalysis that results in this culprit.
 	ParentAnalysis *datastore.Key `gae:"parent"`
-	GitilesCommit
-}
-
-// SuspectHint describes the reason why a CL is a suspect.
-type SuspectHint struct {
-	// A short, human-readable string that concisely describes a fact about the
-	// suspect. e.g. 'add a/b/x.cc'
-	Content string `gae:"content,noindex"`
-	// Score is an integer from 0-100 representing the confidence in the suspect.
-	// A higher score means a stronger signal that the suspect is responsible for
-	// a failure.
-	Score int `gae:"score,noindex"`
+	buildbucketpb.GitilesCommit
 }
 
 // Suspect is the suspect of heuristic analysis.
 type Suspect struct {
 	// Key to the CompileFailureHeuristicAnalysis that results in this suspect.
 	ParentAnalysis *datastore.Key `gae:"parent"`
-	// SuspectHint describes the reason why a CL is a suspect.
-	Hint SuspectHint `gae:"hint"`
-	GitilesCommit
+
+	// The commit of the suspect
+	buildbucketpb.GitilesCommit
+
+	// The Url where the suspect was reviewed
+	ReviewUrl string `gae:"review_url,noindex"`
+
+	// Score is an integer representing the how confident we believe the suspect
+	// is indeed the culprit.
+	// A higher score means a stronger signal that the suspect is responsible for
+	// a failure.
+	Score int `gae:"score,noindex"`
+
+	// A short, human-readable string that concisely describes a fact about the
+	// suspect. e.g. 'add a/b/x.cc'
+	Justification string `gae:"justification,noindex"`
 }
 
 // CompileHeuristicAnalysis is heuristic analysis for compile failures.
