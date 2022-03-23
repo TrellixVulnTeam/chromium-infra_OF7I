@@ -29,6 +29,10 @@ message ChangeReviewTask {
   int64 cherry_pick_of_change = 7;
   // The number of revisions.
   int64 revisions_count = 8;
+  // The email of CL owner.
+  string owner_email = 9;
+  // CL hashtags.
+  repeated string hashtags = 10;
   // Timestamp of when the change was created.
   google.protobuf.Timestamp created = 11;
 }

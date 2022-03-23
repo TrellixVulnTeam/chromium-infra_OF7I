@@ -51,7 +51,7 @@ func reviewCleanCherryPick(ctx context.Context, cfg *config.Config, gc gerrit.Cl
 			}
 		}
 
-		if len(invalidFiles) > 0 {
+		if len(invalidFiles) > 0 && !bypassFileCheck(ctx, invalidFiles, t.Hashtags, t.OwnerEmail, ccpp.GetFileCheckBypassRule()) {
 			sort.Strings(invalidFiles)
 			msg := "The current revision changed the following files compared with the initial revision: " + strings.Join(invalidFiles[:], ", ") + "."
 			return msg, nil

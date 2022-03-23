@@ -63,6 +63,10 @@ func TestQueue(t *testing.T) {
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"123abc": {},
 					},
+					Owner: &gerritpb.AccountInfo{
+						Email: "user@example.com",
+					},
+					Hashtags: []string{"Tag"},
 				},
 				{
 					Number:          12345,
@@ -72,6 +76,10 @@ func TestQueue(t *testing.T) {
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"123abc": {},
 					},
+					Owner: &gerritpb.AccountInfo{
+						Email: "user@example.com",
+					},
+					Hashtags: []string{"Tag"},
 				},
 				{
 					Number:          12315,
@@ -83,6 +91,10 @@ func TestQueue(t *testing.T) {
 						"112233": {},
 						"456123": {},
 					},
+					Owner: &gerritpb.AccountInfo{
+						Email: "user@example.com",
+					},
+					Hashtags: []string{"Tag"},
 				},
 				{
 					Number:             12387,
@@ -93,6 +105,10 @@ func TestQueue(t *testing.T) {
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"111aaa": {},
 					},
+					Owner: &gerritpb.AccountInfo{
+						Email: "user@example.com",
+					},
+					Hashtags: []string{"Tag"},
 				},
 			}
 
@@ -202,6 +218,8 @@ func TestQueue(t *testing.T) {
 					AutoSubmit:     true,
 					RevisionsCount: 1,
 					Created:        createdTime,
+					Hashtags:       []string{"Tag"},
+					OwnerEmail:     "user@example.com",
 				},
 				{
 					Host:           "host",
@@ -211,6 +229,8 @@ func TestQueue(t *testing.T) {
 					AutoSubmit:     false,
 					RevisionsCount: 1,
 					Created:        createdTime,
+					Hashtags:       []string{"Tag"},
+					OwnerEmail:     "user@example.com",
 				},
 				{
 					Host:           "host",
@@ -221,6 +241,8 @@ func TestQueue(t *testing.T) {
 					RevertOf:       129380,
 					RevisionsCount: 2,
 					Created:        createdTime,
+					Hashtags:       []string{"Tag"},
+					OwnerEmail:     "user@example.com",
 				},
 				{
 					Host:               "host",
@@ -231,6 +253,8 @@ func TestQueue(t *testing.T) {
 					CherryPickOfChange: 129380,
 					RevisionsCount:     1,
 					Created:            createdTime,
+					Hashtags:           []string{"Tag"},
+					OwnerEmail:         "user@example.com",
 				},
 			})
 		})

@@ -49,7 +49,7 @@ func TestScheduleReviews(t *testing.T) {
 		Convey("schedule works", func() {
 			gerritMock.EXPECT().ListChanges(gomock.Any(), proto.MatcherEqual(&gerritpb.ListChangesRequest{
 				Query:   "status:open r:srv-account@example.com",
-				Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS, gerritpb.QueryOption_LABELS},
+				Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS, gerritpb.QueryOption_LABELS, gerritpb.QueryOption_DETAILED_ACCOUNTS},
 			})).Return(&gerritpb.ListChangesResponse{
 				Changes: []*gerritpb.ChangeInfo{
 					{
@@ -62,6 +62,10 @@ func TestScheduleReviews(t *testing.T) {
 						Labels: map[string]*gerritpb.LabelInfo{
 							"Auto-Submit": {Approved: &gerritpb.AccountInfo{}},
 						},
+						Owner: &gerritpb.AccountInfo{
+							Email: "user@example.com",
+						},
+						Hashtags: []string{"Tag"},
 					},
 					{
 						Number:          00001,
@@ -70,6 +74,10 @@ func TestScheduleReviews(t *testing.T) {
 						Revisions: map[string]*gerritpb.RevisionInfo{
 							"234abc": {},
 						},
+						Owner: &gerritpb.AccountInfo{
+							Email: "user@example.com",
+						},
+						Hashtags: []string{"Tag"},
 					},
 					{
 						Number:             00002,
@@ -84,6 +92,10 @@ func TestScheduleReviews(t *testing.T) {
 								Number: 2,
 							},
 						},
+						Owner: &gerritpb.AccountInfo{
+							Email: "user@example.com",
+						},
+						Hashtags: []string{"Tag"},
 					},
 				},
 				MoreChanges: false,
@@ -155,6 +167,8 @@ func TestScheduleReviews(t *testing.T) {
 					Repo:           "example",
 					AutoSubmit:     true,
 					RevisionsCount: 1,
+					Hashtags:       []string{"Tag"},
+					OwnerEmail:     "user@example.com",
 				},
 				{
 					Host:           "test-host",
@@ -163,6 +177,8 @@ func TestScheduleReviews(t *testing.T) {
 					Repo:           "example",
 					AutoSubmit:     false,
 					RevisionsCount: 1,
+					Hashtags:       []string{"Tag"},
+					OwnerEmail:     "user@example.com",
 				},
 				{
 					Host:               "test-host",
@@ -172,6 +188,8 @@ func TestScheduleReviews(t *testing.T) {
 					AutoSubmit:         false,
 					CherryPickOfChange: 11234,
 					RevisionsCount:     2,
+					Hashtags:           []string{"Tag"},
+					OwnerEmail:         "user@example.com",
 				},
 			})
 		})
@@ -179,7 +197,7 @@ func TestScheduleReviews(t *testing.T) {
 		Convey("repo disabled", func() {
 			gerritMock.EXPECT().ListChanges(gomock.Any(), proto.MatcherEqual(&gerritpb.ListChangesRequest{
 				Query:   "status:open r:srv-account@example.com",
-				Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS, gerritpb.QueryOption_LABELS},
+				Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS, gerritpb.QueryOption_LABELS, gerritpb.QueryOption_DETAILED_ACCOUNTS},
 			})).Return(&gerritpb.ListChangesResponse{
 				Changes: []*gerritpb.ChangeInfo{
 					{
@@ -192,6 +210,10 @@ func TestScheduleReviews(t *testing.T) {
 						Labels: map[string]*gerritpb.LabelInfo{
 							"Auto-Submit": {Approved: &gerritpb.AccountInfo{}},
 						},
+						Owner: &gerritpb.AccountInfo{
+							Email: "user@example.com",
+						},
+						Hashtags: []string{"Tag"},
 					},
 				},
 				MoreChanges: false,

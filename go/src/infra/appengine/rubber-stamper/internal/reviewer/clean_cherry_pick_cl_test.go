@@ -48,8 +48,97 @@ func TestReviewCleanCherryPick(t *testing.T) {
 			AutoSubmit:         false,
 			RevisionsCount:     1,
 			CherryPickOfChange: 12121,
+			Hashtags:           []string{"Random", "Example"},
+			OwnerEmail:         "userA@example.com",
 			Created:            timestamppb.New(time.Now().Add(-time.Minute)),
 		}
+
+		Convey("approve", func() {
+			Convey("general", func() {
+				t.RevisionsCount = 2
+				gerritMock.EXPECT().GetChange(gomock.Any(), proto.MatcherEqual(&gerritpb.GetChangeRequest{
+					Number:  t.CherryPickOfChange,
+					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
+				})).Return(&gerritpb.ChangeInfo{
+					Status:          gerritpb.ChangeStatus_MERGED,
+					CurrentRevision: "456def",
+					Revisions: map[string]*gerritpb.RevisionInfo{
+						"456def": {
+							Created: timestamppb.New(time.Now().Add(-5 * 24 * time.Hour)),
+						},
+						"789aaa": {
+							Created: timestamppb.New(time.Now().Add(-9 * 24 * time.Hour)),
+						},
+					},
+				}, nil)
+				gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+					Number:     t.Number,
+					RevisionId: t.Revision,
+					Base:       "1",
+				})).Return(&gerritpb.ListFilesResponse{
+					Files: map[string]*gerritpb.FileInfo{
+						"/COMMIT_MSG": nil,
+					},
+				}, nil)
+				gerritMock.EXPECT().GetMergeable(gomock.Any(), proto.MatcherEqual(&gerritpb.GetMergeableRequest{
+					Number:     t.Number,
+					Project:    t.Repo,
+					RevisionId: t.Revision,
+				})).Return(&gerritpb.MergeableInfo{
+					Mergeable: true,
+				}, nil)
+				msg, err := reviewCleanCherryPick(ctx, cfg, gerritMock, t)
+				So(err, ShouldBeNil)
+				So(msg, ShouldEqual, "")
+			})
+			Convey("has invalid files, but can be bypassed", func() {
+				t.RevisionsCount = 2
+				cfg.HostConfigs["test-host"].RepoConfigs["dummy"] = &config.RepoConfig{
+					CleanCherryPickPattern: &config.CleanCherryPickPattern{
+						FileCheckBypassRule: &config.CleanCherryPickPattern_FileCheckBypassRule{
+							IncludedPaths: []string{"dir_valid/**/*.txt"},
+							Hashtag:       "Example",
+							AllowedOwners: []string{"userA@example.com"},
+						},
+					},
+				}
+				gerritMock.EXPECT().GetChange(gomock.Any(), proto.MatcherEqual(&gerritpb.GetChangeRequest{
+					Number:  t.CherryPickOfChange,
+					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
+				})).Return(&gerritpb.ChangeInfo{
+					Status:          gerritpb.ChangeStatus_MERGED,
+					CurrentRevision: "456def",
+					Revisions: map[string]*gerritpb.RevisionInfo{
+						"456def": {
+							Created: timestamppb.New(time.Now().Add(-5 * 24 * time.Hour)),
+						},
+						"789aaa": {
+							Created: timestamppb.New(time.Now().Add(-9 * 24 * time.Hour)),
+						},
+					},
+				}, nil)
+				gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+					Number:     t.Number,
+					RevisionId: t.Revision,
+					Base:       "1",
+				})).Return(&gerritpb.ListFilesResponse{
+					Files: map[string]*gerritpb.FileInfo{
+						"/COMMIT_MSG":         nil,
+						"dir_valid/valid.txt": nil,
+					},
+				}, nil)
+				gerritMock.EXPECT().GetMergeable(gomock.Any(), proto.MatcherEqual(&gerritpb.GetMergeableRequest{
+					Number:     t.Number,
+					Project:    t.Repo,
+					RevisionId: t.Revision,
+				})).Return(&gerritpb.MergeableInfo{
+					Mergeable: true,
+				}, nil)
+				msg, err := reviewCleanCherryPick(ctx, cfg, gerritMock, t)
+				So(err, ShouldBeNil)
+				So(msg, ShouldEqual, "")
+			})
+		})
 
 		Convey("decline when the current revision made any file changes compared with the initial version", func() {
 			t.RevisionsCount = 2

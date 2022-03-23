@@ -40,7 +40,7 @@ func ScheduleReviews(ctx context.Context) error {
 
 		listReq := &gerritpb.ListChangesRequest{
 			Query:   "status:open r:" + sa,
-			Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS, gerritpb.QueryOption_LABELS},
+			Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS, gerritpb.QueryOption_LABELS, gerritpb.QueryOption_DETAILED_ACCOUNTS},
 		}
 		resp, err := gc.ListChanges(ctx, listReq)
 		if err != nil {
