@@ -22,7 +22,7 @@ func kernelBootPriorityChangedExec(ctx context.Context, info *execs.ExecInfo) er
 	if !yes {
 		return errors.Reason("kernel boot priority changed: priority not changed").Err()
 	}
-	log.Debug(ctx, "Kernel boot priority changed. Expecting reboot.")
+	log.Debugf(ctx, "Kernel boot priority changed. Expecting reboot.")
 	return nil
 }
 
@@ -35,7 +35,7 @@ func kernelBootPriorityPersistExec(ctx context.Context, info *execs.ExecInfo) er
 	if yes {
 		return errors.Reason("kernel boot priority persist: priority changed").Err()
 	}
-	log.Debug(ctx, "Kernel boot priority persist. Reboot is not expected.")
+	log.Debugf(ctx, "Kernel boot priority persist. Reboot is not expected.")
 	return nil
 }
 

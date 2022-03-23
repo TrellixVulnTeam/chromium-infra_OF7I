@@ -31,7 +31,7 @@ func rpmPowerCycleExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err := info.RPMAction(ctx, info.RunArgs.DUT.Name, info.RunArgs.DUT.RPMOutlet, tlw.RunRPMActionRequest_CYCLE); err != nil {
 		return errors.Annotate(err, "rpm power cycle").Err()
 	}
-	log.Debug(ctx, "RPM power cycle finished with success.")
+	log.Debugf(ctx, "RPM power cycle finished with success.")
 	return nil
 }
 
@@ -40,7 +40,7 @@ func rpmPowerOffExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err := info.RPMAction(ctx, info.RunArgs.DUT.Name, info.RunArgs.DUT.RPMOutlet, tlw.RunRPMActionRequest_OFF); err != nil {
 		return errors.Annotate(err, "rpm power off").Err()
 	}
-	log.Debug(ctx, "RPM power OFF finished with success.")
+	log.Debugf(ctx, "RPM power OFF finished with success.")
 	return nil
 }
 
@@ -49,7 +49,7 @@ func rpmPowerOnExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err := info.RPMAction(ctx, info.RunArgs.DUT.Name, info.RunArgs.DUT.RPMOutlet, tlw.RunRPMActionRequest_ON); err != nil {
 		return errors.Annotate(err, "rpm power on").Err()
 	}
-	log.Debug(ctx, "RPM power ON finished with success.")
+	log.Debugf(ctx, "RPM power ON finished with success.")
 	return nil
 }
 

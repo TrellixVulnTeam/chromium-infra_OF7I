@@ -95,18 +95,18 @@ func runFirmwareUpdaterExec(ctx context.Context, info *execs.ExecInfo) error {
 		Mode:  am.AsString(ctx, "mode", "autoupdate"),
 		Force: am.AsBool(ctx, "force", false),
 	}
-	info.NewLogger().Debug("Run firmware update: request to run with %q mode.", req.Mode)
+	info.NewLogger().Debugf("Run firmware update: request to run with %q mode.", req.Mode)
 	if err := firmware.RunFirmwareUpdater(ctx, req, run, info.NewLogger()); err != nil {
 		return errors.Annotate(err, "run firmware update").Err()
 	}
 	switch am.AsString(ctx, "reboot", "") {
 	case "by_servo":
-		info.NewLogger().Debug("Start DUT reset by servo.")
+		info.NewLogger().Debugf("Start DUT reset by servo.")
 		if err := info.NewServod().Set(ctx, "power_state", "reset"); err != nil {
 			return errors.Annotate(err, "run firmware update: reboot by servo").Err()
 		}
 	case "by_host":
-		info.NewLogger().Debug("Start DUT reset by host.")
+		info.NewLogger().Debugf("Start DUT reset by host.")
 		if _, err := run(ctx, time.Minute, "reboot && exit"); err != nil {
 			return errors.Annotate(err, "run firmware update: reboot by host").Err()
 		}

@@ -236,7 +236,7 @@ func copyFromHelper(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyReques
 	}
 
 	destFileName := filepath.Join(req.PathDestination, remoteFileName)
-	log.Debug(ctx, "copy from helper: %q path to new file.", destFileName)
+	log.Debugf(ctx, "copy from helper: %q path to new file.", destFileName)
 	tmpDir, err := ioutil.TempDir("", "")
 	if err != nil {
 		return errors.Annotate(err, "copy from helper: error with creating temporary dir %q", tmpDir).Err()
@@ -281,7 +281,7 @@ func copyFromHelper(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyReques
 	if err := os.Rename(tmpLocalFile, destFileName); err != nil {
 		return errors.Annotate(err, "copy from helper: moving local file %q to %q failed", tmpLocalFile, destFileName).Err()
 	}
-	log.Debug(ctx, "copy from helper: successfully moved %q to %q.", tmpLocalFile, destFileName)
+	log.Debugf(ctx, "copy from helper: successfully moved %q to %q.", tmpLocalFile, destFileName)
 	return nil
 }
 
@@ -295,9 +295,9 @@ func validateInputParams(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyR
 	} else if req.PathDestination == "" {
 		return errors.New("validate input params: destination path is empty")
 	}
-	log.Debug(ctx, "Source for transfer: %q.", req.PathSource)
-	log.Debug(ctx, "Destination for transfer: %q.", req.PathDestination)
-	log.Debug(ctx, "Resource: %q.", req.Resource)
+	log.Debugf(ctx, "Source for transfer: %q.", req.PathSource)
+	log.Debugf(ctx, "Destination for transfer: %q.", req.PathDestination)
+	log.Debugf(ctx, "Resource: %q.", req.Resource)
 	return nil
 }
 
@@ -309,7 +309,7 @@ func ensureDirExists(ctx context.Context, dirPath string, createDir bool) error 
 	s, err := os.Stat(dirPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Debug(ctx, "Ensure directory exists: creating directory %q.", dirPath)
+			log.Debugf(ctx, "Ensure directory exists: creating directory %q.", dirPath)
 			if createDir {
 				if mErr := os.MkdirAll(dirPath, dirPermission); mErr != nil {
 					return errors.Annotate(mErr, "ensure directory exists: cannot create %q", dirPath).Err()
@@ -325,7 +325,7 @@ func ensureDirExists(ctx context.Context, dirPath string, createDir bool) error 
 		return errors.Annotate(err, "ensure directory exists: cannot determine if %q exists", dirPath).Err()
 	}
 	if s.IsDir() {
-		log.Debug(ctx, "Ensure directory %q exists: confirmed.", dirPath)
+		log.Debugf(ctx, "Ensure directory %q exists: confirmed.", dirPath)
 		return nil
 	}
 	return errors.Reason("ensure directory exists: %q, is a pre-existing file instead of a directory", dirPath).Err()

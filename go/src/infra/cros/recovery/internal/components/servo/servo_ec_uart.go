@@ -18,20 +18,20 @@ import (
 // Before and after the set of the "ec_uart_cmd", it will toggle the value of "ec_uart_flush".
 func SetEcUartCmd(ctx context.Context, servod components.Servod, value string, waitTimeout time.Duration) error {
 	const ecUartFlush = "ec_uart_flush"
-	log.Info(ctx, `Setting servod command %q to "off" value.`, ecUartFlush)
+	log.Infof(ctx, `Setting servod command %q to "off" value.`, ecUartFlush)
 	if err := servod.Set(ctx, ecUartFlush, "off"); err != nil {
 		return errors.Annotate(err, "set ec uart cmd").Err()
 	}
 	const ecUartCmd = "ec_uart_cmd"
-	log.Info(ctx, `Setting servod command %q to %q value.`, ecUartCmd, value)
+	log.Infof(ctx, `Setting servod command %q to %q value.`, ecUartCmd, value)
 	if err := servod.Set(ctx, ecUartCmd, value); err != nil {
 		return errors.Annotate(err, "set ec uart cmd").Err()
 	}
-	log.Info(ctx, `Setting servod command %q to "on" value.`, ecUartFlush)
+	log.Infof(ctx, `Setting servod command %q to "on" value.`, ecUartFlush)
 	if err := servod.Set(ctx, ecUartFlush, "on"); err != nil {
 		return errors.Annotate(err, "set ec uart cmd").Err()
 	}
-	log.Debug(ctx, "Set Ec Uart Cmd: Waiting %v after setting of %q.", waitTimeout, ecUartCmd)
+	log.Debugf(ctx, "Set Ec Uart Cmd: Waiting %v after setting of %q.", waitTimeout, ecUartCmd)
 	time.Sleep(waitTimeout)
 	return nil
 }

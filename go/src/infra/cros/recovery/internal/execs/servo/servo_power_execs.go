@@ -36,17 +36,17 @@ func servoServodPdRoleToggleExec(ctx context.Context, info *execs.ExecInfo) erro
 	pdRoleToggleMap := info.GetActionArgs(ctx)
 	retryCount := pdRoleToggleMap.AsInt(ctx, "retry_count", 1)
 	waitInRetry := pdRoleToggleMap.AsInt(ctx, "wait_in_retry", 5)
-	log.Debug(ctx, "The wait time for power restore in the middle of retry is being set to: %d", waitInRetry)
+	log.Debugf(ctx, "The wait time for power restore in the middle of retry is being set to: %d", waitInRetry)
 	waitBeforeRetry := pdRoleToggleMap.AsInt(ctx, "wait_before_retry", 1)
-	log.Debug(ctx, "The wait time for power restore before retry is being set to: %d", waitBeforeRetry)
+	log.Debugf(ctx, "The wait time for power restore before retry is being set to: %d", waitBeforeRetry)
 	// First setting the servod pd_role to the snk position.
 	if err := info.NewServod().Set(ctx, servodPdRoleCmd, servodPdRoleValueSnk); err != nil {
-		log.Debug(ctx, "Error setting the servo_pd_role: %q", err.Error())
+		log.Debugf(ctx, "Error setting the servo_pd_role: %q", err.Error())
 	}
 	time.Sleep(time.Duration(waitBeforeRetry) * time.Second)
 	toggleErr := retry.LimitCount(ctx, retryCount, 0*time.Second, func() error {
 		if err := info.NewServod().Set(ctx, servodPdRoleCmd, servodPdRoleValueSrc); err != nil {
-			log.Debug(ctx, "Error setting the servo_pd_role: %q", err.Error())
+			log.Debugf(ctx, "Error setting the servo_pd_role: %q", err.Error())
 		}
 		// Waiting a few seconds as it can be change to snk if PD on servo has issue.
 		time.Sleep(time.Duration(waitInRetry) * time.Second)
@@ -54,7 +54,7 @@ func servoServodPdRoleToggleExec(ctx context.Context, info *execs.ExecInfo) erro
 			return errors.Annotate(err, "servod pd role toggle").Err()
 		} else if pdRoleValue == servodPdRoleValueSrc {
 			// log the main toggle action succeed.
-			log.Debug(ctx, "Successfully toggle the servod: servo_pd_role value to src.")
+			log.Debugf(ctx, "Successfully toggle the servod: servo_pd_role value to src.")
 			return nil
 		} else {
 			return errors.Reason("servod pd role toggle: did not successfully set it to src").Err()
@@ -77,7 +77,7 @@ func servoRecoverAcPowerExec(ctx context.Context, info *execs.ExecInfo) error {
 	servod := info.NewServod()
 	// Make sure ec is available and we can interact with that.
 	if _, err := servodGetString(ctx, servod, "ec_board"); err != nil {
-		log.Debug(ctx, "Servo recover ac power: cannot get ec board with error: %s", err)
+		log.Debugf(ctx, "Servo recover ac power: cannot get ec board with error: %s", err)
 		// if EC is off it will fail to execute any EC command
 		// to wake it up we do cold-reboot then we will have active ec connection for ~30 seconds.
 		if err := servod.Set(ctx, "power_state", "reset"); err != nil {
@@ -87,7 +87,7 @@ func servoRecoverAcPowerExec(ctx context.Context, info *execs.ExecInfo) error {
 	if batteryIsCharging, err := servodGetBool(ctx, servod, "battery_is_charging"); err != nil {
 		return errors.Annotate(err, "servo recover ac power").Err()
 	} else if batteryIsCharging {
-		log.Debug(ctx, "Servo recover ac power: battery is charging")
+		log.Debugf(ctx, "Servo recover ac power: battery is charging")
 		return nil
 	}
 	// Simple off-on not always working stable in all cases as source-sink not working too in another cases.
@@ -106,7 +106,7 @@ func servoRecoverAcPowerExec(ctx context.Context, info *execs.ExecInfo) error {
 		return errors.Annotate(err, "servo recover ac power").Err()
 	}
 	// Wait to reinitialize PD negotiation and charge a little bit.
-	log.Debug(ctx, "Servo recover ac power: Wait %v", waitTimeout)
+	log.Debugf(ctx, "Servo recover ac power: Wait %v", waitTimeout)
 	time.Sleep(waitTimeout)
 	if err := servod.Set(ctx, "power_state", "reset"); err != nil {
 		return errors.Annotate(err, "servo recover ac power").Err()

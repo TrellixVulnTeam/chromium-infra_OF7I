@@ -19,7 +19,7 @@ func (ei *ExecInfo) DefaultPinger() components.Pinger {
 // NewRunner returns pinger for requested resource.
 func (ei *ExecInfo) NewPinger(resource string) components.Pinger {
 	pinger := func(ctx context.Context, count int) error {
-		log.Debug(ctx, "Start ping %q %d times", resource, count)
+		log.Debugf(ctx, "Start ping %q %d times", resource, count)
 		return ei.RunArgs.Access.Ping(ctx, resource, count)
 	}
 	return pinger

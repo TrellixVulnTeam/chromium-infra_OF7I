@@ -28,7 +28,7 @@ func readGbbFlagsByServoExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err != nil {
 		return errors.Annotate(err, "read gbb flags").Err()
 	}
-	log.Debug(ctx, "Device has GBB flags: %v (%v)", res.GBBFlags, res.GBBFlagsRaw)
+	log.Debugf(ctx, "Device has GBB flags: %v (%v)", res.GBBFlags, res.GBBFlagsRaw)
 	am := info.GetActionArgs(ctx)
 	// FORCE_DEV_SWITCH_ON 0x00000008 -> 8
 	if am.AsBool(ctx, "validate_in_dev_mode", false) {
@@ -36,7 +36,7 @@ func readGbbFlagsByServoExec(ctx context.Context, info *execs.ExecInfo) error {
 			return errors.Reason("read gbb flags: device is not forced to boot to dev mode").Err()
 		}
 	} else {
-		log.Info(ctx, "Not expected GBB flags for dev-mode")
+		log.Infof(ctx, "Not expected GBB flags for dev-mode")
 	}
 	// FORCE_DEV_BOOT_USB 0x00000010 -> 16
 	if am.AsBool(ctx, "validate_usb_boot_enabled", false) {
@@ -44,10 +44,10 @@ func readGbbFlagsByServoExec(ctx context.Context, info *execs.ExecInfo) error {
 			return errors.Reason("read gbb flags: usb boot in dev mode is not enabled").Err()
 		}
 	} else {
-		log.Info(ctx, "Not expected GBB flags for usb boot")
+		log.Infof(ctx, "Not expected GBB flags for usb boot")
 	}
 	if am.AsBool(ctx, "remove_file", true) {
-		log.Debug(ctx, "Remove AP image from host")
+		log.Debugf(ctx, "Remove AP image from host")
 		if _, err := run(ctx, 30*time.Second, "rm", "-f", req.FilePath); err != nil {
 			return errors.Annotate(err, "set gbb flags").Err()
 		}
@@ -66,7 +66,7 @@ func checkIfApHasDevSignedImageExec(ctx context.Context, info *execs.ExecInfo) e
 	if err != nil {
 		return errors.Annotate(err, "ap dev signed").Err()
 	}
-	log.Debug(ctx, "Device has keys: %v", res.Keys)
+	log.Debugf(ctx, "Device has keys: %v", res.Keys)
 	if firmware.IsDevKeys(res.Keys, info.NewLogger()) {
 		return nil
 	}
@@ -79,7 +79,7 @@ func removeAPFileFromServoHostExec(ctx context.Context, info *execs.ExecInfo) er
 	p := defaultAPFilePath(info.RunArgs.DUT)
 	if _, err := run(ctx, 30*time.Second, "rm", "-f", p); err != nil {
 		// Do not fail if we cannot remove the file.
-		log.Info(ctx, "Fail to remove AP file %q from servo-host: %s", p, err)
+		log.Infof(ctx, "Fail to remove AP file %q from servo-host: %s", p, err)
 	}
 	return nil
 }
@@ -98,10 +98,10 @@ func setGbbFlagsByServoExec(ctx context.Context, info *execs.ExecInfo) error {
 		return errors.Annotate(err, "set gbb flags").Err()
 	}
 	if am.AsBool(ctx, "remove_file", true) {
-		log.Debug(ctx, "Remove AP image from host")
+		log.Debugf(ctx, "Remove AP image from host")
 		if _, err := run(ctx, 30*time.Second, "rm", "-f", req.FilePath); err != nil {
 			// Do not fail if we cannot remove the file.
-			log.Info(ctx, "Fail to remove AP file %q from servo-host: %s", req.FilePath, err)
+			log.Infof(ctx, "Fail to remove AP file %q from servo-host: %s", req.FilePath, err)
 		}
 	}
 	if !am.AsBool(ctx, "prevent_reboot", false) {
@@ -123,13 +123,13 @@ func updateFwWithFwImageByServo(ctx context.Context, info *execs.ExecInfo) error
 	mn := "update fw with fw-image by servo"
 	am := info.GetActionArgs(ctx)
 	imageName := am.AsString(ctx, "version_name", sv.FwImage)
-	log.Debug(ctx, "Used fw image name: %s", imageName)
+	log.Debugf(ctx, "Used fw image name: %s", imageName)
 	gsBucket := am.AsString(ctx, "gs_bucket", gsCrOSImageBucket)
-	log.Debug(ctx, "Used gs bucket name: %s", gsBucket)
+	log.Debugf(ctx, "Used gs bucket name: %s", gsBucket)
 	gsImagePath := am.AsString(ctx, "gs_image_path", fmt.Sprintf("%s/%s", gsBucket, imageName))
-	log.Debug(ctx, "Used fw image path: %s", gsImagePath)
+	log.Debugf(ctx, "Used fw image path: %s", gsImagePath)
 	fwDownloadDir := am.AsString(ctx, "fw_download_dir", defaultFwFolderPath(info.RunArgs.DUT))
-	log.Debug(ctx, "Used fw image path: %s", gsImagePath)
+	log.Debugf(ctx, "Used fw image path: %s", gsImagePath)
 	// Requesting convert GC path to caches service path.
 	// Example: `http://Addr:8082/download/chromeos-image-archive/board-release/R99-XXXXX.XX.0`
 	downloadPath, err := info.RunArgs.Access.GetCacheUrl(ctx, info.RunArgs.DUT.Name, gsImagePath)

@@ -31,9 +31,9 @@ func setServoStateExec(ctx context.Context, info *execs.ExecInfo) error {
 	if d := info.RunArgs.DUT; d == nil || d.ServoHost == nil || d.ServoHost.Servo == nil {
 		return errors.Reason("set servo state: servo is not supported").Err()
 	}
-	log.Debug(ctx, "Previous servo state: %s", info.RunArgs.DUT.ServoHost.Servo.State)
+	log.Debugf(ctx, "Previous servo state: %s", info.RunArgs.DUT.ServoHost.Servo.State)
 	info.RunArgs.DUT.ServoHost.Servo.State = tlw.ServoState(newState)
-	log.Info(ctx, "Set servo state to be: %s", newState)
+	log.Infof(ctx, "Set servo state to be: %s", newState)
 	return nil
 }
 

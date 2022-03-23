@@ -30,7 +30,7 @@ func createRebootRequestExec(ctx context.Context, info *execs.ExecInfo) error {
 	_, err := run(ctx, time.Minute, fmt.Sprintf(rebootRequestCreateSingleGlob, info.RunArgs.DUT.ServoHost.ServodPort))
 	if err != nil {
 		// Print finish result as we ignore any errors.
-		log.Debug(ctx, "Create the reboot request: %s", err)
+		log.Debugf(ctx, "Create the reboot request: %s", err)
 	}
 	return nil
 }
@@ -42,7 +42,7 @@ func hasRebootRequestExec(ctx context.Context, info *execs.ExecInfo) error {
 	if rr == "" {
 		return errors.Reason("has reboot request: not request found").Err()
 	}
-	log.Info(ctx, "Found reboot requests:\n%s", rr)
+	log.Infof(ctx, "Found reboot requests:\n%s", rr)
 	return nil
 }
 
@@ -51,7 +51,7 @@ func removeAllRebootRequestsExec(ctx context.Context, info *execs.ExecInfo) erro
 	run := info.DefaultRunner()
 	if _, err := run(ctx, time.Minute, rebootRequestRemoveAllCmd); err != nil {
 		// Print finish result as we ignore any errors.
-		log.Debug(ctx, "Remove all reboot requests: %s", err)
+		log.Debugf(ctx, "Remove all reboot requests: %s", err)
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func removeRebootRequestExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
 	if _, err := run(ctx, time.Minute, fmt.Sprintf(rebootRequestRemoveSingleGlob, info.RunArgs.DUT.ServoHost.ServodPort)); err != nil {
 		// Print finish result as we ignore any errors.
-		log.Debug(ctx, "Remove the reboot request: %s", err)
+		log.Debugf(ctx, "Remove the reboot request: %s", err)
 	}
 	return nil
 }

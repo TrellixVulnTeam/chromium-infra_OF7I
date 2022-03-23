@@ -35,9 +35,9 @@ func (parsedArgs ParsedArgs) AsBool(ctx context.Context, key string, defaultValu
 		if boolVal, err := strconv.ParseBool(value); err == nil {
 			return boolVal
 		}
-		log.Debug(ctx, "Parsed Args As Bool: value %q for key %q is not a valid boolean, returning default value %t.", value, key, defaultValue)
+		log.Debugf(ctx, "Parsed Args As Bool: value %q for key %q is not a valid boolean, returning default value %t.", value, key, defaultValue)
 	} else {
-		log.Debug(ctx, "Parsed Args As Bool: key %q does not exist in the parsed arguments, returning default value %t.", key, defaultValue)
+		log.Debugf(ctx, "Parsed Args As Bool: key %q does not exist in the parsed arguments, returning default value %t.", key, defaultValue)
 	}
 	return defaultValue
 }
@@ -47,10 +47,10 @@ func (parsedArgs ParsedArgs) AsBool(ctx context.Context, key string, defaultValu
 // is returned.
 func (parsedArgs ParsedArgs) AsString(ctx context.Context, key, defaultValue string) string {
 	if value, ok := parsedArgs[key]; ok {
-		log.Debug(ctx, "Parsed Args As String: value %q found for key %q", value, key)
+		log.Debugf(ctx, "Parsed Args As String: value %q found for key %q", value, key)
 		return value
 	}
-	log.Debug(ctx, "Parsed Args As String: key %q not found, default value of empty string returned", key)
+	log.Debugf(ctx, "Parsed Args As String: key %q not found, default value of empty string returned", key)
 	return defaultValue
 }
 
@@ -71,9 +71,9 @@ func (parsedArgs ParsedArgs) AsInt(ctx context.Context, key string, defaultValue
 		if intVal, err := strconv.Atoi(value); err == nil {
 			return intVal
 		}
-		log.Debug(ctx, "Parsed Args As int: value %q for key %q is not a valid integer, returning default value %d.", value, key, defaultValue)
+		log.Debugf(ctx, "Parsed Args As int: value %q for key %q is not a valid integer, returning default value %d.", value, key, defaultValue)
 	} else {
-		log.Debug(ctx, "Parsed Args As int: key %q does not exist in the parsed arguments, returning default value %d.", key, defaultValue)
+		log.Debugf(ctx, "Parsed Args As int: key %q does not exist in the parsed arguments, returning default value %d.", key, defaultValue)
 	}
 	return defaultValue
 }
@@ -85,9 +85,9 @@ func (parsedArgs ParsedArgs) AsFloat64(ctx context.Context, key string, defaultV
 		if val, err := strconv.ParseFloat(value, 64); err == nil {
 			return val
 		}
-		log.Debug(ctx, "Parsed Args As Float64: value %q for key %q is not a valid integer, returning default value %d.", value, key, defaultValue)
+		log.Debugf(ctx, "Parsed Args As Float64: value %q for key %q is not a valid integer, returning default value %d.", value, key, defaultValue)
 	} else {
-		log.Debug(ctx, "Parsed Args As Float64: key %q does not exist in the parsed arguments, returning default value %d.", key, defaultValue)
+		log.Debugf(ctx, "Parsed Args As Float64: key %q does not exist in the parsed arguments, returning default value %d.", key, defaultValue)
 	}
 	return defaultValue
 }
@@ -102,9 +102,9 @@ func (parsedArgs ParsedArgs) AsDuration(ctx context.Context, key string, default
 		if intVal, err := strconv.Atoi(value); err == nil {
 			return time.Duration(intVal) * unit
 		}
-		log.Debug(ctx, "Parsed Args As duration: value %q for key %q is not a valid integer, returning default duration %v.", value, key, defaultDuration)
+		log.Debugf(ctx, "Parsed Args As duration: value %q for key %q is not a valid integer, returning default duration %v.", value, key, defaultDuration)
 	} else {
-		log.Debug(ctx, "Parsed Args As duration: key %q does not exist in the parsed arguments, returning default duration %v.", key, defaultDuration)
+		log.Debugf(ctx, "Parsed Args As duration: key %q does not exist in the parsed arguments, returning default duration %v.", key, defaultDuration)
 	}
 	return defaultDuration
 }
@@ -125,16 +125,16 @@ func ParseActionArgs(ctx context.Context, actionArgs []string, splitter string) 
 		if a == "" {
 			continue
 		}
-		log.Debug(ctx, "Parse Action Args: action arg %q", a)
+		log.Debugf(ctx, "Parse Action Args: action arg %q", a)
 		i := strings.Index(a, splitter)
 		// Separator has to be at least second letter in the string to provide one letter key.
 		if i < 1 {
-			log.Debug(ctx, "Parse Action Args: malformed action arg %q", a)
+			log.Debugf(ctx, "Parse Action Args: malformed action arg %q", a)
 			parsedArgs[a] = ""
 		} else {
 			k := strings.TrimSpace(a[:i])
 			v := strings.TrimSpace(a[i+1:])
-			log.Debug(ctx, "Parse Action Args: k: %q, v: %q", k, v)
+			log.Debugf(ctx, "Parse Action Args: k: %q, v: %q", k, v)
 			parsedArgs[k] = v
 		}
 	}

@@ -95,28 +95,28 @@ func readDeviceInfo(ctx context.Context, runner execs.Runner, devicePath string)
 	}
 	servo.Serial, err = readServoFs(ctx, runner, devicePath, serialNumberFileName)
 	if err != nil {
-		log.Debug(ctx, "Read Device Info: %q", err)
+		log.Debugf(ctx, "Read Device Info: %q", err)
 	}
 	vidPid, err := fsReadVidPid(ctx, runner, devicePath)
 	if err != nil {
-		log.Debug(ctx, "Read Device Info: %q", err)
+		log.Debugf(ctx, "Read Device Info: %q", err)
 	}
 	if servo.Type, err = convertVidPidToServoType(vidPid); err != nil {
-		log.Debug(ctx, "Read Device Info: %q", err)
+		log.Debugf(ctx, "Read Device Info: %q", err)
 	}
 	servo.UsbHubPort, err = readServoFs(ctx, runner, devicePath, servoHubFileName)
 	if err != nil {
-		log.Debug(ctx, "Read Device Info: %q", err)
+		log.Debugf(ctx, "Read Device Info: %q", err)
 	}
 	servo.FwVersion, err = readServoFs(ctx, runner, devicePath, configurationFileName)
 	if err != nil {
-		log.Debug(ctx, "Read Device Info: %q", err)
+		log.Debugf(ctx, "Read Device Info: %q", err)
 	}
 	servo.SysfsProduct, err = readServoFs(ctx, runner, devicePath, productFileName)
 	if err != nil {
-		log.Debug(ctx, "Read Device Info: %q", err)
+		log.Debugf(ctx, "Read Device Info: %q", err)
 	}
-	log.Debug(ctx, "Read Device Info: servo %q", ConvertServoTopologyItemToString(servo))
+	log.Debugf(ctx, "Read Device Info: servo %q", ConvertServoTopologyItemToString(servo))
 	return servo
 }
 
@@ -126,7 +126,7 @@ func RereadServoFwVersion(ctx context.Context, runner execs.Runner, servo *tlw.S
 	if fwVersion, err := readServoFs(ctx, runner, servo.SysfsPath, configurationFileName); err != nil {
 		return errors.Annotate(err, "reread servo fw version").Err()
 	} else {
-		log.Debug(ctx, "Reread servo device %q firmware to be %q", servo.Type, fwVersion)
+		log.Debugf(ctx, "Reread servo device %q firmware to be %q", servo.Type, fwVersion)
 		servo.FwVersion = fwVersion
 		return nil
 	}
@@ -214,7 +214,7 @@ func RetrieveServoTopology(ctx context.Context, runner execs.Runner, servoSerial
 				servoTopology.Children = append(servoTopology.Children, d)
 			}
 		} else {
-			log.Info(ctx, "Retrieve Servo Topology: %q is missing some data", d)
+			log.Infof(ctx, "Retrieve Servo Topology: %q is missing some data", d)
 		}
 	}
 	return servoTopology, nil
@@ -263,7 +263,7 @@ func findServoHub(ctx context.Context, runner execs.Runner, servoSerial string) 
 		return "", errors.Annotate(err, "find servo hub").Err()
 	}
 	basePath, servoTail := filepath.Dir(rootServoPath), filepath.Base(rootServoPath)
-	log.Debug(ctx, "Find Servo Hub: basePath %q, servoTail %q", basePath, servoTail)
+	log.Debugf(ctx, "Find Servo Hub: basePath %q, servoTail %q", basePath, servoTail)
 	servoHubTail := strings.Split(servoTail, servoTailSplitter)
 	return filepath.Join(basePath, strings.Join(servoHubTail[:len(servoHubTail)-1], servoTailSplitter)), nil
 }

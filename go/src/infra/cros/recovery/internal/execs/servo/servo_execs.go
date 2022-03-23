@@ -108,7 +108,7 @@ func servoDetectUSBKeyExec(ctx context.Context, info *execs.ExecInfo) error {
 		info.RunArgs.DUT.ServoHost.UsbkeyState = tlw.HardwareStateNotDetected
 		return errors.Reason("servo detect usb key exec: the path to usb drive is empty").Err()
 	}
-	log.Debug(ctx, "Servo Detect USB-Key Exec: USB-key path: %s.", servoUsbPath)
+	log.Debugf(ctx, "Servo Detect USB-Key Exec: USB-key path: %s.", servoUsbPath)
 	run := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
 	if _, err := run(ctx, time.Minute, fmt.Sprintf("fdisk -l %s", servoUsbPath)); err != nil {
 		info.RunArgs.DUT.ServoHost.UsbkeyState = tlw.HardwareStateNotDetected
@@ -117,7 +117,7 @@ func servoDetectUSBKeyExec(ctx context.Context, info *execs.ExecInfo) error {
 	if info.RunArgs.DUT.ServoHost.UsbkeyState == tlw.HardwareStateNeedReplacement {
 		// This device has been marked for replacement. A further
 		// audit action is required to correct this.
-		log.Debug(ctx, "Servo Detect USB-Key Exec: device marked for replacement.")
+		log.Debugf(ctx, "Servo Detect USB-Key Exec: device marked for replacement.")
 	} else {
 		info.RunArgs.DUT.ServoHost.UsbkeyState = tlw.HardwareStateNormal
 	}
@@ -126,7 +126,7 @@ func servoDetectUSBKeyExec(ctx context.Context, info *execs.ExecInfo) error {
 
 func runCheckOnHost(ctx context.Context, run execs.Runner, usbPath string, timeout time.Duration) (tlw.HardwareState, error) {
 	command := fmt.Sprintf(badBlocksCommandPrefix, usbPath)
-	log.Debug(ctx, "Run Check On Host: Executing %q", command)
+	log.Debugf(ctx, "Run Check On Host: Executing %q", command)
 	// The execution timeout for this audit job is configured at the
 	// level of the action. So the execution of this command will be
 	// bound by that.
@@ -151,14 +151,14 @@ func servoAuditUSBKeyExec(ctx context.Context, info *execs.ExecInfo) error {
 	dutUsb := ""
 	dutRunner := info.NewRunner(info.RunArgs.DUT.Name)
 	if cros.IsSSHable(ctx, dutRunner) == nil {
-		log.Debug(ctx, "Servo Audit USB-Key Exec: %q is reachable through SSH", info.RunArgs.DUT.Name)
+		log.Debugf(ctx, "Servo Audit USB-Key Exec: %q is reachable through SSH", info.RunArgs.DUT.Name)
 		var err error = nil
 		dutUsb, err = GetUSBDrivePathOnDut(ctx, dutRunner, info.NewServod())
 		if err != nil {
-			log.Debug(ctx, "Servo Audit USB-Key Exec: could not determine USB-drive path on DUT: %q, error: %q. This is not critical. We will continue the audit by setting the path to empty string.", info.RunArgs.DUT.Name, err)
+			log.Debugf(ctx, "Servo Audit USB-Key Exec: could not determine USB-drive path on DUT: %q, error: %q. This is not critical. We will continue the audit by setting the path to empty string.", info.RunArgs.DUT.Name, err)
 		}
 	} else {
-		log.Debug(ctx, "Servo Audit USB-Key Exec: continue audit from servo-host because DUT %q is not reachable through SSH", info.RunArgs.DUT.Name)
+		log.Debugf(ctx, "Servo Audit USB-Key Exec: continue audit from servo-host because DUT %q is not reachable through SSH", info.RunArgs.DUT.Name)
 	}
 	if dutUsb != "" {
 		// DUT is reachable, and we found a USB drive on it.
@@ -187,12 +187,12 @@ func servoAuditUSBKeyExec(ctx context.Context, info *execs.ExecInfo) error {
 		servoUsbPath = strings.TrimSpace(servoUsbPath)
 		if servoUsbPath == "" {
 			info.RunArgs.DUT.ServoHost.UsbkeyState = tlw.HardwareStateNotDetected
-			log.Debug(ctx, "Servo Audit USB-Key Exec: cannot continue audit because the path to USB-Drive is empty")
+			log.Debugf(ctx, "Servo Audit USB-Key Exec: cannot continue audit because the path to USB-Drive is empty")
 			return errors.Reason("servo audit usb key exec: the path to usb drive is empty").Err()
 		}
 		state, err := runCheckOnHost(ctx, info.NewRunner(info.RunArgs.DUT.ServoHost.Name), servoUsbPath, 2*time.Hour)
 		if err != nil {
-			log.Debug(ctx, "Servo Audit USB-Key Exec: error %q during audit of USB-Drive", err)
+			log.Debugf(ctx, "Servo Audit USB-Key Exec: error %q during audit of USB-Drive", err)
 			return errors.Annotate(err, "servo audit usb key: could not check usb path %q on servo-host %q", servoUsbPath, info.RunArgs.DUT.ServoHost.Name).Err()
 		}
 		info.RunArgs.DUT.ServoHost.UsbkeyState = state
@@ -208,10 +208,10 @@ func isRootServoPresentExec(ctx context.Context, info *execs.ExecInfo) error {
 		return errors.Annotate(err, "is root servo present exec").Err()
 	}
 	if !topology.IsItemGood(ctx, rootServo) {
-		log.Info(ctx, "Is Servo Root Present Exec: no good root servo found")
+		log.Infof(ctx, "Is Servo Root Present Exec: no good root servo found")
 		return errors.Reason("is servo root present exec: no good root servo found").Err()
 	}
-	log.Info(ctx, "is servo root present exec: success")
+	log.Infof(ctx, "is servo root present exec: success")
 	return nil
 }
 
@@ -229,7 +229,7 @@ func servoTopologyUpdateExec(ctx context.Context, info *execs.ExecInfo) error {
 	minChildCount := topologyMinChildCountDefaultValue
 	persistTopology := persistTopologyDefaultValue
 	for k, v := range argsMap {
-		log.Debug(ctx, "Servo Topology Update Exec: k:%q, v:%q", k, v)
+		log.Debugf(ctx, "Servo Topology Update Exec: k:%q, v:%q", k, v)
 		if v != "" {
 			// a non-empty value string implies that the corresponding
 			// action arg was parsed correctly.
@@ -270,7 +270,7 @@ func servoServodEchoHostExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err != nil {
 		return errors.Annotate(err, "servo servod echo host exec: servod is not responsive for dut-control commands").Err()
 	}
-	log.Debug(ctx, "Servo Servod Echo Host Exec: Servod is responsive: %q", v)
+	log.Debugf(ctx, "Servo Servod Echo Host Exec: Servod is responsive: %q", v)
 	return nil
 }
 
@@ -295,13 +295,13 @@ func servoFirmwareNeedsUpdateExec(ctx context.Context, info *execs.ExecInfo) err
 		if err != nil {
 			errors.Annotate(err, "servo firmware needs update exec").Err()
 		}
-		log.Debug(ctx, "Servo Firmware Needs Update Exec: topology re-computer because pre-existing servo topology not found.")
+		log.Debugf(ctx, "Servo Firmware Needs Update Exec: topology re-computer because pre-existing servo topology not found.")
 	}
 	for _, d := range devices {
 		if topology.IsItemGood(ctx, d) {
-			log.Debug(ctx, "Servo Firmware Needs Update Exec: device type (d.Type) :%q.", d.Type)
+			log.Debugf(ctx, "Servo Firmware Needs Update Exec: device type (d.Type) :%q.", d.Type)
 			if needsUpdate(ctx, runner, d, info.RunArgs.DUT.ServoHost.Servo.FirmwareChannel) {
-				log.Debug(ctx, "Servo Firmware Needs Update Exec: needs update is true")
+				log.Debugf(ctx, "Servo Firmware Needs Update Exec: needs update is true")
 				return errors.Reason("servo firmware needs update exec: servo needs update").Err()
 			}
 		}
@@ -359,7 +359,7 @@ func servoLowPPDut5Exec(ctx context.Context, info *execs.ExecInfo) error {
 func servoCheckServodControlExec(ctx context.Context, info *execs.ExecInfo) error {
 	argsMap := info.GetActionArgs(ctx)
 	command, ok := argsMap[commandToken]
-	log.Debug(ctx, "Servo Check Servod Control Exec: %s ok :%t", commandToken, ok)
+	log.Debugf(ctx, "Servo Check Servod Control Exec: %s ok :%t", commandToken, ok)
 	if !ok {
 		// It is a failure condition if an action invokes this exec,
 		// and does not specify the servod command.
@@ -378,9 +378,9 @@ func servoCheckServodControlExec(ctx context.Context, info *execs.ExecInfo) erro
 			return errors.Annotate(err, "servo check servod control exec").Err()
 		}
 		compare = func(ctx context.Context) error {
-			log.Debug(ctx, "Compare (String), expected value %q, actual value %q", expectedValue, controlValue)
+			log.Debugf(ctx, "Compare (String), expected value %q, actual value %q", expectedValue, controlValue)
 			if controlValue != expectedValue {
-				log.Debug(ctx, "Compare (String), expected value %q, actual value %q do not match.", expectedValue, controlValue)
+				log.Debugf(ctx, "Compare (String), expected value %q, actual value %q do not match.", expectedValue, controlValue)
 				return errors.Reason("compare (string): expected value %q, actual value %q do not match.", expectedValue, controlValue).Err()
 			}
 			return nil
@@ -391,7 +391,7 @@ func servoCheckServodControlExec(ctx context.Context, info *execs.ExecInfo) erro
 			return errors.Annotate(err, "servo check servod control exec").Err()
 		}
 		compare = func(ctx context.Context) error {
-			log.Debug(ctx, "Compare (Int), expected value %s, actual value %d", expectedValue, controlValue)
+			log.Debugf(ctx, "Compare (Int), expected value %s, actual value %d", expectedValue, controlValue)
 			expectedInt, err := strconv.Atoi(expectedValue)
 			if err != nil {
 				return errors.Annotate(err, "compare (int32)").Err()
@@ -407,7 +407,7 @@ func servoCheckServodControlExec(ctx context.Context, info *execs.ExecInfo) erro
 			return errors.Annotate(err, "servo check servod control exec").Err()
 		}
 		compare = func(ctx context.Context) error {
-			log.Debug(ctx, "Compare (Double), expected value %s, actual value %f", expectedValue, controlValue)
+			log.Debugf(ctx, "Compare (Double), expected value %s, actual value %f", expectedValue, controlValue)
 			expectedDouble, err := strconv.ParseFloat(expectedValue, 64)
 			if err != nil {
 				return errors.Annotate(err, "compare (float64)").Err()
@@ -423,7 +423,7 @@ func servoCheckServodControlExec(ctx context.Context, info *execs.ExecInfo) erro
 			return errors.Annotate(err, "servo check servod control exec").Err()
 		}
 		compare = func(ctx context.Context) error {
-			log.Debug(ctx, "Compare (Bool), expected value %s, actual value %t", expectedValue, controlValue)
+			log.Debugf(ctx, "Compare (Bool), expected value %s, actual value %t", expectedValue, controlValue)
 			expectedBool, err := strconv.ParseBool(expectedValue)
 			if err != nil {
 				return errors.Annotate(err, "compare (int32)").Err()
@@ -435,7 +435,7 @@ func servoCheckServodControlExec(ctx context.Context, info *execs.ExecInfo) erro
 		}
 	}
 	if compare == nil {
-		log.Info(ctx, "Servo Check Servod Control Exec: expected value type not specified in config, or did not match any known types.")
+		log.Infof(ctx, "Servo Check Servod Control Exec: expected value type not specified in config, or did not match any known types.")
 		res, err := info.NewServod().Get(ctx, command)
 		if err != nil {
 			return errors.Annotate(err, "servo check servod control exec").Err()
@@ -443,7 +443,7 @@ func servoCheckServodControlExec(ctx context.Context, info *execs.ExecInfo) erro
 		// The value can contain different value types.
 		// Ex.: "double:xxxx.xx"
 		resRawString := strings.TrimSpace(res.String())
-		log.Info(ctx, "Servo Check Servod Control Exec: for command %q, received %q.", command, resRawString)
+		log.Infof(ctx, "Servo Check Servod Control Exec: for command %q, received %q.", command, resRawString)
 	} else if err := compare(ctx); err != nil {
 		return errors.Annotate(err, "servo check servod control exec").Err()
 	}
@@ -469,9 +469,9 @@ func servoLabstationDiskCleanUpExec(ctx context.Context, info *execs.ExecInfo) e
 	// Remove all files in the filesToRemoveSlice during the labstation disk clean up process.
 	for _, filePath := range filesToRemoveSlice {
 		if _, err := r(ctx, time.Minute, fmt.Sprintf(removeFileCmd, filePath)); err != nil {
-			log.Debug(ctx, "servo labstation disk clean up: %s", err.Error())
+			log.Debugf(ctx, "servo labstation disk clean up: %s", err.Error())
 		}
-		log.Info(ctx, "labstation file removed: %s", filePath)
+		log.Infof(ctx, "labstation file removed: %s", filePath)
 	}
 	return nil
 }
@@ -498,11 +498,11 @@ func servoServodOldLogsCleanupExec(ctx context.Context, info *execs.ExecInfo) er
 	if err != nil {
 		return errors.Annotate(err, "servod old logs").Err()
 	}
-	log.Info(ctx, "The max number of days for keeping old servod logs is: %v", keepLogsMaxDays)
+	log.Infof(ctx, "The max number of days for keeping old servod logs is: %v", keepLogsMaxDays)
 	r := info.DefaultRunner()
 	// remove old servod logs.
 	if _, err := r(ctx, time.Minute, fmt.Sprintf(removeOldServodLogsCmd, keepLogsMaxDays)); err != nil {
-		log.Debug(ctx, "servo servod old logs clean up: %s", err.Error())
+		log.Debugf(ctx, "servo servod old logs clean up: %s", err.Error())
 	}
 	return nil
 }
@@ -528,27 +528,27 @@ func servoValidateBatteryChargingExec(ctx context.Context, info *execs.ExecInfo)
 		return err
 	}
 	if err := retry.LimitCount(ctx, servodBatteryReadRetryLimit, -1, getLastFullCharge, "get last full charge"); err != nil {
-		log.Debug(ctx, "Servo Validate Battery Charging Exec: could not read last full charge despite trying %d times", servodBatteryReadRetryLimit)
+		log.Debugf(ctx, "Servo Validate Battery Charging Exec: could not read last full charge despite trying %d times", servodBatteryReadRetryLimit)
 		return errors.Annotate(err, "servo validate battery charging exec").Err()
 	}
-	log.Debug(ctx, "Servo Validate Battery Charging Exec: last full charge is %d", lastFullCharge)
+	log.Debugf(ctx, "Servo Validate Battery Charging Exec: last full charge is %d", lastFullCharge)
 	var getBatteryCapacity = func() error {
 		var err error
 		batteryCapacity, err = servodGetInt(ctx, info.NewServod(), batteryDesignFullCapacityServodControl)
 		return err
 	}
 	if err := retry.LimitCount(ctx, servodBatteryReadRetryLimit, -1, getBatteryCapacity, "get battery capacity"); err != nil {
-		log.Debug(ctx, "Servo Validate Battery Charging Exec: could not read battery capacity despite trying %d times", servodBatteryReadRetryLimit)
+		log.Debugf(ctx, "Servo Validate Battery Charging Exec: could not read battery capacity despite trying %d times", servodBatteryReadRetryLimit)
 		return errors.Annotate(err, "servo validate battery charging exec").Err()
 	}
-	log.Debug(ctx, "Servo Validate Battery Charging Exec: battery capacity is %d", batteryCapacity)
+	log.Debugf(ctx, "Servo Validate Battery Charging Exec: battery capacity is %d", batteryCapacity)
 	hardwareState := battery.DetermineHardwareStatus(ctx, float64(lastFullCharge), float64(batteryCapacity))
-	log.Info(ctx, "Battery hardware state: %s", hardwareState)
+	log.Infof(ctx, "Battery hardware state: %s", hardwareState)
 	if hardwareState == tlw.HardwareStateUnspecified {
 		return errors.Reason("audit battery: dut battery did not detected or state cannot extracted").Err()
 	}
 	if hardwareState == tlw.HardwareStateNeedReplacement {
-		log.Info(ctx, "Detected issue with storage on the DUT.")
+		log.Infof(ctx, "Detected issue with storage on the DUT.")
 		info.RunArgs.DUT.Battery.State = tlw.HardwareStateNeedReplacement
 	}
 	return nil
@@ -571,7 +571,7 @@ func initDutForServoExec(ctx context.Context, info *execs.ExecInfo) error {
 			return errors.Annotate(err, "init dut for servo exec").Err()
 		}
 	} else {
-		log.Debug(ctx, "Init Dut For Servo Exec: servod control %q is not available.", usbMuxControl)
+		log.Debugf(ctx, "Init Dut For Servo Exec: servod control %q is not available.", usbMuxControl)
 	}
 	return nil
 }
@@ -642,9 +642,9 @@ func servoFakeDisconnectDUTExec(ctx context.Context, info *execs.ExecInfo) error
 	// TODO: (yunzhiyu@): change logic to use unified servod cmd: "root.servo_uart_cmd"
 	// As in the (b/204369636), currently blocked by (b/198638900).
 	if err := info.NewServod().Has(ctx, uartCmd); err != nil {
-		log.Debug(ctx, "Servod control %q is not supported", servodUartCmd)
+		log.Debugf(ctx, "Servod control %q is not supported", servodUartCmd)
 		uartCmd = servodUartV4P1Cmd
-		log.Debug(ctx, "Using Servod control %q instead", uartCmd)
+		log.Debugf(ctx, "Using Servod control %q instead", uartCmd)
 	}
 	if err := info.NewServod().Set(ctx, uartCmd, disconnectCmd); err != nil {
 		return errors.Annotate(err, "servod fake disconnect servo").Err()
@@ -670,18 +670,18 @@ func servoServodCCToggleExec(ctx context.Context, info *execs.ExecInfo) error {
 	// TODO: (yunzhiyu@): change logic to use unified servod cmd: "root.servo_uart_cmd"
 	// As in the (b/204369636), currently blocked by (b/198638900).
 	if err := info.NewServod().Has(ctx, uartCmd); err != nil {
-		log.Debug(ctx, "Servod control %q is not supported", servodUartCmd)
+		log.Debugf(ctx, "Servod control %q is not supported", servodUartCmd)
 		uartCmd = servodUartV4P1Cmd
-		log.Debug(ctx, "Using Servod control %q instead", uartCmd)
+		log.Debugf(ctx, "Using Servod control %q instead", uartCmd)
 	}
 	// Turning off configuration channel.
-	log.Info(ctx, "Turn off configuration channel and wait %d seconds.", ccOffTimeout)
+	log.Infof(ctx, "Turn off configuration channel and wait %d seconds.", ccOffTimeout)
 	if err := info.NewServod().Set(ctx, uartCmd, "cc off"); err != nil {
 		return errors.Annotate(err, "servod cc toggle").Err()
 	}
 	time.Sleep(time.Duration(ccOffTimeout) * time.Second)
 	// Turning on configuration channel.
-	log.Info(ctx, "Turn on configuration channel and wait %d seconds.", ccOnTimeout)
+	log.Infof(ctx, "Turn on configuration channel and wait %d seconds.", ccOnTimeout)
 	if err := info.NewServod().Set(ctx, servodPdRoleCmd, servodPdRoleValueSrc); err != nil {
 		return errors.Annotate(err, "servod cc toggle").Err()
 	}
@@ -759,17 +759,17 @@ func servoPowerCycleRootServoExec(ctx context.Context, info *execs.ExecInfo) err
 	if err != nil {
 		return errors.Annotate(err, "servo power cycle root servo: find the servo").Err()
 	}
-	log.Info(ctx, "Servo usb devnum before reset: %s", preResetDevnum)
+	log.Infof(ctx, "Servo usb devnum before reset: %s", preResetDevnum)
 	// Resetting servo.
-	log.Info(ctx, "Resetting servo through smart usbhub.")
+	log.Infof(ctx, "Resetting servo through smart usbhub.")
 	if _, err := run(ctx, resetTimeout, "servodtool", "device", "-s", servoSerial, "power-cycle"); err != nil {
-		log.Warning(ctx, `Failed to reset servo with serial: %s. Please ignore this error if the DUT is not connected to a smart usbhub`, servoSerial)
+		log.Warningf(ctx, `Failed to reset servo with serial: %s. Please ignore this error if the DUT is not connected to a smart usbhub`, servoSerial)
 		return errors.Annotate(err, "servo power cycle root servo").Err()
 	}
 	// Since we are able to run the power cycle servodtool command
 	// It implies the smartUsb is present.
 	smartUsbhubPresent = true
-	log.Debug(ctx, "Wait %v for servo to come back from reset.", waitTimeout)
+	log.Debugf(ctx, "Wait %v for servo to come back from reset.", waitTimeout)
 	time.Sleep(waitTimeout)
 	// Reset authorized flag fror servo-hub for servo v4p1 only.
 	if ResetUsbkeyAuthorized(ctx, run, servoSerial, info.RunArgs.DUT.ServoHost.Servo.Type) != nil {
@@ -780,13 +780,13 @@ func servoPowerCycleRootServoExec(ctx context.Context, info *execs.ExecInfo) err
 	if err != nil {
 		return errors.Annotate(err, "servo power cycle root servo: after rest").Err()
 	}
-	log.Info(ctx, "Servo usb devnum after reset: %s", postResetDevnum)
+	log.Infof(ctx, "Servo usb devnum after reset: %s", postResetDevnum)
 	if preResetDevnum == "" || postResetDevnum == "" {
-		log.Info(ctx, "Servo reset completed but unable to verify devnum change!")
+		log.Infof(ctx, "Servo reset completed but unable to verify devnum change!")
 	} else if preResetDevnum != postResetDevnum {
-		log.Info(ctx, "Reset servo with serial %s completed successfully!", servoSerial)
+		log.Infof(ctx, "Reset servo with serial %s completed successfully!", servoSerial)
 	} else {
-		log.Info(ctx, "Servo reset completed but devnum is still not changed!")
+		log.Infof(ctx, "Servo reset completed but devnum is still not changed!")
 	}
 	return nil
 }
@@ -811,9 +811,9 @@ func servoHostV3RebootExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.DefaultRunner()
 	oldBootId, err := cros.BootID(ctx, run)
 	if err != nil {
-		log.Debug(ctx, "Servo Host V3 Reboot: (non-critical) could not determine the old boot id, err :%q. Continuing with reboot action.", err)
+		log.Debugf(ctx, "Servo Host V3 Reboot: (non-critical) could not determine the old boot id, err :%q. Continuing with reboot action.", err)
 	}
-	log.Debug(ctx, "Servo Host V3 Reboot: Old boot id: %q", oldBootId)
+	log.Debugf(ctx, "Servo Host V3 Reboot: Old boot id: %q", oldBootId)
 	// Restart the device using the reboot command.
 	if _, err := run(ctx, rebootTimeout, fmt.Sprintf(runCmdInBackgroundCmd, rebootCmd)); err != nil {
 		return errors.Annotate(err, "servo host v3 reboot").Err()
@@ -834,7 +834,7 @@ func servoHostV3RebootExec(ctx context.Context, info *execs.ExecInfo) error {
 			return errors.Reason("servo host v3 reboot: reboot fail as new boot id: %s equal to old boot id: %s", newBootId, oldBootId).Err()
 		}
 	}
-	log.Debug(ctx, "Servo Host V3 Reboot: reboot is successful")
+	log.Debugf(ctx, "Servo Host V3 Reboot: reboot is successful")
 	return nil
 }
 

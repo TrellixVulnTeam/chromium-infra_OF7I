@@ -91,7 +91,7 @@ func (s *servod) getStatus(ctx context.Context, pool *sshpool.Pool) (status, err
 	} else if strings.Contains(strings.ToLower(r.Stderr), "unknown instance") {
 		return servodNotRunning, nil
 	}
-	log.Debug(ctx, "Status check: %s", r.Stderr)
+	log.Debugf(ctx, "Status check: %s", r.Stderr)
 	return servodUndefined, errors.Reason("servo status %q: fail to check status", s.host).Err()
 }
 
@@ -108,7 +108,7 @@ func (s *servod) start(ctx context.Context, pool *sshpool.Pool) error {
 	}
 	// Waiting to start servod.
 	// TODO(otabek@): Replace to use servod tool to wait servod start.
-	log.Debug(ctx, "Start servod: waiting %d seconds to initialize daemon.", startServodTimeout)
+	log.Debugf(ctx, "Start servod: waiting %d seconds to initialize daemon.", startServodTimeout)
 	time.Sleep(startServodTimeout * time.Second)
 	return nil
 }
@@ -117,11 +117,11 @@ func (s *servod) start(ctx context.Context, pool *sshpool.Pool) error {
 func (s *servod) Stop(ctx context.Context, pool *sshpool.Pool) error {
 	r := ssh.Run(ctx, pool, s.host, fmt.Sprintf("stop servod PORT=%d", s.port))
 	if r.ExitCode != 0 {
-		log.Debug(ctx, "stop servod: %s", r.Stderr)
+		log.Debugf(ctx, "stop servod: %s", r.Stderr)
 		return errors.Reason("stop servod: %s", r.Stderr).Err()
 	} else {
 		// Wait to teardown the servod.
-		log.Debug(ctx, "Stop servod: waiting %d seconds to fully teardown the daemon.", stopServodTimeout)
+		log.Debugf(ctx, "Stop servod: waiting %d seconds to fully teardown the daemon.", stopServodTimeout)
 		time.Sleep(stopServodTimeout * time.Second)
 	}
 	return nil

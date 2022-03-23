@@ -47,7 +47,7 @@ func ReadAPInfoByServo(ctx context.Context, req *ReadAPInfoRequest, run componen
 	}
 	defer func() {
 		if cerr := p.Close(ctx); cerr != nil {
-			log.Debug("Close programmer fail: %s", cerr)
+			log.Debugf("Close programmer fail: %s", cerr)
 		}
 	}()
 	p.Prepare(ctx)
@@ -68,14 +68,14 @@ func ReadAPInfoByServo(ctx context.Context, req *ReadAPInfoRequest, run componen
 		} else if raw := strings.TrimSpace(parts[1]); raw == "" {
 			return nil, errors.Annotate(err, "read ap info: gbb not found").Err()
 		} else {
-			log.Info("Read GBB raw: %v", raw)
+			log.Infof("Read GBB raw: %v", raw)
 			res.GBBFlagsRaw = raw
 		}
 		gbb, err := gbbToInt(res.GBBFlagsRaw)
 		if err != nil {
 			return nil, errors.Annotate(err, "read ap info").Err()
 		}
-		log.Debug("Read GBB flags: %v", gbb)
+		log.Debugf("Read GBB flags: %v", gbb)
 		res.GBBFlags = gbb
 	}
 	if req.Keys {
@@ -96,7 +96,7 @@ const (
 func IsDevKeys(keys []string, log logger.Logger) bool {
 	for _, key := range keys {
 		if strings.HasPrefix(key, DevSignedFirmwareKeyPrefix) {
-			log.Debug("Found dev signed key: %q !", key)
+			log.Debugf("Found dev signed key: %q !", key)
 			return true
 		}
 	}
@@ -110,7 +110,7 @@ func readAPKeysFromFile(ctx context.Context, filePath string, run components.Run
 	if err != nil {
 		return nil, errors.Annotate(err, "read ap keys").Err()
 	}
-	log.Debug("Read firmware keys: %v", out)
+	log.Debugf("Read firmware keys: %v", out)
 	return strings.Split(out, "\n"), nil
 }
 
@@ -139,14 +139,14 @@ func SetApInfoByServo(ctx context.Context, req *SetApInfoByServoRequest, run com
 	}
 	defer func() {
 		if cerr := p.Close(ctx); cerr != nil {
-			log.Debug("Close programmer fail: %s", cerr)
+			log.Debugf("Close programmer fail: %s", cerr)
 		}
 	}()
 	p.Prepare(ctx)
 	if err := p.ExtractAP(ctx, req.FilePath, req.ForceExtractAPFile); err != nil {
 		return errors.Annotate(err, "set ap info").Err()
 	}
-	log.Debug("Set AP info: starting flashing AP to the DUT")
+	log.Debugf("Set AP info: starting flashing AP to the DUT")
 	err = p.ProgramAP(ctx, req.FilePath, req.GBBFlags)
 	return errors.Annotate(err, "set ap info: read flags").Err()
 }
@@ -187,7 +187,7 @@ func InstallFwFromFwImage(ctx context.Context, req *InstallFwFromFwImageRequest,
 	)
 	clearDirectory := func() {
 		_, err := run(ctx, time.Minute, "rm", "-rf", req.DownloadDir)
-		log.Debug("Failed to remove download directory %q, Error: %s", req.DownloadDir, err)
+		log.Debugf("Failed to remove download directory %q, Error: %s", req.DownloadDir, err)
 	}
 	// Remove directory in case something left from last times.
 	clearDirectory()
@@ -199,37 +199,37 @@ func InstallFwFromFwImage(ctx context.Context, req *InstallFwFromFwImageRequest,
 	// Spicily filename for file to download.
 	tarballPath := filepath.Join(req.DownloadDir, downloadFilename)
 	if out, err := run(ctx, req.DownloadImageTimeout, "curl", req.DownloadImagePath, "--output", tarballPath); err != nil {
-		log.Debug("Output to download fw-image: %s", out)
+		log.Debugf("Output to download fw-image: %s", out)
 		return errors.Annotate(err, "install fw from fw-image").Err()
 	}
 	p, err := NewProgrammer(ctx, run, servod, log)
 	if err != nil {
 		return errors.Annotate(err, "install fw from fw-image").Err()
 	}
-	log.Info("Successful download tarbar %q from %q", tarballPath, req.DownloadImagePath)
+	log.Infof("Successful download tarbar %q from %q", tarballPath, req.DownloadImagePath)
 	if req.UpdateEC {
-		log.Debug("Start extraction EC image from %q", tarballPath)
+		log.Debugf("Start extraction EC image from %q", tarballPath)
 		ecImage, err := extractECImage(ctx, tarballPath, run, log, req.Board, req.Model)
 		if err != nil {
 			return errors.Annotate(err, "install fw from fw-image").Err()
 		}
-		log.Debug("Start program EC image %q", ecImage)
+		log.Debugf("Start program EC image %q", ecImage)
 		if err := p.ProgramEC(ctx, ecImage); err != nil {
 			return errors.Annotate(err, "install fw from fw-image").Err()
 		}
-		log.Info("Finished program EC image %q", ecImage)
+		log.Infof("Finished program EC image %q", ecImage)
 	}
 	if req.UpdateAP {
-		log.Debug("Start extraction AP image from %q", tarballPath)
+		log.Debugf("Start extraction AP image from %q", tarballPath)
 		apImage, err := extractAPImage(ctx, tarballPath, run, servod, log, req.Board, req.Model)
 		if err != nil {
 			return errors.Annotate(err, "install fw from fw-image").Err()
 		}
-		log.Debug("Start program AP image %q", apImage)
+		log.Debugf("Start program AP image %q", apImage)
 		if err := p.ProgramAP(ctx, apImage, ""); err != nil {
 			return errors.Annotate(err, "install fw from fw-image").Err()
 		}
-		log.Info("Finished program AP image %q", apImage)
+		log.Infof("Finished program AP image %q", apImage)
 	}
 	return nil
 }
@@ -256,7 +256,7 @@ func extractECImage(ctx context.Context, tarballPath string, run components.Runn
 		monitorFiles = append(monitorFiles, strings.Replace(f, "ec.bin", ecMonitorFileName, 1))
 	}
 	if _, err := extractFromTarball(ctx, tarballPath, destDir, monitorFiles, run, log); err != nil {
-		log.Debug("Extract EC files: fail to extract %q file. Error: %s", ecMonitorFileName, err)
+		log.Debugf("Extract EC files: fail to extract %q file. Error: %s", ecMonitorFileName, err)
 	}
 	return filepath.Join(destDir, imagePath), nil
 }
@@ -273,7 +273,7 @@ func extractAPImage(ctx context.Context, tarballPath string, run components.Runn
 	if servod != nil {
 		fwTarget, err := servo.GetString(ctx, servod, "ec_board")
 		if err != nil {
-			log.Debug("Fail to read `ec_board` value from servo. Skipping.")
+			log.Debugf("Fail to read `ec_board` value from servo. Skipping.")
 		} else {
 			candidatesFiles = append(candidatesFiles, fmt.Sprintf("image-%s.bin", fwTarget))
 		}
@@ -315,12 +315,12 @@ func extractFromTarball(ctx context.Context, tarballPath, destDirPath string, ca
 	// Check if image candidates are in the list of tarball files.
 	for _, cf := range candidates {
 		if !tarballFiles[cf] {
-			log.Debug("Extract from tarball: candidate file %q is not in tarball.", cf)
+			log.Debugf("Extract from tarball: candidate file %q is not in tarball.", cf)
 			continue
 		}
 		cmd := fmt.Sprintf(tarballExtractTheFileGlob, tarballPath, destDirPath, cf)
 		if _, err := run(ctx, extractFileTimeout, cmd); err != nil {
-			log.Debug("Extract from tarball: candidate %q fail to be extracted from tarball.", cf)
+			log.Debugf("Extract from tarball: candidate %q fail to be extracted from tarball.", cf)
 		} else {
 			return cf, nil
 		}

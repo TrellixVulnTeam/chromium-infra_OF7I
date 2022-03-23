@@ -50,7 +50,7 @@ func parseServodLogTime(rawTime string, log logger.Logger) (*time.Time, error) {
 	if err != nil {
 		return nil, errors.Annotate(err, "extract time from servo logs").Err()
 	}
-	log.Debug("Parsed servod log time: %v", t)
+	log.Debugf("Parsed servod log time: %v", t)
 	return &t, nil
 }
 
@@ -123,32 +123,32 @@ func collectServodLogsExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err != nil {
 		return errors.Annotate(err, "collect servod logs").Err()
 	}
-	log.Debug("Servod logs dir: %q", servoLogsDir)
+	log.Debugf("Servod logs dir: %q", servoLogsDir)
 	output, err := run(ctx, time.Minute, "ls", servoLogsDir)
 	if err != nil {
 		return errors.Annotate(err, "collect servod logs").Err()
 	}
 	startTime, err := getServosStartTime(ctx, logRoot, servod.Port(), run, log)
 	if err != nil {
-		log.Debug("Fail to get start time of servod logs: %v", err)
+		log.Debugf("Fail to get start time of servod logs: %v", err)
 	}
 	for _, lf := range strings.Split(output, "\n") {
 		t, err := extractTimeFromServoLog(lf, log)
 		if err != nil {
-			log.Debug("Collect servod logs: %v", err)
+			log.Debugf("Collect servod logs: %v", err)
 			continue
 		}
 		if startTime != nil {
 			if t.Before(*startTime) {
-				log.Debug("Collect servod logs: skip as created at %v before start time %v", t, startTime)
+				log.Debugf("Collect servod logs: skip as created at %v before start time %v", t, startTime)
 				continue
 			}
 		}
 		srcFile := filepath.Join(servoLogsDir, lf)
 		destFile := filepath.Join(servoLogDir, lf)
-		log.Info("Try to collect servod log %q!", srcFile)
+		log.Infof("Try to collect servod log %q!", srcFile)
 		if err := info.CopyFrom(ctx, resource, srcFile, destFile); err != nil {
-			log.Debug("Collect servod logs: fail to copy file %q to logs! Error: %v", srcFile, err)
+			log.Debugf("Collect servod logs: fail to copy file %q to logs! Error: %v", srcFile, err)
 		}
 	}
 	return nil

@@ -75,14 +75,14 @@ func (ei *ExecInfo) DefaultRunner() Runner {
 // servo-host etc.
 func (a *RunArgs) NewRunner(host string) Runner {
 	runner := func(ctx context.Context, timeout time.Duration, cmd string, args ...string) (string, error) {
-		log.Debug(ctx, "Run command %q", cmd)
+		log.Debugf(ctx, "Run command %q", cmd)
 		r := a.Access.Run(ctx, &tlw.RunRequest{
 			Resource: host,
 			Timeout:  durationpb.New(timeout),
 			Command:  cmd,
 			Args:     args,
 		})
-		a.Logger.Debug("Run %q completed with exit code %d", r.Command, r.ExitCode)
+		a.Logger.Debugf("Run %q completed with exit code %d", r.Command, r.ExitCode)
 		exitCode := r.ExitCode
 		if exitCode != 0 {
 			errAnnotator := errors.Reason("runner: command %q completed with exit code %d", r.Command, r.ExitCode)
@@ -109,7 +109,7 @@ func (a *RunArgs) NewRunner(host string) Runner {
 			return "", errAnnotator.Err()
 		}
 		out := strings.TrimSpace(r.Stdout)
-		log.Debug(ctx, "Run output:\n%s", out)
+		log.Debugf(ctx, "Run output:\n%s", out)
 		return out, nil
 	}
 	return runner

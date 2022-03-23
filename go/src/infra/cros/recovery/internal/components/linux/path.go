@@ -45,7 +45,7 @@ func PathHasEnoughValue(ctx context.Context, r execs.Runner, dutName string, pat
 	var cmd string
 	if typeOfSpace == SpaceTypeDisk {
 		oneMB := math.Pow(10, 6)
-		log.Info(ctx, "Checking for >= %f (GB/inodes) of %s under %s on machine %s", minSpaceNeeded, typeOfSpace, path, dutName)
+		log.Infof(ctx, "Checking for >= %f (GB/inodes) of %s under %s on machine %s", minSpaceNeeded, typeOfSpace, path, dutName)
 		cmd = fmt.Sprintf(`df -PB %.f %s | tail -1`, oneMB, path)
 	} else {
 		// checking typeOfSpace == "inodes"
@@ -58,7 +58,7 @@ func PathHasEnoughValue(ctx context.Context, r execs.Runner, dutName string, pat
 	outputList := strings.Fields(output)
 	free, err := strconv.ParseFloat(outputList[3], 64)
 	if err != nil {
-		log.Error(ctx, err.Error())
+		log.Errorf(ctx, err.Error())
 		return errors.Annotate(err, "path has enough value: %s", typeOfSpace).Err()
 	}
 	if typeOfSpace == SpaceTypeDisk {
@@ -67,7 +67,7 @@ func PathHasEnoughValue(ctx context.Context, r execs.Runner, dutName string, pat
 	if free < minSpaceNeeded {
 		return errors.Reason("path has enough value: %s: Not enough free %s on %s - %f (GB/inodes) free, want %f (GB/inodes)", typeOfSpace, typeOfSpace, path, free, minSpaceNeeded).Err()
 	}
-	log.Info(ctx, "Found %f (GB/inodes) >= %f (GB/inodes) of %s under %s on machine %s", free, minSpaceNeeded, typeOfSpace, path, dutName)
+	log.Infof(ctx, "Found %f (GB/inodes) >= %f (GB/inodes) of %s under %s on machine %s", free, minSpaceNeeded, typeOfSpace, path, dutName)
 	return nil
 }
 
@@ -87,9 +87,9 @@ func PathOccupiedSpacePercentage(ctx context.Context, r execs.Runner, path strin
 	percentageString := strings.TrimRight(outputList[4], "%")
 	occupied, err := strconv.ParseFloat(percentageString, 64)
 	if err != nil {
-		log.Error(ctx, err.Error())
+		log.Errorf(ctx, err.Error())
 		return -1, errors.Annotate(err, "path occupied space percentage").Err()
 	}
-	log.Info(ctx, "Found %v%% occupied space under %s", occupied, path)
+	log.Infof(ctx, "Found %v%% occupied space under %s", occupied, path)
 	return occupied, nil
 }

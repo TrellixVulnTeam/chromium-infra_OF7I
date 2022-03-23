@@ -53,10 +53,10 @@ func ReadBatteryInfo(ctx context.Context, r execs.Runner) (*batteryInfo, error) 
 		return nil, errors.Annotate(err, "read battery info").Err()
 	}
 	if b.DeviceDirPath == "" {
-		log.Info(ctx, "Battery path is not present")
+		log.Infof(ctx, "Battery path is not present")
 		return nil, errors.Reason("read battery info: battery file path not present").Err()
 	}
-	log.Debug(ctx, "Battery path: %s", b.DeviceDirPath)
+	log.Debugf(ctx, "Battery path: %s", b.DeviceDirPath)
 	if b.FullChargeCapacity, err = b.readFile(ctx, r, fullChargeFileName); err != nil {
 		return nil, errors.Annotate(err, "read battery info").Err()
 	}
@@ -64,9 +64,9 @@ func ReadBatteryInfo(ctx context.Context, r execs.Runner) (*batteryInfo, error) 
 		return nil, errors.Annotate(err, "read battery info").Err()
 	}
 	if b.ChargeCycleCount, err = b.readFile(ctx, r, chargeCycleCountFileName); err != nil {
-		log.Error(ctx, err.Error())
+		log.Errorf(ctx, err.Error())
 	}
-	log.Debug(ctx, "Battery cycle_count %v", b.ChargeCycleCount)
+	log.Debugf(ctx, "Battery cycle_count %v", b.ChargeCycleCount)
 	return b, nil
 }
 
@@ -101,15 +101,15 @@ const (
 //   if capacity  < 40% then NEED_REPLACEMENT
 func DetermineHardwareStatus(ctx context.Context, fullChargeCapacity float64, fullChargeCapacityDesigned float64) tlw.HardwareState {
 	if fullChargeCapacity == 0 {
-		log.Debug(ctx, "charge_full is 0. Skip update battery_state!")
+		log.Debugf(ctx, "charge_full is 0. Skip update battery_state!")
 		return tlw.HardwareStateUnspecified
 	}
 	if fullChargeCapacityDesigned == 0 {
-		log.Debug(ctx, "charge_full_design is 0. Skip update battery_state!")
+		log.Debugf(ctx, "charge_full_design is 0. Skip update battery_state!")
 		return tlw.HardwareStateUnspecified
 	}
 	capacity := (100 * fullChargeCapacity) / fullChargeCapacityDesigned
-	log.Info(ctx, "battery capacity: %.2f%%", capacity)
+	log.Infof(ctx, "battery capacity: %.2f%%", capacity)
 	switch {
 	case capacity >= auditCapacityNormalLevel:
 		return tlw.HardwareStateNormal

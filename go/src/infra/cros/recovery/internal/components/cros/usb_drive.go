@@ -56,7 +56,7 @@ func BootFromServoUSBDriveInDevMode(ctx context.Context, waitBootTimeout, waitBo
 	}
 	// Try to boot from UBS-drive so some period of time.
 	err := retry.WithTimeout(ctx, waitBootInterval, waitBootTimeout, func() error {
-		log.Debug("Pressing ctrl+u")
+		log.Debugf("Pressing ctrl+u")
 		if err := servod.Set(ctx, "ctrl_u", "tab"); err != nil {
 			return errors.Annotate(err, "wait for device boot").Err()
 		}
@@ -64,7 +64,7 @@ func BootFromServoUSBDriveInDevMode(ctx context.Context, waitBootTimeout, waitBo
 		if err := IsPingable(ctx, 1, ping); err != nil {
 			return errors.Annotate(err, "wait for device boot").Err()
 		}
-		log.Debug("Device started booting!")
+		log.Debugf("Device started booting!")
 		return nil
 	}, "wait to boot")
 	if err != nil {
@@ -87,6 +87,6 @@ func BootFromServoUSBDriveInDevMode(ctx context.Context, waitBootTimeout, waitBo
 // RunInstallOSCommand run chromeos-install command on the host.
 func RunInstallOSCommand(ctx context.Context, timeout time.Duration, run components.Runner, log logger.Logger) error {
 	out, err := run(ctx, timeout, "chromeos-install", "--yes")
-	log.Debug("Install OS:\n%s", out)
+	log.Debugf("Install OS:\n%s", out)
 	return errors.Annotate(err, "install OS").Err()
 }

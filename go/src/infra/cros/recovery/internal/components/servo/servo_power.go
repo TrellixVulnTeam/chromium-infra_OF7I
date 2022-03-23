@@ -55,25 +55,25 @@ var (
 func SetPDRole(ctx context.Context, servod components.Servod, role PDRole, pd_required bool) error {
 	if err := servod.Has(ctx, ServodPdRoleCmd()); err != nil {
 		msg := fmt.Sprintf("control %q is not supported, cannot set target role %q", ServodPdRoleCmd(), role)
-		log.Info(ctx, "Set PD Role: %q", msg)
+		log.Infof(ctx, "Set PD Role: %q", msg)
 		if pd_required {
-			log.Debug(ctx, "Set PD Role: PD is not supported by this servo, but is required.")
+			log.Debugf(ctx, "Set PD Role: PD is not supported by this servo, but is required.")
 			return errors.Reason("set PD role: %q", msg).Err()
 		}
 		return nil
 	}
 	currentRole, err := GetString(ctx, servod, ServodPdRoleCmd())
 	if err != nil {
-		log.Debug(ctx, "Set PD Role: could not determine current PD role")
+		log.Debugf(ctx, "Set PD Role: could not determine current PD role")
 		errors.Annotate(err, "set PD role").Err()
 	}
 	currentPDRole := PDRole{currentRole}
 	if currentPDRole == role {
-		log.Debug(ctx, "Set PD Role: PD role is already %q", role)
+		log.Debugf(ctx, "Set PD Role: PD role is already %q", role)
 		return nil
 	}
 	if err := servod.Set(ctx, ServodPdRoleCmd(), role.role); err != nil {
-		log.Debug(ctx, "Set PD Role: %q", err.Error())
+		log.Debugf(ctx, "Set PD Role: %q", err.Error())
 		return errors.Annotate(err, "set PD role").Err()
 	}
 	return nil

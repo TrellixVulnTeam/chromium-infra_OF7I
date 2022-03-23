@@ -26,7 +26,7 @@ func updateDeviceSKUExec(ctx context.Context, info *execs.ExecInfo) error {
 	r := info.DefaultRunner()
 	skuLabelOutput, err := r(ctx, time.Minute, moSysSkuCmd)
 	if err != nil {
-		log.Debug(ctx, "Device sku label not found in the DUT.")
+		log.Debugf(ctx, "Device sku label not found in the DUT.")
 		return errors.Annotate(err, "update device sku label").Err()
 	}
 	info.RunArgs.DUT.DeviceSku = skuLabelOutput
@@ -47,7 +47,7 @@ func isAudioLoopBackStateWorkingExec(ctx context.Context, info *execs.ExecInfo) 
 // For all other cases, state is unspecified.
 func updateAudioLoopbackLabelExec(ctx context.Context, info *execs.ExecInfo) error {
 	info.RunArgs.DUT.Audio.LoopbackState = tlw.DUTAudio_LOOPBACK_UNSPECIFIED
-	defer log.Info(ctx, "Setting DUT's Audio Loopback State to be %s", info.RunArgs.DUT.Audio.GetLoopbackState())
+	defer log.Infof(ctx, "Setting DUT's Audio Loopback State to be %s", info.RunArgs.DUT.Audio.GetLoopbackState())
 	r := info.DefaultRunner()
 	// check if the Headphone cras audio type exists on the DUT.
 	isAudioHeadPhoneExist, err := CrasAudioNodeTypeIsPlugged(ctx, r, CrasAudioHeadphone)

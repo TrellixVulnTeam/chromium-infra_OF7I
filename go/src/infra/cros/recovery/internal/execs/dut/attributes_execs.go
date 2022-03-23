@@ -19,7 +19,7 @@ import (
 // List of pools should be listed as part of ActionArgs.
 func notInPoolExec(ctx context.Context, info *execs.ExecInfo) error {
 	if len(info.ActionArgs) == 0 {
-		log.Debug(ctx, "Not in pool: no pools passed as arguments.")
+		log.Debugf(ctx, "Not in pool: no pools passed as arguments.")
 		return nil
 	}
 	poolMap := getDUTPoolMap(ctx, info.RunArgs.DUT)
@@ -28,9 +28,9 @@ func notInPoolExec(ctx context.Context, info *execs.ExecInfo) error {
 		if poolMap[pool] {
 			return errors.Reason("not in pool: dut is in pool %q", pool).Err()
 		}
-		log.Debug(ctx, "Not in pools: %q pool is not matched.", pool)
+		log.Debugf(ctx, "Not in pools: %q pool is not matched.", pool)
 	}
-	log.Debug(ctx, "Not in pools: no intersection found.")
+	log.Debugf(ctx, "Not in pools: no intersection found.")
 	return nil
 }
 
@@ -38,17 +38,17 @@ func notInPoolExec(ctx context.Context, info *execs.ExecInfo) error {
 // List of pools should be listed as part of ActionArgs.
 func isInPoolExec(ctx context.Context, info *execs.ExecInfo) error {
 	if len(info.ActionArgs) == 0 {
-		log.Debug(ctx, "Is in pool: no pools passed as arguments.")
+		log.Debugf(ctx, "Is in pool: no pools passed as arguments.")
 		return nil
 	}
 	poolMap := getDUTPoolMap(ctx, info.RunArgs.DUT)
 	for _, pool := range info.ActionArgs {
 		pool = strings.TrimSpace(pool)
 		if poolMap[pool] {
-			log.Debug(ctx, "Is in pools: %q pool listed at the DUT.", pool)
+			log.Debugf(ctx, "Is in pools: %q pool listed at the DUT.", pool)
 			return nil
 		}
-		log.Debug(ctx, "Is in pools: %q pool is not matched.", pool)
+		log.Debugf(ctx, "Is in pools: %q pool is not matched.", pool)
 	}
 	return errors.Reason("is in pool: not match found").Err()
 }
@@ -58,7 +58,7 @@ func getDUTPoolMap(ctx context.Context, d *tlw.Dut) map[string]bool {
 	poolMap := make(map[string]bool)
 	pools := d.ExtraAttributes["pool"]
 	if len(pools) == 0 {
-		log.Debug(ctx, "device does not have any pools.")
+		log.Debugf(ctx, "device does not have any pools.")
 		return poolMap
 	}
 	for _, pool := range pools {

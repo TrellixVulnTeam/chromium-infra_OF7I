@@ -82,29 +82,29 @@ func createMetric(ctx context.Context, m metrics.Metrics, action *metrics.Action
 		return nil
 	}
 	if err := m.Create(ctx, action); err != nil {
-		log.Error(ctx, err.Error())
+		log.Errorf(ctx, err.Error())
 	}
 	closer := func(ctx context.Context, e error) {
 		if m == nil {
-			log.Debug(ctx, "Forgivable error while creating metric, nil metrics")
+			log.Debugf(ctx, "Forgivable error while creating metric, nil metrics")
 			return
 		}
 		if action == nil {
-			log.Debug(ctx, "Forgivable error while creating metric, action reference points to nil action")
+			log.Debugf(ctx, "Forgivable error while creating metric, action reference points to nil action")
 			return
 		}
 		action.Status = metrics.ActionStatusUnspecified
 		// TODO(gregorynisbet): Consider strategies for multiple fail reasons.
 		if e != nil {
-			log.Debug(ctx, "Updating action %q of kind %q during close failed with reason %q", action.Name, action.ActionKind, e.Error())
+			log.Debugf(ctx, "Updating action %q of kind %q during close failed with reason %q", action.Name, action.ActionKind, e.Error())
 			action.Status = metrics.ActionStatusFail
 			action.FailReason = e.Error()
 		} else {
 			action.Status = metrics.ActionStatusSuccess
-			log.Debug(ctx, "Updating action %q of kind %q during close was successful", action.Name, action.ActionKind)
+			log.Debugf(ctx, "Updating action %q of kind %q during close was successful", action.Name, action.ActionKind)
 		}
 		if uErr := m.Update(ctx, action); uErr != nil {
-			log.Error(ctx, "Updating action %q during close had error during upload: %s", action.Name, uErr.Error())
+			log.Errorf(ctx, "Updating action %q during close had error during upload: %s", action.Name, uErr.Error())
 		}
 		return
 	}

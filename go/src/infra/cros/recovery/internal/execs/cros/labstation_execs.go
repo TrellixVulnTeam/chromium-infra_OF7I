@@ -64,7 +64,7 @@ func allowedRebootExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err != nil {
 		return errors.Annotate(err, "has no-reboot request").Err()
 	}
-	log.Debug(ctx, "No-reboot request file found.")
+	log.Debugf(ctx, "No-reboot request file found.")
 	return nil
 }
 

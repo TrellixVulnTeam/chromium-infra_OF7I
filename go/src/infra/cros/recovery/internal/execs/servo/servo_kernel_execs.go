@@ -38,10 +38,10 @@ func servoTriggerKernelPanicExec(ctx context.Context, info *execs.ExecInfo) erro
 		if err := servod.Set(ctx, "sysrq_x", "tab"); err != nil {
 			return errors.Annotate(err, "servo trigger kernel panic").Err()
 		}
-		log.Debug(ctx, "Wait %v after servod sending system request to trigger kernel panic.", retryInterval)
+		log.Debugf(ctx, "Wait %v after servod sending system request to trigger kernel panic.", retryInterval)
 		time.Sleep(retryInterval)
 	}
-	log.Debug(ctx, "Rest the DUT via keyboard 'Alt+VolUp+X' successfully.")
+	log.Debugf(ctx, "Rest the DUT via keyboard 'Alt+VolUp+X' successfully.")
 	return nil
 }
 

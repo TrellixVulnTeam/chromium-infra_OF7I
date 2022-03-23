@@ -37,7 +37,7 @@ func USBDrivePath(ctx context.Context, fileCheck bool, run components.Runner, se
 		if out, err := run(ctx, time.Minute, "fdisk", "-l", usbPath); err != nil {
 			return "", errors.Annotate(err, "usb-drive path: file check by fdisk").Err()
 		} else {
-			log.Debug("USB-key fdisk check results:\n%s", out)
+			log.Debugf("USB-key fdisk check results:\n%s", out)
 		}
 	}
 	return usbPath, nil
@@ -63,7 +63,7 @@ func ChromeOSImageNameFromUSBDrive(ctx context.Context, usbPath string, run comp
 	mountDst := fmt.Sprintf(usbMountPathGlob, servod.Port())
 	unmount := func() {
 		if err := linux.UnmountDrive(ctx, run, mountDst); err != nil {
-			log.Debug("ChromeOS image name from USB drive (not critical): %s", err)
+			log.Debugf("ChromeOS image name from USB drive (not critical): %s", err)
 		}
 	}
 	// Unmount if there is an existing stale mount.
@@ -91,12 +91,12 @@ func ChromeOSImageNameFromUSBDrive(ctx context.Context, usbPath string, run comp
 		}
 		if !isTestImage && crosTestImageTrack.MatchString(l) {
 			isTestImage = true
-			log.Info("ChromeOS image name from USB drive: that is test image: %s", l)
+			log.Infof("ChromeOS image name from USB drive: that is test image: %s", l)
 			continue
 		}
 		if re := crosTestImageName.FindStringSubmatch(l); len(re) > 1 {
 			imageName = re[1]
-			log.Info("ChromeOS image name from USB drive: image name: %q", imageName)
+			log.Infof("ChromeOS image name from USB drive: image name: %q", imageName)
 			continue
 		}
 	}

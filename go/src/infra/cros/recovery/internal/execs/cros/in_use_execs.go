@@ -31,7 +31,7 @@ func createServoInUseFlagExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.DefaultRunner()
 	if _, err := run(ctx, time.Minute, fmt.Sprintf(inUseFlagFileCreateSingleGlob, info.RunArgs.DUT.ServoHost.ServodPort)); err != nil {
 		// Print finish result as we ignore any errors.
-		log.Debug(ctx, "Create in-use flag file: %s", err)
+		log.Debugf(ctx, "Create in-use flag file: %s", err)
 	}
 	return nil
 }
@@ -42,7 +42,7 @@ func hasNoServoInUseExec(ctx context.Context, info *execs.ExecInfo) error {
 	// Recursively look for the in-use files which are modified less than or exactly X minutes ago.
 	v, _ := run(ctx, time.Minute, fmt.Sprintf(inUseFlagFileGlob, inUseFlagFileExpirationMins))
 	if v == "" {
-		log.Debug(ctx, "Does not have any servo in-use.")
+		log.Debugf(ctx, "Does not have any servo in-use.")
 		return nil
 	}
 	return errors.Reason("has no servo is in-use: found flags\n%s", v).Err()
@@ -53,7 +53,7 @@ func removeServoInUseFlagExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
 	if _, err := run(ctx, time.Minute, fmt.Sprintf(inUseFlagFileRemoveSingleGlob, info.RunArgs.DUT.ServoHost.ServodPort)); err != nil {
 		// Print finish result as we ignore any errors.
-		log.Debug(ctx, "Remove in-use file flag: %s", err)
+		log.Debugf(ctx, "Remove in-use file flag: %s", err)
 	}
 	return nil
 }

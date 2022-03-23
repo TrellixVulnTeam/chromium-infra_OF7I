@@ -67,12 +67,12 @@ func isOnStableVersionExec(ctx context.Context, info *execs.ExecInfo) error {
 	}
 	argsMap := info.GetActionArgs(ctx)
 	expected := argsMap.AsString(ctx, "os_name", sv.OSImage)
-	log.Debug(ctx, "Expected version: %s", expected)
+	log.Debugf(ctx, "Expected version: %s", expected)
 	fromDevice, err := releaseBuildPath(ctx, info.DefaultRunner())
 	if err != nil {
 		return errors.Annotate(err, "match os version").Err()
 	}
-	log.Debug(ctx, "Version on device: %s", fromDevice)
+	log.Debugf(ctx, "Version on device: %s", fromDevice)
 	if fromDevice != expected {
 		return errors.Reason("match os version: mismatch, expected %q, found %q", expected, fromDevice).Err()
 	}
@@ -86,12 +86,12 @@ func notOnStableVersionExec(ctx context.Context, info *execs.ExecInfo) error {
 		return errors.Annotate(err, "match os version").Err()
 	}
 	expected := sv.OSImage
-	log.Debug(ctx, "Expected version: %s", expected)
+	log.Debugf(ctx, "Expected version: %s", expected)
 	fromDevice, err := releaseBuildPath(ctx, info.DefaultRunner())
 	if err != nil {
 		return errors.Annotate(err, "match os version").Err()
 	}
-	log.Debug(ctx, "Version on device: %s", fromDevice)
+	log.Debugf(ctx, "Version on device: %s", fromDevice)
 	if fromDevice == expected {
 		return errors.Reason("match os version: matched, expected %q, found %q", expected, fromDevice).Err()
 	}
@@ -117,15 +117,15 @@ func runShellCommandExec(ctx context.Context, info *execs.ExecInfo) error {
 	// TODO: Convert to single line command and always use linux shell.
 	actionArgs := info.ActionArgs
 	if len(actionArgs) > 0 {
-		log.Debug(ctx, "Run shell command: arguments %s.", actionArgs)
+		log.Debugf(ctx, "Run shell command: arguments %s.", actionArgs)
 		run := info.DefaultRunner()
 		if out, err := run(ctx, info.ActionTimeout, actionArgs[0], actionArgs[1:]...); err != nil {
 			return errors.Annotate(err, "run shell command").Err()
 		} else {
-			log.Debug(ctx, "Run shell command: output: %s", out)
+			log.Debugf(ctx, "Run shell command: output: %s", out)
 		}
 	} else {
-		log.Debug(ctx, "Run shell command: no arguments passed.")
+		log.Debugf(ctx, "Run shell command: no arguments passed.")
 	}
 	return nil
 }
@@ -152,7 +152,7 @@ func isFileSystemWritableExec(ctx context.Context, info *execs.ExecInfo) error {
 		run := info.DefaultRunner()
 		_, err := run(ctx, time.Minute, command)
 		if err != nil {
-			log.Debug(ctx, "Cannot create a file in %s! \n Probably the FS is read-only", testDir)
+			log.Debugf(ctx, "Cannot create a file in %s! \n Probably the FS is read-only", testDir)
 			return errors.Annotate(err, "file system writtable").Err()
 		}
 	}
@@ -188,7 +188,7 @@ func hasCriticalKernelErrorExec(ctx context.Context, info *execs.ExecInfo) error
 	if out != "" {
 		sample := strings.Split(out, `\n`)[0]
 		// Log the first file system error.
-		log.Error(ctx, "first file system error: %q", sample)
+		log.Errorf(ctx, "first file system error: %q", sample)
 		return errors.Reason("has critical kernel error: saw file system error: %s", sample).Err()
 	}
 	// Check for other critical FS errors.
@@ -197,7 +197,7 @@ func hasCriticalKernelErrorExec(ctx context.Context, info *execs.ExecInfo) error
 	if out != "" {
 		return errors.Reason("has critical kernel error: saw file system error: Data will be lost").Err()
 	}
-	log.Debug(ctx, "Could not determine stateful mount.")
+	log.Debugf(ctx, "Could not determine stateful mount.")
 	return nil
 }
 
@@ -261,7 +261,7 @@ func isGscToolPresentExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err != nil {
 		return errors.Annotate(err, "gsc tool present: gsc tool issue detected").Err()
 	}
-	log.Debug(ctx, "GSC tool is functional")
+	log.Debugf(ctx, "GSC tool is functional")
 	return nil
 }
 
@@ -293,7 +293,7 @@ func isToolPresentExec(ctx context.Context, info *execs.ExecInfo) error {
 func crosSetGbbFlagsExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.NewRunner(info.RunArgs.DUT.Name)
 	if _, err := run(ctx, info.ActionTimeout, "/usr/share/vboot/bin/set_gbb_flags.sh 0"); err != nil {
-		log.Debug(ctx, "Cros Set Gbb Flags: %s", err)
+		log.Debugf(ctx, "Cros Set Gbb Flags: %s", err)
 		return errors.Annotate(err, "cros set gbb flags").Err()
 	}
 	return nil
@@ -303,7 +303,7 @@ func crosSetGbbFlagsExec(ctx context.Context, info *execs.ExecInfo) error {
 func crosSwitchToSecureModeExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.NewRunner(info.RunArgs.DUT.Name)
 	if _, err := run(ctx, info.ActionTimeout, "crossystem", "disable_dev_request=1"); err != nil {
-		log.Debug(ctx, "Cros Switch to Secure Mode %s", err)
+		log.Debugf(ctx, "Cros Switch to Secure Mode %s", err)
 		return errors.Annotate(err, "cros switch to secure mode").Err()
 	}
 	return nil
@@ -316,13 +316,13 @@ func enrollmentCleanupExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.NewRunner(info.RunArgs.DUT.Name)
 	// 1. Reset VPD enrollment state
 	repairTimeout := argsMap.AsDuration(ctx, "repair_timeout", 120, time.Second)
-	log.Debug(ctx, "enrollment cleanup: using repair timeout :%s", repairTimeout)
+	log.Debugf(ctx, "enrollment cleanup: using repair timeout :%s", repairTimeout)
 	run(ctx, repairTimeout, "/usr/sbin/update_rw_vpd check_enrollment", "0")
 	// 2. clear tpm owner state
 	clearTpmOwnerTimeout := argsMap.AsDuration(ctx, "clear_tpm_owner_timeout", 60, time.Second)
-	log.Debug(ctx, "enrollment cleanup: using clear tpm owner timeout :%s", clearTpmOwnerTimeout)
+	log.Debugf(ctx, "enrollment cleanup: using clear tpm owner timeout :%s", clearTpmOwnerTimeout)
 	if _, err := run(ctx, clearTpmOwnerTimeout, "crossystem", "clear_tpm_owner_request=1"); err != nil {
-		log.Debug(ctx, "enrollment cleanup: unable to clear TPM.")
+		log.Debugf(ctx, "enrollment cleanup: unable to clear TPM.")
 		return errors.Annotate(err, "enrollment cleanup").Err()
 	}
 	filesToRemove := []string{
@@ -343,14 +343,14 @@ func enrollmentCleanupExec(ctx context.Context, info *execs.ExecInfo) error {
 	run(ctx, fileDeletionTimeout, "sudo", "rm", "-rf", strings.Join(filesToRemove, " "), strings.Join(dirsToRemove, " "))
 	run(ctx, fileDeletionTimeout, "sync")
 	rebootTimeout := argsMap.AsDuration(ctx, "reboot_timeout", 10, time.Second)
-	log.Debug(ctx, "enrollment cleanup: using reboot timeout :%s", rebootTimeout)
+	log.Debugf(ctx, "enrollment cleanup: using reboot timeout :%s", rebootTimeout)
 	if err := SimpleReboot(ctx, run, rebootTimeout, info); err != nil {
 		return errors.Annotate(err, "enrollment cleanup").Err()
 	}
 	// Finally, we will read the TPM status, and will check whether it
 	// has been cleared or not.
 	tpmTimeout := argsMap.AsDuration(ctx, "tpm_timeout", 150, time.Second)
-	log.Debug(ctx, "enrollment cleanup: using tpm timeout :%s", tpmTimeout)
+	log.Debugf(ctx, "enrollment cleanup: using tpm timeout :%s", tpmTimeout)
 	retry.WithTimeout(ctx, time.Second, tpmTimeout, func() error {
 		tpmStatus := NewTpmStatus(ctx, run, repairTimeout)
 		if tpmStatus.hasSuccess() {

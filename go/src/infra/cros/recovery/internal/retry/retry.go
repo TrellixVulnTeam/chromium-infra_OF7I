@@ -43,10 +43,10 @@ func WithTimeout(ctx context.Context, interval, duration time.Duration, f func()
 			attempts++
 			err := f()
 			if err == nil {
-				log.Debug(ctx, getSuccessMessage(opName, attempts, startTime))
+				log.Debugf(ctx, getSuccessMessage(opName, attempts, startTime))
 			}
 			spentTime := time.Now().Sub(startTime).Seconds()
-			log.Debug(ctx, "Retry %q: attempt %d (used %0.2f of %0.2f seconds), error: %s", opName, attempts, spentTime, duration.Seconds(), err)
+			log.Debugf(ctx, "Retry %q: attempt %d (used %0.2f of %0.2f seconds), error: %s", opName, attempts, spentTime, duration.Seconds(), err)
 			return err
 		},
 		hasNext: func(ctx context.Context) bool {
@@ -55,7 +55,7 @@ func WithTimeout(ctx context.Context, interval, duration time.Duration, f func()
 		},
 		abort: func(ctx context.Context) {
 			abort = true
-			log.Debug(ctx, "Retry %q: aborted!", opName)
+			log.Debugf(ctx, "Retry %q: aborted!", opName)
 		},
 		interval: interval,
 	})
@@ -78,9 +78,9 @@ func LimitCount(ctx context.Context, count int, interval time.Duration, f func()
 			attempts++
 			err := f()
 			if err == nil {
-				log.Debug(ctx, getSuccessMessage(opName, attempts, startTime))
+				log.Debugf(ctx, getSuccessMessage(opName, attempts, startTime))
 			}
-			log.Debug(ctx, "Retry %q: attempts %d of %d, error: %s", opName, attempts, count, err)
+			log.Debugf(ctx, "Retry %q: attempts %d of %d, error: %s", opName, attempts, count, err)
 			return err
 		},
 		hasNext: func(ctx context.Context) bool {
@@ -91,7 +91,7 @@ func LimitCount(ctx context.Context, count int, interval time.Duration, f func()
 		},
 		abort: func(ctx context.Context) {
 			abort = true
-			log.Debug(ctx, "Retry %q: aborted!", opName)
+			log.Debugf(ctx, "Retry %q: aborted!", opName)
 		},
 		interval: interval,
 	})
@@ -123,7 +123,7 @@ func retry(ctx context.Context, o *retryOptions) error {
 			if err == nil {
 				return
 			} else if stopRetryLoopTag.In(err) {
-				log.Debug(ctx, "Retry received request for abort!")
+				log.Debugf(ctx, "Retry received request for abort!")
 				o.abort(ctx)
 				// Removing tag from the error to void recursion stop.
 				stopRetryLoopTag.Off().Apply(err)

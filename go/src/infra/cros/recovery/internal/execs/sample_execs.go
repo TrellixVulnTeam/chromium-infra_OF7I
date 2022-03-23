@@ -36,7 +36,7 @@ func sampleSleepExec(ctx context.Context, i *ExecInfo) error {
 	if sleepTimeout <= 0*time.Second {
 		return errors.Reason("sample sleep: provided time duration %v is less than or equal to 0s", sleepTimeout).Err()
 	}
-	log.Debug(ctx, "Sample Sleep: planning to sleep %v.", sleepTimeout)
+	log.Debugf(ctx, "Sample Sleep: planning to sleep %v.", sleepTimeout)
 	time.Sleep(sleepTimeout)
 	return nil
 }

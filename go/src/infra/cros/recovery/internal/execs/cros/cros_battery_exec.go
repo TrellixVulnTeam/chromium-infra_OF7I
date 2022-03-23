@@ -23,7 +23,7 @@ func isBatteryCanChangeToExpectedLevelExec(ctx context.Context, info *execs.Exec
 	log := info.NewLogger()
 	run := info.NewRunner(d.Name)
 	argsMap := info.GetActionArgs(ctx)
-	log.Info("Started to verify battery status")
+	log.Infof("Started to verify battery status")
 	pi, err := power.ReadPowerInfo(ctx, run)
 	if err != nil {
 		return errors.Annotate(err, "battery can charge to expected level").Err()
@@ -31,7 +31,7 @@ func isBatteryCanChangeToExpectedLevelExec(ctx context.Context, info *execs.Exec
 	if ok, err := pi.IsBatterySupportedState(); err != nil {
 		return errors.Annotate(err, "battery can charge to expected level").Err()
 	} else if !ok {
-		log.Info("Unexpected battery status. Please verify that DUT prepared for deployment.")
+		log.Infof("Unexpected battery status. Please verify that DUT prepared for deployment.")
 		return errors.Reason("battery can charge to expected level: Unexpected battery status.").Err()
 	}
 	batteryExpectedLevel := argsMap.AsFloat64(ctx, "battery_expected_level", float64(MinimumBatteryLevel))
@@ -47,15 +47,15 @@ func isBatteryCanChangeToExpectedLevelExec(ctx context.Context, info *execs.Exec
 		if err != nil {
 			return errors.Annotate(err, "reached expected level").Err()
 		}
-		log.Debug("Battery level: %f%%", bl)
+		log.Debugf("Battery level: %f%%", bl)
 		if bl >= batteryExpectedLevel {
-			log.Debug("Battery reached expected level %f%%", batteryExpectedLevel)
+			log.Debugf("Battery reached expected level %f%%", batteryExpectedLevel)
 			return nil
 		}
 		if lastChargedLevel > 0 && bl-lastChargedLevel < batteryChargingPerRetry {
 			// Breaking the loop as battery is not charging.
-			log.Debug("Battery is not charged or discharging. Please verify that DUT connected to power and charging.")
-			log.Debug("Possible that the DUT is not ready for deployment in lab.")
+			log.Debugf("Battery is not charged or discharging. Please verify that DUT connected to power and charging.")
+			log.Debugf("Possible that the DUT is not ready for deployment in lab.")
 			return errors.Reason("reached expected level: charged %f%% when expected %f%%", bl-lastChargedLevel, batteryChargingPerRetry).Tag(retry.LoopBreakTag()).Err()
 		}
 		lastChargedLevel = bl
@@ -69,7 +69,7 @@ func isBatteryCanChangeToExpectedLevelExec(ctx context.Context, info *execs.Exec
 	if err := retry.LimitCount(ctx, retryCount, retryInnterval, reachedExpectedLevel, "check bettry level"); err != nil {
 		return errors.Annotate(err, "battery can charge to expected level").Err()
 	}
-	log.Info("Battery status verification passed!")
+	log.Infof("Battery status verification passed!")
 	return nil
 }
 

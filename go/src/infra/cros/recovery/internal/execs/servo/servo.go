@@ -48,11 +48,11 @@ func GetUSBDrivePathOnDut(ctx context.Context, run components.Runner, s componen
 				if _, fErr := run(ctx, time.Minute, fmt.Sprintf("fdisk -l %s", p)); fErr == nil {
 					return p, nil
 				} else {
-					log.Debug(ctx, "Get USB-drive path on dut: checked candidate usb drive path %q and found it incorrect.", p)
+					log.Debugf(ctx, "Get USB-drive path on dut: checked candidate usb drive path %q and found it incorrect.", p)
 				}
 			}
 		}
-		log.Debug(ctx, "Get USB-drive path on dut: did not find any valid USB drive path on the DUT.")
+		log.Debugf(ctx, "Get USB-drive path on dut: did not find any valid USB drive path on the DUT.")
 	}
 	return "", errors.Reason("get usb drive path on dut: did not find any USB Drive connected to the DUT as we checked that DUT is up").Err()
 }
@@ -118,7 +118,7 @@ func IsContainerizedServoHost(ctx context.Context, servoHost *tlw.ServoHost) boo
 	if servoHost == nil || servoHost.ContainerName == "" {
 		return false
 	}
-	log.Debug(ctx, "Servo uses servod container with the name: %s", servoHost.ContainerName)
+	log.Debugf(ctx, "Servo uses servod container with the name: %s", servoHost.ContainerName)
 	return true
 }
 
@@ -130,7 +130,7 @@ func IsContainerizedServoHost(ctx context.Context, servoHost *tlw.ServoHost) boo
 func WrappedServoType(ctx context.Context, info *execs.ExecInfo) (*servo.ServoType, error) {
 	servoType, err := GetServoType(ctx, info)
 	if err != nil {
-		log.Debug(ctx, "Wrapped Servo Type: Could not read the servo type from servod.")
+		log.Debugf(ctx, "Wrapped Servo Type: Could not read the servo type from servod.")
 		if info.RunArgs.DUT != nil && info.RunArgs.DUT.ServoHost != nil && info.RunArgs.DUT.ServoHost.Servo != nil && info.RunArgs.DUT.ServoHost.Servo.Type != "" {
 			servoType = info.RunArgs.DUT.ServoHost.Servo.Type
 		} else {
@@ -146,7 +146,7 @@ func WrappedServoType(ctx context.Context, info *execs.ExecInfo) (*servo.ServoTy
 // TODO(197647872): Remove as soon issue will be addressed.
 func ResetUsbkeyAuthorized(ctx context.Context, run execs.Runner, servoSerial string, servoType string) error {
 	if servoSerial == "" || !strings.HasPrefix(servoType, topology.SERVO_V4P1_TYPE) {
-		log.Debug(ctx, "Autotrized flag reset only for servo_v4p1.")
+		log.Debugf(ctx, "Autotrized flag reset only for servo_v4p1.")
 		return nil
 	}
 	rootServoPath, err := topology.GetRootServoPath(ctx, run, servoSerial)
@@ -164,19 +164,19 @@ func ResetUsbkeyAuthorized(ctx context.Context, run execs.Runner, servoSerial st
 	pathTail = strings.Replace(pathTail, "1-", "2-", 1)
 	const authorizedFlagName = "authorized"
 	authorizedPath := filepath.Join(pathDir, pathTail, authorizedFlagName)
-	log.Info(ctx, "Authorized flag file path: %s", authorizedPath)
+	log.Infof(ctx, "Authorized flag file path: %s", authorizedPath)
 	// Setting flag to 0.
 	if _, err := run(ctx, 30*time.Second, fmt.Sprintf("echo 0 > %s", authorizedPath)); err != nil {
-		log.Debug(ctx, `Attempt to reset %q flag to 0 for servo-hub failed`, authorizedFlagName)
+		log.Debugf(ctx, `Attempt to reset %q flag to 0 for servo-hub failed`, authorizedFlagName)
 		return errors.Annotate(err, "reset usbkey authorized: set to 0").Err()
 	}
 	time.Sleep(time.Second)
 	// Setting flag to 1.
 	if _, err := run(ctx, 30*time.Second, fmt.Sprintf("echo 1 > %s", authorizedPath)); err != nil {
-		log.Debug(ctx, `Attempt to reset %q flag to 1 for servo-hub failed`, authorizedFlagName)
+		log.Debugf(ctx, `Attempt to reset %q flag to 1 for servo-hub failed`, authorizedFlagName)
 		return errors.Annotate(err, "reset usbkey authorized: set to 1").Err()
 	}
 	time.Sleep(time.Second)
-	log.Info(ctx, "Attempt to reset %q succeed", authorizedFlagName)
+	log.Infof(ctx, "Attempt to reset %q succeed", authorizedFlagName)
 	return nil
 }

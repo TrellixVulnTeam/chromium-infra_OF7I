@@ -11,22 +11,6 @@ import (
 	"sync/atomic"
 )
 
-// Logger represents a simple interface for logging data.
-type Logger interface {
-	// Debug log message at Debug level.
-	Debug(format string, args ...interface{})
-	// Info is like Debug, but logs at Info level.
-	Info(format string, args ...interface{})
-	// Warning is like Debug, but logs at Warning level.
-	Warning(format string, args ...interface{})
-	// Error is like Debug, but logs at Error level.
-	Error(format string, args ...interface{})
-	// IndentLogging increment indentation for logger.
-	IndentLogging()
-	// DedentLogging decrement indentation for logger.
-	DedentLogging()
-}
-
 // NewLogger creates default logger.
 func NewLogger() Logger {
 	return &logger{
@@ -40,23 +24,23 @@ type logger struct {
 	indentation int32
 }
 
-// Debug log message at Debug level.
-func (l *logger) Debug(format string, args ...interface{}) {
+// Debugf log message at Debug level.
+func (l *logger) Debugf(format string, args ...interface{}) {
 	l.print(format, args...)
 }
 
-// Info is like Debug, but logs at Info level.
-func (l *logger) Info(format string, args ...interface{}) {
+// Infof is like Debug, but logs at Info level.
+func (l *logger) Infof(format string, args ...interface{}) {
 	l.print(format, args...)
 }
 
-// Warning is like Debug, but logs at Warning level.
-func (l *logger) Warning(format string, args ...interface{}) {
+// Warningf is like Debug, but logs at Warning level.
+func (l *logger) Warningf(format string, args ...interface{}) {
 	l.print(format, args...)
 }
 
-// Error is like Debug, but logs at Error level.
-func (l *logger) Error(format string, args ...interface{}) {
+// Errorf is like Debug, but logs at Error level.
+func (l *logger) Errorf(format string, args ...interface{}) {
 	l.print(format, args...)
 }
 

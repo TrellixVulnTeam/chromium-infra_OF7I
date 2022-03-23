@@ -42,8 +42,8 @@ func auditStorageSMARTExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err != nil {
 		return errors.Annotate(err, "audit storage smart").Err()
 	}
-	log.Debug(ctx, "Detected storage type: %q", ss.StorageType)
-	log.Debug(ctx, "Detected storage state: %q", ss.StorageState)
+	log.Debugf(ctx, "Detected storage type: %q", ss.StorageType)
+	log.Debugf(ctx, "Detected storage state: %q", ss.StorageState)
 	convertedHardwareState, ok := storageStateMap[ss.StorageState]
 	if !ok {
 		return errors.Reason("audit storage smart: cannot find corresponding hardware state match in the map").Err()
@@ -52,7 +52,7 @@ func auditStorageSMARTExec(ctx context.Context, info *execs.ExecInfo) error {
 		return errors.Reason("audit storage smart: DUT storage did not detected or state cannot extracted").Err()
 	}
 	if convertedHardwareState == tlw.HardwareStateNeedReplacement {
-		log.Debug(ctx, "Detected issue with storage on the DUT")
+		log.Debugf(ctx, "Detected issue with storage on the DUT")
 		info.RunArgs.DUT.Storage.State = tlw.HardwareStateNeedReplacement
 		return errors.Reason("audit storage smart: hardware state need replacement").Err()
 	}

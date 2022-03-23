@@ -18,7 +18,7 @@ import (
 // the servo host.
 func servoVerifyPortNumberExec(ctx context.Context, info *execs.ExecInfo) error {
 	if info.RunArgs.DUT != nil && info.RunArgs.DUT.ServoHost != nil && info.RunArgs.DUT.ServoHost.ServodPort > 9000 {
-		log.Debug(ctx, "Servo Verify Port Number Exec: %d", info.RunArgs.DUT.ServoHost.ServodPort)
+		log.Debugf(ctx, "Servo Verify Port Number Exec: %d", info.RunArgs.DUT.ServoHost.ServodPort)
 		return nil
 	}
 	return errors.Reason("servo verify port number: port number is not available").Err()

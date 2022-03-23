@@ -46,10 +46,10 @@ func updateCr50LabelExec(ctx context.Context, info *execs.ExecInfo) error {
 		// PVT image has a odd major version number.
 		// prePVT image has an even major version number.
 		info.RunArgs.DUT.Cr50Phase = tlw.Cr50PhasePVT
-		log.Info(ctx, "update DUT's Cr50 to be %s", tlw.Cr50PhasePVT)
+		log.Infof(ctx, "update DUT's Cr50 to be %s", tlw.Cr50PhasePVT)
 	} else {
 		info.RunArgs.DUT.Cr50Phase = tlw.Cr50PhasePREPVT
-		log.Info(ctx, "update DUT's Cr50 to be %s", tlw.Cr50PhasePREPVT)
+		log.Infof(ctx, "update DUT's Cr50 to be %s", tlw.Cr50PhasePREPVT)
 	}
 	return nil
 }
@@ -75,10 +75,10 @@ func updateCr50KeyIdLabelExec(ctx context.Context, info *execs.ExecInfo) error {
 	}
 	if roKeyID&(1<<2) != 0 {
 		info.RunArgs.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvProd
-		log.Info(ctx, "update DUT's Cr50 Key Env to be %s", tlw.Cr50KeyEnvProd)
+		log.Infof(ctx, "update DUT's Cr50 Key Env to be %s", tlw.Cr50KeyEnvProd)
 	} else {
 		info.RunArgs.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvDev
-		log.Info(ctx, "update DUT's Cr50 Key Env to be %s", tlw.Cr50KeyEnvDev)
+		log.Infof(ctx, "update DUT's Cr50 Key Env to be %s", tlw.Cr50KeyEnvDev)
 	}
 	return nil
 }
@@ -115,14 +115,14 @@ func reflashCr50FwExec(ctx context.Context, info *execs.ExecInfo) error {
 		Status:     metrics.ActionStatusFail,
 	}
 	if mErr := info.RunArgs.Metrics.Create(ctx, karteAction); mErr != nil {
-		log.Debug(ctx, "Reflash cr50 firmware: cannot create karte metrics: %s", mErr)
+		log.Debugf(ctx, "Reflash cr50 firmware: cannot create karte metrics: %s", mErr)
 	}
 	defer func() {
 		// Recoding cr 50 fw reflash to Karte.
-		log.Debug(ctx, "Updating cr 50 fw reflash record in Karte.")
+		log.Debugf(ctx, "Updating cr 50 fw reflash record in Karte.")
 		karteAction.StopTime = time.Now()
 		if mErr := info.RunArgs.Metrics.Update(ctx, karteAction); mErr != nil {
-			log.Debug(ctx, "Reflash cr 50 fw: Metrics error: %s", mErr)
+			log.Debugf(ctx, "Reflash cr 50 fw: Metrics error: %s", mErr)
 		}
 	}()
 	run := info.NewRunner(info.RunArgs.DUT.Name)
@@ -141,18 +141,18 @@ func reflashCr50FwExec(ctx context.Context, info *execs.ExecInfo) error {
 			return errors.Annotate(err, "reflash cr50 fw: fail to flash %q", info.RunArgs.DUT.Cr50Phase).Err()
 		}
 	}
-	log.Debug(ctx, "cr50 fw update successfully.")
+	log.Debugf(ctx, "cr50 fw update successfully.")
 	// reboot the DUT for the reflash of the cr50 fw to be effective.
 	if out, err := run(ctx, 30*time.Second, "reboot && exit"); err != nil {
 		// Client closed connected as rebooting.
-		log.Debug(ctx, "Client exit as device rebooted: %s", err)
+		log.Debugf(ctx, "Client exit as device rebooted: %s", err)
 		karteAction.FailReason = fmt.Sprintf("%s : reflash cr50 fw", err)
 		return errors.Annotate(err, "reflash cr50 fw").Err()
 	} else {
-		log.Debug(ctx, "Stdout: %s", out)
+		log.Debugf(ctx, "Stdout: %s", out)
 	}
 	karteAction.Status = metrics.ActionStatusSuccess
-	log.Debug(ctx, "waiting for %d seconds to let cr50 fw reflash be effective.", waitTimeout)
+	log.Debugf(ctx, "waiting for %d seconds to let cr50 fw reflash be effective.", waitTimeout)
 	time.Sleep(waitTimeout)
 	return nil
 }

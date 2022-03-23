@@ -42,7 +42,7 @@ func Run(ctx context.Context, planName string, plan *config.Plan, args *execs.Ru
 	}
 	r.initCache()
 	defer func() { r.close() }()
-	log.Debug(ctx, "Received plan %s for %s \n%s", r.planName, r.args.ResourceName, r.describe())
+	log.Debugf(ctx, "Received plan %s for %s \n%s", r.planName, r.args.ResourceName, r.describe())
 	return r.runPlan(ctx)
 }
 
@@ -56,7 +56,7 @@ func (r *recoveryEngine) close() {
 
 // runPlan executes recovery plan with critical-actions.
 func (r *recoveryEngine) runPlan(ctx context.Context) (rErr error) {
-	log.Info(ctx, "Plan %q: started", r.planName)
+	log.Infof(ctx, "Plan %q: started", r.planName)
 
 	var restartTally int64
 	var forgivenFailureTally int64
@@ -86,14 +86,14 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (rErr error) {
 	for {
 		if err := r.runCriticalActionAttempt(ctx, restartTally); err != nil {
 			if startOverTag.In(err) {
-				log.Info(ctx, "Plan %q for %s: received request to start over.", r.planName, r.args.ResourceName)
+				log.Infof(ctx, "Plan %q for %s: received request to start over.", r.planName, r.args.ResourceName)
 				r.resetCacheAfterSuccessfulRecoveryAction()
 				restartTally++
 				continue
 			}
 			if r.plan.GetAllowFail() {
-				log.Info(ctx, "Plan %q for %s: failed with error: %s.", r.planName, r.args.ResourceName, err)
-				log.Info(ctx, "Plan %q for %s: is allowed to fail, continue.", r.planName, r.args.ResourceName)
+				log.Infof(ctx, "Plan %q for %s: failed with error: %s.", r.planName, r.args.ResourceName, err)
+				log.Infof(ctx, "Plan %q for %s: is allowed to fail, continue.", r.planName, r.args.ResourceName)
 				forgivenFailureTally++
 				return nil
 			}
@@ -101,9 +101,9 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (rErr error) {
 		}
 		break
 	}
-	log.Info(ctx, "Plan %q: finished successfully.", r.planName)
-	log.Info(ctx, "Plan %q: recorded %d restarts during execution.", r.planName, restartTally)
-	log.Info(ctx, "Plan %q: recorded %d forgiven failures during execution.", r.planName, forgivenFailureTally)
+	log.Infof(ctx, "Plan %q: finished successfully.", r.planName)
+	log.Infof(ctx, "Plan %q: recorded %d restarts during execution.", r.planName, restartTally)
+	log.Infof(ctx, "Plan %q: recorded %d forgiven failures during execution.", r.planName, forgivenFailureTally)
 	return nil
 }
 
@@ -142,7 +142,7 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 	newCtx := ctx
 	if r.args != nil {
 		if r.args.Metrics != nil {
-			log.Debug(ctx, "Recording metrics for action %q", actionName)
+			log.Debugf(ctx, "Recording metrics for action %q", actionName)
 			closer, err := r.args.NewMetric(
 				newCtx,
 				// TODO(gregorynisbet): Consider adding a new field to Karte to explicitly track the name
@@ -156,7 +156,7 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 				}()
 			}
 		} else {
-			log.Debug(ctx, "Skipping metrics for action %q", actionName)
+			log.Debugf(ctx, "Skipping metrics for action %q", actionName)
 		}
 		if r.args.ShowSteps {
 			var step *build.Step
@@ -168,24 +168,24 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 			defer func() { r.args.Logger.DedentLogging() }()
 		}
 	}
-	log.Info(ctx, "Action %q: started.", actionName)
+	log.Infof(ctx, "Action %q: started.", actionName)
 	defer func() {
 		if rErr != nil {
-			log.Debug(ctx, "Action %q: finished with error %s.", actionName, rErr)
+			log.Debugf(ctx, "Action %q: finished with error %s.", actionName, rErr)
 		} else {
-			log.Debug(ctx, "Action %q: finished.", actionName)
+			log.Debugf(ctx, "Action %q: finished.", actionName)
 		}
 	}()
 	a := r.getAction(actionName)
 	if aErr, ok := r.actionResultFromCache(actionName); ok {
 		if aErr == nil {
-			log.Info(ctx, "Action %q: pass (cached).", actionName)
+			log.Infof(ctx, "Action %q: pass (cached).", actionName)
 			// Return nil error so we can continue execution of next actions...
 			return nil
 		}
 		if a.GetAllowFailAfterRecovery() {
-			log.Info(ctx, "Action %q: fail (cached). Error: %s", actionName, aErr)
-			log.Debug(ctx, "Action %q: error ignored as action is allowed to fail.", actionName)
+			log.Infof(ctx, "Action %q: fail (cached). Error: %s", actionName, aErr)
+			log.Debugf(ctx, "Action %q: error ignored as action is allowed to fail.", actionName)
 			// Return nil error so we can continue execution of next actions...
 			return nil
 		}
@@ -193,8 +193,8 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 	}
 	conditionName, err := r.runActionConditions(ctx, actionName)
 	if err != nil {
-		log.Info(ctx, "Action %q: one of conditions %q failed, skipping...", actionName, conditionName)
-		log.Debug(ctx, "Action %q: conditions fail with %s", actionName, err)
+		log.Infof(ctx, "Action %q: one of conditions %q failed, skipping...", actionName, conditionName)
+		log.Debugf(ctx, "Action %q: conditions fail with %s", actionName, err)
 		// Return nil error so we can continue execution of next actions...
 		return nil
 	}
@@ -203,8 +203,8 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 			return errors.Annotate(err, "run action %q", actionName).Err()
 		}
 		if a.GetAllowFailAfterRecovery() {
-			log.Info(ctx, "Action %q: one of dependencies fail. Error: %s", actionName, err)
-			log.Debug(ctx, "Action %q: error ignored as action is allowed to fail.", actionName)
+			log.Infof(ctx, "Action %q: one of dependencies fail. Error: %s", actionName, err)
+			log.Debugf(ctx, "Action %q: error ignored as action is allowed to fail.", actionName)
 			return nil
 		} else {
 			return errors.Annotate(err, "run action %q", actionName).Err()
@@ -215,13 +215,13 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 			return errors.Annotate(err, "run action %q", actionName).Err()
 		}
 		if a.GetAllowFailAfterRecovery() {
-			log.Info(ctx, "Action %q: fail. Error: %s", actionName, err)
-			log.Debug(ctx, "Action %q: error ignored as action is allowed to fail.", actionName)
+			log.Infof(ctx, "Action %q: fail. Error: %s", actionName, err)
+			log.Debugf(ctx, "Action %q: error ignored as action is allowed to fail.", actionName)
 		} else {
 			return errors.Annotate(err, "run action %q", actionName).Err()
 		}
 	} else {
-		log.Info(ctx, "Action %q: finished successfully.", actionName)
+		log.Infof(ctx, "Action %q: finished successfully.", actionName)
 	}
 	// Return nil error so we can continue execution of next actions...
 	return nil
@@ -233,12 +233,12 @@ func (r *recoveryEngine) runActionExec(ctx context.Context, actionName string, e
 	a := r.getAction(actionName)
 	if err := r.runActionExecWithTimeout(ctx, a); err != nil {
 		if enableRecovery && len(a.GetRecoveryActions()) > 0 {
-			log.Info(ctx, "Action %q: starting recovery actions.", actionName)
-			log.Debug(ctx, "Action %q: fail. Error: %s", actionName, err)
+			log.Infof(ctx, "Action %q: starting recovery actions.", actionName)
+			log.Debugf(ctx, "Action %q: fail. Error: %s", actionName, err)
 			if rErr := r.runRecoveries(ctx, actionName); rErr != nil {
 				return errors.Annotate(rErr, "run action %q exec", actionName).Err()
 			}
-			log.Info(ctx, "Run action %q exec: no recoveries left to try", actionName)
+			log.Infof(ctx, "Run action %q exec: no recoveries left to try", actionName)
 		}
 		// Cache the action error only after running recoveries.
 		// If no recoveries were run, we still cache the action.
@@ -278,7 +278,7 @@ func (r *recoveryEngine) runActionExecWithTimeout(ctx context.Context, a *config
 	case err := <-cw:
 		return errors.Annotate(err, "run exec %q with timeout %s", a.ExecName, timeout).Err()
 	case <-ctx.Done():
-		log.Info(ctx, "Run exec %q with timeout %s: excited timeout", a.ExecName, timeout)
+		log.Infof(ctx, "Run exec %q with timeout %s: excited timeout", a.ExecName, timeout)
 		return errors.Reason("run exec %q with timeout %s: excited timeout", a.ExecName, timeout).Err()
 	}
 }
@@ -301,15 +301,15 @@ func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName str
 			defer func() { r.args.Logger.DedentLogging() }()
 		}
 	}
-	log.Debug(ctx, "Action %q: running conditions...", actionName)
+	log.Debugf(ctx, "Action %q: running conditions...", actionName)
 	enableRecovery := false
 	for _, condition := range a.GetConditions() {
 		if err := r.runAction(ctx, condition, enableRecovery); err != nil {
-			log.Debug(ctx, "Action %q: condition %q fails. Error: %s", actionName, condition, err)
+			log.Debugf(ctx, "Action %q: condition %q fails. Error: %s", actionName, condition, err)
 			return condition, errors.Annotate(err, "run conditions").Err()
 		}
 	}
-	log.Debug(ctx, "Action %q: all conditions passed.", actionName)
+	log.Debugf(ctx, "Action %q: all conditions passed.", actionName)
 	return "", nil
 }
 
@@ -361,12 +361,12 @@ func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) (
 			continue
 		}
 		if err := r.runActions(ctx, []string{recoveryName}, false); err != nil {
-			log.Debug(ctx, "Recovery action %q: fail. Error: %s ", recoveryName, err)
+			log.Debugf(ctx, "Recovery action %q: fail. Error: %s ", recoveryName, err)
 			r.registerRecoveryUsage(actionName, recoveryName, err)
 			continue
 		}
 		r.registerRecoveryUsage(actionName, recoveryName, nil)
-		log.Info(ctx, "Recovery action %q: request to start-over.", recoveryName)
+		log.Infof(ctx, "Recovery action %q: request to start-over.", recoveryName)
 		return errors.Reason("recovery action %q: request to start over", recoveryName).Tag(startOverTag).Err()
 	}
 	return nil

@@ -51,13 +51,13 @@ func metricsFoundAtLastTimeExec(ctx context.Context, info *execs.ExecInfo) error
 	}
 	matchedQueryResCount := len(queryRes.Actions)
 	if matchedQueryResCount == 0 {
-		log.Debug(ctx, "No match of the metrics kind: %q found in karte.", metricsKind)
+		log.Debugf(ctx, "No match of the metrics kind: %q found in karte.", metricsKind)
 		return nil
 	}
 	// Grabbing the most recent Karte response for this particular metrics kind.
 	karteAction := queryRes.Actions[0]
 	lastTime := karteAction.StopTime
-	log.Info(ctx, "Found last time: %v of metric kind: %q on the DUT: %v", lastTime, metricsKind)
+	log.Infof(ctx, "Found last time: %v of metric kind: %q on the DUT: %v", lastTime, metricsKind)
 	if time.Since(lastTime) < timeFrameHours {
 		return nil
 	}

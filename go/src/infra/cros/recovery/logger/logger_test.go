@@ -33,27 +33,27 @@ func TestBasicLogging(t *testing.T) {
 
 	// No indent
 	// Empty first line to keep want string neat.
-	l.Info("")
-	l.Info("Line 1")
+	l.Infof("")
+	l.Infof("Line 1")
 
 	// Single indent
 	l.IndentLogging()
-	l.Info("Line 2")
+	l.Infof("Line 2")
 
 	// Multi-indent
 	l.IndentLogging()
 	l.IndentLogging()
-	l.Info("Line 3")
+	l.Infof("Line 3")
 
 	// Dedent
 	l.DedentLogging()
-	l.Info("Line 4")
+	l.Infof("Line 4")
 
 	// Negative indent safety check
 	l.DedentLogging()
 	l.DedentLogging()
 	l.DedentLogging()
-	l.Info("Line 5")
+	l.Infof("Line 5")
 
 	assert.IntsEqual(t, int(l.(*logger).indentation), -1)
 	assert.StringsEqual(t, buf.String(), want)

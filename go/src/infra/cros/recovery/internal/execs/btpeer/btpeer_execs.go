@@ -48,7 +48,7 @@ func getDetectedStatusesExec(ctx context.Context, info *execs.ExecInfo) error {
 	if count == 0 {
 		return errors.Reason("get detected statuses: list is empty").Err()
 	}
-	log.Debug(ctx, "Detected statuses count: %v", count)
+	log.Debugf(ctx, "Detected statuses count: %v", count)
 	return nil
 }
 

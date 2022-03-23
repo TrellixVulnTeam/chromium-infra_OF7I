@@ -33,7 +33,7 @@ func servodLidopenActionExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err != nil {
 		return errors.Annotate(err, "servod lid_open").Err()
 	} else if res == "not_applicable" {
-		log.Info(ctx, "Device does not support this action. Skipping...")
+		log.Infof(ctx, "Device does not support this action. Skipping...")
 	} else if res != "yes" {
 		return errors.Reason("servod lid_open: expected to received 'yes'").Err()
 	}
@@ -73,7 +73,7 @@ func servodDUTColdResetActionExec(ctx context.Context, info *execs.ExecInfo) err
 func servodHasExec(ctx context.Context, info *execs.ExecInfo) error {
 	argsMap := info.GetActionArgs(ctx)
 	command, ok := argsMap[commandToken]
-	log.Debug(ctx, "Servod Has Exec: %s ok :%t", commandToken, ok)
+	log.Debugf(ctx, "Servod Has Exec: %s ok :%t", commandToken, ok)
 	if !ok {
 		// It is a failure condition if an action invokes this exec,
 		// and does not specify the servod command.
@@ -82,7 +82,7 @@ func servodHasExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err := info.NewServod().Has(ctx, command); err != nil {
 		return errors.Annotate(err, "servod has exec").Err()
 	}
-	log.Debug(ctx, "Servod Has Exec: Command %s is supported by servod", command)
+	log.Debugf(ctx, "Servod Has Exec: Command %s is supported by servod", command)
 	return nil
 }
 
@@ -102,23 +102,23 @@ func servodCanReadAllExec(ctx context.Context, info *execs.ExecInfo) error {
 	// to succeed, or can we greedily return as soon as any one
 	// command succeeds.
 	anyOne := argsMap.AsBool(ctx, "any_one", false)
-	log.Debug(ctx, "Servod Can Read All Exec: anyOne:%t.", anyOne)
+	log.Debugf(ctx, "Servod Can Read All Exec: anyOne:%t.", anyOne)
 	s := info.NewServod()
 	for _, c := range commands {
 		if err := s.Has(ctx, c); err != nil {
-			log.Debug(ctx, "Servod Can Read All Exec: control %q is not loaded, skipping this.", c)
+			log.Debugf(ctx, "Servod Can Read All Exec: control %q is not loaded, skipping this.", c)
 			if !anyOne {
 				return errors.Annotate(err, "servod can read all exec").Err()
 			}
 		} else {
-			log.Debug(ctx, "Servod Can Read All Exec: control %q is loaded.", c)
+			log.Debugf(ctx, "Servod Can Read All Exec: control %q is loaded.", c)
 			if _, err = s.Get(ctx, c); err != nil {
-				log.Debug(ctx, "Servod Can Read All Exec: could not read the control %q.", c)
+				log.Debugf(ctx, "Servod Can Read All Exec: could not read the control %q.", c)
 				if !anyOne {
 					return errors.Annotate(err, "servod can read all exec").Err()
 				}
 			} else {
-				log.Debug(ctx, "Servod Can Read All Exec: %q was read successfully.", c)
+				log.Debugf(ctx, "Servod Can Read All Exec: %q was read successfully.", c)
 				if anyOne {
 					return nil
 				}
@@ -152,7 +152,7 @@ func servodSetActiveDutControllerExec(ctx context.Context, info *execs.ExecInfo)
 	if returnedMainDevice != mainDevice {
 		return errors.Reason("servod set active dut controller exec: expected the main device to be %q, but found it to be %q", mainDevice, returnedMainDevice).Err()
 	}
-	log.Debug(ctx, "Servod Set Active Dut Controller Exec: the expected value of servod control %q matches the value returned.", command)
+	log.Debugf(ctx, "Servod Set Active Dut Controller Exec: the expected value of servod control %q matches the value returned.", command)
 	return nil
 }
 

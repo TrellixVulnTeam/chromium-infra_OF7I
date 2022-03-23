@@ -22,7 +22,7 @@ func hasCrosImageStableVersionActionExec(ctx context.Context, info *execs.ExecIn
 		if err != nil {
 			return errors.Annotate(err, "cros has stable version").Err()
 		}
-		log.Debug(ctx, "Stable version for cros: %q", sv.OSImage)
+		log.Debugf(ctx, "Stable version for cros: %q", sv.OSImage)
 		if sv.OSImage != "" && strings.Contains(sv.OSImage, "/") {
 			return nil
 		}
@@ -38,7 +38,7 @@ func hasFwVersionStableVersionActionExec(ctx context.Context, info *execs.ExecIn
 		if err != nil {
 			return errors.Annotate(err, "cros has stable firmware version").Err()
 		}
-		log.Debug(ctx, "Stable version for firmware version: %q", sv.FwVersion)
+		log.Debugf(ctx, "Stable version for firmware version: %q", sv.FwVersion)
 		if sv.FwVersion != "" {
 			return nil
 		}
@@ -54,7 +54,7 @@ func hasFwImageStableVersionActionExec(ctx context.Context, info *execs.ExecInfo
 		if err != nil {
 			return errors.Annotate(err, "cros has stable firmware image version").Err()
 		}
-		log.Debug(ctx, "Stable version for firmware image: %q", sv.FwImage)
+		log.Debugf(ctx, "Stable version for firmware image: %q", sv.FwImage)
 		if sv.FwImage != "" && strings.Contains(sv.FwImage, "/") {
 			return nil
 		}

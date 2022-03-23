@@ -38,7 +38,7 @@ const (
 
 // WaitUntilPingable waiting resource to be pingable.
 func WaitUntilPingable(ctx context.Context, waitTime, waitInterval time.Duration, countPerAttempt int, ping components.Pinger, log logger.Logger) error {
-	log.Debug("Start ping for the next %s.", waitTime)
+	log.Debugf("Start ping for the next %s.", waitTime)
 	return retry.WithTimeout(ctx, waitInterval, waitTime, func() error {
 		return IsPingable(ctx, countPerAttempt, ping)
 	}, "wait to ping")
@@ -46,7 +46,7 @@ func WaitUntilPingable(ctx context.Context, waitTime, waitInterval time.Duration
 
 // WaitUntilSSHable waiting resource to be sshable.
 func WaitUntilSSHable(ctx context.Context, waitTime, waitInterval time.Duration, run components.Runner, log logger.Logger) error {
-	log.Debug("Start SSH check for the next %s.", waitTime)
+	log.Debugf("Start SSH check for the next %s.", waitTime)
 	return retry.WithTimeout(ctx, waitInterval, waitTime, func() error {
 		return IsSSHable(ctx, run)
 	}, "wait to ssh access")

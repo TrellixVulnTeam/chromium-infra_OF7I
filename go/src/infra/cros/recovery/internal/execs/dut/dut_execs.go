@@ -18,7 +18,7 @@ import (
 // hasDutNameActionExec verifies that DUT provides name.
 func hasDutNameActionExec(ctx context.Context, info *execs.ExecInfo) error {
 	if info.RunArgs.DUT != nil && info.RunArgs.DUT.Name != "" {
-		log.Debug(ctx, "DUT name: %q", info.RunArgs.DUT.Name)
+		log.Debugf(ctx, "DUT name: %q", info.RunArgs.DUT.Name)
 		return nil
 	}
 	return errors.Reason("dut name is empty").Err()
@@ -27,7 +27,7 @@ func hasDutNameActionExec(ctx context.Context, info *execs.ExecInfo) error {
 // hasDutBoardActionExec verifies that DUT provides board name.
 func hasDutBoardActionExec(ctx context.Context, info *execs.ExecInfo) error {
 	if d := info.RunArgs.DUT; d != nil && d.Board != "" {
-		log.Debug(ctx, "DUT board name: %q", d.Board)
+		log.Debugf(ctx, "DUT board name: %q", d.Board)
 		return nil
 	}
 	return errors.Reason("dut board name is empty").Err()
@@ -36,7 +36,7 @@ func hasDutBoardActionExec(ctx context.Context, info *execs.ExecInfo) error {
 // hasDutModelActionExec verifies that DUT provides model name.
 func hasDutModelActionExec(ctx context.Context, info *execs.ExecInfo) error {
 	if d := info.RunArgs.DUT; d != nil && d.Model != "" {
-		log.Debug(ctx, "DUT model name: %q", d.Model)
+		log.Debugf(ctx, "DUT model name: %q", d.Model)
 		return nil
 	}
 	return errors.Reason("dut model name is empty").Err()
@@ -45,7 +45,7 @@ func hasDutModelActionExec(ctx context.Context, info *execs.ExecInfo) error {
 // dutServolessExec verifies that setup is servoless.
 func dutServolessExec(ctx context.Context, info *execs.ExecInfo) error {
 	if sh := info.RunArgs.DUT.ServoHost; sh == nil || (sh.Name == "" && sh.ContainerName == "") {
-		log.Debug(ctx, "DUT servoless confirmed!")
+		log.Debugf(ctx, "DUT servoless confirmed!")
 		return nil
 	}
 	return errors.Reason("dut is servoless").Err()
@@ -57,7 +57,7 @@ func hasDutDeviceSkuActionExec(ctx context.Context, info *execs.ExecInfo) error 
 	if deviceSkuLabel == "" {
 		return errors.Reason("dut device sku label is empty").Err()
 	}
-	log.Debug(ctx, "dut device sku label: %s.", deviceSkuLabel)
+	log.Debugf(ctx, "dut device sku label: %s.", deviceSkuLabel)
 	return nil
 }
 
@@ -82,7 +82,7 @@ func dutCheckModelExec(ctx context.Context, info *execs.ExecInfo) error {
 		m = strings.TrimSpace(m)
 		if strings.EqualFold(m, info.RunArgs.DUT.Model) {
 			msg := fmt.Sprintf("DUT Model %s found in the list of models in config", info.RunArgs.DUT.Model)
-			log.Debug(ctx, "Dut Check Model Exec :%s.", msg)
+			log.Debugf(ctx, "Dut Check Model Exec :%s.", msg)
 			if invertResultsFlag {
 				return errors.Reason("dut check model exec: %s", msg).Err()
 			}
@@ -90,7 +90,7 @@ func dutCheckModelExec(ctx context.Context, info *execs.ExecInfo) error {
 		}
 	}
 	msg := "No matching model found"
-	log.Debug(ctx, "Dut Check Model Exec: %s", msg)
+	log.Debugf(ctx, "Dut Check Model Exec: %s", msg)
 	if invertResultsFlag {
 		return nil
 	}
@@ -107,7 +107,7 @@ func dutCheckBoardExec(ctx context.Context, info *execs.ExecInfo) error {
 		m = strings.TrimSpace(m)
 		if strings.EqualFold(m, info.RunArgs.DUT.Board) {
 			msg := fmt.Sprintf("DUT Board %s found in the list of boards in config", info.RunArgs.DUT.Model)
-			log.Debug(ctx, "Dut Check Board Exec :%s.", msg)
+			log.Debugf(ctx, "Dut Check Board Exec :%s.", msg)
 			if invertResultsFlag {
 				return errors.Reason("dut check board exec: %s", msg).Err()
 			}
@@ -115,7 +115,7 @@ func dutCheckBoardExec(ctx context.Context, info *execs.ExecInfo) error {
 		}
 	}
 	msg := "No matching board found"
-	log.Debug(ctx, "Dut Check Board Exec: %s", msg)
+	log.Debugf(ctx, "Dut Check Board Exec: %s", msg)
 	if invertResultsFlag {
 		return nil
 	}
@@ -126,7 +126,7 @@ func dutCheckBoardExec(ctx context.Context, info *execs.ExecInfo) error {
 // to the DUT has a serial number configured.
 func servoVerifySerialNumberExec(ctx context.Context, info *execs.ExecInfo) error {
 	if d := info.RunArgs.DUT; d != nil && d.ServoHost != nil && d.ServoHost.Servo != nil && d.ServoHost.Servo.SerialNumber != "" {
-		log.Debug(ctx, "Servo Verify Serial Number : %q", d.ServoHost.Servo.SerialNumber)
+		log.Debugf(ctx, "Servo Verify Serial Number : %q", d.ServoHost.Servo.SerialNumber)
 		return nil
 	}
 	return errors.Reason("servo verify serial number: serial number is not available").Err()

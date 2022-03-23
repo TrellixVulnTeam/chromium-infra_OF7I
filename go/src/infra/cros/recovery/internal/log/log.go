@@ -35,30 +35,30 @@ func get(ctx context.Context) logger.Logger {
 	return nil
 }
 
-// Debug log message at Debug level.
-func Debug(ctx context.Context, format string, args ...interface{}) {
+// Debugf log message at Debugf level.
+func Debugf(ctx context.Context, format string, args ...interface{}) {
 	if l := get(ctx); l != nil {
-		l.Debug(format, args...)
+		l.Debugf(format, args...)
 	}
 }
 
-// Info is like Debug, but logs at Info level.
-func Info(ctx context.Context, format string, args ...interface{}) {
+// Infof is like Debug, but logs at Infof level.
+func Infof(ctx context.Context, format string, args ...interface{}) {
 	if l := get(ctx); l != nil {
-		l.Info(format, args...)
+		l.Infof(format, args...)
 	}
 }
 
-// Warning is like Debug, but logs at Warning level.
-func Warning(ctx context.Context, format string, args ...interface{}) {
+// Warningf is like Debug, but logs at Warningf level.
+func Warningf(ctx context.Context, format string, args ...interface{}) {
 	if l := get(ctx); l != nil {
-		l.Warning(format, args...)
+		l.Warningf(format, args...)
 	}
 }
 
-// Error is like Debug, but logs at Error level.
-func Error(ctx context.Context, format string, args ...interface{}) {
+// Errorf is like Debug, but logs at Errorf level.
+func Errorf(ctx context.Context, format string, args ...interface{}) {
 	if l := get(ctx); l != nil {
-		l.Error(format, args...)
+		l.Errorf(format, args...)
 	}
 }

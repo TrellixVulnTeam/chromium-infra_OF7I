@@ -57,7 +57,7 @@ func Run(ctx context.Context, pool *sshpool.Pool, addr string, cmd string) (resu
 	}
 	defer func() { pool.Put(addr, sc) }()
 	result = createSessionAndExecute(ctx, cmd, sc)
-	log.Debug(ctx, "run SSH %q: Cmd: %q; ExitCode: %d; Stdout: %q;  Stderr: %q", addr, result.Command, result.ExitCode, result.Stdout, result.Stderr)
+	log.Debugf(ctx, "run SSH %q: Cmd: %q; ExitCode: %d; Stdout: %q;  Stderr: %q", addr, result.Command, result.ExitCode, result.Stdout, result.Stderr)
 	return
 }
 

@@ -46,7 +46,7 @@ func (s *iServod) Call(ctx context.Context, method string, args ...interface{}) 
 	if res.Fault {
 		return nil, errors.Reason("call %q", method).Err()
 	}
-	log.Debug(ctx, "Servod call %q with %v: received %#v", method, args, res.Value.GetScalarOneof())
+	log.Debugf(ctx, "Servod call %q with %v: received %#v", method, args, res.Value.GetScalarOneof())
 	return res.Value, nil
 }
 

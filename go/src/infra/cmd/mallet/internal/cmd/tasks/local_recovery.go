@@ -127,7 +127,7 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 		return errors.Annotate(err, "local recovery: create http client").Err()
 	}
 	e := c.envFlags.Env()
-	logger.Debug("Init TLW with inventory: %s and csa: %s sources", e.UFSService, e.AdminService)
+	logger.Debugf("Init TLW with inventory: %s and csa: %s sources", e.UFSService, e.AdminService)
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UFSService,
@@ -173,7 +173,7 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 			metrics, err = karte.NewMetrics(ctx, kclient.EmptyConfig())
 		}
 		if err == nil {
-			logger.Info("internal run: metrics client successfully created.")
+			logger.Infof("internal run: metrics client successfully created.")
 		} else {
 			return errors.Annotate(err, "ineer run: failed to instantiate karte client of server: %q", c.karteServer).Err()
 		}
@@ -200,7 +200,7 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 	if err = recovery.Run(ctx, in); err != nil {
 		return errors.Annotate(err, "local recovery").Err()
 	}
-	logger.Info("Task on %q has completed successfully", unit)
+	logger.Infof("Task on %q has completed successfully", unit)
 	return nil
 }
 
@@ -237,23 +237,23 @@ type recoveryLogger struct {
 	callDepth int
 }
 
-// Debug log message at Debug level.
-func (l *recoveryLogger) Debug(format string, args ...interface{}) {
+// Debugf log message at Debug level.
+func (l *recoveryLogger) Debugf(format string, args ...interface{}) {
 	l.log.LogCall(logging.Debug, l.callDepth, l.indentString(format), args)
 }
 
-// Info is like Debug, but logs at Info level.
-func (l *recoveryLogger) Info(format string, args ...interface{}) {
+// Infof is like Debugf, but logs at Info level.
+func (l *recoveryLogger) Infof(format string, args ...interface{}) {
 	l.log.LogCall(logging.Info, l.callDepth, l.indentString(format), args)
 }
 
-// Warning is like Debug, but logs at Warning level.
-func (l *recoveryLogger) Warning(format string, args ...interface{}) {
+// Warningf is like Debugf, but logs at Warning level.
+func (l *recoveryLogger) Warningf(format string, args ...interface{}) {
 	l.log.LogCall(logging.Warning, l.callDepth, l.indentString(format), args)
 }
 
-// Error is like Debug, but logs at Error level.
-func (l *recoveryLogger) Error(format string, args ...interface{}) {
+// Errorf is like Debug, but logs at Error level.
+func (l *recoveryLogger) Errorf(format string, args ...interface{}) {
 	l.log.LogCall(logging.Error, l.callDepth, l.indentString(format), args)
 }
 

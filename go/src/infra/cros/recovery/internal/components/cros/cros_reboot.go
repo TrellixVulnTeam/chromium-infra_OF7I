@@ -33,14 +33,14 @@ const (
 // This function executes an ellaborate reboot sequence that includes
 // executing sync and then attempting forcible reboot etc.
 func Reboot(ctx context.Context, run execs.Runner, timeout time.Duration) error {
-	log.Debug(ctx, "Reboot Helper : %s", rebootCommand)
+	log.Debugf(ctx, "Reboot Helper : %s", rebootCommand)
 	out, err := run(ctx, timeout, rebootCommand)
 	if execs.NoExitStatusErrorInternal.In(err) {
 		// Client closed connected as rebooting.
-		log.Debug(ctx, "Client exit as device rebooted: %s", err)
+		log.Debugf(ctx, "Client exit as device rebooted: %s", err)
 	} else if err != nil {
 		return errors.Annotate(err, "reboot helper").Err()
 	}
-	log.Debug(ctx, "Stdout: %s", out)
+	log.Debugf(ctx, "Stdout: %s", out)
 	return nil
 }

@@ -92,7 +92,7 @@ const (
 // extractStorageType extracts the storage type information from storageInfoSlice.
 // return error if the regular expression cannot compile.
 func extractStorageType(ctx context.Context, storageInfoSlice []string) (tlw.StorageType, error) {
-	log.Debug(ctx, "Extracting storage type")
+	log.Debugf(ctx, "Extracting storage type")
 	ssdTypeRegexp, err := regexp.Compile(ssdTypeStorageGlob)
 	if err != nil {
 		return tlw.StorageTypeUnspecified, errors.Annotate(err, "extract storage type").Err()
@@ -113,9 +113,9 @@ func extractStorageType(ctx context.Context, storageInfoSlice []string) (tlw.Sto
 		// check if storage type is MMC
 		mMMC, err := regexpSubmatchToMap(mmcTypeRegexp, line)
 		if err == nil {
-			log.Info(ctx, "Found line => "+line)
+			log.Infof(ctx, "Found line => "+line)
 			if version, ok := mMMC["version"]; ok {
-				log.Info(ctx, "Found eMMC device, version: %s", version)
+				log.Infof(ctx, "Found eMMC device, version: %s", version)
 			}
 			return tlw.StorageTypeMMC, nil
 		}
@@ -139,7 +139,7 @@ const (
 // detectSSDState read the info to detect state for SSD storage.
 // return error if the regular expression cannot compile.
 func detectSSDState(ctx context.Context, storageInfoSlice []string) (StorageState, error) {
-	log.Info(ctx, "Extraction metrics for SSD storage")
+	log.Infof(ctx, "Extraction metrics for SSD storage")
 	ssdFailRegexp, err := regexp.Compile(ssdFailGlob)
 	if err != nil {
 		return StorageStateUndefined, errors.Annotate(err, "detect ssd state").Err()
@@ -151,12 +151,12 @@ func detectSSDState(ctx context.Context, storageInfoSlice []string) (StorageStat
 	for _, line := range storageInfoSlice {
 		_, err := regexpSubmatchToMap(ssdFailRegexp, line)
 		if err == nil {
-			log.Debug(ctx, "Found critical line => %q", line)
+			log.Debugf(ctx, "Found critical line => %q", line)
 			return StorageStateCritical, nil
 		}
 		mRelocate, err := regexpSubmatchToMap(ssdRelocateSectorsRegexp, line)
 		if err == nil {
-			log.Debug(ctx, "Found warning line => %q", line)
+			log.Debugf(ctx, "Found warning line => %q", line)
 			value, _ := strconv.ParseFloat(mRelocate["value"], 64)
 			// manufacture set default value 100, if number started to grow then it is time to mark it.
 			if value > 100 {
@@ -185,7 +185,7 @@ const (
 // detectMMCState read the info to detect state for MMC storage.
 // return error if the regular expression cannot compile.
 func detectMMCState(ctx context.Context, storageInfoSlice []string) (StorageState, error) {
-	log.Info(ctx, "Extraction metrics for MMC storage")
+	log.Infof(ctx, "Extraction metrics for MMC storage")
 	mmcFailLevRegexp, err := regexp.Compile(mmcFailLifeGlob)
 	if err != nil {
 		return StorageStateUndefined, errors.Annotate(err, "detect mmc state").Err()
@@ -200,7 +200,7 @@ func detectMMCState(ctx context.Context, storageInfoSlice []string) (StorageStat
 		mLife, err := regexpSubmatchToMap(mmcFailLevRegexp, line)
 		if err == nil {
 			param := mLife["val"]
-			log.Debug(ctx, "Found line for lifetime estimate => %q", line)
+			log.Debugf(ctx, "Found line for lifetime estimate => %q", line)
 			var val int
 			if param == "a" {
 				val = 100
@@ -209,7 +209,7 @@ func detectMMCState(ctx context.Context, storageInfoSlice []string) (StorageStat
 			} else {
 				parsedVal, parseIntErr := strconv.ParseInt(param, 10, 64)
 				if parseIntErr != nil {
-					log.Error(ctx, parseIntErr.Error())
+					log.Errorf(ctx, parseIntErr.Error())
 				}
 				val = int(parsedVal * 10)
 			}
@@ -221,10 +221,10 @@ func detectMMCState(ctx context.Context, storageInfoSlice []string) (StorageStat
 		mEol, err := regexpSubmatchToMap(mmcFailEolRegexp, line)
 		if err == nil {
 			param := mEol["val"]
-			log.Debug(ctx, "Found line for end-of-life => %q", line)
+			log.Debugf(ctx, "Found line for end-of-life => %q", line)
 			parsedVal, parseIntErr := strconv.ParseInt(param, 10, 64)
 			if parseIntErr != nil {
-				log.Error(ctx, parseIntErr.Error())
+				log.Errorf(ctx, parseIntErr.Error())
 			}
 			eolValue = int(parsedVal)
 			break
@@ -255,7 +255,7 @@ const (
 // detectNVMEState read the info to detect state for NVMe storage.
 // return error if the regular expression cannot compile
 func detectNVMEState(ctx context.Context, storageInfoSlice []string) (StorageState, error) {
-	log.Info(ctx, "Extraction metrics for NVMe storage")
+	log.Infof(ctx, "Extraction metrics for NVMe storage")
 	nvmeFailRegexp, err := regexp.Compile(nvmeFailGlob)
 	if err != nil {
 		return StorageStateUndefined, errors.Annotate(err, "detect nvme state").Err()
@@ -264,18 +264,18 @@ func detectNVMEState(ctx context.Context, storageInfoSlice []string) (StorageSta
 	for _, line := range storageInfoSlice {
 		m, err := regexpSubmatchToMap(nvmeFailRegexp, line)
 		if err == nil {
-			log.Debug(ctx, "Found line for usage => %q", line)
+			log.Debugf(ctx, "Found line for usage => %q", line)
 			val, convertErr := strconv.ParseInt(m["param"], 10, 64)
 			if convertErr == nil {
 				usedValue = int(val)
 			} else {
-				log.Debug(ctx, "Could not cast: %s to int", m["param"])
+				log.Debugf(ctx, "Could not cast: %s to int", m["param"])
 			}
 			break
 		}
 	}
 	if usedValue < 91 {
-		log.Info(ctx, "NVME storage usage value: %v", usedValue)
+		log.Infof(ctx, "NVME storage usage value: %v", usedValue)
 		return StorageStateNormal, nil
 	}
 	return StorageStateWarning, nil

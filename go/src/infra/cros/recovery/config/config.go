@@ -19,7 +19,7 @@ type ExecsExist func(execName string) bool
 
 // Load performs loading the configuration source with data validation.
 func Load(ctx context.Context, r io.Reader, execsExit ExecsExist) (*Configuration, error) {
-	log.Debug(ctx, "Load configuration: started.")
+	log.Debugf(ctx, "Load configuration: started.")
 	if r == nil {
 		return nil, errors.Reason("load configuration: reader is not provided").Err()
 	}
@@ -35,14 +35,14 @@ func Load(ctx context.Context, r io.Reader, execsExit ExecsExist) (*Configuratio
 		return nil, errors.Annotate(err, "load configuration").Err()
 	}
 	if execsExit == nil {
-		log.Info(ctx, "Load configuration: validation skipped!")
+		log.Infof(ctx, "Load configuration: validation skipped!")
 	} else {
 		c, err = Validate(ctx, c, execsExit)
 		if err != nil {
 			return nil, errors.Annotate(err, "load configuration").Err()
 		}
 	}
-	log.Debug(ctx, "Load configuration: finished successfully.")
+	log.Debugf(ctx, "Load configuration: finished successfully.")
 	return c, nil
 }
 

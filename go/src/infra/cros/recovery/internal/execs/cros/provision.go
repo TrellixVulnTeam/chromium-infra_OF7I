@@ -27,7 +27,7 @@ func updateProvisionedCrosVersionExec(ctx context.Context, info *execs.ExecInfo)
 	if err != nil {
 		return errors.Annotate(err, "read os version").Err()
 	}
-	log.Debug(ctx, "ChromeOS version on the dut: %s.", version)
+	log.Debugf(ctx, "ChromeOS version on the dut: %s.", version)
 	if info.RunArgs.DUT.ProvisionedInfo == nil {
 		info.RunArgs.DUT.ProvisionedInfo = &tlw.DUTProvisionedInfo{}
 	}
@@ -46,7 +46,7 @@ func updateJobRepoURLExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err != nil {
 		return errors.Annotate(err, "update job repo url").Err()
 	}
-	log.Debug(ctx, "New job repo URL: %s.", jobRepoURL)
+	log.Debugf(ctx, "New job repo URL: %s.", jobRepoURL)
 	info.RunArgs.DUT.ProvisionedInfo.JobRepoURL = jobRepoURL
 	return nil
 }

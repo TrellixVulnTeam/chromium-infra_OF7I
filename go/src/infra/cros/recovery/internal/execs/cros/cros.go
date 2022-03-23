@@ -47,7 +47,7 @@ func releaseBuildPath(ctx context.Context, run execs.Runner) (string, error) {
 	if err != nil {
 		return "", errors.Annotate(err, "release build path").Err()
 	}
-	log.Debug(ctx, "Read value: %q.", output)
+	log.Debugf(ctx, "Read value: %q.", output)
 	p, err := regexp.Compile("CHROMEOS_RELEASE_BUILDER_PATH=([\\w\\W]*)")
 	if err != nil {
 		return "", errors.Annotate(err, "release build path").Err()
@@ -79,7 +79,7 @@ func ReleaseBoard(ctx context.Context, r execs.Runner) (string, error) {
 		return "", errors.Reason("release board: cannot find chromeos release board information").Err()
 	}
 	board := matches[1]
-	log.Debug(ctx, "Release board: %q.", board)
+	log.Debugf(ctx, "Release board: %q.", board)
 	return board, nil
 }
 
@@ -94,7 +94,7 @@ func uptime(ctx context.Context, run execs.Runner) (*time.Duration, error) {
 	if err != nil {
 		return nil, errors.Annotate(err, "uptime").Err()
 	}
-	log.Debug(ctx, "Read value: %q.", out)
+	log.Debugf(ctx, "Read value: %q.", out)
 	p, err := regexp.Compile("([\\d.]{6,})")
 	if err != nil {
 		return nil, errors.Annotate(err, "uptime").Err()
@@ -118,7 +118,7 @@ func IsPingable(ctx context.Context, info *execs.ExecInfo, resourceName string, 
 // IsNotPingable checks whether the resource is not pingable
 func IsNotPingable(ctx context.Context, info *execs.ExecInfo, resourceName string, count int) error {
 	if err := info.RunArgs.Access.Ping(ctx, resourceName, count); err != nil {
-		log.Debug(ctx, "Resource %s is not pingble, but expected.", resourceName)
+		log.Debugf(ctx, "Resource %s is not pingble, but expected.", resourceName)
 		return nil
 	}
 	return errors.Reason("not pingable: is pingable").Err()
@@ -132,7 +132,7 @@ const (
 // WaitUntilPingable waiting resource to be pingable.
 // TODO: Migrate usage from components.
 func WaitUntilPingable(ctx context.Context, info *execs.ExecInfo, resourceName string, waitTime time.Duration, count int) error {
-	log.Debug(ctx, "Start ping %q for the next %s.", resourceName, waitTime)
+	log.Debugf(ctx, "Start ping %q for the next %s.", resourceName, waitTime)
 	return retry.WithTimeout(ctx, pingAttemptInteval, waitTime, func() error {
 		return IsPingable(ctx, info, resourceName, count)
 	}, "wait to ping")
@@ -155,7 +155,7 @@ func IsSSHable(ctx context.Context, run execs.Runner) error {
 // WaitUntilSSHable waiting resource to be sshable.
 // TODO: Migrate usage from components.
 func WaitUntilSSHable(ctx context.Context, run execs.Runner, waitTime time.Duration) error {
-	log.Debug(ctx, "Start SSH check for the next %s.", waitTime)
+	log.Debugf(ctx, "Start SSH check for the next %s.", waitTime)
 	return retry.WithTimeout(ctx, sshAttemptInteval, waitTime, func() error {
 		return IsSSHable(ctx, run)
 	}, "wait to ssh access")
@@ -164,12 +164,12 @@ func WaitUntilSSHable(ctx context.Context, run execs.Runner, waitTime time.Durat
 // hasOnlySingleLine determines if the given string is only one single line.
 func hasOnlySingleLine(ctx context.Context, s string) bool {
 	if s == "" {
-		log.Debug(ctx, "The string is empty")
+		log.Debugf(ctx, "The string is empty")
 		return false
 	}
 	lines := strings.Split(s, "\n")
 	if len(lines) != 1 {
-		log.Debug(ctx, "Found %d lines in the string.", len(lines))
+		log.Debugf(ctx, "Found %d lines in the string.", len(lines))
 		return false
 	}
 	return true
@@ -242,7 +242,7 @@ func ServoNICMacAddress(ctx context.Context, r execs.Runner, nicPath string) (st
 	} else if !hasOnlySingleLine(ctx, nicAddressFile) {
 		return "", errors.Reason("servo nic mac address: found more then one nic address file").Err()
 	}
-	log.Info(ctx, "Found servo NIC address file: %q", nicAddressFile)
+	log.Infof(ctx, "Found servo NIC address file: %q", nicAddressFile)
 	macAddress, err := r(ctx, time.Minute, fmt.Sprintf("cat %s", nicAddressFile))
 	if err != nil {
 		return "", errors.Annotate(err, "servo nic mac address").Err()
@@ -252,10 +252,10 @@ func ServoNICMacAddress(ctx context.Context, r execs.Runner, nicPath string) (st
 		return "", errors.Annotate(err, "servo nic mac address: regular expression for correct mac address cannot compile").Err()
 	}
 	if !macAddressRegexp.MatchString(macAddress) {
-		log.Info(ctx, "Incorrect format of the servo nic mac address: %s", macAddress)
+		log.Infof(ctx, "Incorrect format of the servo nic mac address: %s", macAddress)
 		return "", errors.Reason("servo nic mac address: incorrect format mac address found").Err()
 	}
-	log.Info(ctx, "Servo NIC MAC address visible from DUT: %s", macAddress)
+	log.Infof(ctx, "Servo NIC MAC address visible from DUT: %s", macAddress)
 	return macAddress, nil
 }
 
@@ -275,7 +275,7 @@ func BootID(ctx context.Context, run execs.Runner) (string, error) {
 		return "", errors.Annotate(err, "boot id").Err()
 	}
 	if bootId == noIDMessage {
-		log.Debug(ctx, "Boot ID: old boot ID not found, will be assumed empty.")
+		log.Debugf(ctx, "Boot ID: old boot ID not found, will be assumed empty.")
 		return "", nil
 	}
 	return bootId, nil
@@ -295,7 +295,7 @@ const (
 func WaitForRestart(ctx context.Context, info *execs.ExecInfo) error {
 	// wait for it to be down.
 	if waitDownErr := WaitUntilNotPingable(ctx, info, info.RunArgs.ResourceName, waitDownRebootTime, defaultPingRetryCount); waitDownErr != nil {
-		log.Debug(ctx, "Wait For Restart: device shutdown failed.")
+		log.Debugf(ctx, "Wait For Restart: device shutdown failed.")
 		return errors.Annotate(waitDownErr, "wait for restart").Err()
 	}
 	// wait down for servo device is successful, then wait for device
@@ -303,7 +303,7 @@ func WaitForRestart(ctx context.Context, info *execs.ExecInfo) error {
 	if waitUpErr := WaitUntilPingable(ctx, info, info.RunArgs.ResourceName, waitUpRebootTime, defaultPingRetryCount); waitUpErr != nil {
 		return errors.Annotate(waitUpErr, "wait for restart").Err()
 	}
-	log.Info(ctx, "Device is up.")
+	log.Infof(ctx, "Device is up.")
 	return nil
 }
 
@@ -318,7 +318,7 @@ type TpmStatus struct {
 // status values as a map.
 func NewTpmStatus(ctx context.Context, run execs.Runner, timeout time.Duration) *TpmStatus {
 	status, _ := run(ctx, timeout, "tpm_manager_client", "status", "--nonsensitive")
-	log.Debug(ctx, "New Tpm Status :%q", status)
+	log.Debugf(ctx, "New Tpm Status :%q", status)
 	statusItems := strings.Split(status, "\n")
 	var ts = &TpmStatus{
 		statusMap: make(map[string]string),
@@ -370,9 +370,9 @@ func (tpmStatus *TpmStatus) isOwned() (bool, error) {
 // runner for a DUT.
 func SimpleReboot(ctx context.Context, run execs.Runner, timeout time.Duration, info *execs.ExecInfo) error {
 	rebootCmd := "reboot"
-	log.Debug(ctx, "Simple Rebooter : %s", rebootCmd)
+	log.Debugf(ctx, "Simple Rebooter : %s", rebootCmd)
 	out, _ := run(ctx, timeout, rebootCmd)
-	log.Debug(ctx, "Stdout: %s", out)
+	log.Debugf(ctx, "Stdout: %s", out)
 	if restartErr := WaitForRestart(ctx, info); restartErr != nil {
 		return errors.Annotate(restartErr, "simple reboot").Err()
 	}

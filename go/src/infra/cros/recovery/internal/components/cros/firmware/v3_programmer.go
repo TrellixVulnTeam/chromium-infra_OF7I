@@ -74,7 +74,7 @@ func (p *v3Programmer) programEC(ctx context.Context, imagePath string) error {
 		cmd = fmt.Sprintf(ecProgrammerCmdGlob, ecChip, imagePath, p.servod.Port())
 	}
 	out, err := p.run(ctx, firmwareProgramTimeout, cmd)
-	p.log.Debug("Program EC output: \n%s", out)
+	p.log.Debugf("Program EC output: \n%s", out)
 	return errors.Annotate(err, "program ec").Err()
 }
 
@@ -104,7 +104,7 @@ func (p *v3Programmer) programAP(ctx context.Context, imagePath, gbbHex string) 
 		}
 	}
 	out, err := p.run(ctx, firmwareProgramTimeout, cmd)
-	p.log.Debug("Program AP output:\n%s", out)
+	p.log.Debugf("Program AP output:\n%s", out)
 	return errors.Annotate(err, "program ap").Err()
 }
 
@@ -114,21 +114,21 @@ func (p *v3Programmer) ExtractAP(ctx context.Context, imagePath string, force bo
 		return errors.Reason("extract ap from dut: path for extracting file is not provided").Err()
 	}
 	if force || isFileExist(ctx, imagePath, p.run) != nil {
-		p.log.Info("Proceed to extract AP from the DUT to %q path", imagePath)
+		p.log.Infof("Proceed to extract AP from the DUT to %q path", imagePath)
 		pn, err := p.name(ctx)
 		if err != nil {
 			return errors.Annotate(err, "extract ap from dut").Err()
 		}
-		p.log.Debug("Using programmer %q", pn)
+		p.log.Debugf("Using programmer %q", pn)
 		// Reading AP from the DUT.
 		args := []string{"-p", pn, "-f", "-r", imagePath}
 		if out, err := p.run(ctx, firmwareProgramTimeout, "flashrom", args...); err != nil {
 			return errors.Annotate(err, "extract ap from dut: read ap").Err()
 		} else {
-			p.log.Debug("Extract AP: %v", out)
+			p.log.Debugf("Extract AP: %v", out)
 		}
 	} else {
-		p.log.Info("AP file is present by %q and not need to extract it again", imagePath)
+		p.log.Infof("AP file is present by %q and not need to extract it again", imagePath)
 	}
 	return nil
 }
@@ -156,7 +156,7 @@ func (p *v3Programmer) Prepare(ctx context.Context) error {
 }
 
 func (p *v3Programmer) setServodState(ctx context.Context) error {
-	p.log.Debug("Set servod state to prepare programmer.")
+	p.log.Debugf("Set servod state to prepare programmer.")
 	for _, s := range p.servodStateList() {
 		sp := strings.Split(s, ":")
 		if len(sp) != 2 {

@@ -34,12 +34,12 @@ func ReadProvisionInfo(ctx context.Context, dutHostname string) (*tlw.DUTProvisi
 	}
 	crosVersion, ok := s.LocalDUTState.ProvisionableLabels[CrosVersionKey]
 	if !ok {
-		log.Debug(ctx, "local dut info file does not have provisional information of cros-version.")
+		log.Debugf(ctx, "local dut info file does not have provisional information of cros-version.")
 	}
 	pi.CrosVersion = crosVersion
 	jobRepoURL, ok := s.LocalDUTState.ProvisionableAttributes[JobRepoURLKey]
 	if !ok {
-		log.Debug(ctx, "local dut info file does not have provisional information of job_repo_url.")
+		log.Debugf(ctx, "local dut info file does not have provisional information of job_repo_url.")
 	}
 	pi.JobRepoURL = jobRepoURL
 	return pi, nil

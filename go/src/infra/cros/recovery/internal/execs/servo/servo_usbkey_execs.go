@@ -36,7 +36,7 @@ func servoUSBHasCROSStableImageExec(ctx context.Context, info *execs.ExecInfo) e
 		return errors.Annotate(err, "servo usb-key has cros stable image").Err()
 	}
 	if strings.Contains(expectedImage, imageName) {
-		log.Info(ctx, "The image %q found on USB-key and match to stable version", imageName)
+		log.Infof(ctx, "The image %q found on USB-key and match to stable version", imageName)
 		return nil
 	}
 	return errors.Reason("servo usb-key has cros stable image: expected %q but found %q", expectedImage, imageName).Err()

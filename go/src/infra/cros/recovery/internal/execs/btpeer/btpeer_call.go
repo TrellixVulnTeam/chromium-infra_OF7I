@@ -26,7 +26,7 @@ func Call(ctx context.Context, in tlw.Access, host *tlw.BluetoothPeerHost, metho
 		Method:   "GetDetectedStatus",
 		Args:     packToXMLRPCValues(args...),
 	})
-	log.Debug(ctx, "BluetoothPeer call %q: received %#v", method, res.GetValue())
+	log.Debugf(ctx, "BluetoothPeer call %q: received %#v", method, res.GetValue())
 	if res.GetFault() {
 		return nil, errors.Reason("bluetooth peer call %q: received fail flag", method).Err()
 	}

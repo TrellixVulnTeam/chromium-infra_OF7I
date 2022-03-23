@@ -49,7 +49,7 @@ func isEnrollmentInCleanStateExec(ctx context.Context, info *execs.ExecInfo) err
 	command := fmt.Sprintf(`grep "check_enrollment" %s`, VPD_CACHE)
 	result, err := run(ctx, time.Minute, command)
 	if err == nil {
-		log.Debug(ctx, "Enrollment state in VPD cache: %s", result)
+		log.Debugf(ctx, "Enrollment state in VPD cache: %s", result)
 		if result != `"check_enrollment"="0"` {
 			return errors.Reason("enrollment in clean state: failed, The device is enrolled, it may interfere with some tests").Err()
 		}
@@ -57,7 +57,7 @@ func isEnrollmentInCleanStateExec(ctx context.Context, info *execs.ExecInfo) err
 	}
 	// In any case it returns a non zero value, it means we can't verify enrollment state, but we cannot say the device is enrolled
 	// Only trigger the enrollment in clean state when we can confirm the device is enrolled.
-	log.Error(ctx, "Unexpected error occurred during verify enrollment state in VPD cache, skipping verify process.")
+	log.Errorf(ctx, "Unexpected error occurred during verify enrollment state in VPD cache, skipping verify process.")
 	return nil
 }
 

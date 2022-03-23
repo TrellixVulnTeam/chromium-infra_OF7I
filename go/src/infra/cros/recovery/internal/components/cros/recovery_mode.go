@@ -38,7 +38,7 @@ func BootInRecoveryMode(ctx context.Context, req *BootInRecoveryRequest, dutRun,
 	if err != nil {
 		return errors.Annotate(err, "boot in recovery mode").Err()
 	}
-	log.Debug("Servo OS Install Repair: needSink :%t", needSink)
+	log.Debugf("Servo OS Install Repair: needSink :%t", needSink)
 	// Turn power off.
 	if err := servo.SetPowerState(ctx, servod, servo.PowerStateValueOFF); err != nil {
 		return errors.Annotate(err, "boot in recovery mode").Err()
@@ -55,7 +55,7 @@ func BootInRecoveryMode(ctx context.Context, req *BootInRecoveryRequest, dutRun,
 			return errors.Annotate(err, "boot in recovery mode").Err()
 		}
 	} else {
-		log.Info("Boot in recovery mode: servo type is neither V4, or V4P1, no need to switch power-deliver to sink.")
+		log.Infof("Boot in recovery mode: servo type is neither V4, or V4P1, no need to switch power-deliver to sink.")
 	}
 	closing := func() error {
 		// Register turn off for the DUT if at the end.
@@ -82,7 +82,7 @@ func BootInRecoveryMode(ctx context.Context, req *BootInRecoveryRequest, dutRun,
 	if req.IgnoreRebootFailure {
 		defer func() {
 			if err := closing(); err != nil {
-				log.Debug("Boot in recovery mode: %s", err)
+				log.Debugf("Boot in recovery mode: %s", err)
 			}
 		}()
 	}
@@ -96,9 +96,9 @@ func BootInRecoveryMode(ctx context.Context, req *BootInRecoveryRequest, dutRun,
 	if err := IsBootedFromExternalStorage(ctx, dutRun, log); err != nil {
 		return errors.Annotate(err, "boot in recovery mode").Err()
 	}
-	log.Debug("Device successful booted in recovery mode from USB-drive")
+	log.Debugf("Device successful booted in recovery mode from USB-drive")
 	if req.Callback != nil {
-		log.Debug("Boot in recovery mode: passing control to call back")
+		log.Debugf("Boot in recovery mode: passing control to call back")
 		if err := req.Callback(ctx); err != nil {
 			return errors.Annotate(err, "boot in recovery mode: callback").Err()
 		}

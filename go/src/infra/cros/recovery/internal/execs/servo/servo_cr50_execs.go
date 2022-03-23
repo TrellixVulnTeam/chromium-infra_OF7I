@@ -29,7 +29,7 @@ func servoCR50LowSBUExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err != nil {
 		return errors.Reason("servo CR50 low sbu exec: could not compute the average SBU voltage value.").Err()
 	}
-	log.Debug(ctx, "Servo CR50 Low Sbu Exec: avg SBU value is %f", sbuValue)
+	log.Debugf(ctx, "Servo CR50 Low Sbu Exec: avg SBU value is %f", sbuValue)
 	if sbuValue <= sbuThreshold {
 		return errors.Reason("servo CR50 low sbu exec: CR50 not detected due to low SBU voltage").Err()
 	}
@@ -47,7 +47,7 @@ func servoCR50EnumeratedExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err != nil {
 		return errors.Reason("servo CR50 enumerated exec: could not compute the average SBU voltage value.").Err()
 	}
-	log.Debug(ctx, "Servo CR50 Enumerated Exec: avg SBU value is %f", sbuValue)
+	log.Debugf(ctx, "Servo CR50 Enumerated Exec: avg SBU value is %f", sbuValue)
 	if sbuValue > sbuThreshold {
 		return errors.Reason("servo CR50 enumerated exec: CR50 SBU voltage is greater than the threshold").Err()
 	}

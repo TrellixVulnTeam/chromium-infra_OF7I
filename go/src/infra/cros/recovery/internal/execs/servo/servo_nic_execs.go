@@ -35,12 +35,12 @@ func servoAuditNICMacAddressExec(ctx context.Context, info *execs.ExecInfo) erro
 	if err != nil {
 		return errors.Annotate(err, "servo audit nic mac address").Err()
 	}
-	log.Debug(ctx, "Path to the servo HUB device: %s", hubPath)
+	log.Debugf(ctx, "Path to the servo HUB device: %s", hubPath)
 	nicPath, err := cros.FindSingleUsbDeviceFSDir(ctx, r, hubPath, cros.SERVO_DUT_NIC_VID, cros.SERVO_DUT_NIC_PID)
 	if err != nil {
 		return errors.Annotate(err, "servo audit nic mac address").Err()
 	}
-	log.Debug(ctx, "Path to the servo NIC device: %s", nicPath)
+	log.Debugf(ctx, "Path to the servo NIC device: %s", nicPath)
 	if hubPath == nicPath || !strings.HasPrefix(nicPath, hubPath) {
 		return errors.Reason("servo audit nic mac address: the servo nic path was detect out of servo hub path").Err()
 	}
@@ -57,13 +57,13 @@ func servoAuditNICMacAddressExec(ctx context.Context, info *execs.ExecInfo) erro
 	}
 	if cachedMacAddressFromServo == "" || cachedMacAddressFromServo != macAddressFromDUT {
 		if err := info.NewServod().Set(ctx, macAddressServoCmd, macAddressFromDUT); err != nil {
-			log.Debug(ctx, `Fail to update "macaddr" to value: %s`, macAddressFromDUT)
+			log.Debugf(ctx, `Fail to update "macaddr" to value: %s`, macAddressFromDUT)
 			return errors.Annotate(err, "servo audit nic mac address").Err()
 		}
-		log.Info(ctx, `Successfully updated the servo "macaddr" to be: %s`, macAddressFromDUT)
+		log.Infof(ctx, `Successfully updated the servo "macaddr" to be: %s`, macAddressFromDUT)
 		return nil
 	}
-	log.Info(ctx, `The servo "macaddr" does not need update.`)
+	log.Infof(ctx, `The servo "macaddr" does not need update.`)
 	return nil
 }
 

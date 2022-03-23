@@ -83,7 +83,7 @@ func main() {
 				if err != nil {
 					res.Success = false
 					res.FailReason = err.Error()
-					lg.Debug("Finished with err: %s", err)
+					lg.Debugf("Finished with err: %s", err)
 				}
 				writeOutputProps(res)
 				// if err is nil then will marked as SUCCESS
@@ -99,12 +99,12 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	// Catching the panic here as luciexe just set a step as fail and but not exit execution.
 	defer func() {
 		if r := recover(); r != nil {
-			lg.Debug("Received panic!")
+			lg.Debugf("Received panic!")
 			err = errors.Reason("panic: %s", r).Err()
 		}
 	}()
 	if err = printInputs(ctx, in); err != nil {
-		lg.Debug("Internal run: failed to marshal proto. Error: %s", err)
+		lg.Debugf("Internal run: failed to marshal proto. Error: %s", err)
 		return err
 	}
 	access, err := tlw.NewAccess(ctx, in)
@@ -122,10 +122,10 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 		var err error
 		metrics, err = karte.NewMetrics(ctx, kclient.ProdConfig(auth.Options{}))
 		if err == nil {
-			lg.Info("internal run: metrics client successfully created.")
+			lg.Infof("internal run: metrics client successfully created.")
 		} else {
 			// TODO(gregorynisbet): Make this error end the current function.
-			lg.Error("internal run: failed to instantiate karte client: %s", err)
+			lg.Errorf("internal run: failed to instantiate karte client: %s", err)
 		}
 	}
 	cr, err := getConfiguration(in.GetConfiguration(), lg)
@@ -154,7 +154,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 		BuildbucketID:         state.Infra().GetBackend().GetTask().GetId().GetId(),
 		LogRoot:               logRoot,
 	}
-	lg.Debug("Labpack: started recovery engine.")
+	lg.Debugf("Labpack: started recovery engine.")
 	if err := recovery.Run(ctx, runArgs); err != nil {
 		return errors.Annotate(err, "internal run").Err()
 	}
@@ -165,14 +165,14 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 // If configuration is empty then we will pass nil so recovery-engine will use default configuration.
 func getConfiguration(config string, lg logger.Logger) (io.Reader, error) {
 	if config == "" {
-		lg.Debug("Labpack: received empty configuration.")
+		lg.Debugf("Labpack: received empty configuration.")
 		return nil, nil
 	}
 	dc, err := b64.StdEncoding.DecodeString(config)
 	if err != nil {
 		return nil, errors.Annotate(err, "get configuration: decode configuration").Err()
 	}
-	lg.Debug("Received configuration:\n%s", string(dc))
+	lg.Debugf("Received configuration:\n%s", string(dc))
 	return bytes.NewReader(dc), nil
 }
 

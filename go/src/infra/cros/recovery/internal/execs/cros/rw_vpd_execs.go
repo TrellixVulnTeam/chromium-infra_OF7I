@@ -36,7 +36,7 @@ func areRequiredRWVPDKeysPresentExec(ctx context.Context, info *execs.ExecInfo) 
 			return errors.Annotate(err, "any rw vpd keys missing").Err()
 		}
 	}
-	log.Info(ctx, "no rw_vpd values missing")
+	log.Infof(ctx, "no rw_vpd values missing")
 	return nil
 }
 

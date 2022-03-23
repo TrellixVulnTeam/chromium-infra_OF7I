@@ -31,12 +31,12 @@ func resetEcExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.NewRunner(info.RunArgs.DUT.Name)
 	if out, err := run(ctx, 30*time.Second, ecResetCmd); err != nil {
 		// Client closed connected as rebooting.
-		log.Debug(ctx, "Client exit as device rebooted: %s", err)
+		log.Debugf(ctx, "Client exit as device rebooted: %s", err)
 		return errors.Annotate(err, "reset ec").Err()
 	} else {
-		log.Debug(ctx, "Stdout: %s", out)
+		log.Debugf(ctx, "Stdout: %s", out)
 	}
-	log.Debug(ctx, "waiting for %d seconds to let ec reset be effective.", waitTimeout)
+	log.Debugf(ctx, "waiting for %d seconds to let ec reset be effective.", waitTimeout)
 	time.Sleep(waitTimeout)
 	return nil
 }

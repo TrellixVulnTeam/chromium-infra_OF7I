@@ -40,7 +40,7 @@ func (m *metrics) Create(ctx context.Context, action *Action) error {
 		// TODO(gregorynisbet): Check if action is nil.
 		return errors.Annotate(err, "record action for asset %q", action.AssetTag).Err()
 	}
-	m.logger.Debug("Create action %q: %s\n", action.ActionKind, string(a))
+	m.logger.Debugf("Create action %q: %s\n", action.ActionKind, string(a))
 	return nil
 }
 
@@ -59,7 +59,7 @@ func (m *metrics) Update(ctx context.Context, action *Action) error {
 		// TODO(gregorynisbet): Check if action is nil.
 		return errors.Annotate(err, "record action for asset %q", action.AssetTag).Err()
 	}
-	m.logger.Debug("Update action %q: %s\n", action.ActionKind, string(a))
+	m.logger.Debugf("Update action %q: %s\n", action.ActionKind, string(a))
 	return nil
 }
 

@@ -59,32 +59,32 @@ var (
 // Checks whether the servo update is required for the passed servo device.
 func needsUpdate(ctx context.Context, runner execs.Runner, device *tlw.ServoTopologyItem, channel tlw.ServoFirmwareChannel) bool {
 	if !updatableServoNames[device.Type] {
-		log.Debug(ctx, "Needs Update: servo type %q cannot be updated", device.Type)
+		log.Debugf(ctx, "Needs Update: servo type %q cannot be updated", device.Type)
 		return false
 	}
 	if isVersionOutdated(ctx, runner, device, channel) {
-		log.Debug(ctx, "Needs Update: version is outdated, update needed.")
+		log.Debugf(ctx, "Needs Update: version is outdated, update needed.")
 		return true
 	}
-	log.Debug(ctx, "Needs Update: Device Type is %q, update not needed.", device.Type)
+	log.Debugf(ctx, "Needs Update: Device Type is %q, update not needed.", device.Type)
 	return false
 }
 
 // Checks whether the servo version is outdated for the passed servo device.
 func isVersionOutdated(ctx context.Context, runner execs.Runner, device *tlw.ServoTopologyItem, channel tlw.ServoFirmwareChannel) bool {
 	cVersion := device.FwVersion
-	log.Debug(ctx, "Is Version Outdated: current version is %q", cVersion)
+	log.Debugf(ctx, "Is Version Outdated: current version is %q", cVersion)
 	if cVersion == "" {
 		return true
 	}
 	lVersion := latestVersionFromUpdater(ctx, runner, channel, device.Type)
-	log.Debug(ctx, "Is Version Outdated: latest version is %q", lVersion)
+	log.Debugf(ctx, "Is Version Outdated: latest version is %q", lVersion)
 	// In LABPACK, if lVersion is empty, we raise an
 	// exception. However, we really only care whether latest version
 	// is available (i.e. is non-empty string), so that we can compare
 	// it with current version.
 	if cVersion != lVersion {
-		log.Info(ctx, "Servo %q version mismatch %q != %q", device.Type, cVersion, lVersion)
+		log.Infof(ctx, "Servo %q version mismatch %q != %q", device.Type, cVersion, lVersion)
 		return true
 	}
 	return false
@@ -102,7 +102,7 @@ func latestVersionFromUpdater(ctx context.Context, runner execs.Runner, channel 
 			return strings.TrimSpace(resultComponents[len(resultComponents)-1])
 		}
 	} else {
-		log.Debug(ctx, "Latest Version From Updater: encountered error while determining latest version %q", err)
+		log.Debugf(ctx, "Latest Version From Updater: encountered error while determining latest version %q", err)
 	}
 	// If any error was encountered while determining the later
 	// version, it is sufficient to return an empty string because
@@ -122,7 +122,7 @@ const (
 func KillActiveUpdaterProcesses(ctx context.Context, r execs.Runner, timeout time.Duration, deviceSerial string) error {
 	cmd := fmt.Sprintf(killActiveUpdatersCmd, deviceSerial)
 	if _, err := r(ctx, timeout, cmd); err != nil {
-		log.Debug(ctx, "Fail to kill active update process")
+		log.Debugf(ctx, "Fail to kill active update process")
 		return errors.Annotate(err, "kill active update process").Err()
 	}
 	return nil
@@ -147,25 +147,25 @@ func createServoDeviceFwUpdateCmd(useContainer bool, device *tlw.ServoTopologyIt
 func updateServoDeviceFW(ctx context.Context, r execs.Runner, useContainer bool, device *tlw.ServoTopologyItem, forceUpdate bool, ignoreVersion bool, channel tlw.ServoFirmwareChannel) error {
 	if !ignoreVersion {
 		if needsUpdate(ctx, r, device, channel) {
-			log.Debug(ctx, "This servo %q: still need update", device.Type)
+			log.Debugf(ctx, "This servo %q: still need update", device.Type)
 		} else {
-			log.Debug(ctx, "This servo %q: does not need update", device.Type)
+			log.Debugf(ctx, "This servo %q: does not need update", device.Type)
 			return nil
 		}
 	} else {
-		log.Debug(ctx, "Version check for %q skipped by request!", device.Type)
+		log.Debugf(ctx, "Version check for %q skipped by request!", device.Type)
 	}
 	updateCmd := createServoDeviceFwUpdateCmd(useContainer, device, forceUpdate, channel)
 	if forceUpdate {
-		log.Debug(ctx, "Try to update servo fw of the %q with force.", device.Type)
+		log.Debugf(ctx, "Try to update servo fw of the %q with force.", device.Type)
 	} else {
-		log.Debug(ctx, "Try to update servo fw of the %q.", device.Type)
+		log.Debugf(ctx, "Try to update servo fw of the %q.", device.Type)
 	}
 	if !useContainer {
 		// Kill any active updater processes before return.
 		defer func() {
 			if err := KillActiveUpdaterProcesses(ctx, r, 30*time.Second, device.Serial); err != nil {
-				log.Debug(ctx, "Kill active update process fail: %s", err)
+				log.Debugf(ctx, "Kill active update process fail: %s", err)
 			}
 		}()
 	}
@@ -173,8 +173,8 @@ func updateServoDeviceFW(ctx context.Context, r execs.Runner, useContainer bool,
 	if fwUpdateStdOut, err := r(ctx, fwUpdaterTimeout, updateCmd); err != nil {
 		return errors.Annotate(err, "update servo device fw").Err()
 	} else {
-		log.Debug(ctx, "Servo firmware update of %q finished with output: %s", device.Type, fwUpdateStdOut)
-		log.Info(ctx, "Servo firmware update of %q finished.", device.Type)
+		log.Debugf(ctx, "Servo firmware update of %q finished with output: %s", device.Type, fwUpdateStdOut)
+		log.Infof(ctx, "Servo firmware update of %q finished.", device.Type)
 		return nil
 	}
 }
@@ -187,7 +187,7 @@ func runUpdateServoDeviceFwAttempt(ctx context.Context, r execs.Runner, device *
 	err := updateServoDeviceFW(ctx, r, req.UseContainer, device, req.ForceUpdate, req.IgnoreVersion, req.FirmwareChannel)
 	if err != nil {
 		errMsg := err.Error()
-		log.Debug(ctx, `(Not critical) fail to update %s; %s`, device.Type, errMsg)
+		log.Debugf(ctx, `(Not critical) fail to update %s; %s`, device.Type, errMsg)
 		for _, issueMessage := range servoUpdateIssueMessages {
 			if strings.Contains(errMsg, issueMessage) {
 				return errors.Annotate(err, "run update servo device fw attempt: issue with servo_updater detected").Err()
@@ -200,7 +200,7 @@ func runUpdateServoDeviceFwAttempt(ctx context.Context, r execs.Runner, device *
 		return errors.Annotate(err, "run update servo device fw attempt").Err()
 	}
 	if !req.IgnoreVersion && !needsUpdate(ctx, r, device, req.FirmwareChannel) {
-		log.Info(ctx, "Servo %q firmware updated successfully", device.Type)
+		log.Infof(ctx, "Servo %q firmware updated successfully", device.Type)
 		return nil
 	}
 	return errors.Reason("run update servo device fw attempt: the servo device still require updates or ignore version is being set to true").Err()
@@ -229,11 +229,11 @@ func UpdateBoardsServoFw(ctx context.Context, r execs.Runner, req FwUpdaterReque
 	failBoards := []*tlw.ServoTopologyItem{}
 	for _, device := range devices {
 		if !topology.IsItemGood(ctx, device) {
-			log.Debug(ctx, "%s does not have minimum required data to update its firmware", device.Type)
+			log.Debugf(ctx, "%s does not have minimum required data to update its firmware", device.Type)
 			continue
 		}
 		if !updatableServoNames[device.Type] {
-			log.Debug(ctx, "%s is not supportive of servo firmware update.", device.Type)
+			log.Debugf(ctx, "%s is not supportive of servo firmware update.", device.Type)
 			continue
 		}
 		updateErr := retry.LimitCount(ctx, req.TryAttemptCount, 0, func() error {
@@ -241,7 +241,7 @@ func UpdateBoardsServoFw(ctx context.Context, r execs.Runner, req FwUpdaterReque
 
 		}, fmt.Sprintf("update %s's servo firmware", device.Type))
 		if updateErr == nil {
-			log.Info(ctx, "%s servo firmware updated successfully.", device.Type)
+			log.Infof(ctx, "%s servo firmware updated successfully.", device.Type)
 			continue
 		}
 		// Normal update attempt failed.
@@ -249,12 +249,12 @@ func UpdateBoardsServoFw(ctx context.Context, r execs.Runner, req FwUpdaterReque
 			newReq := req
 			newReq.ForceUpdate = true
 			if err := runUpdateServoDeviceFwAttempt(ctx, r, device, newReq); err == nil {
-				log.Info(ctx, "%s servo firmware force-updated successfully.", device.Type)
+				log.Infof(ctx, "%s servo firmware force-updated successfully.", device.Type)
 				continue
 			}
 		}
 		// Normal and force update attempt both failed.
-		log.Info(ctx, "Fail update firmware for %s", device.Type)
+		log.Infof(ctx, "Fail update firmware for %s", device.Type)
 		failBoards = append(failBoards, device)
 	}
 	return failBoards

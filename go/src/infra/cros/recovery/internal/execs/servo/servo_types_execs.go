@@ -29,13 +29,13 @@ func servoVerifyV3Exec(ctx context.Context, info *execs.ExecInfo) error {
 	// correct.
 	sType, err := WrappedServoType(ctx, info)
 	if err != nil {
-		log.Debug(ctx, "Servo Verify V3: could not determine the servo type")
+		log.Debugf(ctx, "Servo Verify V3: could not determine the servo type")
 		return errors.Annotate(err, "servo verify v3").Err()
 	}
 	if sType.IsV3() {
 		return nil
 	}
-	log.Debug(ctx, "Servo Verify V3: servo type is not V3.")
+	log.Debugf(ctx, "Servo Verify V3: servo type is not V3.")
 	return errors.Reason("servo verify v3: servo type %q is not V3.", sType).Err()
 }
 
@@ -44,11 +44,11 @@ func servoVerifyV3Exec(ctx context.Context, info *execs.ExecInfo) error {
 func servoVerifyV4Exec(ctx context.Context, info *execs.ExecInfo) error {
 	sType, err := WrappedServoType(ctx, info)
 	if err != nil {
-		log.Debug(ctx, "Servo Verify V4: could not determine the servo type")
+		log.Debugf(ctx, "Servo Verify V4: could not determine the servo type")
 		return errors.Annotate(err, "servo verify v4").Err()
 	}
 	if !sType.IsV4() {
-		log.Debug(ctx, "Servo Verify V4: servo type is neither V4, or V4P1.")
+		log.Debugf(ctx, "Servo Verify V4: servo type is neither V4, or V4P1.")
 		return errors.Reason("servo verify v4: servo type %q is not V4.", sType).Err()
 	}
 	return nil
@@ -59,11 +59,11 @@ func servoVerifyV4Exec(ctx context.Context, info *execs.ExecInfo) error {
 func servoVerifyServoMicroExec(ctx context.Context, info *execs.ExecInfo) error {
 	sType, err := WrappedServoType(ctx, info)
 	if err != nil {
-		log.Debug(ctx, "Servo Verify Servo Micro: could not determine the servo type")
+		log.Debugf(ctx, "Servo Verify Servo Micro: could not determine the servo type")
 		return errors.Annotate(err, "servo verify servo micro").Err()
 	}
 	if !sType.IsMicro() {
-		log.Debug(ctx, "Servo Verify servo micro: servo type is not servo micro.")
+		log.Debugf(ctx, "Servo Verify servo micro: servo type is not servo micro.")
 		return errors.Reason("servo verify servo micro: servo type %q is not servo micro.", sType).Err()
 	}
 	return nil
@@ -74,7 +74,7 @@ func servoVerifyServoMicroExec(ctx context.Context, info *execs.ExecInfo) error 
 func servoIsDualSetupConfiguredExec(ctx context.Context, info *execs.ExecInfo) error {
 	if info.RunArgs.DUT != nil && info.RunArgs.DUT.ExtraAttributes != nil {
 		if _, ok := info.RunArgs.DUT.ExtraAttributes["servo_setup_dual"]; ok {
-			log.Debug(ctx, "Servo Is Dual Setup Configured: servo device is configured to be in dual-setup mode.")
+			log.Debugf(ctx, "Servo Is Dual Setup Configured: servo device is configured to be in dual-setup mode.")
 			return nil
 		}
 	}
@@ -99,11 +99,11 @@ func servoVerifyDualSetupExec(ctx context.Context, info *execs.ExecInfo) error {
 func servoVerifyServoCCDExec(ctx context.Context, info *execs.ExecInfo) error {
 	sType, err := WrappedServoType(ctx, info)
 	if err != nil {
-		log.Debug(ctx, "Servo Verify Servo CCD: could not determine the servo type")
+		log.Debugf(ctx, "Servo Verify Servo CCD: could not determine the servo type")
 		return errors.Annotate(err, "servo verify servo type ccd").Err()
 	}
 	if !sType.IsCCD() {
-		log.Debug(ctx, "Servo Verify servo CCD: servo type is not servo ccd.")
+		log.Debugf(ctx, "Servo Verify servo CCD: servo type is not servo ccd.")
 		return errors.Reason("servo verify servo ccd: servo type %q is not servo ccd.", sType).Err()
 	}
 	return nil

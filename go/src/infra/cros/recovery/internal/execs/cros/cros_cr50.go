@@ -71,7 +71,7 @@ func cr50FWComponent(ctx context.Context, r execs.Runner, region CR50Region, fin
 	if err != nil {
 		return "", errors.Annotate(err, "cr50").Err()
 	}
-	log.Debug(ctx, "Cr50 : %s", output)
+	log.Debugf(ctx, "Cr50 : %s", output)
 	componentRegexp, err := regexp.Compile(fmt.Sprintf(findComponentRegexp, region))
 	if err != nil {
 		return "", errors.Annotate(err, "cr50").Err()
@@ -84,6 +84,6 @@ func cr50FWComponent(ctx context.Context, r execs.Runner, region CR50Region, fin
 		return "", errors.Reason("cr50: cr50 output is in wrong format").Err()
 	}
 	componentValue := matches[1]
-	log.Debug(ctx, "Found %s FW component of value: %s", region, componentValue)
+	log.Debugf(ctx, "Found %s FW component of value: %s", region, componentValue)
 	return componentValue, nil
 }

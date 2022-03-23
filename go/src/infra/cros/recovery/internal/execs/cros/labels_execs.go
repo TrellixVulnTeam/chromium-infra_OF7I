@@ -27,18 +27,18 @@ func matchCrosVersionToInvExec(ctx context.Context, info *execs.ExecInfo) error 
 	}
 	osFromInv := info.RunArgs.DUT.ProvisionedInfo.CrosVersion
 	if osFromInv == "" {
-		log.Info(ctx, "No exsiting chromeos version label detected")
+		log.Infof(ctx, "No exsiting chromeos version label detected")
 		return nil
 	}
 	// known cases where the version label will not match the original
 	// CHROMEOS_RELEASE_BUILDER_PATH setting:
 	// * Tests for the `arc-presubmit` append "-cheetsth" to the label.
 	if strings.HasSuffix(osFromInv, cheets_suffix) {
-		log.Debug(ctx, "chromeos label with %s suffix detected, this suffix will be ignored when comparing label.", cheets_suffix)
+		log.Debugf(ctx, "chromeos label with %s suffix detected, this suffix will be ignored when comparing label.", cheets_suffix)
 		endingIndex := len(osFromInv) - len(cheets_suffix)
 		osFromInv = osFromInv[:endingIndex]
 	}
-	log.Debug(ctx, "OS version from DUT: %s; OS version cached in label: %s", osFromDUT, osFromInv)
+	log.Debugf(ctx, "OS version from DUT: %s; OS version cached in label: %s", osFromDUT, osFromInv)
 	if osFromDUT != osFromInv {
 		return errors.Reason("match cros version to inventory: no match").Err()
 	}
@@ -50,7 +50,7 @@ func matchCrosVersionToInvExec(ctx context.Context, info *execs.ExecInfo) error 
 func matchJobRepoURLVersionToInvExec(ctx context.Context, info *execs.ExecInfo) error {
 	jobRepoUrlFromInv := info.RunArgs.DUT.ProvisionedInfo.JobRepoURL
 	if jobRepoUrlFromInv == "" {
-		log.Info(ctx, "job repo url is empty, skipping check")
+		log.Infof(ctx, "job repo url is empty, skipping check")
 		return nil
 	}
 	osFromDUT, err := releaseBuildPath(ctx, info.DefaultRunner())

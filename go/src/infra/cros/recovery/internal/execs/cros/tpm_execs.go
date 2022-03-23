@@ -74,24 +74,24 @@ func isTPMInGoodStatusExec(ctx context.Context, info *execs.ExecInfo) error {
 	}
 	enabled, enabledOk := cryptoHS.ReadTPMBool("enabled")
 	if !enabledOk {
-		log.Error(ctx, `Cannot read field "enabled"`)
-		log.Error(ctx, `Cannot determine cryptohome valid status, skipping check`)
+		log.Errorf(ctx, `Cannot read field "enabled"`)
+		log.Errorf(ctx, `Cannot determine cryptohome valid status, skipping check`)
 		return nil
 	}
 	if !enabled {
-		log.Error(ctx, "TPM status: hardware is not working.")
+		log.Errorf(ctx, "TPM status: hardware is not working.")
 		return errors.Reason("tpm in good status: tpm is not enabled").Err()
 	}
 	canConnect, canConnectOk := cryptoHS.ReadTPMBool("can_connect")
 	lastErrorValue, lastErrorValueOk := cryptoHS.ReadTPMFloat64("last_error")
 	if !canConnectOk {
-		log.Error(ctx, `Cannot read field "can_connect"`)
-		log.Error(ctx, `Cannot determine cryptohome valid status, skipping check`)
+		log.Errorf(ctx, `Cannot read field "can_connect"`)
+		log.Errorf(ctx, `Cannot determine cryptohome valid status, skipping check`)
 		return nil
 	}
 	if !lastErrorValueOk {
-		log.Error(ctx, `Cannot read field "last_error"`)
-		log.Error(ctx, `Cannot determine cryptohome valid status, skipping check`)
+		log.Errorf(ctx, `Cannot read field "last_error"`)
+		log.Errorf(ctx, `Cannot determine cryptohome valid status, skipping check`)
 		return nil
 	}
 	if !canConnect {
@@ -100,13 +100,13 @@ func isTPMInGoodStatusExec(ctx context.Context, info *execs.ExecInfo) error {
 	owned, ownedOk := cryptoHS.ReadTPMBool("owned")
 	canLoadSrk, canLoadSrkOk := cryptoHS.ReadTPMBool("can_load_srk")
 	if !ownedOk {
-		log.Error(ctx, `Cannot read field value:"owned"`)
-		log.Error(ctx, `Cannot determine cryptohome valid status, skipping check`)
+		log.Errorf(ctx, `Cannot read field value:"owned"`)
+		log.Errorf(ctx, `Cannot determine cryptohome valid status, skipping check`)
 		return nil
 	}
 	if !canLoadSrkOk {
-		log.Error(ctx, `Cannot read field value:"can_load_srk"`)
-		log.Error(ctx, `Cannot determine cryptohome valid status, skipping check`)
+		log.Errorf(ctx, `Cannot read field value:"can_load_srk"`)
+		log.Errorf(ctx, `Cannot determine cryptohome valid status, skipping check`)
 		return nil
 	}
 	if owned && !canLoadSrk {
@@ -114,8 +114,8 @@ func isTPMInGoodStatusExec(ctx context.Context, info *execs.ExecInfo) error {
 	}
 	canLoadSrkPk, canLoadSrkPkOk := cryptoHS.ReadTPMBool("can_load_srk_pubkey")
 	if !canLoadSrkPkOk {
-		log.Error(ctx, `Cannot read field value:"can_load_srk_pubkey"`)
-		log.Error(ctx, `Cannot determine cryptohome valid status, skipping check`)
+		log.Errorf(ctx, `Cannot read field value:"can_load_srk_pubkey"`)
+		log.Errorf(ctx, `Cannot determine cryptohome valid status, skipping check`)
 		return nil
 	}
 	if canLoadSrk && !canLoadSrkPk {

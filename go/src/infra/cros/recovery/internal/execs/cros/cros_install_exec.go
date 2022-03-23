@@ -44,7 +44,7 @@ func osInstallRepairExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err != nil {
 		return errors.Annotate(err, "servo os install repair").Err()
 	}
-	log.Debug(ctx, "Servo OS Install Repair: needSink :%t", needSink)
+	log.Debugf(ctx, "Servo OS Install Repair: needSink :%t", needSink)
 	// Turn power off.
 	if err := servod.Set(ctx, "power_state", "off"); err != nil {
 		return errors.Annotate(err, "servo OS install repair").Err()
@@ -65,7 +65,7 @@ func osInstallRepairExec(ctx context.Context, info *execs.ExecInfo) error {
 			return errors.Annotate(err, "servo OS install repair").Err()
 		}
 	} else {
-		log.Info(ctx, "servo os install repair: servo type is neither V4, or V4P1, no need to switch power-deliver to sink.")
+		log.Infof(ctx, "servo os install repair: servo type is neither V4, or V4P1, no need to switch power-deliver to sink.")
 	}
 	// Step 3. Turn power on
 	if err := servod.Set(ctx, "power_state", "on"); err != nil {
@@ -74,7 +74,7 @@ func osInstallRepairExec(ctx context.Context, info *execs.ExecInfo) error {
 	// Next: Clear TPM
 	tpmRecoveryCmd := "chromeos-tpm-recovery"
 	if _, err := run(ctx, info.ActionTimeout, tpmRecoveryCmd); err != nil {
-		log.Debug(ctx, "servo OS install repair: (non-critical) error %q with command %q.", tpmRecoveryCmd)
+		log.Debugf(ctx, "servo OS install repair: (non-critical) error %q with command %q.", tpmRecoveryCmd)
 	}
 	// Now: install image.
 	if _, err := run(ctx, info.ActionTimeout, "chromeos-install", "--yes"); err != nil {
@@ -84,7 +84,7 @@ func osInstallRepairExec(ctx context.Context, info *execs.ExecInfo) error {
 	// are continuing with it here.
 	argsMap := info.GetActionArgs(ctx)
 	haltTimeout := argsMap.AsDuration(ctx, "halt_timeout", 120, time.Second)
-	log.Debug(ctx, "Servo OS Install Repair: using halt timeout : %s", haltTimeout)
+	log.Debugf(ctx, "Servo OS Install Repair: using halt timeout : %s", haltTimeout)
 	// The halt command needs to be run in the background. For this to
 	// succeed, the stdin, stdout and stderr are closed to allow ssh
 	// session to terminate. This closely follows the logic in

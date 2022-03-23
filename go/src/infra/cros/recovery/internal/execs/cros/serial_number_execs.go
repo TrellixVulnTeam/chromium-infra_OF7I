@@ -28,7 +28,7 @@ func updateSerialNumberToInvExec(ctx context.Context, info *execs.ExecInfo) erro
 	if sn == "" {
 		return errors.Reason("update serial number in DUT-info: is empty").Err()
 	}
-	log.Debug(ctx, "Update serial_number %q in DUT-info.", sn)
+	log.Debugf(ctx, "Update serial_number %q in DUT-info.", sn)
 	info.RunArgs.DUT.SerialNumber = sn
 	return nil
 }

@@ -24,12 +24,12 @@ func stopSartUIExec(ctx context.Context, info *execs.ExecInfo) error {
 	out, err := run(ctx, info.ActionTimeout, "stop ui && start ui")
 	if execs.SSHErrorLinuxTimeout.In(err) {
 		// Timeout Running the command.
-		log.Debug(ctx, "Got timeout when stop ui/start ui. DUT might crash.")
+		log.Debugf(ctx, "Got timeout when stop ui/start ui. DUT might crash.")
 		return errors.Annotate(err, "stop start ui").Err()
 	} else if err != nil {
-		log.Debug(ctx, "Not Critical: %s", err)
+		log.Debugf(ctx, "Not Critical: %s", err)
 	}
-	log.Debug(ctx, "Stdout: %s", out)
+	log.Debugf(ctx, "Stdout: %s", out)
 	return nil
 }
 

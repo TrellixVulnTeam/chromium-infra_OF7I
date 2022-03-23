@@ -33,7 +33,7 @@ func dmesgExec(ctx context.Context, info *execs.ExecInfo) error {
 	}
 	// Output is non-empty and dmesg ran successfully. This exec is successful
 	f := filepath.Join(logRoot, "dmesg")
-	log.Debug("dmesg path to safe: %s", f)
+	log.Debugf("dmesg path to safe: %s", f)
 	ioutil.WriteFile(f, []byte(output), defaultFilePermissions)
 	// Write the number of bytes we collected to a separate file alongside dmesg.txt.
 	// This allows us to know with complete certainty that we intentionally collected 0 bytes of output, for example.
