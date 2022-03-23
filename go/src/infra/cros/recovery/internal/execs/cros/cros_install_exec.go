@@ -13,6 +13,7 @@ import (
 	"infra/cros/recovery/internal/components/cros"
 	"infra/cros/recovery/internal/components/servo"
 	"infra/cros/recovery/internal/execs"
+	"infra/cros/recovery/internal/execs/metrics"
 	"infra/cros/recovery/internal/log"
 )
 
@@ -142,9 +143,35 @@ func verifyBootInRecoveryModeExec(ctx context.Context, info *execs.ExecInfo) err
 	return nil
 }
 
+// isTimeToForceDownloadImageToUsbKeyExec verifies if we want to force download image to usbkey.
+//
+// @params: actionArgs should be in the format of:
+// Ex: ["task_name:xxx", "repair_failed_count:1", "repair_failed_interval:10"]
+func isTimeToForceDownloadImageToUsbKeyExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
+	taskName := argsMap.AsString(ctx, "task_name", "")
+	repairFailedCountTarget := argsMap.AsInt(ctx, "repair_failed_count", -1)
+	repairFailedInterval := argsMap.AsInt(ctx, "repair_failed_interval", 10)
+	repairFailedCount, err := metrics.CountFailedRepairFromMetrics(ctx, taskName, info)
+	if err != nil {
+		return errors.Annotate(err, "is time to force download image to usbkey").Err()
+	}
+	// The previous repair task was successful, and the user didn't specify
+	// when repair_failed_count == 0 to flash usbkey image.
+	if repairFailedCount == 0 && repairFailedCountTarget != 0 {
+		return errors.Reason("is time to force download image to usbkey: the number of failed repair is 0, will not force to install os iamge").Err()
+	}
+	if repairFailedCount == repairFailedCountTarget || repairFailedCount%repairFailedInterval == 0 {
+		log.Infof(ctx, "Required re-download image to usbkey as a previous repair failed. Fail count: %d", repairFailedCount)
+		return nil
+	}
+	return errors.Reason("is time to force download image to usbkey: Fail count: %d", repairFailedCount).Err()
+}
+
 func init() {
 	execs.Register("cros_dev_mode_boot_from_servo_usb_drive", devModeBootFromServoUSBDriveExec)
 	execs.Register("cros_run_chromeos_install_command_after_boot_usbdrive", runChromeosInstallCommandWhenBootFromUSBDriveExec)
 	execs.Register("os_install_repair", osInstallRepairExec)
 	execs.Register("cros_verify_boot_in_recovery_mode", verifyBootInRecoveryModeExec)
+	execs.Register("cros_is_time_to_force_download_image_to_usbkey", isTimeToForceDownloadImageToUsbKeyExec)
 }

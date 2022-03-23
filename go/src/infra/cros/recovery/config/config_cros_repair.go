@@ -611,6 +611,19 @@ func crosRepairActions() map[string]*Action {
 			},
 			ExecName: "sample_fail",
 		},
+		"Servo USB-Key needs to be reflashed": {
+			Docs: []string{
+				"Check if it is time to download image to servo usbkey.",
+				"If so, then download the stable image to usbkey.",
+			},
+			Conditions: []string{
+				"cros_is_time_to_force_download_image_to_usbkey",
+			},
+			Dependencies: []string{
+				"Download stable image to USB-key",
+			},
+			ExecName: "sample_pass",
+		},
 		"Servo has USB-key with require image": {
 			Docs: []string{
 				"USB-drive contains stable image on it.",
@@ -636,6 +649,17 @@ func crosRepairActions() map[string]*Action {
 			},
 			ExecName:    "servo_download_image_to_usb",
 			ExecTimeout: &durationpb.Duration{Seconds: 3000},
+		},
+		"cros_is_time_to_force_download_image_to_usbkey": {
+			Docs: []string{
+				"Check if it is time to force download image to usbkey",
+				"from the number of failed recoveries since last successful PARIS repair task.",
+			},
+			ExecExtraArgs: []string{
+				"task_name:recovery",
+				"repair_failed_count:1",
+				"repair_failed_interval:10",
+			},
 		},
 		"Match provision labels": {
 			Docs: []string{
@@ -966,6 +990,7 @@ func crosRepairActions() map[string]*Action {
 				"Pools required to be in Secure mode",
 			},
 			Dependencies: []string{
+				"Servo USB-Key needs to be reflashed",
 				"Servo has USB-key with require image",
 				"cros_update_provision_os_version",
 			},
