@@ -78,7 +78,7 @@ func (a *appConfig) apply(repo ImageRepo) error {
 
 		// Update remote if applies.
 		if newDigest := img.TagToDigest[t]; newDigest != oldDigest {
-			if err := updateRemoteRepo(repo, t, oImg); err != nil {
+			if err := updateRemoteRepo(ctx, repo, t, oImg); err != nil {
 				return fmt.Errorf("apply policy %q to %q: %s", p, repo.Name(), err)
 			}
 		} else {
@@ -89,10 +89,7 @@ func (a *appConfig) apply(repo ImageRepo) error {
 }
 
 // updateRemoteRepo updates the tag on the remote side.
-func updateRemoteRepo(repo ImageRepo, tag string, oImg *image.OfficialList) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
+func updateRemoteRepo(ctx context.Context, repo ImageRepo, tag string, oImg *image.OfficialList) error {
 	if newTag, ok := oImg.GetOfficialTag(tag); ok {
 		if err := repo.Tag(ctx, tag, newTag); err != nil {
 			return fmt.Errorf("update remote repo %q:%q: %s", repo.Name(), tag, err)
