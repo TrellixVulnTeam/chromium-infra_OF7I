@@ -8,6 +8,7 @@ import (
 	"go.chromium.org/luci/appengine/gaemiddleware"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/config/server/cfgmodule"
+	_ "go.chromium.org/luci/gae/service/datastore/crbug1242998safeget"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
