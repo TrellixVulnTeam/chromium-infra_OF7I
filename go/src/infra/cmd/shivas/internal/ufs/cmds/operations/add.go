@@ -43,7 +43,8 @@ var AddCmd = &subcommands.Command{
 	host/vm
 	asset/dut/labstation/cachingservice/schedulingunit
 	machine-prototype/rack-prototype/chromeplatform/vlan
-	attached-device-machine (aliased as adm/attached-device-machine)`,
+	attached-device-machine (aliased as adm/attached-device-machine),
+	attached-device-host (aliased as adh/attached-device-host)`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &add{}
 		return c

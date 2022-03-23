@@ -45,7 +45,8 @@ var GetCmd = &subcommands.Command{
 	host/vm/vm-slots
 	asset/dut/cachingservice/schedulingunit
 	machine-prototype/rack-prototype/platform/vlan/host-deployment
-	attached-device-machine (aliased as adm/attached-device-machine)`,
+	attached-device-machine (aliased as adm/attached-device-machine),
+	attached-device-host (aliased as adh/attached-device-host)`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &get{}
 		return c

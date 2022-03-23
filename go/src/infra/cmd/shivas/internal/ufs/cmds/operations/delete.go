@@ -41,7 +41,9 @@ var DeleteCmd = &subcommands.Command{
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm
 	asset/dut/cachingservice/schedulingunit
-	machine-prototype/rack-prototype/chromeplatform/vlan`,
+	machine-prototype/rack-prototype/chromeplatform/vlan
+	attached-device-machine (aliased as adm/attached-device-machine),
+	attached-device-host (aliased as adh/attached-device-host)`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &delete{}
 		return c
