@@ -37,7 +37,7 @@ Data type: <Swarming host> | Buildbucket | CQ
 LUCI Project:
 (or link to cr-buildbucket.cfg file)
 
-Table / View:
+Dataset/ Table / View:
 (for Buildbucket and CQ, default is to get access to a view scoped for one or
 several related LUCI projects)
 
@@ -45,6 +45,7 @@ MDB or google groups readers to add/remove:
 
 
 **NOTE to whoever handles a bug: add "BigQuery Data Viewer" role only.
+To edit permissions for Buildbucket data, follow http://shortn/_DaRGa84jDf.
 
 
 END
