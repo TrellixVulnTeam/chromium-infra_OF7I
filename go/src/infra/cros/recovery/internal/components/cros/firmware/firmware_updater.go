@@ -22,6 +22,8 @@ type FirmwareUpdaterRequest struct {
 	Mode string
 	// Run updater with force option.
 	Force bool
+	// Time Specified to run firmware updater.
+	UpdaterTimeout time.Duration
 }
 
 // RunFirmwareUpdater run chromeos-firmwareupdate to update firmware on the host.
@@ -41,7 +43,7 @@ func RunFirmwareUpdater(ctx context.Context, req *FirmwareUpdaterRequest, run co
 		log.Debugf("Run firmware updater: request to run with force.")
 		args = append(args, "--force")
 	}
-	out, err := run(ctx, 5*time.Minute, "chromeos-firmwareupdate", args...)
+	out, err := run(ctx, req.UpdaterTimeout, "chromeos-firmwareupdate", args...)
 	log.Debugf("Run firmware updater stdout:\n%s", out)
 	return errors.Annotate(err, "run firmware update").Err()
 }

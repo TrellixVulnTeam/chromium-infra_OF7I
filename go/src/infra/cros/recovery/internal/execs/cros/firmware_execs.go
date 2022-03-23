@@ -92,8 +92,9 @@ func runFirmwareUpdaterExec(ctx context.Context, info *execs.ExecInfo) error {
 	am := info.GetActionArgs(ctx)
 	req := &firmware.FirmwareUpdaterRequest{
 		// Options for the mode are: autoupdate, recovery, factory.
-		Mode:  am.AsString(ctx, "mode", "autoupdate"),
-		Force: am.AsBool(ctx, "force", false),
+		Mode:           am.AsString(ctx, "mode", "autoupdate"),
+		Force:          am.AsBool(ctx, "force", false),
+		UpdaterTimeout: am.AsDuration(ctx, "updater_timeout", 600, time.Second),
 	}
 	info.NewLogger().Debugf("Run firmware update: request to run with %q mode.", req.Mode)
 	if err := firmware.RunFirmwareUpdater(ctx, req, run, info.NewLogger()); err != nil {

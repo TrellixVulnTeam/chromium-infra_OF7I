@@ -114,12 +114,13 @@ func deployActions() map[string]*Action {
 				"Disable software-controlled write-protect for 'host'",
 				"Disable software-controlled write-protect for 'ec'",
 			},
-			ExecTimeout: &durationpb.Duration{Seconds: 300},
+			ExecTimeout: &durationpb.Duration{Seconds: 900},
 			ExecName:    "cros_run_firmware_update",
 			ExecExtraArgs: []string{
 				"mode:factory",
 				"force:true",
 				"reboot:by_servo",
+				"updater_timeout:600",
 			},
 		},
 		"Update DUT firmware with factory mode and restart by host": {
@@ -133,12 +134,13 @@ func deployActions() map[string]*Action {
 				"Disable software-controlled write-protect for 'host'",
 				"Disable software-controlled write-protect for 'ec'",
 			},
-			ExecTimeout: &durationpb.Duration{Seconds: 300},
+			ExecTimeout: &durationpb.Duration{Seconds: 900},
 			ExecName:    "cros_run_firmware_update",
 			ExecExtraArgs: []string{
 				"mode:factory",
 				"force:true",
 				"reboot:by_host",
+				"updater_timeout:600",
 			},
 		},
 		"Deployment checks": {
@@ -216,7 +218,6 @@ func deployActions() map[string]*Action {
 			Dependencies: []string{
 				"Set GBB flags to 0x18 by servo",
 				"Boot DUT from USB in DEV mode",
-				"Device booted from USB-drive",
 				"Run install after boot from USB-drive",
 				"Cold reset DUT by servo and wait to boot",
 				"Wait DUT to be SSHable after reset",

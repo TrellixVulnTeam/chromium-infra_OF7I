@@ -47,7 +47,7 @@ func IsBootedFromExternalStorage(ctx context.Context, run components.Runner, log
 // 1) Power off the host.
 // 2) Trigger reboot by servo.
 // 3) Perform ctrl+u by servo to try out boot from external storage.
-func BootFromServoUSBDriveInDevMode(ctx context.Context, waitBootTimeout, waitBootInterval time.Duration, run components.Runner, ping components.Pinger, servod components.Servod, log logger.Logger) error {
+func BootFromServoUSBDriveInDevMode(ctx context.Context, waitBootTimeout, waitBootInterval time.Duration, dutRun components.Runner, ping components.Pinger, servod components.Servod, log logger.Logger) error {
 	if err := servo.UpdateUSBVisibility(ctx, servo.USBVisibleDUT, servod); err != nil {
 		return errors.Annotate(err, "boot from servo usb drive in dev mode").Err()
 	}
@@ -70,7 +70,7 @@ func BootFromServoUSBDriveInDevMode(ctx context.Context, waitBootTimeout, waitBo
 	if err != nil {
 		return errors.Annotate(err, "boot from servo usb drive in dev mode").Err()
 	}
-	if err := WaitUntilSSHable(ctx, time.Minute, SSHRetryInteval, run, log); err != nil {
+	if err := WaitUntilSSHable(ctx, time.Minute, SSHRetryInteval, dutRun, log); err != nil {
 		return errors.Annotate(err, "wait for device boot").Err()
 	}
 	// In some cases the device can boot from internal storage by multiple reasons.
@@ -78,7 +78,7 @@ func BootFromServoUSBDriveInDevMode(ctx context.Context, waitBootTimeout, waitBo
 	// 1) Image on USB-drive is bad.
 	// 2) Booting from USB-drive is not allowed.
 	// 3) Device is not in DEV mode.
-	if err := IsBootedFromExternalStorage(ctx, run, log); err != nil {
+	if err := IsBootedFromExternalStorage(ctx, dutRun, log); err != nil {
 		return errors.Annotate(err, "boot from servo usb drive in dev mode").Err()
 	}
 	return nil
