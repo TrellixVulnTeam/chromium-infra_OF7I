@@ -106,7 +106,7 @@ var Dev = Environment{
 	QueenDroneHostname: "drone-queen-ENVIRONMENT_STAGING",
 	ServiceAccount:     "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com",
 
-	UFSService: "ufs.api.cr.dev",
+	UFSService: "staging.ufs.api.cr.dev",
 }
 
 // EnvFlags controls selection of the environment: either prod (default) or dev.
