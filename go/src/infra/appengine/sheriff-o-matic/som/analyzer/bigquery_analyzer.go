@@ -221,13 +221,13 @@ func GetBigQueryAlerts(ctx context.Context, tree string) ([]*messages.BuildFailu
 }
 
 func shouldUseCache(tree string) bool {
-	trees := []string{"android", "chromium", "chromium.gpu", "ios", "chromium.perf", "chrome_browser_release", "chromium.clang"}
+	trees := []string{"android", "chromium", "chromium.gpu", "ios", "chromium.perf", "chrome_browser_release", "chromium.clang", "lacros_skylab"}
 	return sliceContains(trees, tree)
 }
 
 func getFilterFuncForTree(tree string) (func(failureRow) bool, error) {
 	switch tree {
-	case "android", "chrome_browser_release", "chromium", "chromium.clang", "chromium.gpu", "chromium.perf", "ios":
+	case "android", "chrome_browser_release", "chromium", "chromium.clang", "chromium.gpu", "chromium.perf", "ios", "lacros_skylab":
 		return chromeBrowserFilterFunc(tree), nil
 	default:
 		return nil, fmt.Errorf("could not find filter function for tree %s", tree)

@@ -70,6 +70,11 @@ cron:
   schedule: every 24 hours
   target: analyzer
 
+- description: Update Lacros Skylab alerts
+  url: /_cron/analyze/lacros_skylab
+  schedule: every 24 hours
+  target: analyzer
+
 - description: Update Fuchsia alerts
   url: /_cron/analyze/fuchsia
   schedule: every 24 hours
