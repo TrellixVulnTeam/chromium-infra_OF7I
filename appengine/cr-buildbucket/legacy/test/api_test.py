@@ -777,18 +777,6 @@ class V1ApiTest(testing.EndpointsTestCase):
     res = self.call_api('cancel', req).json_body
     self.assertEqual(res['error']['reason'], 'INVALID_INPUT')
 
-  ####### PAUSE ################################################################
-
-  @mock.patch('service.pause', autospec=True)
-  def test_pause(self, pause):
-    req = {
-        'bucket': 'luci.chromium.try',
-        'is_paused': True,
-    }
-    res = self.call_api('pause', req).json_body
-    pause.assert_called_once_with('chromium/try', True)
-    self.assertEqual(res, {})
-
   ####### ERRORS ###############################################################
 
   @mock.patch('service.get_async', autospec=True)

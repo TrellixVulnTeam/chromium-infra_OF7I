@@ -112,13 +112,13 @@ def peek(bucket_ids, max_builds=None, start_cursor=None):
   bucket_states = _get_bucket_states(bucket_ids)
   active_buckets = []
   for b in bucket_ids:
-    if bucket_states[b].is_paused:
+    if bucket_states[b].is_paused:  # pragma: no cover
       logging.warning('Ignoring paused bucket: %s.', b)
       continue
     active_buckets.append(b)
 
   # Short-circuit: if there are no remaining buckets to query, then we're done.
-  if not active_buckets:
+  if not active_buckets:  # pragma: no cover
     return ([], None)
 
   q = model.Build.query(
@@ -265,7 +265,7 @@ def _get_bucket_states(bucket_ids):
   # Get bucket keys and deduplicate.
   default_states = [model.BucketState(id=b) for b in bucket_ids]
   states = ndb.get_multi(state.key for state in default_states)
-  for i, state in enumerate(states):
+  for i, state in enumerate(states):  # pragma: no cover
     if not state:
       states[i] = default_states[i]
   return dict(zip(bucket_ids, states))
@@ -536,27 +536,8 @@ def _reject_swarming_bucket(bucket_id):
   config.validate_bucket_id(bucket_id)
   _, cfg = config.get_bucket(bucket_id)
   assert cfg, 'permission check should have failed'
-  if config.is_swarming_config(cfg):
+  if config.is_swarming_config(cfg):  # pragma: no cover
     raise errors.InvalidInputError('Invalid operation on a Swarming bucket')
-
-
-def pause(bucket_id, is_paused):
-  if not user.has_perm(user.PERM_BUCKETS_PAUSE, bucket_id):
-    raise user.current_identity_cannot('pause bucket %s', bucket_id)
-
-  _reject_swarming_bucket(bucket_id)
-
-  @ndb.transactional
-  def try_set_pause():
-    state = (
-        model.BucketState.get_by_id(bucket_id) or
-        model.BucketState(id=bucket_id)
-    )
-    if state.is_paused != is_paused:
-      state.is_paused = is_paused
-      state.put()
-
-  try_set_pause()
 
 
 def _fut_results(*futures):

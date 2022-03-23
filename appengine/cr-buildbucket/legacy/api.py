@@ -8,7 +8,6 @@ import functools
 import json
 import logging
 
-from google import protobuf
 from google.appengine.ext import ndb
 from google.protobuf import json_format
 from protorpc import messages
@@ -84,15 +83,6 @@ class PutRequestMessage(messages.Message):
 class BuildResponseMessage(messages.Message):
   build = messages.MessageField(api_common.BuildMessage, 1)
   error = messages.MessageField(ErrorMessage, 2)
-
-
-class BucketMessage(messages.Message):
-  name = messages.StringField(1, required=True)
-  project_id = messages.StringField(2, required=True)
-  config_file_content = messages.StringField(3)
-  config_file_url = messages.StringField(4)
-  config_file_rev = messages.StringField(5)
-  error = messages.MessageField(ErrorMessage, 10)
 
 
 def parse_v1_tags(v1_tags):
@@ -913,27 +903,6 @@ class BuildBucketApi(remote.Service):
         ),
     ).get_result()
     return build_to_response_message(build)
-
-  ####### PAUSE ################################################################
-
-  class PauseResponse(messages.Message):
-    pass
-
-  @buildbucket_api_method(
-      endpoints.ResourceContainer(
-          message_types.VoidMessage,
-          bucket=messages.StringField(1, required=True),
-          is_paused=messages.BooleanField(2, required=True),
-      ),
-      PauseResponse,
-      path='buckets/{bucket}/pause',
-      http_method='POST'
-  )
-  @auth.public
-  def pause(self, request):
-    """Pauses or unpause a bucket."""
-    service.pause(convert_bucket(request.bucket), request.is_paused)
-    return self.PauseResponse()
 
 
 @contextlib.contextmanager
