@@ -8,12 +8,12 @@ import (
 	"context"
 	"fmt"
 
+	"go.chromium.org/luci/common/logging"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/server/tq"
 	"google.golang.org/protobuf/proto"
 
 	"infra/appengine/rubber-stamper/internal/reviewer"
-	"infra/appengine/rubber-stamper/internal/util"
 	"infra/appengine/rubber-stamper/tasks/taskspb"
 )
 
@@ -29,7 +29,7 @@ func init() {
 			if err := reviewer.ReviewChange(ctx, t); err != nil {
 				info := tq.TaskExecutionInfo(ctx)
 				if info != nil && info.ExecutionCount >= 2 {
-					util.SendErrorReport(ctx, fmt.Errorf("task (host %s, cl %d, revision %s) failed for at least 3 times; last error %v", t.Host, t.Number, t.Revision, err))
+					logging.WithError(err).Errorf(ctx, "task (host %s, cl %d, revision %s) failed for at least 3 times", t.Host, t.Number, t.Revision)
 				}
 
 				return fmt.Errorf("failed to review change for host %s, cl %d, revision %s: %v", t.Host, t.Number, t.Revision, err.Error())

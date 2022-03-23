@@ -16,7 +16,6 @@ import (
 
 	"infra/appengine/rubber-stamper/cron"
 	"infra/appengine/rubber-stamper/internal/gerrit"
-	"infra/appengine/rubber-stamper/internal/util"
 )
 
 func main() {
@@ -29,7 +28,6 @@ func main() {
 	server.Main(nil, modules, func(srv *server.Server) error {
 		var err error
 		srv.Context = gerrit.Setup(srv.Context)
-		srv.Context, err = util.SetupErrorReporting(srv.Context)
 		if err != nil {
 			logging.Errorf(srv.Context, "failed to set up ErrorReporting client")
 		}
