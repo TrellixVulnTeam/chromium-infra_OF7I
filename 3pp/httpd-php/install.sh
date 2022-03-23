@@ -147,17 +147,32 @@ cd ..
 bin_files="
     bin/httpd
     bin/openssl"
-lib_files="
-    lib/libapr-1.0.dylib
-    lib/libaprutil-1.0.dylib
-    lib/libcrypto.1.1.dylib
-    lib/libexpat.1.dylib
-    lib/libpcre.1.dylib
-    lib/libpcrecpp.0.dylib
-    lib/libpcreposix.0.dylib
-    lib/libssl.1.1.dylib
-    lib/libxml2.2.dylib
-    lib/libz.1.dylib"
+if [[ $OSTYPE == darwin* ]]
+then
+  lib_files="
+      lib/libapr-1.0.dylib
+      lib/libaprutil-1.0.dylib
+      lib/libcrypto.1.1.dylib
+      lib/libexpat.1.dylib
+      lib/libpcre.1.dylib
+      lib/libpcrecpp.0.dylib
+      lib/libpcreposix.0.dylib
+      lib/libssl.1.1.dylib
+      lib/libxml2.2.dylib
+      lib/libz.1.dylib"
+else
+  lib_files="
+      lib/libapr-1.so.0
+      lib/libaprutil-1.so.0
+      lib/libcrypto.so.1.1
+      lib/libexpat.so.1
+      lib/libpcre.so.1
+      lib/libpcrecpp.so.0
+      lib/libpcreposix.so.0
+      lib/libssl.so.1.1
+      lib/libxml2.so.2
+      lib/libz.so.1"
+fi
 libexec_files="
     libexec/apache2/libphp7.so
     libexec/apache2/mod_access_compat.so
@@ -220,24 +235,30 @@ sed -n -e '/^Copyright notice:/,//p' "${src}/zlib-${zlib_version}/README" >> "${
 
 for f in ${bin_files} ${lib_files} ${libexec_files}; do
   cp "${build}/${f}" "${out}/${f}"
-  for lib in ${lib_files}; do
-    install_name_tool -change "${build}/${lib}" "@rpath/$(basename "${lib}")" "${out}/${f}"
-  done
-done
-for f in ${bin_files}; do
-  install_name_tool -add_rpath "@executable_path/../lib" "${out}/${f}"
-done
-for f in ${lib_files}; do
-  install_name_tool -id "@rpath/$(basename "${f}")" "${out}/${f}"
-done
-for f in ${libexec_files}; do
-  install_name_tool -id "@rpath/../libexec/$(basename "${f}")" "${out}/${f}"
-done
-
-# Verify that no absolute build paths have leaked into the output.
-for f in ${bin_files} ${lib_files} ${libexec_files}; do
-  if otool -l "${out}/${f}" | grep ${build}; then
-    echo "ERROR: Absolute path found in binary ${f}"
-    exit 1
+  if [[ $OSTYPE == darwin* ]]
+  then
+    for lib in ${lib_files}; do
+      install_name_tool -change "${build}/${lib}" "@rpath/$(basename "${lib}")" "${out}/${f}"
+    done
   fi
 done
+if [[ $OSTYPE == darwin* ]]
+then
+  for f in ${bin_files}; do
+    install_name_tool -add_rpath "@executable_path/../lib" "${out}/${f}"
+  done
+  for f in ${lib_files}; do
+    install_name_tool -id "@rpath/$(basename "${f}")" "${out}/${f}"
+  done
+  for f in ${libexec_files}; do
+    install_name_tool -id "@rpath/../libexec/$(basename "${f}")" "${out}/${f}"
+  done
+
+  # Verify that no absolute build paths have leaked into the output.
+  for f in ${bin_files} ${lib_files} ${libexec_files}; do
+    if otool -l "${out}/${f}" | grep ${build}; then
+      echo "ERROR: Absolute path found in binary ${f}"
+      exit 1
+    fi
+  done
+fi
