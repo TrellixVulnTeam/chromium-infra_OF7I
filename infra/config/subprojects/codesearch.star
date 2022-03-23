@@ -221,10 +221,7 @@ update_submodules_mirror(
 # TODO(gavinmak): Generalize and add an initializer when using more boards.
 builder(
     name = "codesearch-gen-chromiumos-amd64-generic",
-    executable = luci.recipe(
-        name = "chromiumos_codesearch",
-        cipd_package = "infra/recipe_bundles/chromium.googlesource.com/chromiumos/infra/recipes",
-    ),
+    executable = build.recipe(name = "chromiumos_codesearch"),
     builder_group_property_name = "builder_group",
     execution_timeout = 9 * time.hour,
     category = "gen",
