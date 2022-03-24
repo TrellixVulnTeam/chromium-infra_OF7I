@@ -165,6 +165,16 @@ func hasDutHwidExec(ctx context.Context, info *execs.ExecInfo) error {
 	return errors.Reason("dut Hwid is empty").Err()
 }
 
+// hasDutSerialNumberExec verifies that DUT has a serial number
+// available.
+func hasDutSerialNumberExec(ctx context.Context, info *execs.ExecInfo) error {
+	if d := info.RunArgs.DUT; d != nil && d.SerialNumber != "" {
+		log.Debugf(ctx, "DUT Serial Number : %q", d.SerialNumber)
+		return nil
+	}
+	return errors.Reason("dut serial number is empty").Err()
+}
+
 func init() {
 	execs.Register("dut_servo_host_present", servoHostPresentExec)
 	execs.Register("dut_has_name", hasDutNameActionExec)
@@ -178,4 +188,5 @@ func init() {
 	execs.Register("dut_servo_has_serial", servoVerifySerialNumberExec)
 	execs.Register("dut_has_battery", hasBatteryExec)
 	execs.Register("dut_has_hwid", hasDutHwidExec)
+	execs.Register("dut_has_serial_number", hasDutSerialNumberExec)
 }
