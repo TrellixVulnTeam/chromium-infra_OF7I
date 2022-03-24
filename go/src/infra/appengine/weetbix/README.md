@@ -24,7 +24,7 @@ To run the server, in another terminal use:
 cd frontend
 go run main.go \
  -cloud-project chops-weetbix-dev \
- -spanner-database projects/chops-spanner-testing/instances/testing/databases/chops-weetbix-dev \
+ -spanner-database projects/chops-weetbix-dev/instances/dev/databases/chops-weetbix-dev \
  -default-request-timeout 10m0s \
  -config-local-dir ../configs
 ```

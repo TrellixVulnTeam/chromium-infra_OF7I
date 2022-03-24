@@ -27,7 +27,7 @@ luci_gae_vars:
     OAUTH_REDIRECT_URL: https://chops-weetbix-dev.appspot.com/auth/openid/callback
     ROOT_SECRET: sm://root-secret
     TINK_AEAD_KEY: sm://tink-aead-primary
-    SPANNER_DB: projects/chops-spanner-testing/instances/testing/databases/chops-weetbix-dev
+    SPANNER_DB: projects/chops-weetbix-dev/instances/dev/databases/chops-weetbix-dev
 
 handlers:
 - url: /static
