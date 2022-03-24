@@ -134,8 +134,8 @@ func reportJoinStats(ctx context.Context, metric metric.NonCumulativeDistributio
 		}
 
 		joined := true
-		joinToPresubmitGauge.Set(ctx, joinedDist, project, joined)
+		metric.Set(ctx, joinedDist, project, joined)
 		joined = false
-		joinToPresubmitGauge.Set(ctx, unjoinedDist, project, joined)
+		metric.Set(ctx, unjoinedDist, project, joined)
 	}
 }
