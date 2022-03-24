@@ -76,6 +76,7 @@ var AddLabstationCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.model, "model", "", "model name of the device")
 		c.Flags.StringVar(&c.board, "board", "", "board the device is based on")
 		c.Flags.StringVar(&c.rack, "rack", "", "rack that the labstation is on")
+		c.Flags.StringVar(&c.zone, "zone", "", "zone that the labstation is on. "+cmdhelp.ZoneFilterHelpText)
 		c.Flags.BoolVar(&c.paris, "paris", false, "use paris for deployment")
 		return c
 	},
@@ -107,6 +108,7 @@ type addLabstation struct {
 	model string
 	board string
 	rack  string
+	zone  string
 }
 
 var mcsvFields = []string{
@@ -221,11 +223,13 @@ func (c addLabstation) validateArgs() error {
 		if c.rpm != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe MCSV/JSON mode is specified. '-rpm' cannot be specified at the same time.")
 		}
-		if c.model != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe MCSV/JSON mode is specified. '-model' cannot be specified at the same time.")
-		}
-		if c.board != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe MCSV/JSON mode is specified. '-board' cannot be specified at the same time.")
+		if utils.IsCSVFile(c.newSpecsFile) {
+			if c.board != "" {
+				return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe MCSV mode is specified. '-board' cannot be specified at the same time.")
+			}
+			if c.model != "" {
+				return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe MCSV mode is specified. '-model' cannot be specified at the same time.")
+			}
 		}
 		if c.rpmOutlet != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe MCSV/JSON mode is specified. '-rpm-outlet' cannot be specified at the same time.")
@@ -271,12 +275,7 @@ func (c *addLabstation) parseArgs() ([]*labstationDeployUFSParams, error) {
 		if len(machinelse.GetMachines()) == 0 {
 			return nil, cmdlib.NewQuietUsageError(c.Flags, "Need asset tag to create Labstation. Use Machines field in %s", c.newSpecsFile)
 		}
-		// Get the updated asset and update paths. Note that deployment fails if model/board not already assigned to asset.
-		asset, paths, err := utils.GenerateAssetUpdate(machinelse.GetName(), machinelse.GetMachines()[0], "", "", "", "")
-		if err != nil {
-			return nil, err
-		}
-
+		asset, paths := utils.GenerateAssetUpdate(machinelse.GetMachines()[0], c.model, c.board, c.zone, c.rack)
 		return []*labstationDeployUFSParams{{
 			Labstation: machinelse,
 			Asset:      asset,
@@ -321,9 +320,12 @@ func (c *addLabstation) parseMCSV() ([]*labstationDeployUFSParams, error) {
 
 // addLabstationToUFS attempts to create a machineLSE object in UFS.
 func (c *addLabstation) addLabstationToUFS(ctx context.Context, ic ufsAPI.FleetClient, params *labstationDeployUFSParams) error {
-	if err := c.updateAssetToUFS(ctx, ic, params.Asset, params.Paths); err != nil {
-		return err
+	if params.Asset != nil {
+		if err := c.updateAssetToUFS(ctx, ic, params.Asset, params.Paths); err != nil {
+			return err
+		}
 	}
+	utils.PrintProtoJSON(params.Labstation, true)
 	res, err := ic.CreateMachineLSE(ctx, &ufsAPI.CreateMachineLSERequest{
 		MachineLSE:   params.Labstation,
 		MachineLSEId: params.Labstation.GetName(),
@@ -432,10 +434,8 @@ func (c *addLabstation) initializeLSEAndAsset(recMap map[string]string) (*labsta
 		lse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Pools = pools
 	}
 	// Get the updated asset and update paths
-	asset, paths, err := utils.GenerateAssetUpdate(lse.GetName(), machines[0], model, board, "", c.rack)
-	if err != nil {
-		return nil, err
-	}
+	// Note: If it's a csv update, allow for updating zone and rack from cmdline
+	asset, paths = utils.GenerateAssetUpdate(machines[0], model, board, c.zone, c.rack)
 	return &labstationDeployUFSParams{
 		Labstation: lse,
 		Asset:      asset,

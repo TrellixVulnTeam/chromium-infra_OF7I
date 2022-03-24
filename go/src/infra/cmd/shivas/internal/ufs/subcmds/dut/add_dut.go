@@ -383,10 +383,7 @@ func (c *addDUT) parseArgs() ([]*dutDeployUFSParams, error) {
 		if err := utils.ParseJSONFile(c.newSpecsFile, machinelse); err != nil {
 			return nil, err
 		}
-		asset, paths, err := utils.GenerateAssetUpdate(machinelse.GetName(), machinelse.GetMachines()[0], "", "", "", "")
-		if err != nil {
-			return nil, err
-		}
+		asset, paths := utils.GenerateAssetUpdate(machinelse.GetMachines()[0], c.model, c.board, c.zone, c.rack)
 		return []*dutDeployUFSParams{{
 			DUT:   machinelse,
 			Asset: asset,
@@ -618,10 +615,7 @@ func (c *addDUT) initializeLSEAndAsset(recMap map[string]string) (*dutDeployUFSP
 	peripherals.Chaos = c.chaos
 	peripherals.SmartUsbhub = c.smartUSBHub
 	// Get the updated asset and update paths
-	asset, paths, err := utils.GenerateAssetUpdate(lse.GetName(), machines[0], model, board, c.zone, c.rack)
-	if err != nil {
-		return nil, err
-	}
+	asset, paths := utils.GenerateAssetUpdate(machines[0], model, board, c.zone, c.rack)
 	return &dutDeployUFSParams{
 		DUT:   lse,
 		Asset: asset,

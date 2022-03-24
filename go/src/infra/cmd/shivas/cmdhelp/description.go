@@ -206,6 +206,8 @@ Example DUT with peripherals:
 The protobuf definition of machineLSE is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
 
+It is possible to update the underlying asset using -zone, -rack, -model or -board options.
+
 [MCSV Mode]
 The file may have multiple or one dut csv record.
 The header format and sequence should be: [name,asset,model,board,servo_host,servo_port,servo_serial,rpm_host,rpm_outlet,pools]
@@ -213,7 +215,11 @@ Example mcsv format:
 name,asset,model,board,servo_host,servo_port,servo_serial,servo_setup,rpm_host,rpm_outlet,pools
 dut-1,asset-1,eve,eve,servo-1,9998,ServoXdw,REGULAR,rpm-1,23,"CTS QUOTA"
 dut-2,asset-2,kevin,kevin,servo-2,9998,ServoYdw,,rpm-2,43,QUOTA
-dut-3,asset-3,,,chromeos6-row2-rack3-host4-servo,,,,,,,`
+dut-3,asset-3,,,chromeos6-row2-rack3-host4-servo,,,,,,,
+
+It is possible to update -zone or -rack of asset. This will be applied to all the rows of the csv.
+
+`
 
 	// DUTUpdateFileText description for json file input
 	DUTUpdateFileText string = `Path to a file(.json) containing DUT specification.
@@ -377,6 +383,8 @@ Example Labstation:
         "description": "CrOS6-ro10-r22 labstation",
 }
 
+It is possible to update the underlying asset using -zone, -board, -rack or -model with the json update.
+
 The protobuf definition of machine lse is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
 
@@ -391,6 +399,8 @@ name,asset,model,board,rpm_host,rpm_outlet,pools
 labstation-1,asset-1,wukong,fizz_labstation,rpm-1,A2,labstation_main
 labstation-2,asset-2,wukong,fizz_labstation,rpm-2,A2,"labstation_main labstation_tryjob"
 labstation-3,asset-3,wukong,fizz_labstation,rpm-3,A2,labstation_main
+
+It is possible to update -zone or -rack along with csv. The update is applied to all the rows.
 
 `
 	// LabstationUpdateFileText description for json file input
