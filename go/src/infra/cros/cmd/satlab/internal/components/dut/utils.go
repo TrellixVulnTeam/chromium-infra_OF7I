@@ -20,6 +20,8 @@ type flagmap = map[string][]string
 
 // GetDockerHostBoxIdentifier gets the identifier for the satlab DHB, either from the command line, or
 // by running a command inside the current container if no flag was given on the command line.
+//
+// Note that this function always returns the satlab ID in lowercase.
 func getDockerHostBoxIdentifier(common site.CommonFlags) (string, error) {
 	// Use the string provided in the common flags by default.
 	if common.SatlabID != "" {

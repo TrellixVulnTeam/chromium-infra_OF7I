@@ -31,6 +31,8 @@ const (
 )
 
 // GetHostIdentifier gets the host identifier value.
+//
+// Note that this command always returns the identifier in lowercase.
 func GetDockerHostBoxIdentifier() (string, error) {
 	fmt.Fprintf(os.Stderr, "Get host identifier: run %s\n", paths.GetHostIdentifierScript)
 	out, err := exec.Command(paths.GetHostIdentifierScript).Output()

@@ -122,6 +122,12 @@ func (c *setStableVersionRun) produceRequest(ctx context.Context, a subcommands.
 
 // InnerRun creates a client, sends a GetStableVersion request, and prints the response.
 func (c *setStableVersionRun) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
+	newHostname, err := preprocessHostname(c.commonFlags, c.hostname, nil, nil)
+	if err != nil {
+		return errors.Annotate(err, "set stable version").Err()
+	}
+	c.hostname = newHostname
+
 	req, err := c.produceRequest(ctx, a, args, env)
 	if err != nil {
 		return errors.Annotate(err, "set stable version").Err()

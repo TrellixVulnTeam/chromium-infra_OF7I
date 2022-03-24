@@ -64,6 +64,12 @@ func (c *deleteStableVersionRun) Run(a subcommands.Application, args []string, e
 
 // InnerRun creates a client, sends a DeleteStableVersion request, and prints the response.
 func (c *deleteStableVersionRun) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
+	newHostname, err := preprocessHostname(c.commonFlags, c.hostname, nil, nil)
+	if err != nil {
+		return errors.Annotate(err, "set stable version").Err()
+	}
+	c.hostname = newHostname
+
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return errors.Annotate(err, "delete stable version").Err()
