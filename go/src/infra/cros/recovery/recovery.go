@@ -324,12 +324,7 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, c *config.Configuration, arg
 	log.Infof(ctx, "Run DUT %q: starting...", dut.Name)
 	planNames := c.GetPlanNames()
 	log.Debugf(ctx, "Run DUT %q plans: will use %s.", dut.Name, planNames)
-	hasClosingPlan := false
 	for _, planName := range planNames {
-		if planName == config.PlanClosing {
-			// The Closing plan will be added by default and it i sok if it missed.
-			hasClosingPlan = true
-		}
 		if _, ok := c.GetPlans()[planName]; !ok {
 			return errors.Reason("run dut %q plans: plan %q not found in configuration", dut.Name, planName).Err()
 		}
@@ -366,23 +361,25 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, c *config.Configuration, arg
 		}
 	}
 	defer func() {
-		// If closing plan provided by configuration then we do not need run it here.
-		if !hasClosingPlan {
-			plan, ok := c.GetPlans()[config.PlanClosing]
-			if !ok {
-				log.Infof(ctx, "Run plans: plan %q not found in configuration.", config.PlanClosing)
+		// Always try to run closing plan as the end of the configuration.
+		plan, ok := c.GetPlans()[config.PlanClosing]
+		if !ok {
+			log.Infof(ctx, "Run plans: plan %q not found in configuration.", config.PlanClosing)
+		} else {
+			// Closing plan always allowed to fail.
+			plan.AllowFail = true
+			if err := runSinglePlan(ctx, config.PlanClosing, plan, execArgs); err != nil {
+				log.Debugf(ctx, "Run plans: plan %q for %q finished with error: %s", config.PlanClosing, dut.Name, err)
 			} else {
-				// Closing plan always allowed to fail.
-				plan.AllowFail = true
-				if err := runSinglePlan(ctx, config.PlanClosing, plan, execArgs); err != nil {
-					log.Debugf(ctx, "Run plans: plan %q for %q finished with error: %s", config.PlanClosing, dut.Name, err)
-				} else {
-					log.Debugf(ctx, "Run plans: plan %q for %q finished successfully", config.PlanClosing, dut.Name)
-				}
+				log.Debugf(ctx, "Run plans: plan %q for %q finished successfully", config.PlanClosing, dut.Name)
 			}
 		}
 	}()
 	for _, planName := range planNames {
+		if planName == config.PlanClosing {
+			// The closing plan is always run as last one.
+			continue
+		}
 		plan, ok := c.GetPlans()[planName]
 		if !ok {
 			return errors.Reason("run plans: plan %q: not found in configuration", planName).Err()
