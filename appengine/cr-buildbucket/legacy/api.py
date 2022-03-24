@@ -404,7 +404,7 @@ def catch_errors(fn, response_message_class):
     except errors.Error as ex:
       assert hasattr(response_message_class, 'error')
       return response_message_class(error=exception_to_error_message(ex))
-    except auth.AuthorizationError as ex:
+    except auth.AuthorizationError as ex:  # pragma: no cover
       logging.warning(
           'Authorization error.\n%s\nPeer: %s\nIP: %s', ex.message,
           auth.get_peer_identity().to_bytes(), svc.request_state.remote_address
@@ -498,7 +498,7 @@ def check_scheduling_permissions(bucket_ids):
   bucket_ids = set(bucket_ids)
   can_add = user.filter_buckets_by_perm(user.PERM_BUILDS_ADD, bucket_ids)
   forbidden = sorted(bucket_ids - can_add)
-  if forbidden:
+  if forbidden:  # pragma: no cover
     raise user.current_identity_cannot('add builds to buckets %s', forbidden)
 
 
@@ -540,68 +540,6 @@ class BuildBucketApi(remote.Service):
     settings = config.get_settings_async().get_result()
     build_req = put_request_message_to_build_request(
         request, set(exp.name for exp in settings.experiment.experiments)
-    )
-    build = creation.add_async(build_req).get_result()
-    return build_to_response_message(build, include_lease_key=True)
-
-  ####### RETRY ################################################################
-
-  class RetryRequestMessage(messages.Message):
-    client_operation_id = messages.StringField(1)
-    lease_expiration_ts = messages.IntegerField(2)
-    pubsub_callback = messages.MessageField(PubSubCallbackMessage, 3)
-
-  @buildbucket_api_method(
-      id_resource_container(RetryRequestMessage),
-      BuildResponseMessage,
-      path='builds/{id}/retry',
-      http_method='PUT'
-  )
-  @auth.public
-  def retry(self, request):
-    """Retries an existing build."""
-    lease_expiration_date = parse_datetime(request.lease_expiration_ts)
-    errors.validate_lease_expiration_date(lease_expiration_date)
-
-    build_key = ndb.Key(model.Build, request.id)
-    build, in_props = ndb.get_multi([
-        build_key, model.BuildInputProperties.key_for(build_key)
-    ])
-    if not build:
-      raise errors.BuildNotFoundError('Build %s not found' % request.id)
-
-    check_scheduling_permissions([build.bucket_id])
-
-    # Prepare v2 request.
-    sbr = rpc_pb2.ScheduleBuildRequest(
-        builder=build.proto.builder,
-        request_id=request.client_operation_id,
-        canary=common_pb2.YES if build.canary else common_pb2.NO,
-        properties=build.proto.input.properties,
-        gerrit_changes=build.proto.input.gerrit_changes[:],
-    )
-    build.tags_to_protos(sbr.tags)
-    sbr.properties.ParseFromString(in_props.properties)
-    if build.proto.input.HasField('gitiles_commit'):  # pragma: no branch
-      sbr.gitiles_commit.CopyFrom(build.proto.input.gitiles_commit)
-
-    # Read PubSub callback.
-    pubsub_callback_auth_token = None
-    if request.pubsub_callback:  # pragma: no branch
-      pubsub_callback_auth_token = request.pubsub_callback.auth_token
-      pubsub_callback_to_notification_config(
-          request.pubsub_callback, sbr.notify
-      )
-      with _wrap_validation_error():
-        validation.validate_notification_config(sbr.notify)
-
-    # Create the build.
-    build_req = creation.BuildRequest(
-        schedule_build_request=sbr,
-        parameters=build.parameters,
-        lease_expiration_date=lease_expiration_date,
-        retry_of=request.id,
-        pubsub_callback_auth_token=pubsub_callback_auth_token,
     )
     build = creation.add_async(build_req).get_result()
     return build_to_response_message(build, include_lease_key=True)
