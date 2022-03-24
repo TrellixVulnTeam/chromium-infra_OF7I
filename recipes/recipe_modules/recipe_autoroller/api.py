@@ -320,7 +320,7 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
 
     for i, roll_candidate in enumerate(roll_result['roll_details']):
       roll_step.presentation.logs['candidate #%d' % (i + 1)] = (
-          self.m.json.dumps(roll_candidate['spec']).splitlines())
+          self.m.json.dumps(roll_candidate['spec'], indent=2))
 
     return ROLL_FAILURE
 
