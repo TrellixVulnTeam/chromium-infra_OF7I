@@ -145,10 +145,11 @@ func WrappedServoType(ctx context.Context, info *execs.ExecInfo) (*servo.ServoTy
 // This is work around to address issue found for servo_v4p1.
 // TODO(197647872): Remove as soon issue will be addressed.
 func ResetUsbkeyAuthorized(ctx context.Context, run execs.Runner, servoSerial string, servoType string) error {
-	if servoSerial == "" || !strings.HasPrefix(servoType, topology.SERVO_V4P1_TYPE) {
-		log.Debugf(ctx, "Autotrized flag reset only for servo_v4p1.")
+	if !strings.HasPrefix(servoSerial, "SERVOV4P1") {
+		log.Debugf(ctx, "Authorized flag reset only for servo_v4p1.")
 		return nil
 	}
+	log.Debugf(ctx, "Start reset authorized flag for servo_v4p1.")
 	rootServoPath, err := topology.GetRootServoPath(ctx, run, servoSerial)
 	if err != nil {
 		return errors.Annotate(err, "reset usbkey authorized").Err()
