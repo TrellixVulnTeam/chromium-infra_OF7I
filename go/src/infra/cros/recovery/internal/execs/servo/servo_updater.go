@@ -196,14 +196,19 @@ func runUpdateServoDeviceFwAttempt(ctx context.Context, r execs.Runner, device *
 	}
 	// This will reread the servo fw version after the update attempt
 	// so the topology item is up to date for the check "needsUpdate()".
-	if err = topology.RereadServoFwVersion(ctx, r, device); err != nil {
+	// Since after the servo update fw, the configuration file taking a little bit
+	// time to populate, so retry it 3 times
+	readServoFwErr := retry.LimitCount(ctx, 3, time.Second, func() error {
+		return topology.RereadServoFwVersion(ctx, r, device)
+	}, "re-read servo device fw version")
+	if readServoFwErr != nil {
 		return errors.Annotate(err, "run update servo device fw attempt").Err()
 	}
-	if !req.IgnoreVersion && !needsUpdate(ctx, r, device, req.FirmwareChannel) {
+	if req.IgnoreVersion || !needsUpdate(ctx, r, device, req.FirmwareChannel) {
 		log.Infof(ctx, "Servo %q firmware updated successfully", device.Type)
 		return nil
 	}
-	return errors.Reason("run update servo device fw attempt: the servo device still require updates or ignore version is being set to true").Err()
+	return errors.Reason("run update servo device fw attempt: the servo device still require updates").Err()
 }
 
 // FwUpdaterRequest is the request struct for updating the servo firmware of current DUT's servo.
@@ -238,7 +243,6 @@ func UpdateBoardsServoFw(ctx context.Context, r execs.Runner, req FwUpdaterReque
 		}
 		updateErr := retry.LimitCount(ctx, req.TryAttemptCount, 0, func() error {
 			return runUpdateServoDeviceFwAttempt(ctx, r, device, req)
-
 		}, fmt.Sprintf("update %s's servo firmware", device.Type))
 		if updateErr == nil {
 			log.Infof(ctx, "%s servo firmware updated successfully.", device.Type)
