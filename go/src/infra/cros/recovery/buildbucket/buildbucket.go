@@ -34,6 +34,7 @@ func ScheduleBuilder(ctx context.Context, bc Client, host string, taskName taskn
 		InventoryService: unifiedFleetService,
 		NoStepper:        false,
 		NoMetrics:        false,
+		UpdateInventory:  true,
 		// TODO(gregorynisbet): Pass config file to labpack task.
 		Configuration: "",
 	}

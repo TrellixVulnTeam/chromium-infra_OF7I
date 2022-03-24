@@ -81,6 +81,8 @@ func (c *downloadToUsbDriveRun) innerRun(a subcommands.Application, args []strin
 				InventoryService: e.UFSService,
 				NoMetrics:        true,
 				Configuration:    configuration,
+				// We do not update as this is just manual action.
+				UpdateInventory: false,
 			},
 		)
 		if err != nil {

@@ -23,6 +23,7 @@ func ScheduleDeployTask(ctx context.Context, bc buildbucket.Client, e site.Envir
 		AdminService:   e.AdminService,
 		// NOTE: We use the UFS service, not the Inventory service here.
 		InventoryService: e.UnifiedFleetService,
+		UpdateInventory:  true,
 	}
 	taskID, err := labpack.ScheduleTask(ctx, bc, p)
 	if err != nil {

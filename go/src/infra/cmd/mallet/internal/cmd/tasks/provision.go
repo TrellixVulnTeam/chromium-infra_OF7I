@@ -78,6 +78,8 @@ func (c *customProvisionRun) innerRun(a subcommands.Application, args []string, 
 			InventoryService: e.UFSService,
 			NoMetrics:        true,
 			Configuration:    configuration,
+			// We do not update as this is just manual action.
+			UpdateInventory: false,
 		},
 	)
 	if err != nil {
