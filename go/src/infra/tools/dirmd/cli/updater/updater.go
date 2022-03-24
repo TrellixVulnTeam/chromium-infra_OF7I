@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/storage"
 	"google.golang.org/protobuf/encoding/protojson"
 
@@ -47,6 +48,15 @@ var includedSubRepos = []string{
 	"v8",
 }
 
+// GitCommit contains the information about the git commit the
+// directories are from.
+type GitCommit struct {
+	Host     string
+	Project  string
+	Ref      string
+	Revision string
+}
+
 // Updater computed metadata from a Chromium checkout and uploads it to GCS.
 type Updater struct {
 	// ChromiumCheckout is a path to chromium/src.git checkout.
@@ -60,6 +70,11 @@ type Updater struct {
 
 	// OutDir is a path to the directory where to write output files.
 	OutDir string
+
+	// BqTable is the destination BigQuery table to export metadata rows.
+	BqTable *bigquery.Table
+
+	Commit *GitCommit
 }
 
 // Run updates the metadata stored in GCS.
@@ -89,6 +104,11 @@ func (u *Updater) run(ctx context.Context) error {
 		// Write in new format.
 		work <- func() error {
 			return u.writeMapping(ctx, "metadata_computed.json", mapping, true)
+		}
+
+		// Write to BigQuery.
+		work <- func() error {
+			return u.bqWrite(ctx, mapping)
 		}
 	})
 	if err != nil {

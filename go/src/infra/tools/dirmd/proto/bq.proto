@@ -9,7 +9,6 @@ package chrome.dir_metadata;
 option go_package = "infra/tools/dirmd/proto;dirmdpb";
 
 import "google/protobuf/timestamp.proto";
-import "infra/tools/dirmd/proto/chromeos/chromeos.proto";
 import "infra/tools/dirmd/proto/dir_metadata.proto";
 
 // DirBQRow describes a row in BigQuery table for dir metadata.
@@ -51,8 +50,8 @@ message DirBQRow {
 
 // Information about where the directory was read from.
 message Source {
-  // Gitiles hostname, e.g. "chromium.googlesource.com".
-  string gitiles_host = 1;
+  // Git hostname, e.g. "chromium.googlesource.com".
+  string git_host = 1;
   // Root repository name on the host, e.g. "chromium/src".
   string root_repo = 2;
   // Sub repository name on the host, e.g. "v8".
@@ -67,7 +66,4 @@ message Source {
 message TeamSpecific {
   // WPT-specific metadata.
   WPT wpt = 1;
-
-  // ChromeOS specific metadata.
-  chrome.dir_metadata.chromeos.ChromeOS chromeos = 2;
 }
