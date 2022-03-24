@@ -156,6 +156,15 @@ func hasBatteryExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+// hasDutHwidExec verifies that DUT has an HWID available.
+func hasDutHwidExec(ctx context.Context, info *execs.ExecInfo) error {
+	if d := info.RunArgs.DUT; d != nil && d.Hwid != "" {
+		log.Debugf(ctx, "DUT Hwid: %q", d.Hwid)
+		return nil
+	}
+	return errors.Reason("dut Hwid is empty").Err()
+}
+
 func init() {
 	execs.Register("dut_servo_host_present", servoHostPresentExec)
 	execs.Register("dut_has_name", hasDutNameActionExec)
@@ -168,4 +177,5 @@ func init() {
 	execs.Register("dut_is_in_audio_box", dutInAudioBoxExec)
 	execs.Register("dut_servo_has_serial", servoVerifySerialNumberExec)
 	execs.Register("dut_has_battery", hasBatteryExec)
+	execs.Register("dut_has_hwid", hasDutHwidExec)
 }

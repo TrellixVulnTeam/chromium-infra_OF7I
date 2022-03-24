@@ -467,7 +467,7 @@ func crosRepairActions() map[string]*Action {
 		"cros_hwid_info": {
 			Conditions: []string{
 				"is_not_flex_board",
-				"dut_has_hwid_info",
+				"dut_has_hwid",
 			},
 			Dependencies: []string{
 				"cros_storage_writing",
@@ -484,8 +484,10 @@ func crosRepairActions() map[string]*Action {
 			},
 			ExecName: "cros_match_serial_number_inventory",
 		},
-		"dut_has_hwid_info": {
-			ExecName: "sample_pass",
+		"dut_has_hwid": {
+			Docs: []string{
+				"Check whether the DUT information includes its HWID.",
+			},
 		},
 		"dut_has_serial_number_info": {
 			ExecName: "sample_pass",
