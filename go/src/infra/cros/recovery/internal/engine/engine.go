@@ -148,8 +148,11 @@ func (r *recoveryEngine) recordAction(ctx context.Context, actionName string, ac
 	}
 	if r.args.Metrics != nil {
 		log.Debugf(ctx, "Recording metrics for action %q", actionName)
-		closer, err := r.args.NewMetric(
-			ctx,
+		// Create the metric up front. Allow 30 seconds to talk to Karte.
+		createMetricCtx, createMetricCloser := context.WithTimeout(ctx, 30*time.Second)
+		defer createMetricCloser()
+		u, err := r.args.NewMetric(
+			createMetricCtx,
 			// TODO(gregorynisbet): Consider adding a new field to Karte to explicitly track the name
 			//                      assigned to an action by recoverylib.
 			fmt.Sprintf("action:%s", actionName),
@@ -162,7 +165,10 @@ func (r *recoveryEngine) recordAction(ctx context.Context, actionName string, ac
 		// Here we intentionally close over the context "early", before the deadline is applied inside
 		// runAction.
 		return func(rErr error) {
-			closer(ctx, rErr)
+			// Update the metric. This contains information that we will not know until after the action ran.
+			updateMetricCtx, updateMetricCloser := context.WithTimeout(ctx, 30*time.Second)
+			defer updateMetricCloser()
+			u(updateMetricCtx, rErr)
 		}
 	} else {
 		log.Debugf(ctx, "Skipping metrics for action %q", actionName)
