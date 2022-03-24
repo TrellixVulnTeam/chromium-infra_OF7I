@@ -383,6 +383,12 @@ func crosRepairActions() map[string]*Action {
 			},
 			ExecName: "cros_is_battery_present",
 		},
+		"No Battery is present on device": {
+			Conditions: []string{
+				"Battery is present on device",
+			},
+			ExecName: "sample_fail",
+		},
 		"wifi_audit": {
 			Docs: []string{
 				"Check wifi on the DUT is normal and update wifi hardware state accordingly.",

@@ -123,7 +123,7 @@ func deployActions() map[string]*Action {
 			Docs: []string{"Run some specif checks as part of deployment."},
 			Dependencies: []string{
 				"Verify battery charging level",
-				"Verify RPM config (not critical)",
+				"Verify RPM config (without battery)",
 				"Verify boot in recovery mode",
 			},
 			ExecName: "sample_pass",
@@ -170,7 +170,7 @@ func deployActions() map[string]*Action {
 				"Download stable image to USB-key",
 			},
 		},
-		"Verify RPM config (not critical)": {
+		"Verify RPM config (without battery)": {
 			Docs: []string{
 				"Verify RPM configs and set RPM state",
 				"Not applicable for cr50 servos based on b/205728276",
@@ -180,6 +180,7 @@ func deployActions() map[string]*Action {
 				"servo_state_is_working",
 				"is_servo_main_ccd_cr50",
 				"has_rpm_info",
+				"No Battery is present on device",
 			},
 			ExecName:    "rpm_audit",
 			ExecTimeout: &durationpb.Duration{Seconds: 600},
