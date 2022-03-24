@@ -2087,6 +2087,23 @@ Example:
 shivas delete adh {Host Name}
 Deletes the given attached device host based on host name.
 `
+
+	// ManageBTPsLongDesc is a long description for Bluetooth peer management subcommands.
+	ManageBTPsLongDesc string = `Manage Bluetooth peers (BTPs) attached to a DUT.
+
+This cmd always runs in the OS namespace. A single DUT can have multiple BTPs. The command
+requires specifying an action which is either add, delete, or replace. Multiple BTPs can
+be specified for each action.
+
+Add adds specified BTPs to the DUT and leaves what is already there untouched.
+Delete deletes sepcified BTPs in the DUT and leaves remamining.
+Replace replaces the entire set of BTPs with the specified list.
+
+Examples:
+shivas add bluetooth-peers -dut {d} -hostname {h1} -hostname {h2}
+shivas delete bluetooth-peers -dut {d} -hostname {h2}
+shivas replace bluetooth-peers -dut {d} -hostname {h3} -hostname {h4} -hostname {h5}
+`
 )
 
 func CronTriggerAvailableJobsString() string {

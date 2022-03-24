@@ -20,6 +20,7 @@ import (
 	"infra/cmd/shivas/internal/ufs/subcmds/machine"
 	"infra/cmd/shivas/internal/ufs/subcmds/machineprototype"
 	"infra/cmd/shivas/internal/ufs/subcmds/nic"
+	"infra/cmd/shivas/internal/ufs/subcmds/peripherals"
 	"infra/cmd/shivas/internal/ufs/subcmds/rack"
 	"infra/cmd/shivas/internal/ufs/subcmds/rackprototype"
 	"infra/cmd/shivas/internal/ufs/subcmds/rpm"
@@ -42,8 +43,9 @@ var DeleteCmd = &subcommands.Command{
 	host/vm
 	asset/dut/cachingservice/schedulingunit
 	machine-prototype/rack-prototype/chromeplatform/vlan
-	attached-device-machine (aliased as adm/attached-device-machine),
-	attached-device-host (aliased as adh/attached-device-host)`,
+	attached-device-machine (aliased as adm/attached-device-machine)
+	attached-device-host (aliased as adh/attached-device-host)
+	bluetooth-peers`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &delete{}
 		return c
@@ -89,6 +91,7 @@ func (c deleteApp) GetCommands() []*subcommands.Command {
 		chromeplatform.DeleteChromePlatformCmd,
 		cachingservice.DeleteCachingServiceCmd,
 		vlan.DeleteVlanCmd,
+		peripherals.DeleteBluetoothPeersCmd,
 	}
 }
 

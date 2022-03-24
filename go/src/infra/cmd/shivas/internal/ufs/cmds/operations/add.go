@@ -21,6 +21,7 @@ import (
 	"infra/cmd/shivas/internal/ufs/subcmds/machine"
 	"infra/cmd/shivas/internal/ufs/subcmds/machineprototype"
 	"infra/cmd/shivas/internal/ufs/subcmds/nic"
+	"infra/cmd/shivas/internal/ufs/subcmds/peripherals"
 	"infra/cmd/shivas/internal/ufs/subcmds/rack"
 	"infra/cmd/shivas/internal/ufs/subcmds/rackprototype"
 	"infra/cmd/shivas/internal/ufs/subcmds/rpm"
@@ -43,8 +44,9 @@ var AddCmd = &subcommands.Command{
 	host/vm
 	asset/dut/labstation/cachingservice/schedulingunit
 	machine-prototype/rack-prototype/chromeplatform/vlan
-	attached-device-machine (aliased as adm/attached-device-machine),
-	attached-device-host (aliased as adh/attached-device-host)`,
+	attached-device-machine (aliased as adm/attached-device-machine)
+	attached-device-host (aliased as adh/attached-device-host)
+	bluetooth-peers`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &add{}
 		return c
@@ -90,6 +92,7 @@ func (c addApp) GetCommands() []*subcommands.Command {
 		rackprototype.AddRackLSEPrototypeCmd,
 		chromeplatform.AddChromePlatformCmd,
 		vlan.AddVlanCmd,
+		peripherals.AddBluetoothPeersCmd,
 	}
 }
 
