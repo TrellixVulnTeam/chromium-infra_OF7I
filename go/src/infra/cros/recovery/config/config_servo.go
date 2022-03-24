@@ -252,6 +252,17 @@ func servoRepairPlan() *Plan {
 			"servod_get_serialname": {
 				Docs:     []string{"run command from xmlrpc"},
 				ExecName: "servod_echo",
+				RecoveryActions: []string{
+					"servo_host_servod_stop",
+					"servo_power_cycle_repair",
+					"servo_power_delivery_repair",
+					"servo_fake_disconnect_dut_repair",
+					"servo_servod_cc_toggle_repair",
+					"servo_reboot_ec_on_dut",
+					"reboot_dut_by_power_state:reset",
+					"reflash_cr_50_fw_on_dut",
+					"reset_ec_on_dut",
+				},
 			},
 			"servo_get_ppdut5_mv": {
 				ExecExtraArgs: []string{"command:ppdut5_mv"},
@@ -915,7 +926,7 @@ func servoRepairPlan() *Plan {
 				Docs:       []string{"Try to reset(power-cycle) the servo via smart usbhub."},
 				Conditions: []string{"servo_host_is_labstation"},
 				ExecExtraArgs: []string{
-					"reset_timeout:30",
+					"reset_timeout:60",
 					"wait_timeout:20",
 				},
 				ExecTimeout:            &durationpb.Duration{Seconds: 120},
