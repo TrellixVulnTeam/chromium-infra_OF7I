@@ -12,7 +12,7 @@ require (
 	cloud.google.com/go/firestore v1.5.0
 	cloud.google.com/go/iam v0.2.0 // indirect
 	cloud.google.com/go/pubsub v1.17.0
-	cloud.google.com/go/spanner v1.25.0
+	cloud.google.com/go/spanner v1.29.0
 	cloud.google.com/go/storage v1.21.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/PaesslerAG/jsonpath v0.1.1
