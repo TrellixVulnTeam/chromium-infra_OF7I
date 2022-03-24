@@ -131,6 +131,45 @@ func (r *recoveryEngine) runActions(ctx context.Context, actions []string, enabl
 	return nil
 }
 
+// recordActionCloser is a function that takes an error (the ultimate error produced by an action) and records
+// it inside a defer block.
+type recordActionCloser = func(error)
+
+// recordAction takes a context and an action name and records the initial action for a record.
+// The parameter action is assumed NOT to be nil. Also, this function indirectly mutates its parameter action.
+func (r *recoveryEngine) recordAction(ctx context.Context, actionName string, action *metrics.Action) recordActionCloser {
+	if r == nil {
+		log.Debugf(ctx, "RecoveryEngine is nil, skipping")
+		return nil
+	}
+	if r.args == nil {
+		log.Debugf(ctx, "Metrics is nil, skipping")
+		return nil
+	}
+	if r.args.Metrics != nil {
+		log.Debugf(ctx, "Recording metrics for action %q", actionName)
+		closer, err := r.args.NewMetric(
+			ctx,
+			// TODO(gregorynisbet): Consider adding a new field to Karte to explicitly track the name
+			//                      assigned to an action by recoverylib.
+			fmt.Sprintf("action:%s", actionName),
+			action,
+		)
+		if err != nil {
+			log.Errorf(ctx, "Encountered error when creating action: %s", err)
+			return nil
+		}
+		// Here we intentionally close over the context "early", before the deadline is applied inside
+		// runAction.
+		return func(rErr error) {
+			closer(ctx, rErr)
+		}
+	} else {
+		log.Debugf(ctx, "Skipping metrics for action %q", actionName)
+		return nil
+	}
+}
+
 // runAction runs single action.
 // Execution steps:
 // 1) Check action's result in cache.
@@ -139,24 +178,9 @@ func (r *recoveryEngine) runActions(ctx context.Context, actions []string, enabl
 // 4) Run action exec function. Fail if any fail.
 func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enableRecovery bool) (rErr error) {
 	action := &metrics.Action{}
-	newCtx := ctx
 	if r.args != nil {
-		if r.args.Metrics != nil {
-			log.Debugf(ctx, "Recording metrics for action %q", actionName)
-			closer, err := r.args.NewMetric(
-				newCtx,
-				// TODO(gregorynisbet): Consider adding a new field to Karte to explicitly track the name
-				//                      assigned to an action by recoverylib.
-				fmt.Sprintf("action:%s", actionName),
-				action,
-			)
-			if err == nil {
-				defer func() {
-					closer(ctx, rErr)
-				}()
-			}
-		} else {
-			log.Debugf(ctx, "Skipping metrics for action %q", actionName)
+		if actionCloser := r.recordAction(ctx, actionName, action); actionCloser != nil {
+			defer actionCloser(rErr)
 		}
 		if r.args.ShowSteps {
 			var step *build.Step
