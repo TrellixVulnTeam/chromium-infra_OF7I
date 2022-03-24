@@ -115,6 +115,8 @@ In the list of hotlists, only hotlists that the signed in user is allowed to
 view are shown. And, within a specific hotlist, only issues that the signed in
 user is allowed to view are shown.
 
+**Groups** can be hotlist Owners/Editors by manually allowlisting them in [group import](http://google3/googleclient/chrome/infra/group_import/group_import.py?l=170). You can submit your request [here](https://bugs.chromium.org/p/monorail/issues/entry?template=Administrative+task).
+
 ## How to create a hotlist
 
 1.  Sign in and select `Hotlists` from the account menu.
