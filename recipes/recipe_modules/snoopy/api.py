@@ -17,7 +17,7 @@ from recipe_engine import recipe_api
 # Usage of snoopy recipe_module will have significant downstream impact and to
 # avoid any production outage, we are pinning the latest known good build of
 # the tool here. Upstream changes are intentionally left out.
-_LATEST_STABLE_VERSION = 'git_revision:453e2171ee588a0634876feb6639f9dc6da96639'
+_LATEST_STABLE_VERSION = 'git_revision:26325ee9b6679c76b141d553a016d9245fed45de'
 
 class SnoopyApi(recipe_api.RecipeApi):
   """API for interacting with Snoopy using the snoopy_broker tool."""
@@ -36,7 +36,8 @@ class SnoopyApi(recipe_api.RecipeApi):
     if self._snoopy_bin is None:
       snoopy_dir = self.m.path['start_dir'].join('snoopy')
       ensure_file = self.m.cipd.EnsureFile().add_package(
-          'infra/tools/snoopy_broker/${platform}', _LATEST_STABLE_VERSION)
+          'infra/tools/security/snoopy_broker/${platform}',
+          _LATEST_STABLE_VERSION)
       self.m.cipd.ensure(snoopy_dir, ensure_file)
       self._snoopy_bin = snoopy_dir.join('snoopy_broker')
     return self._snoopy_bin

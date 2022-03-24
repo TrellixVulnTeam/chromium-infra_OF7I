@@ -603,7 +603,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 API for interacting with Snoopy using the snoopy_broker tool.
 
-&mdash; **def [report\_cipd](/recipes/recipe_modules/snoopy/api.py#72)(self, digest, pkg, iid, snoopy_url=None):**
+&mdash; **def [report\_cipd](/recipes/recipe_modules/snoopy/api.py#73)(self, digest, pkg, iid, snoopy_url=None):**
 
 Reports cipd digest to local snoopy server.
 
@@ -617,7 +617,7 @@ Args:
   * snoopy_url (Optional[str]) - URL for the local snoopy server, snoopy
     broker tool will use default if not specified.
 
-&mdash; **def [report\_gcs](/recipes/recipe_modules/snoopy/api.py#101)(self, digest, guri, snoopy_url=None):**
+&mdash; **def [report\_gcs](/recipes/recipe_modules/snoopy/api.py#102)(self, digest, guri, snoopy_url=None):**
 
 Reports cipd digest to local snoopy server.
 
@@ -631,7 +631,7 @@ Args:
   * snoopy_url (Optional[str]) - URL for the local snoopy server, snoopy
     broker tool will use default if not specified.
 
-&mdash; **def [report\_stage](/recipes/recipe_modules/snoopy/api.py#44)(self, stage, snoopy_url=None):**
+&mdash; **def [report\_stage](/recipes/recipe_modules/snoopy/api.py#45)(self, stage, snoopy_url=None):**
 
 Reports task stage to local snoopy server.
 
