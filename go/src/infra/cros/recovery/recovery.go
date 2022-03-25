@@ -110,7 +110,7 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 // createTaskRunMetricsForResource creates metric action for resource with reporting what is the tasking is running for it.
 func createTaskRunMetricsForResource(ctx context.Context, args *RunArgs, startTime time.Time, resource string, runResourceErr error) error {
 	if args.Metrics == nil {
-		log.Debugf(ctx, "Create karte action for each resource: For resource %s: metrics is not provided.")
+		log.Debugf(ctx, "Create karte action for each resource: For resource %s: metrics is not provided.", resource)
 		return nil
 	}
 	action := &metrics.Action{
@@ -148,11 +148,16 @@ func runResource(ctx context.Context, resource string, args *RunArgs) (rErr erro
 	if err != nil {
 		return errors.Annotate(err, "run resource %q", args.UnitName).Err()
 	}
+	// In any case update inventory to update data back, even execution failed.
+	var errs []error
 	if err := runDUTPlans(ctx, dut, config, args); err != nil {
-		return errors.Annotate(err, "run resource %q", resource).Err()
+		errs = append(errs, err)
 	}
 	if err := updateInventory(ctx, dut, args); err != nil {
-		return errors.Annotate(err, "run resource %q", resource).Err()
+		errs = append(errs, err)
+	}
+	if len(errs) > 0 {
+		return errors.Annotate(errors.MultiError(errs), "run recovery").Err()
 	}
 	return nil
 }
@@ -300,6 +305,7 @@ func updateInventory(ctx context.Context, dut *tlw.Dut, args *RunArgs) (rErr err
 		if err := args.Access.UpdateDut(ctx, dut); err != nil {
 			return errors.Annotate(err, "update inventory").Err()
 		}
+		log.Infof(ctx, "Update inventory %q: successful.", dut.Name)
 	} else {
 		log.Infof(ctx, "Update inventory %q: disabled.", dut.Name)
 	}
