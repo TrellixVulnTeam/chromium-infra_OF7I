@@ -382,6 +382,12 @@ func getUFSLabDataFromSpecs(dutID string, dut *tlw.Dut) *ufsAPI.UpdateDeviceReco
 			State:    convertWifiRouterStateToUFS(router.GetState()),
 		})
 	}
+	for _, btp := range dut.BluetoothPeerHosts {
+		labData.BlueoothPeers = append(labData.BlueoothPeers, &ufsAPI.UpdateDeviceRecoveryDataRequest_BluetoothPeer{
+			Hostname: btp.Name,
+			State:    convertBluetoothPeerStateToUFS(btp.State),
+		})
+	}
 	return labData
 }
 
