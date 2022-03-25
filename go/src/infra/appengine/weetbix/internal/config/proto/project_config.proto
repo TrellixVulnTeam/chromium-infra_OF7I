@@ -22,8 +22,15 @@ message ProjectConfig {
   // The monorail configuration to use when filing bugs.
   MonorailProject monorail = 1;
 
-  // The threshold at which to file bugs. If a cluster's impact exceeds
-  // the given threshold, a bug will be filed for it.
+  // The threshold at which to file bugs.
+  // If reason cluster's impact exceeds the given threshold,
+  // a bug will be filed for it.
+  // Alternatively, if test name cluster's impact exceeds 134% of the given
+  // threshold, a bug will also be filed for it.
+  //
+  // Weetbix's bias towards reason clusters reflects the fact that bugs
+  // filed for reasons should be better scoped and more actionable
+  // (focus on one problem).
   ImpactThreshold bug_filing_threshold = 2;
 
   // Per realm configurations.

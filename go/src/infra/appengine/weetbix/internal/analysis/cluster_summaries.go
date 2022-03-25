@@ -15,6 +15,7 @@ import (
 
 	"infra/appengine/weetbix/internal/bqutil"
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/clustering/algorithms/rulesalgorithm"
 	configpb "infra/appengine/weetbix/internal/config/proto"
 )
 
@@ -31,8 +32,9 @@ type ImpactfulClusterReadOptions struct {
 	// Thresholds are applied based on the residual pre-Weetbix (exoneration)
 	// cluster impact.
 	Thresholds *configpb.ImpactThreshold
-	// AlwaysInclude is the set of clusters to always include.
-	AlwaysInclude []clustering.ClusterID
+	// AlwaysIncludeBugClusters controls whether to include analysis for all
+	// bug clusters.
+	AlwaysIncludeBugClusters bool
 }
 
 // ClusterSummary represents a statistical summary of a cluster's failures,
@@ -210,7 +212,7 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 			top_test_ids as TopTestIDs
 		FROM cluster_summaries
 		WHERE (` + whereFailures + `) OR (` + whereTestRuns + `) OR (` + wherePresubmits + `)
-			OR STRUCT(cluster_algorithm AS Algorithm, cluster_id as ID) IN UNNEST(@alwaysInclude)
+		    OR (@alwaysIncludeBugClusters AND cluster_algorithm = @ruleAlgorithmName)
 		ORDER BY
 			presubmit_rejects_residual_1d DESC,
 			test_run_fails_residual_1d DESC,
@@ -220,8 +222,12 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 
 	params := []bigquery.QueryParameter{
 		{
-			Name:  "alwaysInclude",
-			Value: opts.AlwaysInclude,
+			Name:  "ruleAlgorithmName",
+			Value: rulesalgorithm.AlgorithmName,
+		},
+		{
+			Name:  "alwaysIncludeBugClusters",
+			Value: opts.AlwaysIncludeBugClusters,
 		},
 	}
 	params = append(params, failuresParams...)
