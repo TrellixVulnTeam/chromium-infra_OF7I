@@ -1765,6 +1765,10 @@ func updateRecoveryLabData(ctx context.Context, hostname string, resourceState u
 			if err = editRecoveryPeripheralWifi(ctx, peri.GetWifi(), labData); err != nil {
 				return err
 			}
+
+			if err = updateBluetoothPeerStates(peri, labData.GetBlueoothPeers()); err != nil {
+				return err
+			}
 		}
 		if _, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
 			return errors.Annotate(err, "unable to update labData for %s", lse.Name).Err()
@@ -1776,6 +1780,31 @@ func updateRecoveryLabData(ctx context.Context, hostname string, resourceState u
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "updateRecoveryDataDeviceLSE  (%s) - %s", hostname, err)
 		return err
+	}
+	return nil
+}
+
+// updateBluetoothPeerStates updates p.BluetoothPeers with state from btps. It returns an error if a hostname
+// that is not part of p is sent in btps. It handles nil btps.
+func updateBluetoothPeerStates(p *chromeosLab.Peripherals, btps []*ufsAPI.UpdateDeviceRecoveryDataRequest_BluetoothPeer) error {
+	if len(btps) == 0 {
+		return nil
+	}
+	ufsBTPs := make(map[string]*chromeosLab.BluetoothPeer)
+	for _, btp := range p.GetBluetoothPeers() {
+		d := btp.GetDevice()
+		if _, ok := d.(*chromeosLab.BluetoothPeer_RaspberryPi); !ok {
+			return errors.Reason("unsupported BTP device type %T", d).Err()
+		}
+		ufsBTPs[btp.GetRaspberryPi().GetHostname()] = btp
+	}
+
+	for _, btp := range btps {
+		b, ok := ufsBTPs[btp.GetHostname()]
+		if !ok {
+			return errors.Reason("unknown BTP with hostname %q recieved from lab", btp.GetHostname()).Err()
+		}
+		b.GetRaspberryPi().State = btp.GetState()
 	}
 	return nil
 }

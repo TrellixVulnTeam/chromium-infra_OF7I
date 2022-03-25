@@ -3042,3 +3042,57 @@ func TestGetAttachedDeviceData(t *testing.T) {
 		})
 	})
 }
+
+func TestUpdateBluetoothPeerStates(t *testing.T) {
+	// Nil success
+	if err := updateBluetoothPeerStates(nil, nil); err != nil {
+		t.Errorf("updateBluetoothPeerStates = %v; want success on nil btps", err)
+	}
+
+	// Extra BTPs that are not present.
+	var (
+		p    chromeosLab.Peripherals
+		btps = []*ufsAPI.UpdateDeviceRecoveryDataRequest_BluetoothPeer{
+			{
+				Hostname: "h1",
+				State:    chromeosLab.PeripheralState_WORKING,
+			},
+		}
+	)
+	if err := updateBluetoothPeerStates(&p, btps); err == nil {
+		t.Error("updateBluetoothPeerStates succeeded, want unknown BTP error")
+	}
+
+	// Successful update on one BTP
+	p.BluetoothPeers = []*chromeosLab.BluetoothPeer{
+		{
+			Device: &chromeosLab.BluetoothPeer_RaspberryPi{
+				RaspberryPi: &chromeosLab.RaspberryPi{
+					Hostname: "h1",
+					State:    chromeosLab.PeripheralState_BROKEN,
+				},
+			},
+		},
+		{
+			Device: &chromeosLab.BluetoothPeer_RaspberryPi{
+				RaspberryPi: &chromeosLab.RaspberryPi{
+					Hostname: "h2",
+					State:    chromeosLab.PeripheralState_BROKEN,
+				},
+			},
+		},
+	}
+	if err := updateBluetoothPeerStates(&p, btps); err != nil {
+		t.Errorf("updateBluetoothPeerStates = %v, want success", err)
+	}
+	wants := map[string]chromeosLab.PeripheralState{
+		"h1": chromeosLab.PeripheralState_WORKING,
+		"h2": chromeosLab.PeripheralState_BROKEN,
+	}
+	for _, btp := range p.GetBluetoothPeers() {
+		rpi := btp.GetRaspberryPi()
+		if want := wants[rpi.GetHostname()]; rpi.GetState() != want {
+			t.Errorf("rpi(%s).State = %s; want %s", rpi.GetHostname(), rpi.GetState(), want)
+		}
+	}
+}

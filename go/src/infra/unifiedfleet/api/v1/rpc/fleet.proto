@@ -1807,12 +1807,19 @@ message UpdateDeviceRecoveryDataRequest {
     string hostname = 1;
     models.chromeos.lab.PeripheralState state = 2;
   }
+
+  message BluetoothPeer {
+    string hostname = 1;
+    models.chromeos.lab.PeripheralState state = 2;
+  }
+
   message LabData {
     string servo_type = 1;
     bool smart_usbhub = 2;
     models.chromeos.lab.ServoTopology servo_topology = 3;
     string servo_component = 4;
     repeated WifiRouter wifi_routers = 5;
+    repeated BluetoothPeer blueooth_peers = 6;
   }
 
   // Used for updating back essential configs from repair/deploy task.
