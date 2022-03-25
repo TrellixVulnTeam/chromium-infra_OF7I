@@ -53,7 +53,7 @@ func sshDUTExec(ctx context.Context, info *execs.ExecInfo) error {
 
 // rebootExec reboots the cros DUT.
 func rebootExec(ctx context.Context, info *execs.ExecInfo) error {
-	if err := cros.Reboot(ctx, info.NewRunner(info.RunArgs.DUT.Name), 2*time.Minute); err != nil {
+	if err := cros.Reboot(ctx, info.NewRunner(info.RunArgs.DUT.Name), info.ActionTimeout); err != nil {
 		return errors.Annotate(err, "cros reboot").Err()
 	}
 	return nil

@@ -317,7 +317,7 @@ func logDUTInfo(ctx context.Context, resource string, dut *tlw.Dut, msg string) 
 	if err != nil {
 		log.Debugf(ctx, "Resource %q: %s. Fail to print DUT info. Error: %s", resource, msg, err)
 	} else {
-		log.Debugf(ctx, "Resource %q: %s \n%s", resource, msg, s)
+		log.Infof(ctx, "Resource %q: %s \n%s", resource, msg, s)
 	}
 }
 
