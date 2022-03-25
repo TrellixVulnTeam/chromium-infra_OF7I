@@ -19,10 +19,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/golang/protobuf/jsonpb"
-	"go.chromium.org/luci/auth"
+	luciauth "go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/errors"
+	lucigs "go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/luciexe/build"
 
 	"infra/cros/cmd/labpack/internal/site"
@@ -34,6 +36,7 @@ import (
 	"infra/cros/recovery/logger"
 	"infra/cros/recovery/logger/metrics"
 	"infra/cros/recovery/tasknames"
+	"infra/cros/recovery/upload"
 )
 
 // LuciexeProtocolPassthru should always be set to false in checked-in code.
@@ -86,8 +89,61 @@ func main() {
 					lg.Debugf("Finished with err: %s", err)
 				}
 				writeOutputProps(res)
+
+				// Construct the client that we will need to push the logs first.
+				// Eventually, we will make this error fatal. However, for right now, we will
+				// just log whether we succeeded or failed to build the client.
+				authenticator := luciauth.NewAuthenticator(ctx, luciauth.SilentLogin, luciauth.Options{})
+				if authenticator != nil {
+					lg.Infof("NewAuthenticator(...): successfully authed!")
+				} else {
+					lg.Errorf("NewAuthenticator(...): did not successfully auth!")
+				}
+				rt, err := authenticator.Transport()
+				if err == nil {
+					lg.Infof("authenticator.Transport(): successfully authed!")
+				} else {
+					lg.Errorf("authenticator.Transport(...): error: %s", err)
+				}
+				client, err := lucigs.NewProdClient(ctx, rt)
+				if err == nil {
+					lg.Infof("Successfully created client")
+				} else {
+					lg.Errorf("Failed to create client: %s", err)
+				}
+
+				// Actually persist the logs
+				swarmingTaskID := state.Infra().GetSwarming().GetTaskId()
+				if swarmingTaskID == "" {
+					// Failed to get the swarming task, since this is the last thing.
+					lg.Errorf("Swarming task is empty!")
+					return err
+				} else {
+					// upload.Upload can potentially run for a long time. Set a timeout of 30s.
+					//
+					// upload.Upload does respond to cancellation (which callFuncWithTimeout uses internally), but
+					// the correct of this code does not and should not depend on this fact.
+					//
+					// callFuncWithTimeout synchronously calls a function with a timeout and then unconditionally hands control
+					// back to its caller. The goroutine that's created in the background will not by itself keep the process alive.
+					status, err := callFuncWithTimeout(ctx, 30*time.Second, func(ctx context.Context) error {
+						return upload.Upload(ctx, client, &upload.Params{
+							// TODO(gregorynisbet): Change this to the log root.
+							SourceDir: ".",
+							// TODO(gregorynisbet): Allow this parameter to be overridden from outside.
+							GSURL:             fmt.Sprintf("gs://chromeos-autotest-results/swarming-%s", swarmingTaskID),
+							MaxConcurrentJobs: 10,
+						})
+					})
+					lg.Infof("Upload log subtask status: %s", status)
+					if err != nil {
+						lg.Errorf("Upload task error: %s", err)
+					}
+				}
+
 				// if err is nil then will marked as SUCCESS
 				return err
+
 			},
 		)
 	}
@@ -120,7 +176,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	var metrics metrics.Metrics
 	if !in.GetNoMetrics() {
 		var err error
-		metrics, err = karte.NewMetrics(ctx, kclient.ProdConfig(auth.Options{}))
+		metrics, err = karte.NewMetrics(ctx, kclient.ProdConfig(luciauth.Options{}))
 		if err == nil {
 			lg.Infof("internal run: metrics client successfully created.")
 		} else {
