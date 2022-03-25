@@ -156,6 +156,20 @@ func convertWifiRouterStateToUFS(s tlw.WifiRouterHost_State) ufslab.PeripheralSt
 	return ufslab.PeripheralState_UNKNOWN
 }
 
+// peripheralWifiSTates maps the ufs peripheral state to tlw peripheral wifi state
+var peripheralWifiStates = map[ufslab.PeripheralState]tlw.PeripheralWifiState{
+	ufslab.PeripheralState_WORKING: tlw.PeripheralWifiStateWorking,
+	ufslab.PeripheralState_BROKEN:  tlw.PeripheralWifiStateBroken,
+}
+
+// convert wifiRouterState UFS state to TLW peripheralWifiState
+func convertPeripheralWifiState(s ufslab.PeripheralState) tlw.PeripheralWifiState {
+	if ns, ok := peripheralWifiStates[s]; ok {
+		return ns
+	}
+	return tlw.PeripheralWifiStateUnspecified
+}
+
 var rpmStates = map[ufslab.PeripheralState]tlw.RPMOutlet_State{
 	ufslab.PeripheralState_WORKING:        tlw.RPMOutlet_WORKING,
 	ufslab.PeripheralState_MISSING_CONFIG: tlw.RPMOutlet_MISSING_CONFIG,

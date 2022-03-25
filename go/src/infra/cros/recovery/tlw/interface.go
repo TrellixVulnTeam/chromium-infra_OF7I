@@ -229,6 +229,8 @@ type Dut struct {
 	BluetoothPeerHosts []*BluetoothPeerHost
 	// Array of Wifi Router peripheral devices
 	WifiRouterHosts []*WifiRouterHost
+	// Peripehral Wifi state of testbed
+	PeripheralWifiState PeripheralWifiState
 	// RPMOutlet of the DUT setup.
 	RPMOutlet *RPMOutlet
 	// ProvisionedInfo tells provisioned info for the DUT.
@@ -346,6 +348,17 @@ type BluetoothPeerHost struct {
 	// State of the device.
 	State BluetoothPeerState
 }
+
+// PeripheralWifiState describes the state of peripheral wifi testbed.
+type PeripheralWifiState string
+
+const (
+	PeripheralWifiStateUnspecified PeripheralWifiState = "UNSPECIFIED"
+	// All wifirouters are working as expected.
+	PeripheralWifiStateWorking PeripheralWifiState = "WORKING"
+	// Not all wifirouters are working as expected.
+	PeripheralWifiStateBroken PeripheralWifiState = "BROKEN"
+)
 
 // ServoHost holds info about host to manage servod services and verify connected servo devices.
 // Example: labstation, servo-host container.
