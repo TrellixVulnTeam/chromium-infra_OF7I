@@ -40,16 +40,19 @@ func ConvertDut(data *ufspb.ChromeOSDeviceData) (dut *tlw.Dut, err error) {
 }
 
 // CreateUpdateDutRequest creates request instance to update UFS.
-func CreateUpdateDutRequest(dutID string, dut *tlw.Dut) (req *ufsAPI.UpdateDutStateRequest, err error) {
+func CreateUpdateDutRequest(dutID string, dut *tlw.Dut) (req *ufsAPI.UpdateDeviceRecoveryDataRequest, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.Reason("update dut specs: %v\n%s", r, debug.Stack()).Err()
 		}
 	}()
-	return &ufsAPI.UpdateDutStateRequest{
-		DutState: getUFSDutComponentStateFromSpecs(dutID, dut),
-		DutMeta:  getUFSDutMetaFromSpecs(dutID, dut),
-		LabMeta:  getUFSLabMetaFromSpecs(dutID, dut),
+	return &ufsAPI.UpdateDeviceRecoveryDataRequest{
+		ChromeosDeviceId: dutID,
+		Hostname:         dut.Name,
+		DutState:         getUFSDutComponentStateFromSpecs(dutID, dut),
+		DutData:          getUFSDutDataFromSpecs(dutID, dut),
+		LabData:          getUFSLabDataFromSpecs(dutID, dut),
+		ResourceState:    dutstate.ConvertToUFSState(dut.State),
 	}, nil
 }
 
@@ -354,33 +357,31 @@ func configHasFeature(dc *ufsdevice.Config, hf ufsdevice.Config_HardwareFeature)
 	return false
 }
 
-func getUFSDutMetaFromSpecs(dutID string, dut *tlw.Dut) *ufspb.DutMeta {
-	dutMeta := &ufspb.DutMeta{
-		ChromeosDeviceId: dutID,
-		Hostname:         dut.Name,
-	}
-	if dut.SerialNumber != "" {
-		dutMeta.SerialNumber = dut.SerialNumber
-	}
-	if dut.Hwid != "" {
-		dutMeta.HwID = dut.Hwid
-	}
+func getUFSDutDataFromSpecs(dutID string, dut *tlw.Dut) *ufsAPI.UpdateDeviceRecoveryDataRequest_DutData {
+	dutData := &ufsAPI.UpdateDeviceRecoveryDataRequest_DutData{}
+	dutData.SerialNumber = dut.SerialNumber
+	dutData.HwID = dut.Hwid
 	// TODO: update logic if required by b/184391605
-	dutMeta.DeviceSku = dut.DeviceSku
-	return dutMeta
+	dutData.DeviceSku = dut.DeviceSku
+	return dutData
 }
 
-func getUFSLabMetaFromSpecs(dutID string, dut *tlw.Dut) (labconfig *ufspb.LabMeta) {
-	labMeta := &ufspb.LabMeta{
-		ChromeosDeviceId: dutID,
-		Hostname:         dut.Name,
+func getUFSLabDataFromSpecs(dutID string, dut *tlw.Dut) *ufsAPI.UpdateDeviceRecoveryDataRequest_LabData {
+	labData := &ufsAPI.UpdateDeviceRecoveryDataRequest_LabData{
+		WifiRouters: []*ufsAPI.UpdateDeviceRecoveryDataRequest_WifiRouter{},
 	}
 	if sh := dut.ServoHost; sh != nil {
-		labMeta.ServoType = sh.Servo.Type
-		labMeta.SmartUsbhub = sh.SmartUsbhubPresent
-		labMeta.ServoTopology = convertServoTopologyToUFS(sh.ServoTopology)
+		labData.ServoType = sh.Servo.Type
+		labData.SmartUsbhub = sh.SmartUsbhubPresent
+		labData.ServoTopology = convertServoTopologyToUFS(sh.ServoTopology)
 	}
-	return labMeta
+	for _, router := range dut.WifiRouterHosts {
+		labData.WifiRouters = append(labData.WifiRouters, &ufsAPI.UpdateDeviceRecoveryDataRequest_WifiRouter{
+			Hostname: router.GetName(),
+			State:    convertWifiRouterStateToUFS(router.GetState()),
+		})
+	}
+	return labData
 }
 
 // getUFSDutComponentStateFromSpecs collects all states for DUT and peripherals.
@@ -455,6 +456,23 @@ func getUFSDutComponentStateFromSpecs(dutID string, dut *tlw.Dut) *ufslab.DutSta
 		state.AudioLoopbackDongle = ufslab.PeripheralState_WORKING
 	} else {
 		state.AudioLoopbackDongle = ufslab.PeripheralState_UNKNOWN
+	}
+	state.WifiPeripheralState = getWifiPeripheralState(dut.WifiRouterHosts)
+	return state
+}
+
+// getWifiPeripheralState return the wifi peripheral state
+// it represent the state of all wifi routers. it is broken if any of the router state is not working
+func getWifiPeripheralState(wifiRouterHosts []*tlw.WifiRouterHost) ufslab.PeripheralState {
+	if len(wifiRouterHosts) == 0 {
+		return ufslab.PeripheralState_UNKNOWN
+	}
+	state := ufslab.PeripheralState_WORKING
+	for _, wifiRouter := range wifiRouterHosts {
+		if wifiRouter.State != tlw.WifiRouterHost_WORKING {
+			state = ufslab.PeripheralState_BROKEN
+			break
+		}
 	}
 	return state
 }
