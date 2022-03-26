@@ -49,7 +49,7 @@ func matchWifirouterBoardAndModelExec(ctx context.Context, info *execs.ExecInfo)
 
 // wifirouterPresentExec check if wifi router hosts exists
 func wifirouterPresentExec(ctx context.Context, info *execs.ExecInfo) error {
-	if d := info.RunArgs.DUT; d == nil || d.WifiRouterHosts == nil || len(d.WifiRouterHosts) == 0 {
+	if d := info.RunArgs.DUT; d == nil || len(d.WifiRouterHosts) == 0 {
 		return errors.Reason("wifirouter host present: data is not present").Err()
 	}
 	return nil

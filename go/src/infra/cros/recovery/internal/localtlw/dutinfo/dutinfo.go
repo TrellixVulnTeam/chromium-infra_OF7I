@@ -39,6 +39,23 @@ func ConvertDut(data *ufspb.ChromeOSDeviceData) (dut *tlw.Dut, err error) {
 	return nil, errors.Reason("convert dut: unexpected case!").Err()
 }
 
+// ConvertAttachedDeviceToTlw converts USF data to local representation of Dut instance.
+func ConvertAttachedDeviceToTlw(data *ufsAPI.AttachedDeviceData) (dut *tlw.Dut, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.Reason("convert dut: %v\n%s", r, debug.Stack()).Err()
+		}
+	}()
+	if lse := data.GetLabConfig(); lse != nil {
+		return &tlw.Dut{
+			Name: lse.GetName(),
+			// always set twl.Dut.State Ready till android plan are ready b:226652582
+			State: dutstate.Ready,
+		}, nil
+	}
+	return nil, errors.Reason("convert attached device to tlw: unexpected case!").Err()
+}
+
 // CreateUpdateDutRequest creates request instance to update UFS.
 func CreateUpdateDutRequest(dutID string, dut *tlw.Dut) (req *ufsAPI.UpdateDeviceRecoveryDataRequest, err error) {
 	defer func() {
