@@ -3,6 +3,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import glob
 import hashlib
@@ -89,8 +91,8 @@ def run_custom_build(name, link, sha, build):
 
 
 def process_git(name, rev, build, build_options, repo):
-  print
-  print 'Processing (git)', name, rev
+  print()
+  print('Processing (git)', name, rev)
 
   url = repo + '@' + rev
   if not url.startswith('git+https://'):
@@ -103,8 +105,8 @@ def process_git(name, rev, build, build_options, repo):
 
 
 def process_gs(name, sha_ext, build, build_options):
-  print
-  print 'Processing (gs)', name, sha_ext
+  print()
+  print('Processing (gs)', name, sha_ext)
 
   sha, ext = sha_ext.split('.', 1)
   with tempname(ext) as tmp:
@@ -156,13 +158,14 @@ def main(args):
   opts = parser.parse_args(args)
 
   if 'Ubuntu' in platform_tag() and ROOT.startswith('/usr/local/'):
-    print >> sys.stderr, "\n".join([
-      "Due to a bug in Ubuntu's python distribution, build_deps.py does not",
-      "work when run from under a path beginning with /usr/local/. Please ",
-      "clone to a different path, and try again.",
-      "",
-      "Bug: https://github.com/pypa/virtualenv/issues/118"
-    ])
+    print(
+        '\n'.join([
+            'Due to a bug in Ubuntu\'s python distribution, build_deps.py does',
+            'not work when run from under a path beginning with /usr/local/.',
+            'Please clone to a different path, and try again.', '',
+            'Bug: https://github.com/pypa/virtualenv/issues/118'
+        ]),
+        file=sys.stderr)
     return 1
 
   deps_files = opts.deps_file or [os.path.join(ROOT, 'deps.pyl')]
@@ -170,11 +173,11 @@ def main(args):
 
   build_env = os.path.join(ROOT, 'BUILD_ENV')
 
-  print 'Parsing deps.pyl'
+  print('Parsing deps.pyl')
   deps = merge_deps(deps_files)
   bootstrap.activate_env(build_env, {'wheel': deps.pop('wheel')})
 
-  print 'Finding missing deps'
+  print('Finding missing deps')
   missing_deps = {}
   for name, entry in deps.iteritems():
     if to_build and name not in to_build:
@@ -185,10 +188,10 @@ def main(args):
       missing_deps[name] = entry
 
   if not missing_deps:
-    print 'Nothing to process'
+    print('Nothing to process')
     return
 
-  print 'Processing deps:'
+  print('Processing deps:')
   print_deps(missing_deps)
 
   for name, options in missing_deps.iteritems():

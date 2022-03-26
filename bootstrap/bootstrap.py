@@ -3,6 +3,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import contextlib
 import glob
@@ -36,17 +38,16 @@ class NoWheelException(Exception):
 
 def check_pydistutils():
   if os.path.exists(os.path.expanduser('~/.pydistutils.cfg')):
-    print >> sys.stderr, '\n'.join([
-      '',
-      '',
-      '=========== ERROR ===========',
-      'You have a ~/.pydistutils.cfg file, which interferes with the ',
-      'infra virtualenv environment. Please move it to the side and bootstrap ',
-      'again. Once infra has bootstrapped, you may move it back.',
-      '',
-      'Upstream bug: https://github.com/pypa/virtualenv/issues/88/',
-      ''
-    ])
+    print(
+        '\n'.join([
+            '', '', '=========== ERROR ===========',
+            'You have a ~/.pydistutils.cfg file, which interferes with the ',
+            'infra virtualenv environment. Please move it to the side and ',
+            'bootstrap again. Once infra has bootstrapped, you may move it '
+            'back.', '',
+            'Upstream bug: https://github.com/pypa/virtualenv/issues/88/', ''
+        ]),
+        file=sys.stderr)
     sys.exit(1)
 
 
@@ -63,8 +64,9 @@ def ls(prefix):
       break
     except (requests.exceptions.SSLError, requests.exceptions.HTTPError) as ex:
       delay = 4 ** (retry-1)
-      print >> sys.stderr, (
-        "caught an error: %s: retrying in %f sec" % (ex, delay))
+      print(
+          'caught an error: %s: retrying in %f sec' % (ex, delay),
+          file=sys.stderr)
       time.sleep(delay)
       continue
   else:
@@ -153,10 +155,10 @@ def html_index(links):
   tf = tempfile.mktemp('.html')
   try:
     with open(tf, 'w') as f:
-      print >> f, '<html><body>'
+      print('<html><body>', file=f)
       for link in links:
-        print >> f, '<a href="%s">wat</a>' % link
-      print >> f, '</body></html>'
+        print('<a href="%s">wat</a>' % link, file=f)
+      print('</body></html>', file=f)
     yield tf
   finally:
     os.unlink(tf)
@@ -188,14 +190,14 @@ def install(deps):
 
 def activate_env(env, manifest, quiet=False):
   if not quiet:
-    print 'Activating environment: %r' % env
+    print('Activating environment: %r' % env)
   assert isinstance(manifest, dict)
 
   manifest_path = os.path.join(env, 'manifest.pyl')
   cur_manifest = read_python_literal(manifest_path)
   if cur_manifest != manifest:
     if not quiet:
-      print '  Removing old environment: %r' % cur_manifest
+      print('  Removing old environment: %r' % cur_manifest)
     shutil.rmtree(env, ignore_errors=True)
     cur_manifest = None
 
@@ -220,11 +222,11 @@ def activate_env(env, manifest, quiet=False):
     check_pydistutils()
 
     if not quiet:
-      print '  Building new environment'
+      print('  Building new environment')
     subprocess.check_call([real_python, virtualenv_py, env, '--no-download'])
 
   if not quiet:
-    print '  Activating environment'
+    print('  Activating environment')
   bin_dir = 'Scripts' if sys.platform.startswith('win') else 'bin'
   activate_this = os.path.join(env, bin_dir, 'activate_this.py')
   execfile(activate_this, dict(__file__=activate_this))
@@ -232,7 +234,7 @@ def activate_env(env, manifest, quiet=False):
   if cur_manifest is None:
     deps = manifest.get('deps', {})
     if not quiet:
-      print '  Installing deps'
+      print('  Installing deps')
       print_deps(deps, indent=2, with_implicit=False)
     install(deps)
     subprocess.check_call([real_python, virtualenv_py, env, '--relocatable'])
@@ -252,7 +254,7 @@ def activate_env(env, manifest, quiet=False):
         python_bat_file.write(PYTHON_BAT_WIN)
 
   if not quiet:
-    print 'Done creating environment'
+    print('Done creating environment')
 
 
 def main(args):
@@ -292,11 +294,11 @@ def main(args):
   machine = platform.machine()
   arch = 'arm' if ('arm' in machine or 'aarch' in machine) else 'intel'
   if arch == 'arm':
-    print '---------------------------'
-    print 'WARNING! WARNING! WARNING! '
-    print '---------------------------'
-    print 'The infra python environment is not available on ARM.'
-    print 'If you need to develop infra tools for ARM, use Go instead.'
+    print('---------------------------')
+    print('WARNING! WARNING! WARNING! ')
+    print('---------------------------')
+    print('The infra python environment is not available on ARM.')
+    print('If you need to develop infra tools for ARM, use Go instead.')
     return
 
   plat = '%s_%s' % (osname, bitness)
@@ -306,12 +308,13 @@ def main(args):
   activate_env(opts.env_path, manifest, opts.quiet)
 
   if not opts.quiet and kicked:
-    print '---------------------------'
-    print 'WARNING! WARNING! WARNING! '
-    print '---------------------------'
-    print 'The following deps were skipped, they are not available on %s' % plat
+    print('---------------------------')
+    print('WARNING! WARNING! WARNING! ')
+    print('---------------------------')
+    print('The following deps were skipped, they are not available on %s' %
+          plat)
     for pkg, dep in sorted(kicked.iteritems()):
-      print '  * %s (%s)' % (pkg, dep['version'])
+      print('  * %s (%s)' % (pkg, dep['version']))
 
 
 if __name__ == '__main__':

@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import ast
 import contextlib
 import hashlib
@@ -44,8 +46,8 @@ def print_deps(deps, indent=1, with_implicit=True):
   for dep, entry in deps.iteritems():
     if not with_implicit and entry.get('implicit'):
       continue
-    print '  ' * indent + '%s: %r' % (dep, entry)
-  print
+    print('  ' * indent + '%s: %r' % (dep, entry))
+  print()
 
 
 @contextlib.contextmanager
