@@ -10,6 +10,10 @@ create {
   build {
     tool: "tools/texinfo"
   }
+
+  package {
+    version_file: ".versions/ed.version"
+  }
 }
 
 upload { pkg_prefix: "tools" }

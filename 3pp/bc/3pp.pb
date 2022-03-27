@@ -11,6 +11,10 @@ create {
     tool: "tools/ed"
     tool: "tools/texinfo"
   }
+
+  package {
+    version_file: ".versions/bc.version"
+  }
 }
 
 upload { pkg_prefix: "tools" }

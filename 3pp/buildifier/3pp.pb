@@ -6,6 +6,10 @@ create {
   }
 
   build { tool: "tools/go" }
+
+  package {
+    version_file: ".versions/buildifer.version"
+  }
 }
 
 upload { pkg_prefix: "tools" }
