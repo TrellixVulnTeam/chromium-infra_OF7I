@@ -63,7 +63,7 @@ func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.
 		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "chromeos-inventory-privileged-access", "satlab-users"}
 	case "DeleteMachine":
 		group = append(group, "mdb/hwops-nsi", "chromeos-inventory-privileged-access")
-	case "GetMachine", "GetState", "GetCachingService", "GetChromeOSDeviceData", "GetMachineLSE", "GetSchedulingUnit":
+	case "GetMachine", "GetState", "GetCachingService", "GetChromeOSDeviceData", "GetMachineLSE", "GetSchedulingUnit", "GetDeviceData":
 		group = append(group, "chromeos-inventory-readonly-access", "machine-db-readers")
 	case "UpdateState", "UpdateDutState", "UpdateDeviceRecoveryData":
 		group = append(group, "chromeos-inventory-status-label-write-access")
