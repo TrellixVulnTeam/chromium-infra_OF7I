@@ -494,7 +494,7 @@ func appendAndroidLabels(attrMap map[string]string, labels []string, dut *labapi
 	}
 	// Android DUT serial number.
 	if serialNumber := dut.GetSerialNumber(); serialNumber != "" {
-		labels = append(labels, "serial_number:"+strings.ToLower(serialNumber))
+		labels = append(labels, "serial_number:"+serialNumber)
 	}
 	// Android DUT model codename.
 	if model := dut.GetDutModel().GetModelName(); model != "" {

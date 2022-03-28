@@ -29,7 +29,7 @@ func TestConvertAttachedDeviceDutTopologyToHostInfoForAndroid(t *testing.T) {
 		board := "dummy_board"
 		hostname := "dummy_hostname"
 		model := "dummy_model"
-		serialNumber := "1234567890"
+		serialNumber := "1234AbcDE"
 		input := labapi.DutTopology{
 			Id: &labapi.DutTopology_Id{
 				Value: "dummy_dut_topology_id",
@@ -252,7 +252,7 @@ func TestConvertAttachedDeviceInfoToHostInfo(t *testing.T) {
 		board := "dummy_board"
 		hostname := "dummy_hostname"
 		model := "dummy_model"
-		serialNumber := "1234567890"
+		serialNumber := "1234AbcDE"
 		attachedDevice := ufsapi.AttachedDeviceData{
 			LabConfig: &ufspb.MachineLSE{
 				Name:                "dummy_name",
