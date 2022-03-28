@@ -230,8 +230,8 @@ type FwUpdaterRequest struct {
 // UpdateBoardsServoFw will try to update every board (servo devices) within the servo topology.
 //
 // @return: slice of the board (servo device) that didn't update successfully.
-func UpdateBoardsServoFw(ctx context.Context, r execs.Runner, req FwUpdaterRequest, devices []*tlw.ServoTopologyItem) []*tlw.ServoTopologyItem {
-	failBoards := []*tlw.ServoTopologyItem{}
+func UpdateDevicesServoFw(ctx context.Context, r execs.Runner, req FwUpdaterRequest, devices []*tlw.ServoTopologyItem) []*tlw.ServoTopologyItem {
+	failDevices := []*tlw.ServoTopologyItem{}
 	for _, device := range devices {
 		if !topology.IsItemGood(ctx, device) {
 			log.Debugf(ctx, "%s does not have minimum required data to update its firmware", device.Type)
@@ -259,7 +259,7 @@ func UpdateBoardsServoFw(ctx context.Context, r execs.Runner, req FwUpdaterReque
 		}
 		// Normal and force update attempt both failed.
 		log.Infof(ctx, "Fail update firmware for %s", device.Type)
-		failBoards = append(failBoards, device)
+		failDevices = append(failDevices, device)
 	}
-	return failBoards
+	return failDevices
 }

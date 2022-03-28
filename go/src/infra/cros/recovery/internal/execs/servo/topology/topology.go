@@ -163,7 +163,7 @@ func GetServoUsbDevnum(ctx context.Context, runner execs.Runner, servoSerial str
 // directory that contains servo details.
 func readServoFs(ctx context.Context, runner execs.Runner, servoPath string, filename string) (string, error) {
 	fullPath := filepath.Join(servoPath, filename)
-	v, err := runner(ctx, time.Minute, fmt.Sprintf(fileReadCmd, fullPath))
+	v, err := runner(ctx, 20*time.Second, fmt.Sprintf(fileReadCmd, fullPath))
 	if err != nil {
 		return "", errors.Annotate(err, "read servo file %s", fullPath).Err()
 	}
@@ -280,12 +280,20 @@ func IsItemGood(ctx context.Context, c *tlw.ServoTopologyItem) bool {
 	return c.Serial != "" && c.Type != "" && c.UsbHubPort != ""
 }
 
-// Create and return a slice of all the servo devices in servo topology.
-func AllDevices(c *tlw.ServoTopology) []*tlw.ServoTopologyItem {
+// Create and return a slice of the servo devices in servo topology.
+// if there is a filteredBoard, then only return the slice of topology
+// item that contains that one filtered board.
+func Devices(c *tlw.ServoTopology, filteredBoard string) []*tlw.ServoTopologyItem {
 	devices := []*tlw.ServoTopologyItem{}
-	devices = append(devices, c.Root)
+	// Servo device root.
+	if filteredBoard == "" || filteredBoard == c.Root.Type {
+		devices = append(devices, c.Root)
+	}
+	// Servo device children.
 	for _, d := range c.Children {
-		devices = append(devices, d)
+		if filteredBoard == "" || filteredBoard == d.Type {
+			devices = append(devices, d)
+		}
 	}
 	return devices
 }

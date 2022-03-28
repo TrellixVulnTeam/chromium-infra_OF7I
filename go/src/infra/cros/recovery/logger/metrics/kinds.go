@@ -14,4 +14,9 @@ const (
 	// RunLibraryKind is the actionKind for query the
 	// record for overall PARIS recovery result each run.
 	RunLibraryKind = "run_recovery"
+	// ServoFwUpdateKind records the servo fw update information.
+	ServoFwUpdateKind = "servo_firmware_update"
+	// ServoEachDeviceFwUpdateKind is the actionkind for query the record for each
+	// of the servo device's fw update information.
+	ServoEachDeviceFwUpdateKind = "servo_firmware_update_%s"
 )
