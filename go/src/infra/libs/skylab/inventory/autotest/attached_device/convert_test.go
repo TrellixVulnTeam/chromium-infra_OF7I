@@ -23,7 +23,7 @@ lab_config: {
   }
 }
 machine: {
-  serial_number: "1234567890"
+  serial_number: "12345AbcDE"
   attached_device: {
     manufacturer: "dummy_manufacturer"
     device_type: ATTACHED_DEVICE_TYPE_ANDROID_PHONE
@@ -36,7 +36,7 @@ machine: {
 var attachedDeviceLabels = []string{
 	"associated_hostname:dummy_associated_hostname",
 	"name:dummy_hostname",
-	"serial_number:1234567890",
+	"serial_number:12345AbcDE",
 	"model:dummy_model",
 	"board:dummy_board",
 	"os:android",

@@ -28,7 +28,7 @@ func Convert(attachedDeviceData *ufsapi.AttachedDeviceData) []string {
 	}
 	// Attached device serial number.
 	if serialNumber := machine.GetSerialNumber(); serialNumber != "" {
-		labels = append(labels, "serial_number:"+strings.ToLower(serialNumber))
+		labels = append(labels, "serial_number:"+serialNumber)
 	}
 	// Attached device model codename.
 	if model := machine.GetAttachedDevice().GetModel(); model != "" {
