@@ -96,7 +96,7 @@ func (is *ServerImpl) balancePoolsNoRetry(ctx context.Context, req *fleet.Balanc
 			im := m
 			ids := ds
 			workC <- func() error {
-				logging.Infof(ctx, "balancing pool for model: %s", m)
+				logging.Infof(ctx, "balancing pool for model: %s", im)
 				iResp, err2 := ensurePoolHealthyForModel(ctx, ids, botsHealth, req.TargetPool, req.SparePool, req.MaxUnhealthyDuts)
 				if err2 != nil {
 					return err2
