@@ -395,7 +395,7 @@
       "[START_DIR]/snoopy/snoopy_broker",
       "-report-stage",
       "-stage",
-      "upload_complete"
+      "upload-complete"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"

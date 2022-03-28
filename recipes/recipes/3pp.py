@@ -167,7 +167,7 @@ def RunSteps(api, package_locations, to_build, platform, force_build,
     # If reporting to Snoopy is enabled, try to report built package.
     if 'security.snoopy' in api.buildbucket.build.input.experiments:
       try:
-        api.snoopy.report_stage("upload_complete")
+        api.snoopy.report_stage("upload-complete")
       except Exception:  # pragma: no cover
         api.step.active_result.presentation.status = api.step.FAILURE
 
