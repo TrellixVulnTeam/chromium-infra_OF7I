@@ -567,7 +567,7 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 			vmIDs = append(vmIDs, vm.GetName())
 			hc.LogVMChanges(&ufspb.VM{Name: vm.GetName()}, nil)
 		}
-		if vmIDs != nil && len(vmIDs) > 0 {
+		if len(vmIDs) > 0 {
 			if err := inventory.BatchDeleteVMs(ctx, vmIDs); err != nil {
 				return err
 			}
@@ -813,7 +813,6 @@ func deleteNonExistingMachineLSEs(ctx context.Context, machineLSEs []*ufspb.Mach
 		return nil, err
 	}
 	var toDelete []string
-	var toDeleteDHCPHost []string
 	for _, sr := range resp.Passed() {
 		s := sr.Data.(*ufspb.MachineLSE)
 		if lseType == "browser" && s.GetChromeosMachineLse() != nil {
@@ -824,12 +823,6 @@ func deleteNonExistingMachineLSEs(ctx context.Context, machineLSEs []*ufspb.Mach
 		}
 		if _, ok := resMap[s.GetName()]; !ok {
 			toDelete = append(toDelete, s.GetName())
-			toDeleteDHCPHost = append(toDeleteDHCPHost, s.GetName())
-		}
-		if s.GetChromeBrowserMachineLse() != nil {
-			for _, vm := range s.GetChromeBrowserMachineLse().GetVms() {
-				toDeleteDHCPHost = append(toDeleteDHCPHost, vm.GetHostname())
-			}
 		}
 	}
 	logging.Infof(ctx, "Deleting %d non-existing machine lses", len(toDelete))
@@ -870,12 +863,10 @@ func deleteNonExistingVMs(ctx context.Context, vms []*ufspb.VM, pageSize int) (*
 		return nil, err
 	}
 	var toDelete []string
-	var toDeleteDHCPHost []string
 	for _, sr := range resp.Passed() {
 		s := sr.Data.(*ufspb.VM)
 		if _, ok := resMap[s.GetName()]; !ok {
 			toDelete = append(toDelete, s.GetName())
-			toDeleteDHCPHost = append(toDeleteDHCPHost, s.GetName())
 		}
 	}
 	logging.Infof(ctx, "Deleting %d non-existing vms", len(toDelete))
@@ -1036,34 +1027,6 @@ func updateServoV3EntryInLabstation(ctx context.Context, servo *chromeosLab.Serv
 	// Don't store servo serial for servo V3.
 	servo.ServoSerial = ""
 	labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = []*chromeosLab.Servo{servo}
-	return nil
-}
-
-// replaceServoEntryInLabstation replaces oldServo entry with newServo entry in the Labstation.
-// oldServo => old record of servo as found in the DUT.
-// newServo => new servo replacing the old one.
-// labstation => current machine lse of the labstation.
-func replaceServoEntryInLabstation(ctx context.Context, oldServo, newServo *chromeosLab.Servo, labstation *ufspb.MachineLSE) error {
-	if newServo == nil {
-		// Don't use this API to remove servo from labstation.
-		return status.Errorf(codes.Internal, "replaceServoEntryInLabstation[Wrong Usage]: Use removeServoEntryFromLabstation")
-	}
-	if oldServo == nil {
-		// Don't use this API to append servo to labstation.
-		return status.Errorf(codes.Internal, "replaceServoEntryInLabstation[Wrong Usage]: Use appendServoEntryToLabstation")
-	}
-	// Check if its a servo V3 device.
-	if util.ServoV3HostnameRegex.MatchString(labstation.GetHostname()) {
-		return updateServoV3EntryInLabstation(ctx, newServo, labstation)
-	}
-	// Remove oldServo from labstation.
-	if err := removeServoEntryFromLabstation(ctx, oldServo, labstation); err != nil {
-		return errors.Annotate(err, "replaceServoEntryInLabstation - Cannot remove old servo entry").Err()
-	}
-	// Append newServo to the labstation.
-	if err := appendServoEntryToLabstation(ctx, newServo, labstation); err != nil {
-		return errors.Annotate(err, "replaceServoEntryInLabstation - Cannot add new servo entry to labstation").Err()
-	}
 	return nil
 }
 
@@ -1754,7 +1717,7 @@ func updateRecoveryLabData(ctx context.Context, hostname string, resourceState u
 				peri.Servo = &chromeosLab.Servo{}
 			}
 			// Apply servo edits
-			if err = editRecoveryPeripheralServo(ctx, peri.GetServo(), labData); err != nil {
+			if err = editRecoveryPeripheralServo(peri.GetServo(), labData); err != nil {
 				return err
 			}
 			// Wifi cannot be nil for valid DUT
@@ -1810,7 +1773,7 @@ func updateBluetoothPeerStates(p *chromeosLab.Peripherals, btps []*ufsAPI.Update
 }
 
 // editRecoveryPeripheralServo edits peripherals servo
-func editRecoveryPeripheralServo(ctx context.Context, servo *chromeosLab.Servo, labData *ufsAPI.UpdateDeviceRecoveryDataRequest_LabData) error {
+func editRecoveryPeripheralServo(servo *chromeosLab.Servo, labData *ufsAPI.UpdateDeviceRecoveryDataRequest_LabData) error {
 	servo.ServoType = labData.GetServoType()
 	servo.ServoTopology = labData.GetServoTopology()
 	servo.ServoComponent = extractServoComponents(labData.GetServoType())

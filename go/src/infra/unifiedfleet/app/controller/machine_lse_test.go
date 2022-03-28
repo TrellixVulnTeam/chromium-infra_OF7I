@@ -192,7 +192,7 @@ func TestCreateMachineLSE(t *testing.T) {
 				Name:        "vlan-1",
 				VlanAddress: "192.168.40.0/22",
 			}
-			_, err = configuration.CreateVlan(ctx, vlan)
+			configuration.CreateVlan(ctx, vlan)
 			ips, _, _, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress(), "", "")
 			So(err, ShouldBeNil)
 			// Only import the first 20 as one single transaction cannot import all.
@@ -524,7 +524,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 	dutMachinelse2.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals2
 	inventory.CreateMachineLSE(ctx, dutMachinelse2)
 
-	labstationMachinelse, _ = inventory.GetMachineLSE(ctx, "BlueLabstation-10")
+	inventory.GetMachineLSE(ctx, "BlueLabstation-10")
 	Convey("UpdateMachineLSE for a DUT", t, func() {
 		Convey("Update non-existing machineLSE DUT", func() {
 			dutMachinelse := mockDutMachineLSE("DUTMachineLSE-23")
@@ -893,7 +893,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 				Name:        "vlan-1",
 				VlanAddress: "192.168.40.0/22",
 			}
-			_, err = configuration.CreateVlan(ctx, vlan)
+			configuration.CreateVlan(ctx, vlan)
 			ips, _, startFreeIP, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress(), vlan.GetFreeStartIpv4Str(), vlan.GetFreeEndIpv4Str())
 			var assignedIP *ufspb.IP
 			for _, ip := range ips {
@@ -988,7 +988,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 				Name:        "vlan-1",
 				VlanAddress: "192.168.40.0/22",
 			}
-			_, err = configuration.CreateVlan(ctx, vlan)
+			configuration.CreateVlan(ctx, vlan)
 			ips, _, _, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress(), vlan.GetFreeStartIpv4Str(), vlan.GetFreeEndIpv4Str())
 			So(err, ShouldBeNil)
 			// Only import the first 20 as one single transaction cannot import all.
@@ -1112,7 +1112,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 				Name:        "vlan-1",
 				VlanAddress: "192.168.40.0/22",
 			}
-			_, err = configuration.CreateVlan(ctx, vlan)
+			configuration.CreateVlan(ctx, vlan)
 			ips, _, _, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress(), vlan.GetFreeStartIpv4Str(), vlan.GetFreeEndIpv4Str())
 			So(err, ShouldBeNil)
 			// Only import the first 20 as one single transaction cannot import all.
@@ -1225,7 +1225,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			dhcp, err = configuration.GetDHCPConfig(ctx, "machinelse-update-host-nic-user")
 			So(err, ShouldBeNil)
 			So(dhcp.GetMacAddress(), ShouldEqual, "eth1-nic-macaddress")
-			lse, err := inventory.GetMachineLSE(ctx, "machinelse-update-host-nic-user")
+			lse, _ := inventory.GetMachineLSE(ctx, "machinelse-update-host-nic-user")
 			So(lse.GetNic(), ShouldEqual, "eth1-nic-user")
 			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "fake_ip"})
 			So(err, ShouldBeNil)
