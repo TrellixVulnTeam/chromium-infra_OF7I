@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"path"
 	"regexp"
 	"sort"
 	"strconv"
@@ -79,13 +80,13 @@ var (
 	// the messages do not appear to be specific enough to be useful for
 	// clustering. Further work may improve failure reason extraction for
 	// these types of errors.
-	fatalMessageRE = regexp.MustCompile(`.*FATAL.*?([a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+\([0-9]+\))]? (.*)`)
+	fatalMessageRE = regexp.MustCompile(`.*FATAL.*?([a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+\([0-9]+\))\]? (.*)`)
 
 	// checkFailedRE extracts fatal log lines and is used in addition to
 	// fatalMessageRE. This results in an additional ~1% of fatal failure
 	// messages being extracted. Both regular expressions overlap
 	// significantly.
-	checkFailedRE = regexp.MustCompile(`.*?([a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+\([0-9]+\))]? (Check failed:.*)`)
+	checkFailedRE = regexp.MustCompile(`.*?([a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+\([0-9]+\))\]? (Check failed:.*)`)
 
 	// Extracts failed Google Test expectations from test snippets.
 	// Used as a fallback where result parts are not available
@@ -105,7 +106,10 @@ var (
 	// failures that do not start with
 	// "Expected equality of these values:", so no attempt was made
 	// to match on this part of the text.
-	gtestExpectationRE = regexp.MustCompile(`(?s)[a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+:[0-9]+: Failure\n(.*?)Stack trace:`)
+	//
+	// The first capture group is the file name, the second is the
+	// file line, the third is the expectation failure.
+	gtestExpectationRE = regexp.MustCompile(`(?s)([a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+):([0-9]+): Failure\n(.*?)Stack trace:`)
 
 	// As above, but for output generated on Windows machines.
 	// Example:
@@ -117,7 +121,7 @@ var (
 	// Stack trace:
 	// Backtrace:
 	//         std::__1::unique_ptr<network::ResourceRequest,std::__1::default_delete<network::ResourceRequest> >::reset [0x007A3C5B+7709]
-	gtestExpectationWindowsRE = regexp.MustCompile(`(?s)[a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+\([0-9]+\): error: (.*?)Stack trace:`)
+	gtestExpectationWindowsRE = regexp.MustCompile(`(?s)([a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+)\(([0-9]+)\): error: (.*?)Stack trace:`)
 
 	// googleTestTraceRE identifies output from SCOPED_TRACE calls in GTest
 	// so that they can be removed from the primary error message.
@@ -177,6 +181,12 @@ type GTestRunResultPart struct {
 	// - "skip" (from GTEST_SKIP()).
 	Type          string `json:"type"`
 	SummaryBase64 string `json:"summary_base64"`
+	// File is the path to the file where the error was raised, e.g.
+	// "../../content/public/test/browser_test_base.cc".
+	// Even on Windows, this uses forward slashes.
+	File string `json:"file"`
+	// Line is the line number where the failure was raised.
+	Line int `json:"line"`
 }
 
 // Location describes a code location.
@@ -421,9 +431,17 @@ func extractFailureReasonFromResultParts(ctx context.Context, parts []*GTestRunR
 		logging.Warningf(ctx, "SummaryBase64 is not valid UTF-8 %q", f.SummaryBase64)
 		return nil
 	}
-	summary := strings.TrimSpace(string(summaryBytes))
+	// Even on Windows, paths reported in the result parts use forward slashes,
+	// so use path instead of filepath.
+	_, fileName := path.Split(f.File)
+	summary := strings.TrimSpace(trimGoogleTestTrace(string(summaryBytes)))
+
+	// Contextualise the assertion failure with the file name and line number.
+	// This avoids coming up with failure reasons which are too generic,
+	// e.g. "Expected equality of these values:\n true\n false".
+	primaryError := fmt.Sprintf("%v(%v): %v", fileName, f.Line, summary)
 	return &pb.FailureReason{
-		PrimaryErrorMessage: truncateString(trimGoogleTestTrace(summary), maxPrimaryErrorBytes),
+		PrimaryErrorMessage: truncateString(primaryError, maxPrimaryErrorBytes),
 	}
 }
 
@@ -447,13 +465,13 @@ func extractFailureReasonFromSnippet(ctx context.Context, snippet string) *pb.Fa
 	// A fatal error was found. Return it.
 	if match != nil {
 		// File name and line, e.g. "tls_handshaker.cc(123)".
-		fileName := snippet[match[2]:match[3]]
+		fileNameAndLine := snippet[match[2]:match[3]]
 		// The failure message, e.g. "Check failed: !condition. "
 		message := strings.TrimSpace(snippet[match[4]:match[5]])
 
 		// Include the location of the fatal error as sometimes "Check failed: "
 		// errors are non specific. E.g. "Check failed: false".
-		primaryError := fmt.Sprintf("%v: %v", fileName, message)
+		primaryError := fmt.Sprintf("%v: %v", fileNameAndLine, message)
 		return &pb.FailureReason{
 			PrimaryErrorMessage: truncateString(primaryError, maxPrimaryErrorBytes),
 		}
@@ -473,8 +491,11 @@ func extractFailureReasonFromSnippet(ctx context.Context, snippet string) *pb.Fa
 	if match == nil {
 		return nil
 	}
-	message := strings.TrimSpace(snippet[match[2]:match[3]])
-	primaryError := trimGoogleTestTrace(message)
+	fileName := snippet[match[2]:match[3]]
+	lineNumber := snippet[match[4]:match[5]]
+	message := trimGoogleTestTrace(snippet[match[6]:match[7]])
+	message = strings.TrimSpace(message)
+	primaryError := fmt.Sprintf("%v(%v): %v", fileName, lineNumber, message)
 	return &pb.FailureReason{
 		PrimaryErrorMessage: truncateString(primaryError, maxPrimaryErrorBytes),
 	}
