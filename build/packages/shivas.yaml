@@ -1,9 +1,20 @@
 package: infra/shivas/${platform}
 description: Chrome and ChromeOS lab commandline tool.
 platforms:
+  - linux-386
   - linux-amd64
+  - linux-arm64
+  - linux-armv6l
+  - linux-mipsle
+  - linux-mips64
+  - linux-mips64le
+  - linux-ppc64
+  - linux-ppc64le
+  - linux-s390x
+  - aix-ppc64
   - mac-amd64
   - mac-arm64
+  - windows-386
   - windows-amd64
 go_build_environ:
   CGO_ENABLED:
