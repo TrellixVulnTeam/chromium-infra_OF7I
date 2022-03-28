@@ -341,12 +341,7 @@ export class MrHeader extends connectStore(LitElement) {
       return `/p/${this.projectName}/issues/entry`;
     }
 
-    const token = prpcClient.token;
-
-    const customUrl = this.presentationConfig.customIssueEntryUrl;
-
-    return `${customUrl}?token=${token}&role=${
-      role}&continue=${this._wizardPostUrl}`;
+    return `/p/${this.projectName}/issues/wizard`;
   }
 
   /**
