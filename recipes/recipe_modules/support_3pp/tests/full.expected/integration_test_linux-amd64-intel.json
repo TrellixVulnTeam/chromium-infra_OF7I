@@ -2707,6 +2707,93 @@
     ]
   },
   {
+    "cmd": [
+      "cipd",
+      "ensure",
+      "-root",
+      "[START_DIR]/snoopy",
+      "-ensure-file",
+      "infra/tools/security/snoopy_broker/${platform} git_revision:3d4e74afb729a2809cd5e02f044f0318c972a984",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_git",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building deps/bottom_dep_git.do upload.ensure_installed",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:3d4\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/security/snoopy_broker/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "3pp/deps/bottom_dep_git/linux-amd64",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_git",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building deps/bottom_dep_git.do upload.report_cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
     "cmd": [],
     "name": "building deps/bottom_dep_url"
   },
@@ -3682,6 +3769,43 @@
     ]
   },
   {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "3pp/deps/bottom_dep_url/linux-amd64",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_url",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.2.3"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building deps/bottom_dep_url.do upload.report_cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
     "cmd": [],
     "name": "building deps/deep_dep"
   },
@@ -4438,6 +4562,44 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/deps/deep_dep/linux-amd64@https://chrome-infra-packages.appspot.com/p/3pp/deps/deep_dep/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "3pp/deps/deep_dep/linux-amd64",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.2.3"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building deps/deep_dep.do upload.report_cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -5393,6 +5555,43 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/tools/fetch_and_package@https://chrome-infra-packages.appspot.com/p/3pp/tools/fetch_and_package/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "3pp/tools/fetch_and_package",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/fetch_and_package",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/fetch_and_package.do upload.report_cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -6366,6 +6565,43 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/tools/pkg/linux-amd64@https://chrome-infra-packages.appspot.com/p/3pp/tools/pkg/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "3pp/tools/pkg/linux-amd64",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/pkg_override_and_no_latest.do upload.report_cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -7413,6 +7649,43 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/tools/posix_tool/linux-amd64@https://chrome-infra-packages.appspot.com/p/3pp/tools/posix_tool/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "3pp/tools/posix_tool/linux-amd64",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/posix_tool",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.2.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/posix_tool.do upload.report_cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -8464,6 +8737,43 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/tools/windows_experiment/linux-amd64@https://chrome-infra-packages.appspot.com/p/3pp/tools/windows_experiment/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "3pp/tools/windows_experiment/linux-amd64",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/windows_experiment",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/windows_experiment.do upload.report_cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -10272,6 +10582,44 @@
     ]
   },
   {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "3pp/build_tools/git_tool/linux-amd64",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "build_tools/git_tool",
+      "_3PP_PATCH_VERSION": "chops.1",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building build_tools/git_tool.do upload.report_cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
     "cmd": [],
     "name": "building build_tools/tool"
   },
@@ -11995,6 +12343,44 @@
     ]
   },
   {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "3pp/build_tools/tool/linux-amd64",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
+      "_3PP_PATCH_VERSION": "chops.1",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building build_tools/tool.do upload.report_cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
     "cmd": [],
     "name": "building build_tools/tool (2)"
   },
@@ -13127,6 +13513,43 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/deps/dep/linux-amd64@https://chrome-infra-packages.appspot.com/p/3pp/deps/dep/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "3pp/deps/dep/linux-amd64",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/dep",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building deps/dep.do upload.report_cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -14514,6 +14937,43 @@
     ]
   },
   {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "3pp/tools/pkg/linux-amd64",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/pkg.do upload.report_cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
     "cmd": [],
     "name": "building tools/pkg_checkout"
   },
@@ -15848,6 +16308,43 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/tools/pkg_checkout/linux-amd64@https://chrome-infra-packages.appspot.com/p/3pp/tools/pkg_checkout/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "3pp/tools/pkg_checkout/linux-amd64",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/pkg_checkout.do upload.report_cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {

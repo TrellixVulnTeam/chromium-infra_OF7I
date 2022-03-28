@@ -13,10 +13,85 @@
       "infra/tools/dockerbuild"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "compute recipe file hash",
     "~followup_annotations": [
       "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
     ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "ensure",
+      "-root",
+      "[START_DIR]/snoopy",
+      "-ensure-file",
+      "infra/tools/security/snoopy_broker/${platform} git_revision:3d4e74afb729a2809cd5e02f044f0318c972a984",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "ensure_installed",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:3d4\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/security/snoopy_broker/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-stage",
+      "-stage",
+      "start",
+      "-recipe",
+      "3pp"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "report_stage"
   },
   {
     "cmd": [
@@ -33,6 +108,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "read cached checkouts",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@glob@[CACHE]/builder/badc0ffe@@@",
@@ -57,6 +144,18 @@
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load packages from desired repos.git setup",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -76,6 +175,18 @@
       "PATH": "RECIPE_REPO[depot_tools]:<PATH>"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load packages from desired repos.git fetch",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -93,6 +204,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load packages from desired repos.git checkout",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -109,6 +232,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load packages from desired repos.read revision",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -128,6 +263,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load packages from desired repos.git clean",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -148,6 +295,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load packages from desired repos.find package specs",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -179,6 +338,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "remove unused repos.rm badc0ffe",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -198,6 +369,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "remove unused repos.rm deadbeef",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -206,6 +389,30 @@
   {
     "cmd": [],
     "name": "compute build plan"
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-stage",
+      "-stage",
+      "upload_complete"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "report_stage (2)"
   },
   {
     "name": "$result"

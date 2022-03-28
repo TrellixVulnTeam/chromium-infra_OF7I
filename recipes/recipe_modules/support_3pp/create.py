@@ -192,3 +192,12 @@ def _build_impl(api, cipd_spec, is_latest, spec_lookup, force_build, recurse_fn,
             upload_presentation.links[pin_result['instance_id']] = (
                 'https://chrome-infra-packages.appspot.com' +
                 '/p/%(package)s/+/%(instance_id)s' % pin_result)
+
+        # If reporting to Snoopy is enabled, try to report built package.
+        if 'security.snoopy' in api.buildbucket.build.input.experiments:
+          # Attach provenance after the package has been uploaded.
+          try:
+            api.snoopy.report_cipd(package_hash, cipd_spec.name,
+                                  pin_result['instance_id'])
+          except Exception:  # pragma: no cover
+            api.step.active_result.presentation.status = api.step.FAILURE

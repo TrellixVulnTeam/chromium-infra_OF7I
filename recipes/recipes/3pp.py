@@ -22,6 +22,7 @@ DEPS = [
     'recipe_engine/step',
     'depot_tools/git',
     'depot_tools/tryserver',
+    'infra/snoopy',
     'support_3pp',
 ]
 
@@ -77,6 +78,12 @@ PROPERTIES = {
 
 def RunSteps(api, package_locations, to_build, platform, force_build,
              package_prefix, source_cache_prefix):
+  # If reporting to Snoopy is enabled, try to report built package.
+  if 'security.snoopy' in api.buildbucket.build.input.experiments:
+    try:
+      api.snoopy.report_stage("start")
+    except Exception:  # pragma: no cover
+      api.step.active_result.presentation.status = api.step.FAILURE
   if api.tryserver.is_tryserver:
     revision = api.tryserver.gerrit_change_fetch_ref
     api.support_3pp._experimental = True
@@ -157,6 +164,12 @@ def RunSteps(api, package_locations, to_build, platform, force_build,
         platform,
         force_build=force_build,
         tryserver_affected_files=tryserver_affected_files)
+    # If reporting to Snoopy is enabled, try to report built package.
+    if 'security.snoopy' in api.buildbucket.build.input.experiments:
+      try:
+        api.snoopy.report_stage("upload_complete")
+      except Exception:  # pragma: no cover
+        api.step.active_result.presentation.status = api.step.FAILURE
 
     if unsupported:
       api.step.empty(
@@ -174,7 +187,8 @@ def GenTests(api):
         package_prefix='hello_world',
     ))
 
-  yield api.test('basic') + defaults()
+  yield (api.test('basic') + defaults() +
+         api.buildbucket.ci_build(experiments=['security.snoopy']))
 
   pkgs = sorted(dict(
     pkg_a='''
