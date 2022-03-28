@@ -7,7 +7,6 @@ import json
 
 from google.appengine.ext import ndb
 from protorpc import messages
-from protorpc import message_types
 from protorpc import remote
 import endpoints
 
@@ -16,13 +15,9 @@ from components import utils
 import gae_ts_mon
 
 from legacy import api
-from legacy import api_common
 import config
 import errors
-import flatten_swarmingcfg
 import swarming
-import swarmingcfg
-import user
 
 
 def swarmbucket_api_method(
@@ -54,29 +49,10 @@ def adapt_exceptions(fn):
   def decorated(*args, **kwargs):
     try:
       return fn(*args, **kwargs)
-    except errors.InvalidInputError as ex:
+    except errors.InvalidInputError as ex:  # pragma: no cover
       raise endpoints.BadRequestException(ex.message)
 
   return decorated
-
-
-class BuilderMessage(messages.Message):
-  name = messages.StringField(1)
-  category = messages.StringField(2)
-  properties_json = messages.StringField(3)
-  swarming_dimensions = messages.StringField(4, repeated=True)
-  swarming_hostname = messages.StringField(5)
-
-
-class BucketMessage(messages.Message):
-  # Bucket name. Unique per buildbucket instance.
-  name = messages.StringField(1)
-  builders = messages.MessageField(BuilderMessage, 2, repeated=True)
-  swarming_hostname = messages.StringField(3)
-
-
-class GetBuildersResponseMessage(messages.Message):
-  buckets = messages.MessageField(BucketMessage, 1, repeated=True)
 
 
 class GetTaskDefinitionRequestMessage(messages.Message):
@@ -96,82 +72,11 @@ class GetTaskDefinitionResponseMessage(messages.Message):
   swarming_host = messages.StringField(2)
 
 
-class SetNextBuildNumberRequest(messages.Message):
-  bucket = messages.StringField(1, required=True)
-  builder = messages.StringField(2, required=True)
-  next_number = messages.IntegerField(3, required=True)
-
-
 @auth.endpoints_api(
     name='swarmbucket', version='v1', title='Buildbucket-Swarming integration'
 )
 class SwarmbucketApi(remote.Service):
   """API specific to swarmbucket."""
-
-  @swarmbucket_api_method(
-      endpoints.ResourceContainer(
-          message_types.VoidMessage,
-          bucket=messages.StringField(1, repeated=True),
-      ),
-      GetBuildersResponseMessage,
-      path='builders',
-      http_method='GET'
-  )
-  def get_builders(self, request):
-    """Returns defined swarmbucket builders.
-
-    Returns legacy bucket names, e.g. "luci.chromium.try", not "chromium/try".
-
-    Can be used to discover builders.
-    """
-    if len(request.bucket) > 100:
-      raise endpoints.BadRequestException(
-          'Number of buckets cannot be greater than 100'
-      )
-    if request.bucket:
-      # Buckets were specified explicitly.
-      bucket_ids = map(api_common.parse_luci_bucket, request.bucket)
-      bucket_ids = [bid for bid in bucket_ids if bid]
-      # Filter out inaccessible ones.
-      visible = user.filter_buckets_by_perm(user.PERM_BUILDERS_LIST, bucket_ids)
-      bucket_ids = {bid for bid in bucket_ids if bid in visible}
-    else:
-      # Buckets were not specified explicitly.
-      # Use the available ones.
-      bucket_ids = user.buckets_by_perm_async(user.PERM_BUILDERS_LIST
-                                             ).get_result()
-
-    res = GetBuildersResponseMessage()
-    buckets = config.get_buckets_async(
-        bucket_ids=bucket_ids, include_builders=True
-    ).get_result()
-    for bucket_id, cfg in buckets.iteritems():
-      if not cfg or not config.is_swarming_config(cfg):
-        continue
-
-      def to_dims(b):
-        return flatten_swarmingcfg.format_dimensions(
-            swarmingcfg.read_dimensions(b)
-        )
-
-      res.buckets.append(
-          BucketMessage(
-              name=api_common.format_luci_bucket(bucket_id),
-              builders=[
-                  BuilderMessage(
-                      name=builder.name,
-                      category=builder.category,
-                      properties_json=json.dumps(
-                          flatten_swarmingcfg.read_properties(builder.recipe)
-                      ),
-                      swarming_hostname=builder.swarming_host,
-                      swarming_dimensions=to_dims(builder)
-                  ) for builder in cfg.swarming.builders
-              ],
-              swarming_hostname=cfg.swarming.hostname,
-          )
-      )
-    return res
 
   @swarmbucket_api_method(
       GetTaskDefinitionRequestMessage, GetTaskDefinitionResponseMessage
