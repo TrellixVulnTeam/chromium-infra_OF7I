@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+
 	"infra/cros/karte/internal/lex64"
 )
 
@@ -38,7 +39,7 @@ func (i *IDInfo) VersionlessBytes() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// Encoded converts an IDInfo into base128, which preserves lexicographic order.
+// Encoded converts an IDInfo into lex64, which preserves lexicographic order.
 func (i *IDInfo) Encoded() (string, error) {
 	bytes, err := i.VersionlessBytes()
 	if err != nil {
