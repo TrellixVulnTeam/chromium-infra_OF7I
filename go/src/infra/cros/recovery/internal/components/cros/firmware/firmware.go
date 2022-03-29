@@ -209,7 +209,7 @@ func InstallFwFromFwImage(ctx context.Context, req *InstallFwFromFwImageRequest,
 	log.Infof("Successful download tarbar %q from %q", tarballPath, req.DownloadImagePath)
 	if req.UpdateEC {
 		log.Debugf("Start extraction EC image from %q", tarballPath)
-		ecImage, err := extractECImage(ctx, tarballPath, run, log, req.Board, req.Model)
+		ecImage, err := extractECImage(ctx, tarballPath, run, servod, log, req.Board, req.Model)
 		if err != nil {
 			return errors.Annotate(err, "install fw from fw-image").Err()
 		}
@@ -235,16 +235,29 @@ func InstallFwFromFwImage(ctx context.Context, req *InstallFwFromFwImageRequest,
 }
 
 // Helper function to extract EC image from downloaded tarball.
-func extractECImage(ctx context.Context, tarballPath string, run components.Runner, log logger.Logger, board, model string) (string, error) {
+func extractECImage(ctx context.Context, tarballPath string, run components.Runner, servod components.Servod, log logger.Logger, board, model string) (string, error) {
 	if board == "" || model == "" {
 		return "", errors.Reason("extract ec files: board or model is not provided").Err()
 	}
 	destDir := filepath.Join(filepath.Dir(tarballPath), "EC")
 	candidatesFiles := []string{
-		"ec.bin",
 		fmt.Sprintf("%s/ec.bin", model),
-		fmt.Sprintf("%s/ec.bin", board),
 	}
+	if servod != nil {
+		fwBoard, err := servo.GetString(ctx, servod, "ec_board")
+		if err != nil {
+			log.Debugf("Fail to read `ec_board` value from servo. Skipping.")
+		}
+		// Based on b:220157423 some board report name is upper case.
+		fwBoard = strings.ToLower(fwBoard)
+		if fwBoard != "" {
+			candidatesFiles = append(candidatesFiles, fmt.Sprintf("%s/ec.bin", fwBoard))
+		}
+	}
+	candidatesFiles = append(candidatesFiles,
+		fmt.Sprintf("%s/ec.bin", board),
+		"ec.bin",
+	)
 	imagePath, err := extractFromTarball(ctx, tarballPath, destDir, candidatesFiles, run, log)
 	if err != nil {
 		return "", errors.Annotate(err, "extract ec files").Err()
@@ -271,11 +284,14 @@ func extractAPImage(ctx context.Context, tarballPath string, run components.Runn
 		fmt.Sprintf("image-%s.bin", model),
 	}
 	if servod != nil {
-		fwTarget, err := servo.GetString(ctx, servod, "ec_board")
+		fwBoard, err := servo.GetString(ctx, servod, "ec_board")
 		if err != nil {
 			log.Debugf("Fail to read `ec_board` value from servo. Skipping.")
-		} else {
-			candidatesFiles = append(candidatesFiles, fmt.Sprintf("image-%s.bin", fwTarget))
+		}
+		// Based on b:220157423 some board report name is upper case.
+		fwBoard = strings.ToLower(fwBoard)
+		if fwBoard != "" {
+			candidatesFiles = append(candidatesFiles, fmt.Sprintf("image-%s.bin", fwBoard))
 		}
 	}
 	candidatesFiles = append(candidatesFiles,
