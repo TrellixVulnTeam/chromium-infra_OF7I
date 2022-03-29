@@ -1,5 +1,5 @@
-package: infra/tools/luci/vpython/${platform}
-description: vpython is a VirtualEnv Python bootstrap tool.
+package: infra/tools/luci/vpython3/${platform}
+description: vpython3 is a VirtualEnv Python bootstrap tool.
 platforms:
   - mac-amd64
   - mac-arm64
@@ -7,36 +7,34 @@ go_build_environ:
   CGO_ENABLED:
     darwin:  1  # native Go DNS resolved is buggy on OSX (crbug.com/803673)
 go_packages:
-  - infra/tools/vpython/cmd/vpython
+  - infra/tools/vpython/cmd/vpython3
 root: ../../go/bin
 upload_on_change:
-  - file: vpython
+  - file: vpython3
 mac_bundle:
-  name: vpython.app
+  name: vpython3.app
   info: |
     <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
     <plist version="1.0">
     <dict>
             <key>CFBundleExecutable</key>
-            <string>vpython</string>
+            <string>vpython3</string>
             <key>CFBundleIdentifier</key>
-            <string>org.chromium.infra.vpython</string>
+            <string>org.chromium.infra.vpython3</string>
             <key>CFBundleInfoDictionaryVersion</key>
             <string>6.0</string>
             <key>CFBundleName</key>
-            <string>Chrome Infra Vpython</string>
+            <string>Chrome Infra Vpython3</string>
     </dict>
     </plist>
   data:
-    - file: vpython
+    - file: vpython3
       path: ./
   codesign:
-    requirements: =designated => identifier "org.chromium.infra.vpython" and anchor trusted
+    requirements: =designated => identifier "org.chromium.infra.vpython3" and anchor trusted
 posix_symlinks:
-  - src: vpython.app/Contents/MacOS/vpython
-    dst: vpython
-  - src: vpython.app/Contents/MacOS/vpython
+  - src: vpython3.app/Contents/MacOS/vpython3
     dst: vpython3
 data:
-  - version_file: vpython.app/Contents/MacOS/.versions/vpython.cipd_version
+  - version_file: vpython3.app/Contents/MacOS/.versions/vpython3.cipd_version

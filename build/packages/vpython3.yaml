@@ -1,0 +1,26 @@
+package: infra/tools/luci/vpython3/${platform}
+description: vpython3 is a VirtualEnv Python3 bootstrap tool.
+platforms:
+  - linux-386
+  - linux-amd64
+  - linux-arm64
+  - linux-armv6l
+  - linux-mipsle
+  - linux-mips64
+  - linux-mips64le
+  - linux-ppc64
+  - linux-ppc64le
+  - linux-s390x
+  - windows-386
+  - windows-amd64
+go_build_environ:
+  CGO_ENABLED:
+    linux:   0  # to avoid linking to system dynamic libraries
+    windows: 0  # we have no cgo toolchain on Windows
+go_packages:
+  - infra/tools/vpython/cmd/vpython3
+root: ../../go/bin
+data:
+  - file: vpython3${exe_suffix}
+    generate_bat_shim: true
+  - version_file: .versions/vpython3${exe_suffix}.cipd_version

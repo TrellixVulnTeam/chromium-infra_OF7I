@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package vpython
 
 import (
 	"context"
@@ -74,7 +74,7 @@ var defaultConfig = application.Config{
 	DefaultVerificationTags: verificationScenarios,
 }
 
-func mainImpl(c context.Context, argv []string, env environ.Env) int {
+func mainImpl(c context.Context, argv []string, env environ.Env, python3only bool) int {
 	// Enable plugins support. Important to call it before LoadFromEnv to make
 	// sure plugin related env vars are recognized.
 	cipdPackageLoader.Options.PluginHost = &host.Host{PluginsContext: c}
@@ -100,8 +100,9 @@ func mainImpl(c context.Context, argv []string, env environ.Env) int {
 	// Determine if we're bypassing "vpython".
 	defaultConfig.Bypass = env.GetEmpty(BypassENV) == BypassSentinel
 	// Determine if we're operating in "vpython3" mode (invoked as ./vpython3, ./vpython3.exe,
-	// ./python3, or ./python3.exe).
-	if strings.HasSuffix(argv[0], "python3") || strings.HasSuffix(argv[0], "python3.exe") {
+	// ./python3, or ./python3.exe). Alternately, the `vpython3` binary version
+	// will explicitly indicate python3-only behavior.
+	if python3only || strings.HasSuffix(argv[0], "python3") || strings.HasSuffix(argv[0], "python3.exe") {
 		defaultConfig.SpecLoader.CommonSpecNames = []string{".vpython3"}
 		defaultConfig.SpecLoader.PartnerSuffix = ".vpython3"
 		defaultConfig.DefaultSpec.PythonVersion = "3.8"
@@ -111,10 +112,18 @@ func mainImpl(c context.Context, argv []string, env environ.Env) int {
 	return defaultConfig.Main(c, argv, env)
 }
 
-func main() {
+// Main implements the vpython binary.
+//
+// If `python3only` is false, this will inspect argv[0] to determine if the
+// current process "looks like" a python3 invocation and set defaults
+// accordingly. Otherwise this will always have python3 behavior.
+//
+// The argv[0] inspection is for backwards compatibility with original `vpython`
+// deployments which symlinked `vpython3` to the actual `vpython` binary.
+func Main(python3only bool) {
 	c := context.Background()
 	c = gologger.StdConfig.Use(logging.SetLevel(c, logging.Warning))
-	ret := mainImpl(c, os.Args, environ.System())
+	ret := mainImpl(c, os.Args, environ.System(), python3only)
 	// os.Exit seems not to flush logging targets on Windows. The logger stores
 	// the logging target as io.Writer which has no mechanism to flush. Knowing
 	// gologger.StdConfig is configured to use os.Stderr, flush it directly.

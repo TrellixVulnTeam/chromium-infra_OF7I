@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package vpython
 
 import (
 	"bytes"
@@ -42,7 +42,7 @@ func init() {
 	// Do we need to behave exactly like vpython.exe?
 	env := environ.System()
 	if env.GetEmpty(behaveExactlyLikeVpythonENV) != "" {
-		main()
+		Main(false)
 	}
 }
 
@@ -362,7 +362,7 @@ func testMainRunDelegate(self, v string) int {
 	argv = append(argv, p.Args...)
 
 	c := context.Background()
-	return mainImpl(c, argv, environ.System())
+	return mainImpl(c, argv, environ.System(), false)
 }
 
 func encodeEnvironmentParam(i interface{}) string {

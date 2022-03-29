@@ -18,7 +18,7 @@ go_build_environ:
     linux:   0  # to avoid linking to system dynamic libraries
     windows: 0  # we have no cgo toolchain on Windows
 go_packages:
-  - infra/tools/vpython
+  - infra/tools/vpython/cmd/vpython
 root: ../../go/bin
 posix_symlinks:
   - src: vpython
