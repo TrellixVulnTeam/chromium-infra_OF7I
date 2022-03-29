@@ -8,6 +8,7 @@ import (
 	"context"
 	"os"
 
+	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/storage"
 	"github.com/maruel/subcommands"
 
@@ -31,7 +32,7 @@ var logCfg = gologger.LoggerConfig{
 // application creates the application and configures its subcommands.
 // Ignores p.Auth.Scopes.
 func application(p Params) *cli.Application {
-	p.Auth.Scopes = []string{storage.ScopeReadWrite}
+	p.Auth.Scopes = []string{storage.ScopeReadWrite, bigquery.Scope}
 
 	return &cli.Application{
 		Name:  "dirmd",
