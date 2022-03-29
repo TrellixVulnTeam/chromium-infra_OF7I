@@ -28,7 +28,6 @@ _FILES = frozenset([
     'exe.msi',
     'exe_d.msi',
     'exe_pdb.msi',
-    'launcher.msi',
     'lib.msi',
     'lib_d.msi',
     'lib_pdb.msi',
@@ -60,8 +59,7 @@ def get_installer_suffix(platform):
 
 
 # Only look at versions in 3.9.x for now.
-# TODO: Change back to 3.10.0a0 once 3.9.11 has launcher.msi present.
-_VERSION_LIMIT = parse_version("3.9.11")
+_VERSION_LIMIT = parse_version("3.10.0a0")
 
 
 def do_latest(platform):
