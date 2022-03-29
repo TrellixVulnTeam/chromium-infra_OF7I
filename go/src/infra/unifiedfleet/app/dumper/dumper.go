@@ -97,13 +97,10 @@ func TriggerJob(name string) error {
 
 func dump(ctx context.Context) error {
 	ctx = logging.SetLevel(ctx, logging.Info)
-	// Execute importing before dumping
-	err1 := importCrimson(ctx)
-	err2 := exportToBQ(ctx, dumpToBQ)
-	if err1 == nil && err2 == nil {
-		return nil
+	if err := exportToBQ(ctx, dumpToBQ); err != nil {
+		return err
 	}
-	return errors.NewMultiError(err1, err2)
+	return nil
 }
 
 func dumpToBQ(ctx context.Context, bqClient *bigquery.Client) (err error) {
