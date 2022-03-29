@@ -70,6 +70,7 @@ func LabstationRepairConfig() *Configuration {
 							"servo_verification",
 							"labstation_tryjob",
 							"labstation_canary",
+							"labstation_phone_station",
 						},
 					},
 					"update_provision_info": {
