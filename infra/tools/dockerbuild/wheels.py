@@ -1550,7 +1550,6 @@ SPECS.update({
         Universal('paramiko', '2.7.2'),
         Universal('pathlib2', '2.3.3'),
         Universal('pbr', '3.0.0'),
-        Universal('pexpect', '4.8.0'),
         Universal('pipenv', '2018.11.26', pyversions=['py2']),
         Universal('pipenv', '2018.11.26', pyversions=['py3']),
         Universal('pluggy', '0.6.0', pyversions=['py2']),
@@ -1877,6 +1876,17 @@ SPECS.update({
                 'linux-mips',
                 'linux-mips64',
             ],
+        ),
+        # This should actually be 4.8.0, but the version needs to change in
+        # order to pick up dependencies that weren't included when the
+        # wheel was originally added.
+        MultiWheel(
+            'pexpect',
+            '4.8.0.chromium.1',
+            ([
+                Universal('pexpect', '4.8.0'),
+                Universal('ptyprocess', '0.7.0'),
+            ]),
         ),
         # List cultivated from "pyobjc-7.3"'s "setup.py" as a superset of
         # available packages.
