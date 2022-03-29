@@ -101,15 +101,34 @@ func (s *servod) start(ctx context.Context, pool *sshpool.Pool) error {
 	if err != nil {
 		return errors.Annotate(err, "start servod").Err()
 	}
+	// check if the servo host is labstation.
+	// TODO(@otabek): remove checking the labstation logic once data and params
+	// will be passed by tlw.InitServodRequest struct.
+	r := ssh.Run(ctx, pool, s.host, "cat /etc/lsb-release | grep CHROMEOS_RELEASE_BOARD")
+	if r.ExitCode != 0 {
+		return errors.Reason("start servod: checking chrome os relase board: %s", r.Stderr).Err()
+	}
+	isLabstation := strings.HasSuffix(strings.TrimSpace(r.Stdout), "labstation")
 	cmd := strings.Join(append([]string{"start", "servod"}, params...), " ")
-	r := ssh.Run(ctx, pool, s.host, cmd)
+	r = ssh.Run(ctx, pool, s.host, cmd)
 	if r.ExitCode != 0 {
 		return errors.Reason("start servod: %s", r.Stderr).Err()
 	}
-	// Waiting to start servod.
-	// TODO(otabek@): Replace to use servod tool to wait servod start.
-	log.Debugf(ctx, "Start servod: waiting %d seconds to initialize daemon.", startServodTimeout)
-	time.Sleep(startServodTimeout * time.Second)
+	if isLabstation {
+		// Use servodtool to check whether the servod is started.
+		log.Debugf(ctx, "Start servod: use servodtool to check and wait the servod on labstation device to be fully started.")
+		sp := fmt.Sprintf("%d", s.port)
+		servodCheckCmd := strings.Join([]string{"servodtool", "instance", "wait-for-active", "-p", sp}, " ")
+		r = ssh.Run(ctx, pool, s.host, servodCheckCmd)
+		if r.ExitCode != 0 {
+			return errors.Reason("start servod: servodtool check: %s", r.Stderr).Err()
+		}
+	} else {
+		// servo v3 needs to wait for the start servod command to working.
+		log.Debugf(ctx, "Start servod: servo v3 waiting %d seconds to initialize servod.", startServodTimeout)
+		// Waiting to start servod.
+		time.Sleep(startServodTimeout * time.Second)
+	}
 	return nil
 }
 
