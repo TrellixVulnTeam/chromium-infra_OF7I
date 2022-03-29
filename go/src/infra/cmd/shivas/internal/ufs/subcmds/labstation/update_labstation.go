@@ -22,6 +22,7 @@ import (
 	"infra/cmd/shivas/utils"
 	suUtil "infra/cmd/shivas/utils/schedulingunit"
 	"infra/cmdsupport/cmdlib"
+	"infra/cros/recovery/buildbucket"
 	"infra/libs/skylab/common/heuristics"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -75,6 +76,8 @@ var UpdateLabstationCmd = &subcommands.Command{
 		c.Flags.Int64Var(&c.deployTaskTimeout, "deploy-timeout", swarming.DeployTaskExecutionTimeout, "execution timeout for deploy task in seconds.")
 		c.Flags.BoolVar(&c.forceDeploy, "force-deploy", false, "forces a redeploy task.")
 		c.Flags.Var(utils.CSVString(&c.deployTags), "deploy-tags", "comma seperated tags for deployment task.")
+
+		c.Flags.BoolVar(&c.paris, "paris", false, "use paris for deployment")
 		return c
 	},
 }
@@ -95,6 +98,7 @@ type updateLabstation struct {
 	deploymentTicket string
 	tags             []string
 	description      string
+	paris            bool
 
 	// Deploy task inputs.
 	forceDeploy       bool
@@ -170,17 +174,29 @@ func (c *updateLabstation) innerRun(a subcommands.Application, args []string, en
 
 	// Check and start deploy tasks for required Labstations.
 	if len(deployTasks) > 0 {
-		tc, err := swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService)
-		if err != nil {
-			return err
+		var bbClient buildbucket.Client
+		var tc *swarming.TaskCreator
+		if c.paris {
+			bbClient, err = createBBClient(ctx, c.authFlags)
+			if err != nil {
+				return err
+			}
+		} else {
+			tc, err := swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService)
+			if err != nil {
+				return err
+			}
+			tc.LogdogService = e.LogdogService
+			tc.SwarmingServiceAccount = e.SwarmingServiceAccount
 		}
-		tc.LogdogService = e.LogdogService
-		tc.SwarmingServiceAccount = e.SwarmingServiceAccount
-
 		for _, req := range deployTasks {
 			// Check if deploy task is required or force deploy is set.
 			if c.forceDeploy || c.isDeployTaskRequired(req) {
-				err := c.deployLabstationToSwarming(ctx, tc, req.MachineLSE)
+				if c.paris {
+					err = utils.ScheduleDeployTask(ctx, bbClient, e, req.MachineLSE.GetHostname())
+				} else {
+					err = c.deployLabstationToSwarming(ctx, tc, req.MachineLSE)
+				}
 				if err != nil {
 					c.verbosePrint("Unable to deploy task for %s: %s\n", req.MachineLSE.GetHostname(), err.Error())
 				}
@@ -190,7 +206,7 @@ func (c *updateLabstation) innerRun(a subcommands.Application, args []string, en
 			}
 		}
 		// Display URL for all tasks if at least one task is triggered.
-		if resTable.IsSuccessForAny(swarmingOp) {
+		if !c.paris && resTable.IsSuccessForAny(swarmingOp) {
 			fmt.Printf("\nTriggered deployment task(s). Follow at: %s\n\n", tc.SessionTasksURL())
 		}
 	}
@@ -492,7 +508,6 @@ func (c *updateLabstation) deployLabstationToSwarming(ctx context.Context, tc *s
 		return err
 	}
 	c.verbosePrint("Triggered Deploy task for Labstation %s. Follow the deploy job at %s\n", hostname, task.TaskURL)
-
 	return nil
 }
 

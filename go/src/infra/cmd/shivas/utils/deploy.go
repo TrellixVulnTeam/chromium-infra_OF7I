@@ -8,6 +8,8 @@ import (
 	"context"
 	"fmt"
 
+	"go.chromium.org/luci/common/errors"
+
 	"infra/cmd/shivas/site"
 	"infra/cros/recovery/tasknames"
 	"infra/libs/skylab/buildbucket"
@@ -16,6 +18,9 @@ import (
 
 // ScheduleDeployTask schedules a deploy task by Buildbucket for PARIS.
 func ScheduleDeployTask(ctx context.Context, bc buildbucket.Client, e site.Environment, unit string) error {
+	if unit == "" {
+		return errors.Reason("schedule deploy task: unit name is empty").Err()
+	}
 	p := &labpack.Params{
 		UnitName:       unit,
 		TaskName:       string(tasknames.Deploy),
@@ -27,8 +32,8 @@ func ScheduleDeployTask(ctx context.Context, bc buildbucket.Client, e site.Envir
 	}
 	taskID, err := labpack.ScheduleTask(ctx, bc, p)
 	if err != nil {
-		return err
+		return errors.Annotate(err, "schedule deploy task").Err()
 	}
-	fmt.Printf("Triggered Deploy task for DUT %s. Follow the deploy job at %s\n", p.UnitName, bc.BuildURL(taskID))
+	fmt.Printf("Triggered Deploy task %s. Follow the deploy job at %s\n", p.UnitName, bc.BuildURL(taskID))
 	return nil
 }

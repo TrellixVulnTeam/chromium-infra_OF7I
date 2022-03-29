@@ -23,7 +23,6 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	"infra/cros/recovery/buildbucket"
-	"infra/cros/recovery/tasknames"
 	"infra/libs/skylab/common/heuristics"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -177,7 +176,7 @@ func (c *addLabstation) innerRun(a subcommands.Application, args []string, env s
 	var bbClient buildbucket.Client
 	if c.paris {
 		var cErr error
-		bbClient, cErr = c.createBBClient(ctx)
+		bbClient, cErr = createBBClient(ctx, c.authFlags)
 		if cErr != nil {
 			return cErr
 		}
@@ -341,16 +340,10 @@ func (c *addLabstation) addLabstationToUFS(ctx context.Context, ic ufsAPI.FleetC
 
 // CreateLabstationDeployTask creates a task using either the paris or legacy flow to deploy a labstation.
 func (c *addLabstation) createLabstationDeployTask(ctx context.Context, tc *swarming.TaskCreator, bbClient buildbucket.Client, lse *ufspb.MachineLSE, e site.Environment, host string) error {
-	var task *swarming.TaskInfo
-	var dErr error
 	if c.paris {
-		task, dErr = scheduleDeployBuilder(ctx, bbClient, e, host)
-		if dErr != nil {
-			return errors.Annotate(dErr, "deploy labstation").Err()
-		}
-		fmt.Printf("Triggered Deploy task for Labstation %s. Follow the deploy job at %s\n", lse.GetName(), task.TaskURL)
+		return utils.ScheduleDeployTask(ctx, bbClient, e, host)
 	} else {
-		task, dErr = tc.DeployDut(ctx, lse.Name, lse.GetMachines()[0], defaultSwarmingPool, c.deployTaskTimeout, c.deployActions, c.deployTags, nil)
+		task, dErr := tc.DeployDut(ctx, lse.Name, lse.GetMachines()[0], defaultSwarmingPool, c.deployTaskTimeout, c.deployActions, c.deployTags, nil)
 		if dErr != nil {
 			return errors.Annotate(dErr, "deploy labstation").Err()
 		}
@@ -360,8 +353,8 @@ func (c *addLabstation) createLabstationDeployTask(ctx context.Context, tc *swar
 }
 
 // CreateBBClient creates a buildbucket client if permitted.
-func (c *addLabstation) createBBClient(ctx context.Context) (buildbucket.Client, error) {
-	bc, err := buildbucket.NewLabpackClient(ctx, c.authFlags, site.DefaultPRPCOptions)
+func createBBClient(ctx context.Context, authFlags authcli.Flags) (buildbucket.Client, error) {
+	bc, err := buildbucket.NewLabpackClient(ctx, authFlags, site.DefaultPRPCOptions)
 	if err != nil {
 		return nil, errors.Annotate(err, "ensure bb client").Err()
 	}
@@ -457,19 +450,4 @@ func (c *addLabstation) updateAssetToUFS(ctx context.Context, ic ufsAPI.FleetCli
 		UpdateMask: mask,
 	})
 	return err
-}
-
-// ScheduleDeployBuilder schedules a labpack deploy builder. It returns a description of the buildbucket task and an error value.
-func scheduleDeployBuilder(ctx context.Context, bc buildbucket.Client, e site.Environment, host string) (*swarming.TaskInfo, error) {
-	taskID, err := buildbucket.ScheduleBuilder(ctx, bc, host, tasknames.Deploy, e.AdminService, e.UnifiedFleetService)
-	if err != nil {
-		return nil, err
-	}
-	taskInfo := &swarming.TaskInfo{
-		// Use an ID format that makes it extremely obvious that we're dealing with a
-		// buildbucket invocation number rather than a swarming task.
-		ID:      fmt.Sprintf("buildbucket:%d", taskID),
-		TaskURL: bc.BuildURL(taskID),
-	}
-	return taskInfo, nil
 }
