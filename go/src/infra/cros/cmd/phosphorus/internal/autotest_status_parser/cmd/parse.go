@@ -128,7 +128,7 @@ func getTestResults(ctx context.Context, dir string) skylab_test_runner.Result_A
 		}
 	}
 
-	incomplete := exitedWithErrors(string(exitStatusContent))
+	incomplete := exitedWithErrors(string(exitStatusContent)) || len(testCases) == 0
 
 	return skylab_test_runner.Result_Autotest{
 		TestCases:  testCases,
