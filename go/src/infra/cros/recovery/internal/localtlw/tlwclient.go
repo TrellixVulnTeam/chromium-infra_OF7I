@@ -35,6 +35,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 const (
@@ -49,14 +50,12 @@ const (
 
 // UFSClient is a client that knows how to work with UFS RPC methods.
 type UFSClient interface {
-	// GetDeviceData retrieves requested device data from the UFS and inventoryV2.
-	GetDeviceData(ctx context.Context, req *ufsAPI.GetDeviceDataRequest, opts ...grpc.CallOption) (rsp *ufsAPI.GetDeviceDataResponse, err error)
-	// UpdateDeviceRecoveryData updates the labdata, dutdata, resource state, dut states for a DUT
-	UpdateDeviceRecoveryData(ctx context.Context, in *ufsAPI.UpdateDeviceRecoveryDataRequest, opts ...grpc.CallOption) (*ufsAPI.UpdateDeviceRecoveryDataResponse, error)
 	// GetSchedulingUnit retrieves the details of the SchedulingUnit.
 	GetSchedulingUnit(ctx context.Context, req *ufsAPI.GetSchedulingUnitRequest, opts ...grpc.CallOption) (rsp *ufspb.SchedulingUnit, err error)
 	// GetChromeOSDeviceData retrieves requested Chrome OS device data from the UFS and inventoryV2.
 	GetChromeOSDeviceData(ctx context.Context, req *ufsAPI.GetChromeOSDeviceDataRequest, opts ...grpc.CallOption) (rsp *ufspb.ChromeOSDeviceData, err error)
+	// UpdateDeviceRecoveryData updates the labdata, dutdata, resource state, dut states for a DUT
+	UpdateDeviceRecoveryData(ctx context.Context, in *ufsAPI.UpdateDeviceRecoveryDataRequest, opts ...grpc.CallOption) (*ufsAPI.UpdateDeviceRecoveryDataResponse, error)
 	// UpdateDutState updates the state config for a DUT
 	UpdateDutState(ctx context.Context, in *ufsAPI.UpdateDutStateRequest, opts ...grpc.CallOption) (*ufslab.DutState, error)
 }
@@ -628,44 +627,40 @@ func (c *tlwClient) ListResourcesForUnit(ctx context.Context, name string) ([]st
 	if name == "" {
 		return nil, errors.Reason("list resources: unit name is expected").Err()
 	}
-	ddrsp, err := c.ufsClient.GetDeviceData(ctx, &ufsAPI.GetDeviceDataRequest{
+	dd, err := c.ufsClient.GetChromeOSDeviceData(ctx, &ufsAPI.GetChromeOSDeviceDataRequest{
 		Hostname: name,
 	})
 	if err != nil {
-		return nil, errors.Reason("list resources %q", name).Err()
-	}
-	var resourceNames []string
-	switch ddrsp.GetResourceType() {
-	case ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE:
-		attachedDevice := ddrsp.GetAttachedDeviceData()
-		dut, err := dutinfo.ConvertAttachedDeviceToTlw(attachedDevice)
-		if err != nil {
-			return nil, errors.Annotate(err, "list resources: attached device").Err()
+		if status.Code(err) == codes.NotFound {
+			log.Debugf(ctx, "List resources %q: record not found.", name)
+		} else {
+			return nil, errors.Reason("list resources %q", name).Err()
 		}
-		c.cacheDevice(dut)
-		resourceNames = append(resourceNames, dut.Name)
-	case ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE:
-		dd := ddrsp.GetChromeOsDeviceData()
-		if dd.GetLabConfig() == nil {
-			return nil, errors.Reason("list resources %q: device data is empty", name).Err()
-		}
+	} else if dd.GetLabConfig() == nil {
+		return nil, errors.Reason("list resources %q: device data is empty", name).Err()
+	} else {
 		log.Debugf(ctx, "List resources %q: cached received device.", name)
 		dut, err := dutinfo.ConvertDut(dd)
 		if err != nil {
 			return nil, errors.Annotate(err, "list resources %q", name).Err()
 		}
 		c.cacheDevice(dut)
-		resourceNames = append(resourceNames, dut.Name)
-	case ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_SCHEDULING_UNIT:
-		su := ddrsp.GetSchedulingUnit()
-		for _, hostname := range su.GetMachineLSEs() {
-			resourceNames = append(resourceNames, hostname)
-		}
-	default:
-		log.Debugf(ctx, "list resources %q: unsupported type %q", name, ddrsp.GetResourceType())
+		return []string{dut.Name}, nil
 	}
-	if len(resourceNames) == 0 {
-		return nil, errors.Reason("list resources: no resource found for %q", name).Err()
+	suName := ufsUtil.AddPrefix(ufsUtil.SchedulingUnitCollection, name)
+	log.Debugf(ctx, "list resources %q: trying to find scheduling unit by name %q.", name, suName)
+	su, err := c.ufsClient.GetSchedulingUnit(ctx, &ufsAPI.GetSchedulingUnitRequest{
+		Name: suName,
+	})
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, errors.Annotate(err, "list resources %q: record not found", name).Err()
+		}
+		return nil, errors.Annotate(err, "list resources %q", name).Err()
+	}
+	var resourceNames []string
+	for _, hostname := range su.GetMachineLSEs() {
+		resourceNames = append(resourceNames, hostname)
 	}
 	return resourceNames, nil
 }
@@ -717,8 +712,6 @@ func (c *tlwClient) Version(ctx context.Context, req *tlw.VersionRequest) (*tlw.
 }
 
 // getDevice receives device from inventory.
-// TODO(b/226985165): Refactor code inside getDevice and ListResourcesForUnit
-// as they sharing similar logic that converts/cache response to tlw dut.
 func (c *tlwClient) getDevice(ctx context.Context, name string) (*tlw.Dut, error) {
 	if dutName, ok := c.hostToParents[name]; ok {
 		// the device was previously
@@ -728,36 +721,22 @@ func (c *tlwClient) getDevice(ctx context.Context, name string) (*tlw.Dut, error
 		log.Debugf(ctx, "Get device %q: received from cache.", name)
 		return d, nil
 	}
-	req := &ufsAPI.GetDeviceDataRequest{Hostname: name}
-	ddrsp, err := c.ufsClient.GetDeviceData(ctx, req)
+	req := &ufsAPI.GetChromeOSDeviceDataRequest{Hostname: name}
+	dd, err := c.ufsClient.GetChromeOSDeviceData(ctx, req)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return nil, errors.Reason("get device %q: record not found", name).Err()
 		}
 		return nil, errors.Annotate(err, "get device %q", name).Err()
+	} else if dd.GetLabConfig() == nil {
+		return nil, errors.Reason("get device %q: received empty data", name).Err()
 	}
-	var dut *tlw.Dut
-	switch ddrsp.GetResourceType() {
-	case ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE:
-		attachedDevice := ddrsp.GetAttachedDeviceData()
-		dut, err = dutinfo.ConvertAttachedDeviceToTlw(attachedDevice)
-		if err != nil {
-			return nil, errors.Annotate(err, "get device %q: attached device", name).Err()
-		}
-	case ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE:
-		dd := ddrsp.GetChromeOsDeviceData()
-		if dd.GetLabConfig() == nil {
-			return nil, errors.Reason("get device %q: received empty data", name).Err()
-		}
-		dut, err = dutinfo.ConvertDut(dd)
-		if err != nil {
-			return nil, errors.Annotate(err, "get device %q: chromeos device", name).Err()
-		}
-	default:
-		return nil, errors.Reason("get device %q: unsupported type %q", name, ddrsp.GetResourceType()).Err()
+	dut, err := dutinfo.ConvertDut(dd)
+	if err != nil {
+		return nil, errors.Annotate(err, "get device %q", name).Err()
 	}
-	log.Debugf(ctx, "Get device %q: cached received device.", name)
 	c.cacheDevice(dut)
+	log.Debugf(ctx, "Get device %q: cached received device.", name)
 	return dut, nil
 }
 
