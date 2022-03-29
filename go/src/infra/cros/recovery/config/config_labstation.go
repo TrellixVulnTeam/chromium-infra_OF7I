@@ -234,6 +234,7 @@ func LabstationDeployConfig() *Configuration {
 					"install_stable_os": {
 						Docs: []string{
 							"Install stable OS on the device.",
+							"Labstation will be rebooted to make it ready for use.",
 						},
 						ExecName: "cros_provision",
 						Conditions: []string{
