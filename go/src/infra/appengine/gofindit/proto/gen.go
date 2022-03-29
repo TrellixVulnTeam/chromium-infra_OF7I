@@ -15,3 +15,4 @@
 package gofindit
 
 //go:generate cproto
+//go:generate svcdec -type GoFinditServiceServer -type GoFinditBotServiceServer

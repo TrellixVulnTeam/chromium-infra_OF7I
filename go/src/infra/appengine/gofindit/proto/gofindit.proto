@@ -46,7 +46,7 @@ service GoFinditBotService {
 
 message GetAnalysisRequest {
   // ID of the analysis
-  string analysis_id = 1 [(google.api.field_behavior) = REQUIRED];
+  int64 analysis_id = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 message QueryAnalysisRequest {
@@ -113,7 +113,7 @@ message UpdateAnalysisProgressResponse {
 // Analysis result contains result of an analysis
 message Analysis {
   // Id to identify this analysis
-  string analysis_id = 1;
+  int64 analysis_id = 1;
   // The failure associated with the analysis.
   BuildFailure build_failure = 2;
   // Status of the analysis
@@ -154,14 +154,18 @@ message HeuristicAnalysisResult {
 
 message HeuristicSuspect {
   // A suspect revision of heuristic analysis.
-  buildbucket.v2.GitilesCommit suspect = 1;
-  // A number from 0.0 to 1.0. The higher the number, the more likely the suspect
+  buildbucket.v2.GitilesCommit gitiles_commit = 1;
+  // Review URL for the commit
+  string reviewUrl = 2;
+  // Score is an integer representing the how confident we believe the suspect
   // is indeed the culprit.
-  float confidence = 2;
+	// A higher score means a stronger signal that the suspect is responsible for
+  // a failure.
+  int32 score = 3;
   // The reason why heuristic analysis thinks the suspect is a possible culprit.
-  string reason = 3;
+  string justification = 4;
   // Whether the suspect has been verified by the culprit verification component.
-  bool verified = 4;
+  bool verified = 5;
 }
 
 message NthSectionAnalysisResult {

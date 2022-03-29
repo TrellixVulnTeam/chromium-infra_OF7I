@@ -52,7 +52,7 @@ func AnalyzeFailure(
 
 	// TODO (nqmtuan): run heuristic analysis and nth-section analysis in parallel
 	// Heuristic analysis
-	_, e = heuristic.Analyze(c, analysis, regression_range)
+	heuristicResult, e := heuristic.Analyze(c, analysis, regression_range)
 	if e != nil {
 		logging.Errorf(c, "Error during heuristic analysis: %v", e)
 	}
@@ -63,6 +63,15 @@ func AnalyzeFailure(
 		logging.Errorf(c, "Error during nthsection analysis: %v", e)
 	}
 
+	// TODO: For now, just check heuristic analysis status
+	// We need to implement nth-section analysis as well
+	analysis.Status = heuristicResult.Status
+	analysis.EndTime = heuristicResult.EndTime
+
+	e = datastore.Put(c, analysis)
+	if e != nil {
+		return nil, fmt.Errorf("Failed saving analysis: %w", e)
+	}
 	return analysis, nil
 }
 

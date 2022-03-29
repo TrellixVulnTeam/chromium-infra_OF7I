@@ -9,6 +9,8 @@ package main
 import (
 	"infra/appengine/gofindit/compilefailureanalysis"
 	"infra/appengine/gofindit/model"
+	gfipb "infra/appengine/gofindit/proto"
+	gfis "infra/appengine/gofindit/server"
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
@@ -32,6 +34,12 @@ func main() {
 	server.Main(nil, modules, func(srv *server.Server) error {
 		srv.Routes.GET("/", router.MiddlewareChain{}, func(c *router.Context) {
 			c.Writer.Write([]byte("Placeholder for GoFindit UI"))
+		})
+
+		// Installs PRPC service.
+		gfipb.RegisterGoFinditServiceServer(srv.PRPC, &gfipb.DecoratedGoFinditService{
+			// TODO(nqmtuan): Check for auth here.
+			Service: &gfis.GoFinditServer{},
 		})
 
 		srv.Routes.GET("/test", router.MiddlewareChain{}, func(c *router.Context) {

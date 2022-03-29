@@ -12,7 +12,7 @@ type MockedGitilesClient struct{}
 
 func (cl *MockedGitilesClient) sendRequest(c context.Context, url string, params map[string]string) (string, error) {
 	// TODO: properly mock some value when we need it
-	return "", nil
+	return `{"logs":[]}`, nil
 }
 
 func MockedGitilesClientContext(c context.Context) context.Context {

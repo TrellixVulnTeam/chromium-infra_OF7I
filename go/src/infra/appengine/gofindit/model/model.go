@@ -132,17 +132,17 @@ type Suspect struct {
 	buildbucketpb.GitilesCommit
 
 	// The Url where the suspect was reviewed
-	ReviewUrl string `gae:"review_url,noindex"`
+	ReviewUrl string `gae:"review_url"`
 
 	// Score is an integer representing the how confident we believe the suspect
 	// is indeed the culprit.
 	// A higher score means a stronger signal that the suspect is responsible for
 	// a failure.
-	Score int `gae:"score,noindex"`
+	Score int `gae:"score"`
 
 	// A short, human-readable string that concisely describes a fact about the
 	// suspect. e.g. 'add a/b/x.cc'
-	Justification string `gae:"justification,noindex"`
+	Justification string `gae:"justification"`
 }
 
 // CompileHeuristicAnalysis is heuristic analysis for compile failures.

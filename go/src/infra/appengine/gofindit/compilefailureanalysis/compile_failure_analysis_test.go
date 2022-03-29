@@ -6,6 +6,7 @@ package compilefailureanalysis
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -18,6 +19,7 @@ import (
 
 	"infra/appengine/gofindit/internal/buildbucket"
 	"infra/appengine/gofindit/internal/gitiles"
+	"infra/appengine/gofindit/internal/logdog"
 	"infra/appengine/gofindit/model"
 )
 
@@ -42,8 +44,33 @@ func TestAnalyzeFailure(t *testing.T) {
 				Ref:     "ref",
 			},
 		},
+		Steps: []*bbpb.Step{
+			{
+				Name: "compile",
+				Logs: []*bbpb.Log{
+					{
+						Name:    "json.output[ninja_info]",
+						ViewUrl: "https://logs.chromium.org/logs/ninja_log",
+					},
+					{
+						Name:    "stdout",
+						ViewUrl: "https://logs.chromium.org/logs/stdout_log",
+					},
+				},
+			},
+		},
 	}
 	mc.Client.EXPECT().GetBuild(gomock.Any(), gomock.Any(), gomock.Any()).Return(res, nil).AnyTimes()
+
+	// Mock logdog
+	ninjaLogJson := map[string]interface{}{
+		"failures": []interface{}{},
+	}
+	ninjaLogStr, _ := json.Marshal(ninjaLogJson)
+	c = logdog.MockClientContext(c, map[string]string{
+		"https://logs.chromium.org/logs/ninja_log":  string(ninjaLogStr),
+		"https://logs.chromium.org/logs/stdout_log": "stdout_log",
+	})
 
 	Convey("AnalyzeFailure analysis is created", t, func() {
 		failed_build := &model.LuciFailedBuild{

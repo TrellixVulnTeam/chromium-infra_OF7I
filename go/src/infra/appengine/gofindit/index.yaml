@@ -1,0 +1,7 @@
+indexes:
+
+- kind: Suspect
+  properties:
+  - name: parent
+  - name: score
+    direction: desc
