@@ -448,8 +448,9 @@ func servoRepairPlan() *Plan {
 					"servo_servod_cc_toggle_repair",
 					"servo_reboot_ec_on_dut",
 					"reboot_dut_by_power_state:reset",
-					"reflash_cr_50_fw_on_dut",
 					"reset_ec_on_dut",
+					"servo_micro_fw_update_repair",
+					"reflash_cr_50_fw_on_dut",
 				},
 				ExecName: "servo_low_ppdut5",
 			},
@@ -575,6 +576,55 @@ func servoRepairPlan() *Plan {
 				},
 				ExecTimeout: &durationpb.Duration{Seconds: 600},
 				ExecName:    "servo_update_servo_firmware",
+			},
+			"servo_micro_fw_update_repair": {
+				Docs: []string{
+					"Try to update servo micro firmware",
+				},
+				Conditions: []string{
+					"servo_host_is_labstation",
+					"is_servo_micro",
+					"is_time_to_update_servo_micro_fw",
+				},
+				Dependencies: []string{"servo_micro_fw_update"},
+				ExecName:     "servo_host_servod_stop",
+			},
+			"servo_micro_fw_update": {
+				Docs: []string{
+					"Try to update servo micro firmware",
+				},
+				Conditions: []string{
+					"servo_host_is_labstation",
+					"is_servo_micro",
+					"is_time_to_update_servo_micro_fw",
+				},
+				ExecExtraArgs: []string{
+					"force_update:true",
+					"ignore_version:true",
+					"servo_board:servo_micro",
+				},
+				ExecTimeout: &durationpb.Duration{Seconds: 180},
+				ExecName:    "servo_update_servo_firmware",
+			},
+			"is_time_to_update_servo_micro_fw": {
+				Docs: []string{
+					"Verify that it is time when we can try to re-flash fw on servo micro.",
+					"Re-flashing limited to once per once per 2 weeks to avoid over-flashing the servo device.",
+				},
+				Conditions: []string{
+					"last_time_servo_micro_fw_update_within_2_weeks",
+				},
+				ExecName: "sample_fail",
+			},
+			"last_time_servo_micro_fw_update_within_2_weeks": {
+				Docs: []string{
+					"Confirm that servo micro fw update action has occurred in the past 2 weeks. (336 hours)",
+				},
+				ExecExtraArgs: []string{
+					"metrics_kind:servo_firmware_update_servo_micro",
+					"time_frame_hours:336",
+				},
+				ExecName: "metrics_found_at_last_time",
 			},
 			"servo_warm_reset_supported": {
 				ExecExtraArgs: []string{"command:warm_reset"},
