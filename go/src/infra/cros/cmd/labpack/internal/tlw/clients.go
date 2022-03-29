@@ -11,7 +11,6 @@ import (
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
-	"google.golang.org/grpc/metadata"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/cros/cmd/labpack/internal/site"
@@ -19,12 +18,10 @@ import (
 	"infra/cros/recovery"
 	"infra/cros/recovery/tlw"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
-	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // NewAccess creates TLW Access for recovery engine.
 func NewAccess(ctx context.Context, in *steps.LabpackInput) (tlw.Access, error) {
-	ctx = setupContextNamespace(ctx, ufsUtil.OSNamespace)
 	hc, err := httpClient(ctx)
 	if err != nil {
 		return nil, errors.Annotate(err, "create tlw access: create http client").Err()
@@ -58,10 +55,4 @@ func httpClient(ctx context.Context) (*http.Client, error) {
 	a := auth.NewAuthenticator(ctx, auth.SilentLogin, o)
 	c, err := a.Client()
 	return c, errors.Annotate(err, "create http client").Err()
-}
-
-// setupContextNamespace sets namespace to the context for UFS client.
-func setupContextNamespace(ctx context.Context, namespace string) context.Context {
-	md := metadata.Pairs(ufsUtil.Namespace, namespace)
-	return metadata.NewOutgoingContext(ctx, md)
 }

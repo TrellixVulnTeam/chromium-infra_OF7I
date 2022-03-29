@@ -26,6 +26,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	lucigs "go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/luciexe/build"
+	"google.golang.org/grpc/metadata"
 
 	"infra/cros/cmd/labpack/internal/site"
 	steps "infra/cros/cmd/labpack/internal/steps"
@@ -37,6 +38,7 @@ import (
 	"infra/cros/recovery/logger/metrics"
 	"infra/cros/recovery/tasknames"
 	"infra/cros/recovery/upload"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // LuciexeProtocolPassthru should always be set to false in checked-in code.
@@ -163,6 +165,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 		lg.Debugf("Internal run: failed to marshal proto. Error: %s", err)
 		return err
 	}
+	ctx = setupContextNamespace(ctx, ufsUtil.OSNamespace)
 	access, err := tlw.NewAccess(ctx, in)
 	if err != nil {
 		return errors.Annotate(err, "internal run").Err()
@@ -258,4 +261,10 @@ func describeEnvironment(stderr io.Writer) error {
 	command.Stdout = stderr
 	err := command.Run()
 	return errors.Annotate(err, "describe environment").Err()
+}
+
+// setupContextNamespace sets namespace to the context for UFS client.
+func setupContextNamespace(ctx context.Context, namespace string) context.Context {
+	md := metadata.Pairs(ufsUtil.Namespace, namespace)
+	return metadata.NewOutgoingContext(ctx, md)
 }
