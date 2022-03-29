@@ -30,6 +30,10 @@ type ScheduleLabpackTaskParams struct {
 	ExtraTags        []string
 	// TODO(gregorynisbet): Support map[string]string as dims value.
 	ExtraDims map[string]string
+	// Bullder custom fields. If not provide default values will be used
+	BuilderName    string
+	BuilderProject string
+	BuilderBucket  string
 }
 
 // Client provides helper methods to interact with buildbucket builds.
@@ -122,13 +126,22 @@ func (c *clientImpl) ScheduleLabpackTask(ctx context.Context, params *ScheduleLa
 	if err != nil {
 		return -1, err
 	}
-
+	b := &buildbucket_pb.BuilderID{
+		Project: "chromeos",
+		Bucket:  "labpack_runner",
+		Builder: "labpack_builder",
+	}
+	if params.BuilderName != "" {
+		b.Builder = params.BuilderName
+	}
+	if params.BuilderProject != "" {
+		b.Project = params.BuilderProject
+	}
+	if params.BuilderBucket != "" {
+		b.Bucket = params.BuilderBucket
+	}
 	bbReq := &buildbucket_pb.ScheduleBuildRequest{
-		Builder: &buildbucket_pb.BuilderID{
-			Project: "chromeos",
-			Bucket:  "labpack_runner",
-			Builder: "labpack_builder",
-		},
+		Builder:    b,
 		Properties: params.Props,
 		Tags:       tagPairs,
 		Dimensions: bbDimensions(dims),

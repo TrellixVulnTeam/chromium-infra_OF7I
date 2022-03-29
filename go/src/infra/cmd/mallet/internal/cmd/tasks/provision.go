@@ -71,6 +71,7 @@ func (c *customProvisionRun) innerRun(a subcommands.Application, args []string, 
 	taskID, err := labpack.ScheduleTask(
 		ctx,
 		bc,
+		labpack.CIPDProd,
 		&labpack.Params{
 			UnitName:         unit,
 			TaskName:         string(tasknames.Custom),

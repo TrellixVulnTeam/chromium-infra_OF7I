@@ -132,7 +132,7 @@ func scheduleRepairBuilder(ctx context.Context, bc buildbucket.Client, e site.En
 		// TODO(gregorynisbet): Pass config file to labpack task.
 		Configuration: "",
 	}
-	taskID, err := labpack.ScheduleTask(ctx, bc, p)
+	taskID, err := labpack.ScheduleTask(ctx, bc, labpack.CIPDProd, p)
 	if err != nil {
 		return nil, err
 	}

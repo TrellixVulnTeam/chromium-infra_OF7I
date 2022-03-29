@@ -35,6 +35,7 @@ var Recovery = &subcommands.Command{
 		c.Flags.BoolVar(&c.noStepper, "no-stepper", false, "Block steper from using. This will prevent by using steps and you can only see logs.")
 		c.Flags.BoolVar(&c.deployTask, "deploy", false, "Run deploy task. By default run recovery task.")
 		c.Flags.BoolVar(&c.updateUFS, "update-ufs", false, "Update result to UFS. By default no.")
+		c.Flags.BoolVar(&c.latest, "latest", false, "Use latest version of CIPD when scheduling. By default no.")
 		return c
 	},
 }
@@ -49,6 +50,7 @@ type recoveryRun struct {
 	configFile string
 	deployTask bool
 	updateUFS  bool
+	latest     bool
 }
 
 func (c *recoveryRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -87,9 +89,14 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 			task = string(tasknames.Deploy)
 		}
 
+		v := labpack.CIPDProd
+		if c.latest {
+			v = labpack.CIPDLatest
+		}
 		taskID, err := labpack.ScheduleTask(
 			ctx,
 			bc,
+			v,
 			&labpack.Params{
 				UnitName:         unit,
 				TaskName:         task,

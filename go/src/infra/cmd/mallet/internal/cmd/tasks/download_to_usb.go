@@ -74,6 +74,7 @@ func (c *downloadToUsbDriveRun) innerRun(a subcommands.Application, args []strin
 		taskID, err := labpack.ScheduleTask(
 			ctx,
 			bc,
+			labpack.CIPDProd,
 			&labpack.Params{
 				UnitName:         unit,
 				TaskName:         string(tasknames.Custom),

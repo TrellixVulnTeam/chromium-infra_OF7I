@@ -6,10 +6,12 @@ package labpack
 
 import (
 	"context"
+	"log"
+
+	"go.chromium.org/luci/common/errors"
+	structbuilder "google.golang.org/protobuf/types/known/structpb"
 
 	"infra/libs/skylab/buildbucket"
-
-	structbuilder "google.golang.org/protobuf/types/known/structpb"
 )
 
 // Params are the parameters to the labpack job.
@@ -54,19 +56,39 @@ func (p *Params) AsMap() map[string]interface{} {
 	}
 }
 
+// CIPD version used for scheduling PARIS.
+type CIPDVersion string
+
+const (
+	// Use prod version of CIPD package.
+	CIPDProd CIPDVersion = "prod"
+	// Use latest version of CIPD package.
+	CIPDLatest CIPDVersion = "latest"
+)
+
 // ScheduleTask schedules a buildbucket task.
-func ScheduleTask(ctx context.Context, client buildbucket.Client, params *Params) (int64, error) {
+func ScheduleTask(ctx context.Context, client buildbucket.Client, v CIPDVersion, params *Params) (int64, error) {
 	props, err := structbuilder.NewStruct(params.AsMap())
 	if err != nil {
 		return 0, err
 	}
-	taskID, err := client.ScheduleLabpackTask(ctx, &buildbucket.ScheduleLabpackTaskParams{
+	p := &buildbucket.ScheduleLabpackTaskParams{
 		UnitName:         params.UnitName,
 		ExpectedDUTState: params.ExpectedState,
 		Props:            props,
-	})
+	}
+	switch v {
+	case CIPDProd:
+		log.Println("Request to use prod CIPD version")
+	case CIPDLatest:
+		log.Println("Request to use latest CIPD version")
+		p.BuilderName = "labpack_builder-latest"
+	default:
+		return 0, errors.Reason("scheduling task: unsupported CIPD version %s", v).Err()
+	}
+	taskID, err := client.ScheduleLabpackTask(ctx, p)
 	if err != nil {
-		return 0, err
+		return 0, errors.Annotate(err, "scheduling task").Err()
 	}
 	return taskID, nil
 }

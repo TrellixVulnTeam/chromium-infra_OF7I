@@ -30,7 +30,7 @@ func ScheduleDeployTask(ctx context.Context, bc buildbucket.Client, e site.Envir
 		InventoryService: e.UnifiedFleetService,
 		UpdateInventory:  true,
 	}
-	taskID, err := labpack.ScheduleTask(ctx, bc, p)
+	taskID, err := labpack.ScheduleTask(ctx, bc, labpack.CIPDProd, p)
 	if err != nil {
 		return errors.Annotate(err, "schedule deploy task").Err()
 	}
