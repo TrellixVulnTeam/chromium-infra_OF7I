@@ -17,6 +17,7 @@ import (
 //
 // Test based on testing returned errors and check error messages.
 func TestLimitCount(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	t.Run("Fail as reached limit", func(t *testing.T) {
 		t.Parallel()
@@ -34,7 +35,7 @@ func TestLimitCount(t *testing.T) {
 			t.Errorf("Expected to pass: %s", err)
 		}
 	})
-	t.Run("Passed with first attemp", func(t *testing.T) {
+	t.Run("Passed with first attempt", func(t *testing.T) {
 		t.Parallel()
 		if err := LimitCount(ctx, 0, time.Nanosecond, createFunc(0, 0), "Retry test by count"); err != nil {
 			t.Errorf("Expected to pass: %s", err)
@@ -66,6 +67,7 @@ func TestLimitCount(t *testing.T) {
 //
 // Test based on testing returned errors and check error messages.
 func TestLimitTime(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	t.Run("Fail as reached limit", func(t *testing.T) {
 		t.Parallel()

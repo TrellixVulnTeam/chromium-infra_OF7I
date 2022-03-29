@@ -8,6 +8,7 @@ package retry
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
@@ -36,14 +37,16 @@ func WithTimeout(ctx context.Context, interval, duration time.Duration, f func()
 	ctx, cancel := context.WithTimeout(ctx, duration)
 	defer func() { cancel() }()
 	startTime := time.Now()
-	var attempts int
-	var abort bool
+	// Count the number of attempts.
+	var attempts int32
+	// Count the number of times that we have aborted.
+	var aborts int32
 	err = retry(ctx, &retryOptions{
 		next: func(ctx context.Context) error {
-			attempts++
+			atomic.AddInt32(&attempts, 1)
 			err := f()
 			if err == nil {
-				log.Debugf(ctx, getSuccessMessage(opName, attempts, startTime))
+				log.Debugf(ctx, getSuccessMessage(opName, atomic.LoadInt32(&attempts), startTime))
 			}
 			spentTime := time.Now().Sub(startTime).Seconds()
 			log.Debugf(ctx, "Retry %q: attempt %d (used %0.2f of %0.2f seconds), error: %s", opName, attempts, spentTime, duration.Seconds(), err)
@@ -51,15 +54,15 @@ func WithTimeout(ctx context.Context, interval, duration time.Duration, f func()
 		},
 		hasNext: func(ctx context.Context) bool {
 			// Time tracking by context timeout.
-			return !abort
+			return atomic.LoadInt32(&aborts) == 0
 		},
 		abort: func(ctx context.Context) {
-			abort = true
+			atomic.AddInt32(&aborts, 1)
 			log.Debugf(ctx, "Retry %q: aborted!", opName)
 		},
 		interval: interval,
 	})
-	return errors.Annotate(err, getEndErrorMessage(opName, attempts, startTime)).Err()
+	return errors.Annotate(err, getEndErrorMessage(opName, atomic.LoadInt32(&attempts), startTime)).Err()
 }
 
 // LimitCount retries execute function with limit by numbers attempts.
@@ -71,31 +74,33 @@ func WithTimeout(ctx context.Context, interval, duration time.Duration, f func()
 //
 func LimitCount(ctx context.Context, count int, interval time.Duration, f func() error, opName string) (err error) {
 	startTime := time.Now()
-	var attempts int
-	var abort bool
+	// Count the number of attempts.
+	var attempts int32
+	// Count the number of times that we have aborted.
+	var aborts int32
 	err = retry(ctx, &retryOptions{
 		next: func(ctx context.Context) error {
-			attempts++
+			atomic.AddInt32(&attempts, 1)
 			err := f()
 			if err == nil {
-				log.Debugf(ctx, getSuccessMessage(opName, attempts, startTime))
+				log.Debugf(ctx, getSuccessMessage(opName, atomic.LoadInt32(&attempts), startTime))
 			}
 			log.Debugf(ctx, "Retry %q: attempts %d of %d, error: %s", opName, attempts, count, err)
 			return err
 		},
 		hasNext: func(ctx context.Context) bool {
-			if abort {
+			if atomic.LoadInt32(&aborts) > 0 {
 				return false
 			}
-			return attempts < count
+			return int(atomic.LoadInt32(&attempts)) < count
 		},
 		abort: func(ctx context.Context) {
-			abort = true
+			atomic.AddInt32(&aborts, 1)
 			log.Debugf(ctx, "Retry %q: aborted!", opName)
 		},
 		interval: interval,
 	})
-	return errors.Annotate(err, getEndErrorMessage(opName, attempts, startTime)).Err()
+	return errors.Annotate(err, getEndErrorMessage(opName, atomic.LoadInt32(&attempts), startTime)).Err()
 }
 
 type retryOptions struct {
@@ -144,7 +149,7 @@ func retry(ctx context.Context, o *retryOptions) error {
 }
 
 // getSuccessMessage creates a message for retry when it succeeded.
-func getSuccessMessage(opName string, attempts int, startTime time.Time) string {
+func getSuccessMessage(opName string, attempts int32, startTime time.Time) string {
 	spentTime := time.Now().Sub(startTime).Seconds()
 	if attempts == 1 {
 		return fmt.Sprintf("Retry %q: succeeded in first try. Spent %0.2f seconds.", opName, spentTime)
@@ -153,6 +158,6 @@ func getSuccessMessage(opName string, attempts int, startTime time.Time) string 
 }
 
 // getEndErrorMessage creates an error message for each attempts in retry.
-func getEndErrorMessage(opName string, attempts int, startTime time.Time) string {
+func getEndErrorMessage(opName string, attempts int32, startTime time.Time) string {
 	return fmt.Sprintf("%s: failed %d attempts took %0.2f seconds", opName, attempts, time.Now().Sub(startTime).Seconds())
 }
