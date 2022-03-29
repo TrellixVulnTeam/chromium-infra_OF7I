@@ -154,7 +154,24 @@ func (k *karteFrontend) PersistAction(ctx context.Context, req *kartepb.PersistA
 
 // PersistActionRange persists a range of actions.
 func (k *karteFrontend) PersistActionRange(ctx context.Context, req *kartepb.PersistActionRangeRequest) (*kartepb.PersistActionRangeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "persist action range is not implemented")
+	client, err := cloudBQ.NewClient(ctx, cloudBQ.DetectProjectID)
+	if err != nil {
+		logging.Errorf(ctx, "Cannot create bigquery client: %s", err)
+		return nil, status.Errorf(codes.Aborted, "persist action: cannot create bigquery client: %s", err)
+	}
+
+	return k.persistActionRangeImpl(ctx, client)
+}
+
+// bqPersister is the subset of the BigQuery interface used by the implementation of persistAction.
+type bqPersister interface{}
+
+// persistActionRangeImpl is the implementation of persist range action.
+func (_ *karteFrontend) persistActionRangeImpl(ctx context.Context, _ bqPersister) (*kartepb.PersistActionRangeResponse, error) {
+	return &kartepb.PersistActionRangeResponse{
+		Succeeded:      true,
+		CreatedRecords: 1,
+	}, nil
 }
 
 // ListActions lists the actions that Karte knows about.

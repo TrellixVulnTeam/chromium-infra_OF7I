@@ -248,3 +248,19 @@ func TestListObservations(t *testing.T) {
 		t.Errorf("expected error to be nil not %s", err)
 	}
 }
+
+// TestPersistActionRangeImpl_SmokeTest tests that persisting a range of actions
+// returns a non-error response given an empty dataset
+func TestPersistActionRangeImpl_SmokeTest(t *testing.T) {
+	t.Parallel()
+	k := NewKarteFrontend().(*karteFrontend)
+	ctx := gaetesting.TestingContext()
+	datastore.GetTestable(ctx).Consistent(true)
+	resp, err := k.persistActionRangeImpl(ctx, 4)
+	if resp == nil {
+		t.Errorf("expected resp not to be nil")
+	}
+	if err != nil {
+		t.Errorf("expected resp to be nil not %s", err)
+	}
+}
