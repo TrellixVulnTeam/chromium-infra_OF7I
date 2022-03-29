@@ -20,7 +20,7 @@ import (
 
 func handleInterruption(ctx context.Context) context.Context {
 	ctx, cancel := context.WithCancel(ctx)
-	signalC := make(chan os.Signal)
+	signalC := make(chan os.Signal, 1)
 	signal.Notify(signalC, os.Interrupt)
 	go func() {
 		interrupted := false
