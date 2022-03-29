@@ -225,4 +225,5 @@ builder(
     builder_group_property_name = "builder_group",
     execution_timeout = 9 * time.hour,
     category = "gen",
+    schedule = "0 */4 * * *",
 )
