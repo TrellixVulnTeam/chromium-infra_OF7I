@@ -101,11 +101,31 @@ message PersistActionRequest {
 }
 
 // PersistActionRangeRequest describes what range of actions to persist.
+//
+// The semantics of this request are a little bit tricky.
+//
+// In Karte, the name is a combination of the Karte name version identifier (originally "zzzz" and counting down)
+// and the creation time.
+//
+// If the user passes in no version (really an empty version, but logically no version), then we compare based on
+// the creation time only. Specifying neither the start version nor the end version is always semantically correct,
+// but might be inefficient.
+//
+// If both the start_version and stop_version are non-empty, then we will use them to construct a range on the names
+// as well. This range will be intersected with the range based on the creation time.
+//
+// In short, passing in the start version and stop version is an optimization.
 message PersistActionRangeRequest {
   // Start_time is the nominal start time. Defaults to one hour before the present.
   google.protobuf.Timestamp start_time = 1;
+  // Start_version is the Karte record version corresponding to the start, for example "zzzz".
+  string start_version = 4;
+
   // Stop_time is the nominal stop time. Defaults to the present.
   google.protobuf.Timestamp stop_time = 2;
+  // Stop_version is the Karte record version corresponding to the stop, for example "zzzz".
+  string stop_version = 5;
+
   // Seal_time_seconds defaults to the current seal time, expressed in seconds.
   // The seal time is the maximum amount of time that an event can be modifiable for.
   int32 seal_time_seconds = 3;
