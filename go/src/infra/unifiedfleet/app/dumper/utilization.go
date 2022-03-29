@@ -31,6 +31,7 @@ var inventoryMetric = metric.NewInt(
 	field.String("model"),
 	field.String("pool"),
 	field.String("environment"),
+	field.String("hive"),
 )
 
 // reportUFSInventoryCronHandler push the ufs duts metrics to tsmon
@@ -94,7 +95,7 @@ func reportUFSInventoryCronHandler(ctx context.Context) (err error) {
 func (c inventoryCounter) Report(ctx context.Context) {
 	for b, count := range c {
 		//logging.Infof(ctx, "bucket: %s, number: %d", b.String(), count)
-		inventoryMetric.Set(ctx, int64(count), b.board, b.model, b.pool, b.environment)
+		inventoryMetric.Set(ctx, int64(count), b.board, b.model, b.pool, b.environment, b.hive)
 	}
 }
 
@@ -104,6 +105,7 @@ func getBucketForDevice(lse *ufspb.MachineLSE, machine *ufspb.Machine, env strin
 		model:       machine.GetChromeosMachine().GetModel(),
 		pool:        "[None]",
 		environment: env,
+		hive:        util.GetHiveForDut(lse.GetName()),
 	}
 	if dut := lse.GetChromeosMachineLse().GetDeviceLse().GetDut(); dut != nil {
 		b.pool = getReportPool(dut.GetPools())
@@ -124,10 +126,11 @@ type bucket struct {
 	model       string
 	pool        string
 	environment string
+	hive        string
 }
 
 func (b bucket) String() string {
-	return fmt.Sprintf("board: %s, model: %s, pool: %s, env: %s", b.board, b.model, b.pool, b.environment)
+	return fmt.Sprintf("board: %s, model: %s, pool: %s, env: %s, hive: %q", b.board, b.model, b.pool, b.environment, b.hive)
 }
 
 func summarizeValues(vs []string) string {
