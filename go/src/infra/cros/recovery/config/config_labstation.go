@@ -262,7 +262,7 @@ func LabstationDeployConfig() *Configuration {
 							"Validate and update rpm_state.",
 							"The execs is not ready yet.",
 						},
-						ExecName: "rpm_audit",
+						ExecName: "rpm_audit_without_battery",
 						ExecTimeout: &durationpb.Duration{
 							Seconds: 600,
 						},

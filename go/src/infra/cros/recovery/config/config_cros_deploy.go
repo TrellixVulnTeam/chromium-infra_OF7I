@@ -183,8 +183,29 @@ func deployActions() map[string]*Action {
 				"has_rpm_info",
 				"No Battery is present on device",
 			},
-			ExecName:               "rpm_audit",
+			ExecName:               "rpm_audit_without_battery",
 			ExecTimeout:            &durationpb.Duration{Seconds: 600},
+			AllowFailAfterRecovery: true,
+		},
+		"Verify RPM with battery": {
+			Docs: []string{
+				"Verify RPM when battery is present",
+				"Not applicable for cr50 servos based on b/205728276",
+				"Action is not critical as it updates own state.",
+			},
+			Conditions: []string{
+				"dut_servo_host_present",
+				"servo_state_is_working",
+				"is_servo_main_ccd_cr50",
+				"has_rpm_info",
+				"Battery is present on device",
+			},
+			ExecName:    "rpm_audit_with_battery",
+			ExecTimeout: &durationpb.Duration{Seconds: 600},
+			ExecExtraArgs: []string{
+				"timeout:120",
+				"wait_interval:5",
+			},
 			AllowFailAfterRecovery: true,
 		},
 		"DUT verify": {

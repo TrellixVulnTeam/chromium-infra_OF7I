@@ -6,16 +6,19 @@ package rpm
 
 import (
 	"context"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/components/cros/rpm"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/execs/cros"
 	"infra/cros/recovery/tlw"
 )
 
-func rpmAuditExec(ctx context.Context, info *execs.ExecInfo) error {
-	// TODO: Add support for device with battery.
+// rpmAuditWithoutBatteryExec verifies whether RPM is in working order
+// when battery is absent.
+func rpmAuditWithoutBatteryExec(ctx context.Context, info *execs.ExecInfo) error {
 	if err := rpmPowerOffExec(ctx, info); err != nil {
 		return errors.Annotate(err, "rpm audit").Err()
 	}
@@ -34,6 +37,30 @@ func rpmAuditExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+// rpmAuditWithBatteryExec verifies whether RPM is in working order
+// when battery is present.
+func rpmAuditWithBatteryExec(ctx context.Context, info *execs.ExecInfo) error {
+	if err := rpmPowerOffExec(ctx, info); err != nil {
+		return errors.Annotate(err, "rpm audit").Err()
+	}
+	run := info.DefaultRunner()
+	ping := info.NewPinger(info.RunArgs.DUT.Name)
+	am := info.GetActionArgs(ctx)
+	timeOut := am.AsDuration(ctx, "timeout", 120, time.Second)
+	waitInterval := am.AsDuration(ctx, "wait_interval", 5, time.Second)
+	if err := rpm.ValidatePowerState(ctx, run, ping, false, timeOut, waitInterval); err != nil {
+		return errors.Annotate(err, "rpm audit with battery").Err()
+	}
+	if err := rpmPowerOnExec(ctx, info); err != nil {
+		return errors.Annotate(err, "rpm audit").Err()
+	}
+	if err := rpm.ValidatePowerState(ctx, run, ping, true, timeOut, waitInterval); err != nil {
+		return errors.Annotate(err, "rpm audit with battery").Err()
+	}
+	return nil
+}
+
 func init() {
-	execs.Register("rpm_audit", rpmAuditExec)
+	execs.Register("rpm_audit_without_battery", rpmAuditWithoutBatteryExec)
+	execs.Register("rpm_audit_with_battery", rpmAuditWithBatteryExec)
 }
