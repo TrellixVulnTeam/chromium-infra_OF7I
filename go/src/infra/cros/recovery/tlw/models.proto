@@ -158,3 +158,21 @@ message DUTAudio {
   // Audio loopback dongle is plugged in.
   LoopbackState loopback_state = 4;
 }
+
+// ServodOption represents options to start servod.
+message ServodOptions {
+  // Board of DUT connected to servod.
+	string dut_board = 1;
+  // Model of DUT connected to servod.
+	string dut_model = 2;
+  // Port assigned to servod.
+	int32 servod_port = 3;
+  // Servo board serial.
+	string servo_serial = 4;
+  // Specified dual setup for servod.
+	bool servo_dual = 5;
+  // Specified if need apply CR50 config.
+	bool use_cr50_config = 6;
+  // Use recovery mode when start servod.
+	bool recovery_mode = 7;
+}

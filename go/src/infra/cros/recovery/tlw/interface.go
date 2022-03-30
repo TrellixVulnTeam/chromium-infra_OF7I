@@ -107,12 +107,6 @@ const (
 	ServodMethodHwInit ServodMethod = "hwinit"
 )
 
-// ServodOption represents options to start servod.
-type ServodOptions struct {
-	// Use recovery mode when start servod
-	RecoveryMode bool
-}
-
 // InitServodRequest represents data to initiate servod daemon on servo-host.
 type InitServodRequest struct {
 	Resource string

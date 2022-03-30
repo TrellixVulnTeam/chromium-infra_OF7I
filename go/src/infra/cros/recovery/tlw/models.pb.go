@@ -973,6 +973,109 @@ func (x *DUTAudio) GetLoopbackState() DUTAudio_LoopbackState {
 	return DUTAudio_LOOPBACK_UNSPECIFIED
 }
 
+// ServodOption represents options to start servod.
+type ServodOptions struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Board of DUT connected to servod.
+	DutBoard string `protobuf:"bytes,1,opt,name=dut_board,json=dutBoard,proto3" json:"dut_board,omitempty"`
+	// Model of DUT connected to servod.
+	DutModel string `protobuf:"bytes,2,opt,name=dut_model,json=dutModel,proto3" json:"dut_model,omitempty"`
+	// Port assigned to servod.
+	ServodPort int32 `protobuf:"varint,3,opt,name=servod_port,json=servodPort,proto3" json:"servod_port,omitempty"`
+	// Servo board serial.
+	ServoSerial string `protobuf:"bytes,4,opt,name=servo_serial,json=servoSerial,proto3" json:"servo_serial,omitempty"`
+	// Specified dual setup for servod.
+	ServoDual bool `protobuf:"varint,5,opt,name=servo_dual,json=servoDual,proto3" json:"servo_dual,omitempty"`
+	// Specified if need apply CR50 config.
+	UseCr50Config bool `protobuf:"varint,6,opt,name=use_cr50_config,json=useCr50Config,proto3" json:"use_cr50_config,omitempty"`
+	// Use recovery mode when start servod.
+	RecoveryMode bool `protobuf:"varint,7,opt,name=recovery_mode,json=recoveryMode,proto3" json:"recovery_mode,omitempty"`
+}
+
+func (x *ServodOptions) Reset() {
+	*x = ServodOptions{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_cros_recovery_tlw_models_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ServodOptions) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServodOptions) ProtoMessage() {}
+
+func (x *ServodOptions) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_cros_recovery_tlw_models_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServodOptions.ProtoReflect.Descriptor instead.
+func (*ServodOptions) Descriptor() ([]byte, []int) {
+	return file_infra_cros_recovery_tlw_models_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ServodOptions) GetDutBoard() string {
+	if x != nil {
+		return x.DutBoard
+	}
+	return ""
+}
+
+func (x *ServodOptions) GetDutModel() string {
+	if x != nil {
+		return x.DutModel
+	}
+	return ""
+}
+
+func (x *ServodOptions) GetServodPort() int32 {
+	if x != nil {
+		return x.ServodPort
+	}
+	return 0
+}
+
+func (x *ServodOptions) GetServoSerial() string {
+	if x != nil {
+		return x.ServoSerial
+	}
+	return ""
+}
+
+func (x *ServodOptions) GetServoDual() bool {
+	if x != nil {
+		return x.ServoDual
+	}
+	return false
+}
+
+func (x *ServodOptions) GetUseCr50Config() bool {
+	if x != nil {
+		return x.UseCr50Config
+	}
+	return false
+}
+
+func (x *ServodOptions) GetRecoveryMode() bool {
+	if x != nil {
+		return x.RecoveryMode
+	}
+	return false
+}
+
 var File_infra_cros_recovery_tlw_models_proto protoreflect.FileDescriptor
 
 var file_infra_cros_recovery_tlw_models_proto_rawDesc = []byte{
@@ -1099,9 +1202,25 @@ var file_infra_cros_recovery_tlw_models_proto_rawDesc = []byte{
 	0x61, 0x74, 0x65, 0x12, 0x18, 0x0a, 0x14, 0x4c, 0x4f, 0x4f, 0x50, 0x42, 0x41, 0x43, 0x4b, 0x5f,
 	0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x14, 0x0a,
 	0x10, 0x4c, 0x4f, 0x4f, 0x50, 0x42, 0x41, 0x43, 0x4b, 0x5f, 0x57, 0x4f, 0x52, 0x4b, 0x49, 0x4e,
-	0x47, 0x10, 0x01, 0x42, 0x1d, 0x5a, 0x1b, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x63, 0x72, 0x6f,
-	0x73, 0x2f, 0x72, 0x65, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x2f, 0x74, 0x6c, 0x77, 0x3b, 0x74,
-	0x6c, 0x77, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x47, 0x10, 0x01, 0x22, 0xf9, 0x01, 0x0a, 0x0d, 0x53, 0x65, 0x72, 0x76, 0x6f, 0x64, 0x4f, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1b, 0x0a, 0x09, 0x64, 0x75, 0x74, 0x5f, 0x62, 0x6f, 0x61,
+	0x72, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x64, 0x75, 0x74, 0x42, 0x6f, 0x61,
+	0x72, 0x64, 0x12, 0x1b, 0x0a, 0x09, 0x64, 0x75, 0x74, 0x5f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x64, 0x75, 0x74, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x12,
+	0x1f, 0x0a, 0x0b, 0x73, 0x65, 0x72, 0x76, 0x6f, 0x64, 0x5f, 0x70, 0x6f, 0x72, 0x74, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x05, 0x52, 0x0a, 0x73, 0x65, 0x72, 0x76, 0x6f, 0x64, 0x50, 0x6f, 0x72, 0x74,
+	0x12, 0x21, 0x0a, 0x0c, 0x73, 0x65, 0x72, 0x76, 0x6f, 0x5f, 0x73, 0x65, 0x72, 0x69, 0x61, 0x6c,
+	0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x65, 0x72, 0x76, 0x6f, 0x53, 0x65, 0x72,
+	0x69, 0x61, 0x6c, 0x12, 0x1d, 0x0a, 0x0a, 0x73, 0x65, 0x72, 0x76, 0x6f, 0x5f, 0x64, 0x75, 0x61,
+	0x6c, 0x18, 0x05, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x73, 0x65, 0x72, 0x76, 0x6f, 0x44, 0x75,
+	0x61, 0x6c, 0x12, 0x26, 0x0a, 0x0f, 0x75, 0x73, 0x65, 0x5f, 0x63, 0x72, 0x35, 0x30, 0x5f, 0x63,
+	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x18, 0x06, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0d, 0x75, 0x73, 0x65,
+	0x43, 0x72, 0x35, 0x30, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65,
+	0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x5f, 0x6d, 0x6f, 0x64, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28,
+	0x08, 0x52, 0x0c, 0x72, 0x65, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x4d, 0x6f, 0x64, 0x65, 0x42,
+	0x1d, 0x5a, 0x1b, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x63, 0x72, 0x6f, 0x73, 0x2f, 0x72, 0x65,
+	0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x2f, 0x74, 0x6c, 0x77, 0x3b, 0x74, 0x6c, 0x77, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1117,7 +1236,7 @@ func file_infra_cros_recovery_tlw_models_proto_rawDescGZIP() []byte {
 }
 
 var file_infra_cros_recovery_tlw_models_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
-var file_infra_cros_recovery_tlw_models_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_infra_cros_recovery_tlw_models_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_infra_cros_recovery_tlw_models_proto_goTypes = []interface{}{
 	(RunRPMActionRequest_Action)(0),   // 0: chromeos.recovery.RunRPMActionRequest.Action
 	(RPMOutlet_State)(0),              // 1: chromeos.recovery.RPMOutlet.State
@@ -1134,20 +1253,21 @@ var file_infra_cros_recovery_tlw_models_proto_goTypes = []interface{}{
 	(*VersionRequest)(nil),            // 12: chromeos.recovery.VersionRequest
 	(*VersionResponse)(nil),           // 13: chromeos.recovery.VersionResponse
 	(*DUTAudio)(nil),                  // 14: chromeos.recovery.DUTAudio
-	nil,                               // 15: chromeos.recovery.VersionResponse.ValueEntry
-	(*durationpb.Duration)(nil),       // 16: google.protobuf.Duration
-	(*xmlrpc.Value)(nil),              // 17: chromiumos.config.api.test.xmlrpc.Value
+	(*ServodOptions)(nil),             // 15: chromeos.recovery.ServodOptions
+	nil,                               // 16: chromeos.recovery.VersionResponse.ValueEntry
+	(*durationpb.Duration)(nil),       // 17: google.protobuf.Duration
+	(*xmlrpc.Value)(nil),              // 18: chromiumos.config.api.test.xmlrpc.Value
 }
 var file_infra_cros_recovery_tlw_models_proto_depIdxs = []int32{
-	16, // 0: chromeos.recovery.RunRequest.timeout:type_name -> google.protobuf.Duration
-	17, // 1: chromeos.recovery.CallBluetoothPeerRequest.args:type_name -> chromiumos.config.api.test.xmlrpc.Value
-	17, // 2: chromeos.recovery.CallBluetoothPeerResponse.value:type_name -> chromiumos.config.api.test.xmlrpc.Value
+	17, // 0: chromeos.recovery.RunRequest.timeout:type_name -> google.protobuf.Duration
+	18, // 1: chromeos.recovery.CallBluetoothPeerRequest.args:type_name -> chromiumos.config.api.test.xmlrpc.Value
+	18, // 2: chromeos.recovery.CallBluetoothPeerResponse.value:type_name -> chromiumos.config.api.test.xmlrpc.Value
 	0,  // 3: chromeos.recovery.RunRPMActionRequest.action:type_name -> chromeos.recovery.RunRPMActionRequest.Action
 	1,  // 4: chromeos.recovery.RPMOutlet.state:type_name -> chromeos.recovery.RPMOutlet.State
 	2,  // 5: chromeos.recovery.WifiRouterHost.state:type_name -> chromeos.recovery.WifiRouterHost.State
 	10, // 6: chromeos.recovery.WifiRouterHost.RPMOutlet:type_name -> chromeos.recovery.RPMOutlet
 	3,  // 7: chromeos.recovery.VersionRequest.type:type_name -> chromeos.recovery.VersionRequest.VersionType
-	15, // 8: chromeos.recovery.VersionResponse.value:type_name -> chromeos.recovery.VersionResponse.ValueEntry
+	16, // 8: chromeos.recovery.VersionResponse.value:type_name -> chromeos.recovery.VersionResponse.ValueEntry
 	4,  // 9: chromeos.recovery.DUTAudio.loopback_state:type_name -> chromeos.recovery.DUTAudio.LoopbackState
 	10, // [10:10] is the sub-list for method output_type
 	10, // [10:10] is the sub-list for method input_type
@@ -1282,6 +1402,18 @@ func file_infra_cros_recovery_tlw_models_proto_init() {
 				return nil
 			}
 		}
+		file_infra_cros_recovery_tlw_models_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ServodOptions); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1289,7 +1421,7 @@ func file_infra_cros_recovery_tlw_models_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_cros_recovery_tlw_models_proto_rawDesc,
 			NumEnums:      5,
-			NumMessages:   11,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
