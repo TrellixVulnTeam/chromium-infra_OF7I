@@ -10,11 +10,14 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/google/go-cmp/cmp"
+	"go.chromium.org/luci/common/retry"
+	"go.chromium.org/luci/common/retry/transient"
 )
 
 // message for filtering
@@ -213,4 +216,20 @@ func AppendUniqueStrings(des []string, src ...string) []string {
 		prev = elem
 	}
 	return uniqueSlice
+}
+
+// BQTransientErrorRetries returns a retry.Factory to use on transient errors
+func BQTransientErrorRetries() retry.Factory {
+	next := func() retry.Iterator {
+		// The retry strategy follows https://cloud.google.com/bigquery/sla.
+		it := retry.ExponentialBackoff{
+			Limited: retry.Limited{
+				Delay:   1 * time.Second,
+				Retries: 6,
+			},
+			MaxDelay: 32 * time.Second,
+		}
+		return &it
+	}
+	return transient.Only(next)
 }

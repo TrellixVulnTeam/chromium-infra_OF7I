@@ -12,6 +12,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/retry"
 
 	bqlib "infra/cros/lab_inventory/bq"
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -22,6 +23,7 @@ import (
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
+	"infra/unifiedfleet/app/util"
 )
 
 type getAllFunc func(ctx context.Context) ([]proto.Message, error)
@@ -63,7 +65,14 @@ var configurationDumpToolkit = map[string]getAllFunc{
 func dumpHelper(ctx context.Context, bqClient *bigquery.Client, msgs []proto.Message, table, curTimeStr string) error {
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("%s$%s", table, curTimeStr))
 	logging.Infof(ctx, "Dumping %d %s records to BigQuery", len(msgs), table)
-	if err := uploader.Put(ctx, msgs...); err != nil {
+	f := func() error {
+		if err := uploader.Put(ctx, msgs...); err != nil {
+			return err
+		}
+		return nil
+	}
+	err := retry.Retry(ctx, util.BQTransientErrorRetries(), f, retry.LogCallback(ctx, "Dump to BQ"))
+	if err != nil {
 		return err
 	}
 	logging.Infof(ctx, "Finish dumping successfully")
