@@ -10,7 +10,6 @@ import (
 
 	"infra/cmd/shivas/utils"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
-	dumper "infra/unifiedfleet/app/dumper"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
@@ -2118,8 +2117,8 @@ shivas replace bluetooth-peers -dut {d} -hostname {h3} -hostname {h4} -hostname 
 
 func CronTriggerAvailableJobsString() string {
 	cronJobs := []string{}
-	for _, job := range dumper.Jobs {
-		cronJobs = append(cronJobs, job.Name)
+	for _, v := range ufsUtil.CronJobNames {
+		cronJobs = append(cronJobs, v)
 	}
 	return fmt.Sprintf("\n********\n%s\n********", strings.Join(cronJobs, "\n"))
 }

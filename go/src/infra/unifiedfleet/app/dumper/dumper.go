@@ -25,48 +25,48 @@ import (
 var Jobs = []*cron.CronTab{
 	{
 		// Dump configs, registrations, inventory and states to BQ
-		Name:     "ufs.dumper",
+		Name:     util.CronJobNames["mainBQCron"],
 		Time:     20 * time.Minute,
 		TrigType: cron.DAILY,
 		Job:      dump,
 	},
 	{
 		// Dump change events to BQ
-		Name:     "ufs.change_event.BqDump",
+		Name:     util.CronJobNames["changeEventToBQCron"],
 		Time:     10 * time.Minute,
 		TrigType: cron.EVERY,
 		Job:      dumpChangeEvent,
 	},
 	{
 		// Dump snapshots to BQ
-		Name:     "ufs.snapshot_msg.BqDump",
+		Name:     util.CronJobNames["snapshotToBQCron"],
 		Time:     10 * time.Minute,
 		TrigType: cron.EVERY,
 		Job:      dumpChangeSnapshots,
 	},
 	{
 		// Dump network configs to BQ
-		Name:     "ufs.cros_network.dump",
+		Name:     util.CronJobNames["networkConfigToBQCron"],
 		Time:     60 * time.Minute,
 		TrigType: cron.EVERY,
 		Job:      dumpCrosNetwork,
 	},
 	{
 		// Sync asset info from HaRT
-		Name:     "ufs.sync_devices.sync",
+		Name:     util.CronJobNames["hartSyncCron"],
 		TrigType: cron.HOURLY,
 		Job:      SyncAssetInfoFromHaRT,
 	},
 	{
 		// Push changes to dron queen
-		Name:     "ufs.push_to_drone_queen",
+		Name:     util.CronJobNames["droneQueenSyncCron"],
 		Time:     10 * time.Minute,
 		TrigType: cron.EVERY,
 		Job:      pushToDroneQueen,
 	},
 	{
 		// Report UFS metrics
-		Name:     "ufs.report_inventory",
+		Name:     util.CronJobNames["InventoryMetricsReportCron"],
 		Time:     5 * time.Minute,
 		TrigType: cron.EVERY,
 		Job:      reportUFSInventoryCronHandler,
