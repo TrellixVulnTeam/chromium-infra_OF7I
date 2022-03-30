@@ -283,6 +283,7 @@ func tryjob(bID int64) *cvv0.Tryjob {
 				},
 			},
 		},
+		Critical: (bID % 2) == 0,
 	}
 }
 
@@ -294,6 +295,7 @@ func expectedTasks(taskTemplate *taskspb.IngestTestResults, buildIDs []int64) []
 	res := make([]*taskspb.IngestTestResults, 0, len(buildIDs))
 	for _, buildID := range buildIDs {
 		t := proto.Clone(taskTemplate).(*taskspb.IngestTestResults)
+		t.PresubmitRun.Critical = ((buildID % 2) == 0)
 		t.Build = &controlpb.BuildResult{
 			Host:         bbHost,
 			Id:           buildID,

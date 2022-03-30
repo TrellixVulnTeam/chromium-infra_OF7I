@@ -153,10 +153,13 @@ func JoinBuildResult(ctx context.Context, buildID, buildProject string, isPresub
 //
 // If the presubmit result has already been provided for a build,
 // this method has no effect.
-func JoinPresubmitResult(ctx context.Context, buildIDs []string, presubmitProject string, pr *ctlpb.PresubmitResult) error {
-	if pr == nil {
-		return errors.New("presubmit result must be specified")
+func JoinPresubmitResult(ctx context.Context, presubmitResultByBuildID map[string]*ctlpb.PresubmitResult, presubmitProject string) error {
+	for id, result := range presubmitResultByBuildID {
+		if result == nil {
+			return fmt.Errorf("presubmit result for build %v must be specified", id)
+		}
 	}
+
 	var buildIDsSkipped []string
 	var buildsOutputByBuildProject map[string]int64
 	f := func(ctx context.Context) error {
@@ -164,6 +167,11 @@ func JoinPresubmitResult(ctx context.Context, buildIDs []string, presubmitProjec
 		// try of this transaction leaks out to the outer context.
 		buildIDsSkipped = nil
 		buildsOutputByBuildProject = make(map[string]int64)
+
+		var buildIDs []string
+		for id := range presubmitResultByBuildID {
+			buildIDs = append(buildIDs, id)
+		}
 
 		entries, err := control.Read(ctx, buildIDs)
 		if err != nil {
@@ -187,7 +195,7 @@ func JoinPresubmitResult(ctx context.Context, buildIDs []string, presubmitProjec
 				return nil
 			}
 			entry.PresubmitProject = presubmitProject
-			entry.PresubmitResult = pr
+			entry.PresubmitResult = presubmitResultByBuildID[buildID]
 			if err := control.SetPresubmitResult(ctx, entry); err != nil {
 				return err
 			}
@@ -206,7 +214,7 @@ func JoinPresubmitResult(ctx context.Context, buildIDs []string, presubmitProjec
 	}
 
 	// Export metrics.
-	cvPresubmitBuildInputCounter.Add(ctx, int64(len(buildIDs)-len(buildIDsSkipped)), presubmitProject)
+	cvPresubmitBuildInputCounter.Add(ctx, int64(len(presubmitResultByBuildID)-len(buildIDsSkipped)), presubmitProject)
 	for buildProject, count := range buildsOutputByBuildProject {
 		bbPresubmitBuildOutputCounter.Add(ctx, count, buildProject)
 		cvPresubmitBuildOutputCounter.Add(ctx, count, presubmitProject)

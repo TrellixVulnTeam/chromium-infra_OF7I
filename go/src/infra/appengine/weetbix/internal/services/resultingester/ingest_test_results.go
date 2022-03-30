@@ -176,12 +176,21 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 		// The build status implies the test result could not have been
 		// responsible for causing the build (or consequently, the CQ run)
 		// to fail.
-		AutoExonerateBlockingFailures: b.Status != bbpb.Status_FAILURE,
+		ImplicitlyExonerateBlockingFailures: b.Status != bbpb.Status_FAILURE,
 	}
 	if payload.PresubmitRun != nil {
 		opts.PresubmitRunID = payload.PresubmitRun.PresubmitRunId
 		opts.PresubmitRunOwner = payload.PresubmitRun.Owner
 		opts.PresubmitRunCls = payload.PresubmitRun.Cls
+		if !payload.PresubmitRun.Critical {
+			// CQ did not consider the build critical.
+			opts.ImplicitlyExonerateBlockingFailures = true
+		}
+		if payload.PresubmitRun.Critical && b.Status == bbpb.Status_FAILURE &&
+			payload.PresubmitRun.PresubmitRunSucceeded {
+			logging.Warningf(ctx, "Inconsistent data from LUCI CV: build %v/%v was critical to presubmit run %v/%v and failed, but presubmit run did not fail.",
+				payload.Build.Host, payload.Build.Id, payload.PresubmitRun.PresubmitRunId.System, payload.PresubmitRun.PresubmitRunId.Id)
+		}
 	}
 	clusterIngestion := i.clustering.Open(opts)
 

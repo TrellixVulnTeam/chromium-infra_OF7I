@@ -55,4 +55,8 @@ message PresubmitResult {
 
   // The time the presubmit was created.
   google.protobuf.Timestamp creation_time = 3;
+
+  // Whether the build was critical to the completion of the presubmit run.
+  // True if the failure of the build would cause the presubmit run to fail.
+  bool critical = 7;
 }

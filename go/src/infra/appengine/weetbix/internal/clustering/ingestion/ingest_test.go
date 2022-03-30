@@ -67,7 +67,7 @@ func TestIngest(t *testing.T) {
 					Patchset: 2,
 				},
 			},
-			AutoExonerateBlockingFailures: false,
+			ImplicitlyExonerateBlockingFailures: false,
 		}
 		testIngestion := func(input []*rdbpb.TestVariant, expectedCFs []*bqpb.ClusteredFailureRow) {
 			ingestion := ingestor.Open(opts)
@@ -262,7 +262,7 @@ func TestIngest(t *testing.T) {
 			Convey(`Failure with implicit exoneration`, func() {
 				// E.g. the containing invocation was a build which was
 				// cancelled or passed.
-				opts.AutoExonerateBlockingFailures = true
+				opts.ImplicitlyExonerateBlockingFailures = true
 
 				// Update expectations.
 				for _, cf := range expectedCFs {
@@ -334,7 +334,7 @@ func TestIngest(t *testing.T) {
 
 			Convey(`Test run and presubmit run blocked`, func() {
 				Convey(`Build failed`, func() {
-					opts.AutoExonerateBlockingFailures = false
+					opts.ImplicitlyExonerateBlockingFailures = false
 					// No test failure should be exonerated, because
 					// the test variant had no exoneration and
 					// AutoExonerateBlockingFailures is unset.
@@ -345,7 +345,7 @@ func TestIngest(t *testing.T) {
 					So(len(chunkStore.Contents), ShouldEqual, 1)
 				})
 				Convey(`Build passed, cancelled or infra failure`, func() {
-					opts.AutoExonerateBlockingFailures = true
+					opts.ImplicitlyExonerateBlockingFailures = true
 					// The test failure should be exonerated, despite
 					// the test variant having no exoneration, because
 					// all attempts of the test failed, and
@@ -383,12 +383,12 @@ func TestIngest(t *testing.T) {
 					exp.ExonerationStatus = pb.ExonerationStatus_NOT_EXONERATED
 				}
 				Convey(`Build failed`, func() {
-					opts.AutoExonerateBlockingFailures = false
+					opts.ImplicitlyExonerateBlockingFailures = false
 					testIngestion(tvs, expectedCFs)
 					So(len(chunkStore.Contents), ShouldEqual, 1)
 				})
 				Convey(`Build passed, cancelled or infra failure`, func() {
-					opts.AutoExonerateBlockingFailures = true
+					opts.ImplicitlyExonerateBlockingFailures = true
 					testIngestion(tvs, expectedCFs)
 					So(len(chunkStore.Contents), ShouldEqual, 1)
 				})

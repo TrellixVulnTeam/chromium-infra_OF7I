@@ -35,15 +35,18 @@ type Options struct {
 	Realm string
 	// InvocationID is the identity of the invocation being ingested.
 	InvocationID string
-	// AutoExonerateBlockingFailures controls whether invocation-blocking
+	// ImplicitlyExonerateBlockingFailures controls whether invocation-blocking
 	// failures should be automatically treated as exonerated, regardless of
 	// exoneration status reported to ResultDB.
-	// This is typically set if the build corresponding to the
-	// ingested invocation was cancelled, passed, or had an infra
-	// failure (i.e. was anything other than a build failure), as
-	// inferences that test failures caused the build and/or CQ run to fail
-	// are self-evidently untrue in those cases.
-	AutoExonerateBlockingFailures bool
+	// This is set if either:
+	// - the build corresponding to the ingested invocation was cancelled,
+	//   passed, or had an infra failure (i.e. was anything other than a
+	//   build failure), or
+	// - the CQ run did not consider the build critical (e.g. because it
+	//   was experimental).
+	// As inferences that test failures caused the release build or CQ run
+	// to fail are self-evidently untrue in those cases.
+	ImplicitlyExonerateBlockingFailures bool
 	// PresubmitRunID is the identity of the presubmit run (if any).
 	PresubmitRunID *pb.PresubmitRunId
 	// PresubmitRunOwner is the the owner of the presubmit

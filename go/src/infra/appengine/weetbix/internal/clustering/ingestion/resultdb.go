@@ -78,7 +78,7 @@ func failuresFromTestVariants(opts Options, tvs []*rdbpb.TestVariant) []*cpb.Fai
 				exoneration = pb.ExonerationStatus_EXPLICIT
 			case hasWeetbixExonerations:
 				exoneration = pb.ExonerationStatus_WEETBIX
-			case !hasPass && opts.AutoExonerateBlockingFailures:
+			case !hasPass && opts.ImplicitlyExonerateBlockingFailures:
 				exoneration = pb.ExonerationStatus_IMPLICIT
 			default:
 				exoneration = pb.ExonerationStatus_NOT_EXONERATED

@@ -180,6 +180,7 @@ func TestHandleBuild(t *testing.T) {
 								},
 							},
 							CreationTime: timestamppb.New(partitionTime),
+							Critical:     true,
 						},
 					})
 				})
