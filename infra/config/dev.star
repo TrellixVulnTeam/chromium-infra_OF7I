@@ -67,6 +67,10 @@ luci.project(
             roles = acl.LOGDOG_WRITER,
             groups = "luci-logdog-chromium-dev-writers",
         ),
+        acl.entry(
+            roles = acl.BUILDBUCKET_TRIGGERER,
+            users = "adhoc-testing@luci-token-server-dev.iam.gserviceaccount.com",
+        ),
     ],
     bindings = [
         # LED users.
@@ -187,6 +191,68 @@ adhoc_builder(
         use_python3 = True,
     ),
     schedule = "with 10m interval",
+)
+
+adhoc_builder(
+    name = "linux-rel-buildbucket",
+    os = "Ubuntu-18.04",
+    executable = luci.recipe(
+        name = "placeholder",
+        cipd_package = "infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py",
+        use_python3 = True,
+    ),
+    properties = {
+        "status": "SUCCESS",
+        "steps": [
+            {
+                "name": "can_outlive_parent child",
+                "child_build": {
+                    "buildbucket": {
+                        "builder": {
+                            "project": "infra",
+                            "bucket": "ci",
+                            "builder": "linux-rel-buildbucket-child",
+                        },
+                    },
+                    "life_time": "DETACHED",
+                },
+            },
+            {
+                "name": "cannot_outlive_parent child",
+                "child_build": {
+                    "id": "bounded_child",
+                    "buildbucket": {
+                        "builder": {
+                            "project": "infra",
+                            "bucket": "ci",
+                            "builder": "linux-rel-buildbucket-child",
+                        },
+                    },
+                    "life_time": "BUILD_BOUND",
+                },
+            },
+            {
+                "name": "collect children",
+                "collect_children": {
+                    "child_build_step_ids": ["bounded_child"],
+                },
+            },
+        ],
+    },
+    schedule = "with 10m interval",
+)
+
+adhoc_builder(
+    name = "linux-rel-buildbucket-child",
+    os = "Ubuntu-18.04",
+    executable = luci.recipe(
+        name = "placeholder",
+        cipd_package = "infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py",
+        use_python3 = True,
+    ),
+    properties = {
+        "status": "SUCCESS",
+    },
 )
 
 luci.notifier(
