@@ -19,6 +19,7 @@ import (
 	"infra/cros/recovery/internal/localtlw/ssh"
 	"infra/cros/recovery/internal/localtlw/xmlrpc"
 	"infra/cros/recovery/internal/log"
+	"infra/cros/recovery/tlw"
 	"infra/libs/sshpool"
 )
 
@@ -190,4 +191,41 @@ func Call(ctx context.Context, c *xmlrpc.XMLRpc, timeout time.Duration, method s
 		return nil, errors.Annotate(err, "call servod %q: %s", c.Addr(), method).Err()
 	}
 	return val, nil
+}
+
+// GenerateParams generates command's params based on options.
+// Example output:
+//  "BOARD=${VALUE}" - name of DUT board.
+//  "MODEL=${VALUE}" - name of DUT model.
+//  "PORT=${VALUE}" - port specified to run servod on servo-host.
+//  "SERIAL=${VALUE}" - serial number of root servo.
+//  "CONFIG=cr50.xml" - special config for extra ability of CR50.
+//  "REC_MODE=1" - start servod in recovery-mode, if root device found then servod will start event not all components detected.
+func GenerateParams(o *tlw.ServodOptions) []string {
+	var parts []string
+	if o == nil {
+		return parts
+	}
+	if o.ServodPort > 0 {
+		parts = append(parts, fmt.Sprintf("PORT=%d", o.ServodPort))
+	}
+	if o.DutBoard != "" {
+		parts = append(parts, fmt.Sprintf("BOARD=%s", o.DutBoard))
+		if o.DutModel != "" {
+			parts = append(parts, fmt.Sprintf("MODEL=%s", o.DutModel))
+		}
+	}
+	if o.ServoSerial != "" {
+		parts = append(parts, fmt.Sprintf("SERIAL=%s", o.ServoSerial))
+	}
+	if o.ServoDual {
+		parts = append(parts, "DUAL_V4=1")
+	}
+	if o.UseCr50Config {
+		parts = append(parts, "CONFIG=cr50.xml")
+	}
+	if o.RecoveryMode {
+		parts = append(parts, "REC_MODE=1")
+	}
+	return parts
 }
