@@ -29,6 +29,16 @@ func crosDeployPlan() *Plan {
 }
 
 func deployActions() map[string]*Action {
+	// Prepare critical actions as part of DUT verify.
+	var repairCriticalActions []string
+	for _, a := range crosRepairPlan().GetCriticalActions() {
+		// Exclude repair state to keep need_deploy state as default.
+		if a == "dut_state_repair_failed" {
+			continue
+		}
+		repairCriticalActions = append(repairCriticalActions, a)
+	}
+
 	return map[string]*Action{
 		"DUT is in dev-mode and allowed to boot from USB-key": {
 			Docs:        []string{"Verify that device is set to boot in DEV mode and enabled to boot from USB-drive."},
@@ -211,7 +221,7 @@ func deployActions() map[string]*Action {
 		},
 		"DUT verify": {
 			Docs:         []string{"Run all repair critcal actions."},
-			Dependencies: crosRepairPlan().GetCriticalActions(),
+			Dependencies: repairCriticalActions,
 			ExecName:     "sample_pass",
 		},
 		"Install OS in DEV mode": {
