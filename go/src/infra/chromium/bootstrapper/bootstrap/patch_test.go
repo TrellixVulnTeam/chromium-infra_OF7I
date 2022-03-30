@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 func TestPatchFile(t *testing.T) {
@@ -18,31 +17,6 @@ func TestPatchFile(t *testing.T) {
 	ctx := context.Background()
 
 	Convey("patchFile", t, func() {
-
-		Convey("fails if file isn't in patch", func() {
-			contents := "fake-contents"
-			diff := `commit 16ad87ebb64dd08be38df602d8614b1fc3918ece
-Author: Author
-Date:   Fri Jan 1 00:00:00 2021 -0700
-
-diff --git a/test/bar b/test/bar
-index 2550c5c..73b065a 100644
---- a/test/bar
-+++ b/test/bar
-@@ -1,4 +1,4 @@
- red
- blue
--green
-+yellow
- 
-`
-
-			newContents, err := patchFile(ctx, "test/baz", contents, diff)
-
-			So(err, ShouldErrLike, "file test/baz is not present in diff")
-			So(PatchRejected.In(err), ShouldBeFalse)
-			So(newContents, ShouldBeEmpty)
-		})
 
 		Convey("returns patched contents for modified file", func() {
 			contents := `0
