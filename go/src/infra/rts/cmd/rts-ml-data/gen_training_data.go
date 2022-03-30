@@ -10,8 +10,6 @@ import (
 	"fmt"
 	"infra/rts"
 	"infra/rts/filegraph/git"
-	"io"
-	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -30,19 +28,20 @@ import (
 	"go.chromium.org/luci/common/cli"
 )
 
-const csv_header = "ResultId,TestName,TestId,FileName,VariantHash,SixMonthRunCount,SixMonthFailCount,OneMonthRunCount,OneMonthFailCount,OneWeekRunCount,OneWeekFailCount,Distance,UseDistance,Failed"
+const csvHeader = "ResultId,ChangeId,TestName,TestId,FileName,VariantHash,SixMonthRunCount,SixMonthFailCount,OneMonthRunCount,OneMonthFailCount,OneWeekRunCount,OneWeekFailCount,Distance,UseDistance,Failed"
 
 func cmdGenTrainingData(authOpt *auth.Options) *subcommands.Command {
 	return &subcommands.Command{
-		UsageLine: `gen-training-data -out <path> -from <date> -to <date> -builder <builder>`,
-		ShortDesc: "generate features and labels for ML model",
+		UsageLine: `gen-training-data -out <path> -day <date> -builder <builder>`,
+		ShortDesc: "Generate features and labels for ML model",
 		LongDesc: text.Doc(`
-			Benerate features and labels for ML model
+			Generate features and labels for ML model
 
-			Flags -from -to -out are required.
+			Flags -day -out -model-dir are required.
 		`),
 		CommandRun: func() subcommands.CommandRun {
 			r := &genTraingData{}
+			r.queryLimit = 1000000
 			r.authOpt = authOpt
 			r.Flags.StringVar(&r.modelDir, "model-dir", "", text.Doc(`
 				Path to the directory with the model files.
@@ -59,11 +58,11 @@ func cmdGenTrainingData(authOpt *auth.Options) *subcommands.Command {
 			r.Flags.StringVar(&r.builder, "builder", "", text.Doc(`
 				Builder to get training data for.
 			`))
-			r.Flags.IntVar(&r.rowCount, "row-count", 100, text.Doc(`
-				Max number of rows to process. Default: 100
+			r.Flags.Var(luciflag.Date(&r.runDate), "day", text.Doc(`
+				Fetch results for this date. Stability information will be
+				gathered based on this day.
+				format: yyyy-mm-dd
 			`))
-			r.Flags.Var(luciflag.Date(&r.startTime), "from", "Fetch results starting from this date; format: yyyy-mm-dd")
-			r.Flags.Var(luciflag.Date(&r.endTime), "to", "Fetch results until this date; format: yyyy-mm-dd")
 			return r
 		},
 	}
@@ -76,54 +75,60 @@ func (r *genTraingData) Run(a subcommands.Application, args []string, env subcom
 
 	ctx := cli.GetContext(a, r, env)
 
-	entryHashes, err := r.ReadEntryHashes()
-	if err != nil && err != io.EOF {
-		return r.done(errors.Annotate(err, "failed to read existing result hashes").Err())
-	}
+	r.loadInput(ctx)
+	r.openCsv()
+	defer r.closeCsv()
 
 	bqClient, err := newBQClient(ctx, auth.NewAuthenticator(ctx, auth.InteractiveLogin, *r.authOpt))
 	if err != nil {
 		return r.done(errors.Annotate(err, "failed to create BigQuery client").Err())
 	}
 
-	rows, err := r.queryResults(ctx, bqClient, entryHashes)
+	rows, err := r.queryResults(ctx, bqClient)
 	if err != nil {
 		return r.done(errors.Annotate(err, "failed to retrieve query results").Err())
 	}
-
-	r.loadInput(ctx)
-	r.openCsv()
-	defer r.closeCsv()
 
 	fmt.Printf("Calculating distances\n")
-	for i, row := range rows {
-		if (i+1)%100 == 0 {
-			fmt.Printf("Calculating distance on test %d\n", i+1)
-		}
+	// Eventually we might want to restructure the query to group on CL for us.
+	// The row limit makes this less straight forward and would require limiting
+	// the agg like:
+	// ARRAY_AGG(testVariant LIMIT @failedVariantsLimit) as failedTestVariants
+	for len(rows) > 0 {
+		r.calcDistancesForRows(rows)
 
-		if row.AffectedFilesCount > 100 || row.FileName == "" {
-			rows[i].UseDistance = false
-		} else {
-			// TODO(sshrimp): Group by CL and only calculate this once per CL
-			dist := r.calcDistance(row.AffectedFiles, row.FileName)
-
-			if dist < 0 {
-				fmt.Printf("WARNING: Test result calculated a negative distance for ResultId = %s\n", row.ResultId)
+		// If received the full buffer last time, query again
+		if len(rows) == r.queryLimit {
+			rows, err = r.queryResults(ctx, bqClient)
+			if err != nil {
+				return r.done(errors.Annotate(err, "failed to retrieve query results").Err())
 			}
-
-			valid := !math.IsInf(dist, 0)
-
-			rows[i].Distance = dist
-			rows[i].UseDistance = valid
 		}
-		r.writeCsv(rows[i])
 	}
-
-	if err != nil {
-		return r.done(errors.Annotate(err, "failed to retrieve query results").Err())
-	}
-
 	return 0
+}
+
+func (r *genTraingData) calcDistancesForRows(rows []bqRow) {
+	lastChangeId := rows[0].ChangeId
+	var changeIdTestIdsToDistance = make(map[string]bqRow)
+	for i := 0; i < len(rows); i++ {
+		row := rows[i]
+		if row.ChangeId != lastChangeId {
+			// Find distances for the last patchset
+			r.calcDistances(row.AffectedFiles, changeIdTestIdsToDistance)
+			r.writeCsvRows(changeIdTestIdsToDistance)
+
+			lastChangeId = row.ChangeId
+			changeIdTestIdsToDistance = make(map[string]bqRow)
+			r.currentClCount += 1
+			if r.currentClCount%100 == 0 {
+				fmt.Printf("Processed %d patchsets", r.currentClCount)
+			}
+		}
+		changeIdTestIdsToDistance[row.FileName] = row
+	}
+	r.calcDistances(rows[len(rows)-1].AffectedFiles, changeIdTestIdsToDistance)
+	r.writeCsvRows(changeIdTestIdsToDistance)
 }
 
 func (r *genTraingData) closeCsv() {
@@ -140,10 +145,9 @@ func (r *genTraingData) openCsv() error {
 			return err
 		}
 
-		fmt.Fprintf(r.file, "%s\n", csv_header)
+		fmt.Fprintf(r.file, "%s\n", csvHeader)
 	} else {
 		// TODO(sshrimp): Check the header still matches
-
 		r.file, err = os.OpenFile(r.out, os.O_RDWR|os.O_APPEND, 0666)
 		if err != nil {
 			return err
@@ -152,8 +156,15 @@ func (r *genTraingData) openCsv() error {
 	return nil
 }
 
+func (s *genTraingData) writeCsvRows(tests map[string]bqRow) {
+	for _, row := range tests {
+		s.writeCsv(row)
+	}
+}
+
 func (r *genTraingData) writeCsv(row bqRow) {
 	fmt.Fprintf(r.file, "%v,", strings.ReplaceAll(row.ResultId, ",", ";"))
+	fmt.Fprintf(r.file, "%v,", strings.ReplaceAll(row.ChangeId, ",", ";"))
 	fmt.Fprintf(r.file, "%v,", strings.ReplaceAll(row.TestName, ",", ";"))
 	fmt.Fprintf(r.file, "%v,", strings.ReplaceAll(row.TestId, ",", ";"))
 	fmt.Fprintf(r.file, "%v,", strings.ReplaceAll(row.FileName, ",", ";"))
@@ -174,20 +185,18 @@ func (r *genTraingData) writeCsv(row bqRow) {
 	}
 
 	fmt.Fprintf(r.file, "%v,", row.UseDistance)
-	fmt.Fprintf(r.file, "%v", row.Expected)
+	fmt.Fprintf(r.file, "%v", row.Failed)
 	fmt.Fprintf(r.file, "\n")
 }
 
 func (r *genTraingData) ValidateFlags() error {
 	switch {
 	case r.out == "":
-		return errors.New("-out or -in is required")
-	case r.startTime.IsZero():
-		return errors.New("-from is required")
-	case r.endTime.IsZero():
-		return errors.New("-to is required")
-	case r.endTime.Before(r.startTime):
-		return errors.New("the -to date must not be before the -from date")
+		return errors.New("-out is required")
+	case r.runDate.IsZero():
+		return errors.New("-day is required")
+	case r.modelDir == "":
+		return errors.New("the -model-dir is required")
 	default:
 		return nil
 	}
@@ -216,14 +225,14 @@ func (r *genTraingData) ReadEntryHashes() (map[string]interface{}, error) {
 	return hashset, err
 }
 
-func (r *genTraingData) queryResults(ctx context.Context, bqClient *bigquery.Client, ignoreIds map[string]interface{}) ([]bqRow, error) {
+func (r *genTraingData) queryResults(ctx context.Context, bqClient *bigquery.Client) ([]bqRow, error) {
 	q := bqClient.Query(filtersQuery)
 	q.Parameters = []bigquery.QueryParameter{
-		{Name: "rowCount", Value: r.rowCount},
-		{Name: "startTime", Value: r.startTime},
-		{Name: "endTime", Value: r.endTime},
+		{Name: "runDate", Value: r.runDate},
 		{Name: "testSuite", Value: r.testSuite},
 		{Name: "builder", Value: r.builder},
+		{Name: "limit", Value: r.queryLimit},
+		{Name: "limit_offset", Value: r.queryIndex},
 	}
 
 	fmt.Printf("Querying for entries\n")
@@ -241,19 +250,13 @@ func (r *genTraingData) queryResults(ctx context.Context, bqClient *bigquery.Cli
 		// Read the next row.
 		switch err := it.Next(row); {
 		case err == iterator.Done:
+			r.queryIndex += int64(len(rows))
 			return rows, ctx.Err()
 		case err != nil:
 			return nil, err
 		}
 
-		if _, exists := ignoreIds[row.ResultId]; !exists {
-			rows = append(rows, *row)
-
-			if err == iterator.Done {
-			}
-		} else {
-			fmt.Printf("Duplicate entry retrieved: %s\n", row.ResultId)
-		}
+		rows = append(rows, *row)
 	}
 }
 
@@ -274,38 +277,44 @@ func (r *genTraingData) loadGraph(fileName string) error {
 	return r.strategy.Graph.Read(bufio.NewReader(f))
 }
 
-func (s *genTraingData) calcDistance(changedFiles []string, testFile string) float64 {
-	// This is ineffective and will need to be reworked to run per patchset
-	found := false
-	distance := 0.0
+func (s *genTraingData) calcDistances(changedFiles []string, tests map[string]bqRow) {
+	if len(changedFiles) > 100 {
+		for _, row := range tests {
+			row.UseDistance = false
+		}
+		return
+	}
+
+	foundTests := 0
 	s.strategy.RunQuery(changedFiles, func(name string, af rts.Affectedness) (keepGoing bool) {
-		if name == testFile {
-			found = true
-			distance = af.Distance
-			return false
+		if entry, ok := tests[name]; ok {
+			entry.Distance = af.Distance
+			entry.UseDistance = true
+			tests[name] = entry
+			foundTests += 1
+
+			if len(tests) == foundTests {
+				return false
+			}
 		}
 		return true
 	})
-	if found {
-		return distance
-	} else {
-		return math.Inf(1)
-	}
 }
 
 type genTraingData struct {
 	baseCommandRun
 
-	rowCount  int
-	startTime time.Time
-	endTime   time.Time
+	runDate   time.Time
 	testSuite string
 	builder   string
 
-	out      string
-	modelDir string
-	strategy git.SelectionStrategy
-	file     *os.File
+	out            string
+	modelDir       string
+	strategy       git.SelectionStrategy
+	file           *os.File
+	queryLimit     int
+	queryIndex     int64
+	currentClCount int
 
 	authOpt       *auth.Options
 	authenticator *auth.Authenticator
@@ -314,22 +323,20 @@ type genTraingData struct {
 
 type bqRow struct {
 	ResultId           string   `bigquery:"result_id"`
+	ChangeId           string   `bigquery:"change_id"`
 	TestName           string   `bigquery:"test_name"`
 	TestId             string   `bigquery:"test_id"`
 	FileName           string   `bigquery:"file_name"`
 	VariantHash        string   `bigquery:"variant_hash"`
 	SixMonthFailCount  int64    `bigquery:"six_month_fail_count"`
 	SixMonthRunCount   int64    `bigquery:"six_month_run_count"`
-	SixMonthFailRate   float32  `bigquery:"six_month_fail_rate"`
 	OneMonthFailCount  int64    `bigquery:"one_month_fail_count"`
 	OneMonthRunCount   int64    `bigquery:"one_month_run_count"`
-	OneMonthFailRate   float32  `bigquery:"one_month_fail_rate"`
 	OneWeekFailCount   int64    `bigquery:"one_week_fail_count"`
 	OneWeekRunCount    int64    `bigquery:"one_week_run_count"`
-	OneWeekFailRate    float32  `bigquery:"one_week_fail_rate"`
 	AffectedFilesCount int64    `bigquery:"affected_files_count"`
 	AffectedFiles      []string `bigquery:"affected_files"`
-	Expected           bool     `bigquery:"failure"`
+	Failed             bool     `bigquery:"failed"`
 	Distance           float64
 	// Feature for if the distance couldn't be found, might want to split into
 	// "InfiniteDistance" and "HasDistance" to better capture new tests
@@ -343,117 +350,121 @@ WITH fail_rate as (
 		ds.variant_hash variant_hash,
 		SUM(ARRAY_LENGTH(ds.patchsets_with_failures)) six_month_fail_count,
 		SUM(ds.run_count) six_month_run_count,
-		SUM(IF(day > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY), ARRAY_LENGTH(ds.patchsets_with_failures), 0)) one_month_fail_count,
-		SUM(IF(day > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY), ds.run_count, 0)) one_month_run_count,
-		SUM(IF(day > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY), ARRAY_LENGTH(ds.patchsets_with_failures), 0)) one_week_fail_count,
-		SUM(IF(day > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY), ds.run_count, 0)) one_week_run_count,
+		SUM(IF(day >= TIMESTAMP_SUB(TIMESTAMP_TRUNC(@runDate, DAY), INTERVAL 31 DAY), ARRAY_LENGTH(ds.patchsets_with_failures), 0)) one_month_fail_count,
+		SUM(IF(day >= TIMESTAMP_SUB(TIMESTAMP_TRUNC(@runDate, DAY), INTERVAL 31 DAY), ds.run_count, 0)) one_month_run_count,
+		SUM(IF(day >= TIMESTAMP_SUB(TIMESTAMP_TRUNC(@runDate, DAY), INTERVAL 8 DAY), ARRAY_LENGTH(ds.patchsets_with_failures), 0)) one_week_fail_count,
+		SUM(IF(day >= TIMESTAMP_SUB(TIMESTAMP_TRUNC(@runDate, DAY), INTERVAL 8 DAY), ds.run_count, 0)) one_week_run_count,
 	FROM
 		chrome-trooper-analytics.test_results.daily_summary ds
 	WHERE
-		ds.day > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 180 DAY)
+		ds.day BETWEEN
+			TIMESTAMP_SUB(TIMESTAMP_TRUNC(@runDate, DAY), INTERVAL 181 DAY) AND
+			TIMESTAMP_SUB(TIMESTAMP_TRUNC(@runDate, DAY), INTERVAL 1 DAY)
 	GROUP BY ds.test_id, ds.variant_hash
 ),
 
-	tryjobs AS (
-		SELECT
-			TIMESTAMP_TRUNC(partition_time, DAY) day,
-			b.id,
-			ps.change,
-			ps.earliest_equivalent_patchset as patchset,
-			partition_time as ps_approx_timestamp,
-		FROM commit-queue.chromium.attempts a, a.gerrit_changes ps, a.builds b
-		WHERE partition_time BETWEEN @startTime AND @endTime
-	),
+tryjobs AS (
+	SELECT
+		TIMESTAMP_TRUNC(partition_time, DAY) day,
+		b.id,
+		ps.change,
+		ps.earliest_equivalent_patchset as patchset,
+		partition_time as ps_approx_timestamp,
+	FROM commit-queue.chromium.attempts a, a.gerrit_changes ps, a.builds b
+	WHERE
+		TIMESTAMP_TRUNC(partition_time, DAY) = TIMESTAMP_TRUNC(@runDate, DAY)
+),
 
-	bb_tryjobs AS (
-		SELECT
-			id,
-			status,
-			IF(JSON_EXTRACT(b.output.properties, "$.affected_files.total_count") IS NULL, 0, CAST(CAST(JSON_EXTRACT(b.output.properties, "$.affected_files.total_count") AS FLOAT64) AS INT)) affected_files_count,
-			ARRAY(SELECT REGEXP_REPLACE(REPLACE(file, '"', ""), r'^src/', '//') FROM UNNEST(JSON_EXTRACT_ARRAY(b.output.properties, "$.affected_files.first_100")) file) affected_files
-		FROM cr-buildbucket.chromium.builds b
-		WHERE create_time BETWEEN TIMESTAMP_SUB(@startTime, INTERVAL 1 DAY) AND TIMESTAMP_ADD(@endTime, INTERVAL 1 DAY)
-			AND builder.bucket = 'try'
-			# Exclude experimental builders because they may fail for reasons
-			# unrelated to the CL, and are not required for the CL to land.
-			AND STRUCT('cq_experimental', 'true') NOT IN UNNEST(b.tags)
-	),
+bb_tryjobs AS (
+	SELECT
+		id,
+		status,
+		IF(JSON_EXTRACT(b.output.properties, "$.affected_files.total_count") IS NULL, 0, CAST(CAST(JSON_EXTRACT(b.output.properties, "$.affected_files.total_count") AS FLOAT64) AS INT)) affected_files_count,
+		ARRAY(SELECT REGEXP_REPLACE(REPLACE(file, '"', ""), r'^src/', '//') FROM UNNEST(JSON_EXTRACT_ARRAY(b.output.properties, "$.affected_files.first_100")) file) affected_files
+	FROM cr-buildbucket.chromium.builds b
+	WHERE create_time BETWEEN TIMESTAMP_SUB(@runDate, INTERVAL 1 DAY) AND TIMESTAMP_ADD(@runDate, INTERVAL 1 DAY)
+		AND builder.bucket = 'try'
+		# Exclude experimental builders because they may fail for reasons
+		# unrelated to the CL, and are not required for the CL to land.
+		AND STRUCT('cq_experimental', 'true') NOT IN UNNEST(b.tags)
+		AND b.status = "FAILURE"
+),
 
-	tryjobs_with_status AS (
-		SELECT t.*,
-		bb.status,
-		bb.affected_files,
-		bb.affected_files_count
-		FROM tryjobs t
-		JOIN bb_tryjobs bb USING (id)
-	),
+tryjobs_with_status AS (
+	SELECT t.*,
+	bb.status,
+	bb.affected_files,
+	bb.affected_files_count
+	FROM tryjobs t
+	JOIN bb_tryjobs bb USING (id)
+),
 
-	test_results_base AS (
-		SELECT
-			tr.result_id,
-			tr.name test_name,
-			tr.test_id,
-			CAST(REGEXP_EXTRACT(exported.id, r'build-(\d+)') as INT64) as build_id,
-			IF(tr.test_metadata.location.file_name IS NULL, "", REGEXP_REPLACE(tr.test_metadata.location.file_name, r'^src/', r'//'))  file_name,
-			(SELECT v.value FROM tr.variant v where v.key = 'test_suite') AS test_suite,
-			(SELECT v.value FROM tr.variant v where v.key = 'builder') AS builder,
-			variant_hash,
-			expected,
-			exonerated,
-			status,
-			duration,
-		FROM chrome-luci-data.chromium.try_test_results tr
-		-- Read prev-day and next-day results too to ensure that we have ALL
-		-- results of a given CQ attempt.
-		WHERE partition_time BETWEEN TIMESTAMP_SUB(@startTime, INTERVAL 1 DAY) and TIMESTAMP_ADD(@endTime, INTERVAL 1 DAY)
-			# Exclude third-party tests (except Web Tests) because they test code
-			# which isn't in src.git.
-			# As of January 2021, this excludes ~2% of test results.
-			AND (
-				test_metadata.location.file_name NOT LIKE '%/third_party/%'
-				OR test_metadata.location.file_name LIKE '//third_party/blink/%'
-			)
-	),
+test_results_base AS (
+	SELECT
+		tr.result_id,
+		tr.name test_name,
+		tr.test_id,
+		CAST(REGEXP_EXTRACT(exported.id, r'build-(\d+)') as INT64) as build_id,
+		IF(tr.test_metadata.location.file_name IS NULL, "", REGEXP_REPLACE(tr.test_metadata.location.file_name, r'^src/', r'//'))  file_name,
+		(SELECT v.value FROM tr.variant v where v.key = 'test_suite') AS test_suite,
+		(SELECT v.value FROM tr.variant v where v.key = 'builder') AS builder,
+		variant_hash,
+		expected,
+		exonerated,
+		status,
+		duration,
+	FROM chrome-luci-data.chromium.try_test_results tr
+	-- Read prev-day and next-day results too to ensure that we have ALL
+	-- results of a given CQ attempt.
+	WHERE partition_time BETWEEN TIMESTAMP_SUB(@runDate, INTERVAL 1 DAY) and TIMESTAMP_ADD(@runDate, INTERVAL 1 DAY)
+		# Exclude third-party tests (except Web Tests) because they test code
+		# which isn't in src.git.
+		# As of January 2021, this excludes ~2% of test results.
+		AND (
+			test_metadata.location.file_name NOT LIKE '%/third_party/%'
+			OR test_metadata.location.file_name LIKE '//third_party/blink/%'
+		)
+),
 
-	-- Group all test results by patchset, test_id and variant_hash
-	-- in order to analyze individual test variants in each patchset,
-	-- and in particular exclude flaky tests.
-	test_variants_per_ps AS (
-		SELECT
-			ANY_VALUE(result_id) result_id,
-			ANY_VALUE(test_name) test_name,
-			ANY_VALUE(test_suite) test_suite,
-			ANY_VALUE(builder) builder,
-			ANY_VALUE(file_name) file_name,
-			ANY_VALUE(affected_files) affected_files,
-			ANY_VALUE(affected_files_count) affected_files_count,
-			test_id,
-			change,
-			patchset,
-			variant_hash,
-			ANY_VALUE(day) day,
-			LOGICAL_OR(expected) AND LOGICAL_OR(NOT expected) AS flake,
+-- Group all test results by patchset, test_id and variant_hash
+-- in order to analyze individual test variants in each patchset,
+-- and in particular exclude flaky tests.
+test_variants_per_ps AS (
+	SELECT
+		ANY_VALUE(result_id) result_id,
+		ANY_VALUE(test_name) test_name,
+		ANY_VALUE(test_suite) test_suite,
+		ANY_VALUE(builder) builder,
+		ANY_VALUE(file_name) file_name,
+		ANY_VALUE(affected_files) affected_files,
+		ANY_VALUE(affected_files_count) affected_files_count,
+		test_id,
+		change,
+		patchset,
+		variant_hash,
+		ANY_VALUE(day) day,
+		LOGICAL_OR(expected) AND LOGICAL_OR(NOT expected) AS flake,
 
-			# Sometimes ResultDB table misses data. For example, if a test
-			# flaked, the table might miss the pass, and it might look like the test
-			# has failed. Also sometimes builds are incomplete because they
-			# infra-failed or were canceled midway, and the test results do not
-			# represent the whole picture. In particular, CANCELED might mean that the
-			# "without patch" part didn't finish and test results were not properly
-			# exonerated.
-			# Thus ensure that the build has failed too.
-			LOGICAL_AND(NOT expected) AND LOGICAL_AND(t.status = 'FAILURE') all_unexpected,
+		# Sometimes ResultDB table misses data. For example, if a test
+		# flaked, the table might miss the pass, and it might look like the test
+		# has failed. Also sometimes builds are incomplete because they
+		# infra-failed or were canceled midway, and the test results do not
+		# represent the whole picture. In particular, CANCELED might mean that the
+		# "without patch" part didn't finish and test results were not properly
+		# exonerated.
+		# Thus ensure that the build has failed too.
+		LOGICAL_AND(NOT expected) AND LOGICAL_AND(t.status = 'FAILURE') all_unexpected,
 
-			ANY_VALUE(ps_approx_timestamp) AS ps_approx_timestamp,
-		FROM tryjobs_with_status t
-		JOIN test_results_base tr ON t.id = tr.build_id
-		WHERE not exonerated  AND tr.status != 'SKIP' -- not needed for RTS purposes
-		GROUP BY change, patchset, test_id, variant_hash
-	)
-
+		ANY_VALUE(ps_approx_timestamp) AS ps_approx_timestamp,
+	FROM tryjobs_with_status t
+	JOIN test_results_base tr ON t.id = tr.build_id
+	WHERE not exonerated  AND tr.status != 'SKIP' -- not needed for RTS purposes
+	GROUP BY change, patchset, test_id, variant_hash
+)
 
 SELECT
 	rdb.result_id,
+	FORMAT("https://crrev.com/c/%d/%d", rdb.change, rdb.patchset) as change_id,
 	test_name,
 	rdb.variant_hash,
 	rdb.test_id,
@@ -462,13 +473,10 @@ SELECT
 	affected_files_count,
 	fr.six_month_fail_count,
 	fr.six_month_run_count,
-	IF(fr.six_month_run_count > 0, fr.six_month_fail_count / fr.six_month_run_count, 0) as six_month_fail_rate,
 	fr.one_month_fail_count,
 	fr.one_month_run_count,
-	IF(fr.one_month_run_count > 0, fr.one_month_fail_count / fr.one_month_run_count, 0) as one_month_fail_rate,
 	fr.one_week_fail_count,
 	fr.one_week_run_count,
-	IF(fr.one_week_run_count > 0, fr.one_week_fail_count / fr.one_week_run_count, 0) as one_week_fail_rate,
 	rdb.all_unexpected as failed,
 FROM
 	test_variants_per_ps rdb
@@ -479,6 +487,8 @@ WHERE
 	AND (@builder = "" OR rdb.builder = @builder)
 	AND fr.six_month_run_count IS NOT NULL
 	AND fr.six_month_run_count > 0
-ORDER BY IF(failed, 1 - (rand() * .001), rand()) DESC
-LIMIT @rowCount
+	# Downsample the non-failures
+	AND (rdb.all_unexpected OR MOD(FARM_FINGERPRINT(rdb.result_id), 1000) = 0)
+ORDER BY change_id
+LIMIT @limit OFFSET @limit_offset
 `
