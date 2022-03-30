@@ -15,10 +15,10 @@ libxml2_version="2.9.12"
 openssl_version="1.1.1j"
 pcre_version="8.41"
 php_version="7.3.31"
-zlib_version="1.2.11"
+zlib_version="1.2.12"
 
 def do_latest():
-  print('httpd{0}.php{1}.chromium.2'.format(httpd_version, php_version))
+  print('httpd{0}.php{1}.chromium.3'.format(httpd_version, php_version))
 
 
 def get_download_url():
