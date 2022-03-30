@@ -25,3 +25,5 @@ build:
       # Non-reproducible, contains hashes of files in `bin/`, which are
       # themselves non-reproducible.
       - 'RECORD'
+      # Non-reproducible, depends on the local version of bdist_wheel package.
+      - 'WHEEL'

@@ -146,6 +146,7 @@ hooks = [
       "python", "-u", "-m", "pip", "install", "--no-deps", "--require-hashes",
       "-t", "./infra/appengine/monorail/lib",
       "-r", "./infra/appengine/monorail/requirements.py2.txt",
+      "--upgrade",
     ],
   },
 ]
