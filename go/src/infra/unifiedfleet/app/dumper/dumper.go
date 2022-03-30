@@ -184,26 +184,25 @@ func getProject(ctx context.Context) string {
 	return ctx.Value(projectKey).(string)
 }
 
-func exportToBQ(ctx context.Context, f func(ctx context.Context, bqClient *bigquery.Client) error) (err error) {
+func exportToBQ(ctx context.Context, f func(ctx context.Context, bqClient *bigquery.Client) error) error {
+	var mErr error
 	for _, ns := range util.ClientToDatastoreNamespace {
-		newCtx, err1 := util.SetupDatastoreNamespace(ctx, ns)
+		newCtx, err := util.SetupDatastoreNamespace(ctx, ns)
 		if ns == "" {
 			// This is only for printing error message for default namespace.
-			ns = "default"
+			ns = "default (chrome)"
 		}
-		logging.Debugf(newCtx, "Exporting to BQ for namespace %q", ns)
-		if err1 != nil {
-			err1 = errors.Annotate(err, "Setting namespace %q failed. BQ export skipped for the namespace %q", ns, ns).Err()
-			logging.Errorf(ctx, err.Error())
-			err = errors.NewMultiError(err, err1)
+		logging.Infof(newCtx, "Exporting to BQ for namespace %q", ns)
+		if err != nil {
+			logging.Errorf(ctx, "Setting namespace %q failed, BQ export skipped: %s", ns, err.Error())
+			mErr = errors.NewMultiError(mErr, err)
 			continue
 		}
-		err1 = f(newCtx, get(newCtx))
-		if err1 != nil {
-			err1 = errors.Annotate(err, "BQ export failed for the namespace %q", ns).Err()
-			logging.Errorf(ctx, err.Error())
-			err = errors.NewMultiError(err, err1)
+		err = f(newCtx, get(newCtx))
+		if err != nil {
+			logging.Errorf(ctx, "BQ export failed for the namespace %q: %s", ns, err.Error())
+			mErr = errors.NewMultiError(mErr, err)
 		}
 	}
-	return err
+	return mErr
 }
