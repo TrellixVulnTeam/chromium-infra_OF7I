@@ -199,7 +199,7 @@ message OSVersion {
 }
 
 // ChromeOSMachineLSE refers to the entity in Chrome OS lab
-// which can be a Device(DUT, test Bed or Labstation) or a server
+// which can be a Device or a server
 message ChromeOSMachineLSE {
    oneof chromeos_lse {
         ChromeOSDeviceLSE dut = 1 [deprecated = true];
@@ -209,8 +209,8 @@ message ChromeOSMachineLSE {
    }
 }
 
-// ChromeOSDeviceLSE refers to the entity in Chrome OS lab
-// which is a DUT, test Bed or a Labstation
+// ChromeOSDeviceLSE refers to the entity in Chrome OS lab,
+// e.g., DUT, test Bed, Labstation
 message ChromeOSDeviceLSE {
     chromeos.lab.DeviceUnderTest config = 1 [deprecated = true];
     RPMInterface rpm_interface = 2;
@@ -218,6 +218,7 @@ message ChromeOSDeviceLSE {
     oneof device {
         chromeos.lab.DeviceUnderTest dut = 4;
         chromeos.lab.Labstation labstation = 5;
+        chromeos.lab.Devboard devboard = 6;
     };
 }
 

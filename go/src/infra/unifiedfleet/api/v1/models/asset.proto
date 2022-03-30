@@ -39,4 +39,5 @@ enum AssetType {
   DUT = 1;
   SERVO = 2;
   LABSTATION = 3;
+  DEVBOARD = 4;
 }

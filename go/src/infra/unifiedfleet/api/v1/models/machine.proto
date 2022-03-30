@@ -46,6 +46,8 @@ message Machine {
                 (google.api.field_behavior) = OUTPUT_ONLY];
         // Attached Device. Device data for any USB-attached devices.
         AttachedDevice attached_device = 11;
+        // Development board, e.g., Andreiboard
+        Devboard devboard = 13;
     };
     // Record the last update timestamp of this machine (In UTC timezone)
     google.protobuf.Timestamp update_time = 6 [
@@ -162,4 +164,22 @@ enum AttachedDeviceType {
   ATTACHED_DEVICE_TYPE_ANDROID_TABLET = 4;
   ATTACHED_DEVICE_TYPE_DEVBOARD = 5;
   ATTACHED_DEVICE_TYPE_JETSTREAM = 6;
+}
+
+// Devboard refers to development boards for component firmware testing.
+//
+// Next Tag: 2
+message Devboard {
+  oneof board {
+    Andreiboard andreiboard = 1;
+  }
+}
+
+// Andreiboard refers to andreiboard type development boards.
+//
+// Next Tag: 2
+message Andreiboard {
+  // Serial for the UltraDebug interface.
+  // Can be empty if the devboard does not have UltraDebug.
+  string ultradebug_serial = 1;
 }

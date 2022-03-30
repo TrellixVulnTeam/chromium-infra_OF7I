@@ -381,6 +381,62 @@ func (x *Labstation) GetPools() []string {
 	return nil
 }
 
+// Next Tag: 3
+type Devboard struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Servo *Servo   `protobuf:"bytes,1,opt,name=servo,proto3" json:"servo,omitempty"`
+	Pools []string `protobuf:"bytes,2,rep,name=pools,proto3" json:"pools,omitempty"`
+}
+
+func (x *Devboard) Reset() {
+	*x = Devboard{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Devboard) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Devboard) ProtoMessage() {}
+
+func (x *Devboard) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Devboard.ProtoReflect.Descriptor instead.
+func (*Devboard) Descriptor() ([]byte, []int) {
+	return file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *Devboard) GetServo() *Servo {
+	if x != nil {
+		return x.Servo
+	}
+	return nil
+}
+
+func (x *Devboard) GetPools() []string {
+	if x != nil {
+		return x.Pools
+	}
+	return nil
+}
+
 var File_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto protoreflect.FileDescriptor
 
 var file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_rawDesc = []byte{
@@ -511,11 +567,17 @@ var file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_rawDesc = []
 	0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x6f, 0x73,
 	0x2e, 0x6c, 0x61, 0x62, 0x2e, 0x4f, 0x53, 0x52, 0x50, 0x4d, 0x52, 0x03, 0x72, 0x70, 0x6d, 0x12,
 	0x14, 0x0a, 0x05, 0x70, 0x6f, 0x6f, 0x6c, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x09, 0x52, 0x05,
-	0x70, 0x6f, 0x6f, 0x6c, 0x73, 0x42, 0x35, 0x5a, 0x33, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x75,
-	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2f, 0x61, 0x70, 0x69, 0x2f,
-	0x76, 0x31, 0x2f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2f, 0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65,
-	0x6f, 0x73, 0x2f, 0x6c, 0x61, 0x62, 0x3b, 0x75, 0x66, 0x73, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x70, 0x6f, 0x6f, 0x6c, 0x73, 0x22, 0x66, 0x0a, 0x08, 0x44, 0x65, 0x76, 0x62, 0x6f, 0x61, 0x72,
+	0x64, 0x12, 0x44, 0x0a, 0x05, 0x73, 0x65, 0x72, 0x76, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x2e, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e,
+	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x63, 0x68,
+	0x72, 0x6f, 0x6d, 0x65, 0x6f, 0x73, 0x2e, 0x6c, 0x61, 0x62, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x6f,
+	0x52, 0x05, 0x73, 0x65, 0x72, 0x76, 0x6f, 0x12, 0x14, 0x0a, 0x05, 0x70, 0x6f, 0x6f, 0x6c, 0x73,
+	0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x05, 0x70, 0x6f, 0x6f, 0x6c, 0x73, 0x42, 0x35, 0x5a,
+	0x33, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c,
+	0x65, 0x65, 0x74, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x6d, 0x6f, 0x64, 0x65, 0x6c,
+	0x73, 0x2f, 0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x6f, 0x73, 0x2f, 0x6c, 0x61, 0x62, 0x3b, 0x75,
+	0x66, 0x73, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -531,40 +593,42 @@ func file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_rawDescGZIP
 }
 
 var file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_goTypes = []interface{}{
 	(DeviceUnderTest_DUTPool)(0),   // 0: unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest.DUTPool
 	(*ChromeOSDevice)(nil),         // 1: unifiedfleet.api.v1.models.chromeos.lab.ChromeOSDevice
 	(*DeviceUnderTest)(nil),        // 2: unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest
 	(*Labstation)(nil),             // 3: unifiedfleet.api.v1.models.chromeos.lab.Labstation
-	(*ChromeOSDeviceID)(nil),       // 4: unifiedfleet.api.v1.models.chromeos.lab.ChromeOSDeviceID
-	(*manufacturing.ConfigID)(nil), // 5: unifiedfleet.api.v1.models.chromeos.manufacturing.ConfigID
-	(*device.ConfigId)(nil),        // 6: unifiedfleet.api.v1.models.chromeos.device.ConfigId
-	(*Peripherals)(nil),            // 7: unifiedfleet.api.v1.models.chromeos.lab.Peripherals
-	(*License)(nil),                // 8: unifiedfleet.api.v1.models.chromeos.lab.License
-	(*ModemInfo)(nil),              // 9: unifiedfleet.api.v1.models.chromeos.lab.ModemInfo
-	(*SIMInfo)(nil),                // 10: unifiedfleet.api.v1.models.chromeos.lab.SIMInfo
-	(*Servo)(nil),                  // 11: unifiedfleet.api.v1.models.chromeos.lab.Servo
-	(*OSRPM)(nil),                  // 12: unifiedfleet.api.v1.models.chromeos.lab.OSRPM
+	(*Devboard)(nil),               // 4: unifiedfleet.api.v1.models.chromeos.lab.Devboard
+	(*ChromeOSDeviceID)(nil),       // 5: unifiedfleet.api.v1.models.chromeos.lab.ChromeOSDeviceID
+	(*manufacturing.ConfigID)(nil), // 6: unifiedfleet.api.v1.models.chromeos.manufacturing.ConfigID
+	(*device.ConfigId)(nil),        // 7: unifiedfleet.api.v1.models.chromeos.device.ConfigId
+	(*Peripherals)(nil),            // 8: unifiedfleet.api.v1.models.chromeos.lab.Peripherals
+	(*License)(nil),                // 9: unifiedfleet.api.v1.models.chromeos.lab.License
+	(*ModemInfo)(nil),              // 10: unifiedfleet.api.v1.models.chromeos.lab.ModemInfo
+	(*SIMInfo)(nil),                // 11: unifiedfleet.api.v1.models.chromeos.lab.SIMInfo
+	(*Servo)(nil),                  // 12: unifiedfleet.api.v1.models.chromeos.lab.Servo
+	(*OSRPM)(nil),                  // 13: unifiedfleet.api.v1.models.chromeos.lab.OSRPM
 }
 var file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_depIdxs = []int32{
-	4,  // 0: unifiedfleet.api.v1.models.chromeos.lab.ChromeOSDevice.id:type_name -> unifiedfleet.api.v1.models.chromeos.lab.ChromeOSDeviceID
-	5,  // 1: unifiedfleet.api.v1.models.chromeos.lab.ChromeOSDevice.manufacturing_id:type_name -> unifiedfleet.api.v1.models.chromeos.manufacturing.ConfigID
-	6,  // 2: unifiedfleet.api.v1.models.chromeos.lab.ChromeOSDevice.device_config_id:type_name -> unifiedfleet.api.v1.models.chromeos.device.ConfigId
+	5,  // 0: unifiedfleet.api.v1.models.chromeos.lab.ChromeOSDevice.id:type_name -> unifiedfleet.api.v1.models.chromeos.lab.ChromeOSDeviceID
+	6,  // 1: unifiedfleet.api.v1.models.chromeos.lab.ChromeOSDevice.manufacturing_id:type_name -> unifiedfleet.api.v1.models.chromeos.manufacturing.ConfigID
+	7,  // 2: unifiedfleet.api.v1.models.chromeos.lab.ChromeOSDevice.device_config_id:type_name -> unifiedfleet.api.v1.models.chromeos.device.ConfigId
 	2,  // 3: unifiedfleet.api.v1.models.chromeos.lab.ChromeOSDevice.dut:type_name -> unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest
 	3,  // 4: unifiedfleet.api.v1.models.chromeos.lab.ChromeOSDevice.labstation:type_name -> unifiedfleet.api.v1.models.chromeos.lab.Labstation
-	7,  // 5: unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest.peripherals:type_name -> unifiedfleet.api.v1.models.chromeos.lab.Peripherals
+	8,  // 5: unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest.peripherals:type_name -> unifiedfleet.api.v1.models.chromeos.lab.Peripherals
 	0,  // 6: unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest.critical_pools:type_name -> unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest.DUTPool
-	8,  // 7: unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest.licenses:type_name -> unifiedfleet.api.v1.models.chromeos.lab.License
-	9,  // 8: unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest.modeminfo:type_name -> unifiedfleet.api.v1.models.chromeos.lab.ModemInfo
-	10, // 9: unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest.siminfo:type_name -> unifiedfleet.api.v1.models.chromeos.lab.SIMInfo
-	11, // 10: unifiedfleet.api.v1.models.chromeos.lab.Labstation.servos:type_name -> unifiedfleet.api.v1.models.chromeos.lab.Servo
-	12, // 11: unifiedfleet.api.v1.models.chromeos.lab.Labstation.rpm:type_name -> unifiedfleet.api.v1.models.chromeos.lab.OSRPM
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	9,  // 7: unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest.licenses:type_name -> unifiedfleet.api.v1.models.chromeos.lab.License
+	10, // 8: unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest.modeminfo:type_name -> unifiedfleet.api.v1.models.chromeos.lab.ModemInfo
+	11, // 9: unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest.siminfo:type_name -> unifiedfleet.api.v1.models.chromeos.lab.SIMInfo
+	12, // 10: unifiedfleet.api.v1.models.chromeos.lab.Labstation.servos:type_name -> unifiedfleet.api.v1.models.chromeos.lab.Servo
+	13, // 11: unifiedfleet.api.v1.models.chromeos.lab.Labstation.rpm:type_name -> unifiedfleet.api.v1.models.chromeos.lab.OSRPM
+	12, // 12: unifiedfleet.api.v1.models.chromeos.lab.Devboard.servo:type_name -> unifiedfleet.api.v1.models.chromeos.lab.Servo
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_init() }
@@ -615,6 +679,18 @@ func file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_init() {
 				return nil
 			}
 		}
+		file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Devboard); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_msgTypes[0].OneofWrappers = []interface{}{
 		(*ChromeOSDevice_Dut)(nil),
@@ -626,7 +702,7 @@ func file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_unifiedfleet_api_v1_models_chromeos_lab_device_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

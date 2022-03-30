@@ -71,3 +71,9 @@ message Labstation {
   OSRPM rpm = 3;
   repeated string pools = 4;
 }
+
+// Next Tag: 3
+message Devboard {
+  Servo servo = 1;
+  repeated string pools = 2;
+}
