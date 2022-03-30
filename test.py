@@ -20,7 +20,7 @@ import sys
 INFRA_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
-# Whitelist of packages to test on Windows.
+# Allowlist of packages to test on Windows.
 WIN_ENABLED_PACKAGES = [
   'infra/libs/decorators',
   'infra/libs/gitiles',
@@ -107,7 +107,7 @@ for arg in args:
 
 # Set up default list of packages/directories if none have been provided.
 if not modules:
-  # On Windows, test only whitelisted subset of 'infra' and 'packages' modules.
+  # On Windows, test only allowlisted subset of 'infra' and 'packages' modules.
   if sys.platform == 'win32':
     modules.extend([
       p for p in WIN_ENABLED_PACKAGES
