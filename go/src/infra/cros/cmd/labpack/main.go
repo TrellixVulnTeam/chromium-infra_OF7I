@@ -15,6 +15,7 @@ import (
 	b64 "encoding/base64"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -136,6 +137,7 @@ func mainRunInternal(ctx context.Context, input *steps.LabpackInput, state *buil
 // TODO: Need collect metrics of success collected logs per run to Karte.
 func uploadLogs(ctx context.Context, state *build.State, lg logger.Logger) (rErr error) {
 	step, ctx := build.StartStep(ctx, "Upload logs")
+	lg.Infof("Beginning to upload logs")
 	defer func() { step.End(rErr) }()
 	// Construct the client that we will need to push the logs first.
 	// Eventually, we will make this error fatal. However, for right now, we will
@@ -171,12 +173,22 @@ func uploadLogs(ctx context.Context, state *build.State, lg logger.Logger) (rErr
 		//
 		// callFuncWithTimeout synchronously calls a function with a timeout and then unconditionally hands control
 		// back to its caller. The goroutine that's created in the background will not by itself keep the process alive.
-		status, err := callFuncWithTimeout(ctx, 30*time.Second, func(ctx context.Context) error {
+		// TODO(gregorynisbet): Allow this parameter to be overridden from outside.
+		gsURL := fmt.Sprintf("gs://chromeos-autotest-results/swarming-%s", swarmingTaskID)
+		lg.Infof("Swarming task %q is non-empty. Uploading to %q", swarmingTaskID, gsURL)
+		status, err := callFuncWithTimeout(ctx, 5*time.Minute, func(ctx context.Context) error {
+			lg.Infof("Beginning upload attempt. Starting five minute timeout.")
+			lg.Infof("Writing upload marker.")
+			// TODO(b:227489086): Remove this file.
+			if wErr := ioutil.WriteFile("_labpack_upload_marker", []byte("ca85a1f7-0de3-43c5-90ff-2e00b1041007"), 0o666); wErr != nil {
+				lg.Errorf("Failed to write upload marker file: %s", wErr)
+			}
+
+			lg.Infof("Calling upload.")
 			return upload.Upload(ctx, client, &upload.Params{
 				// TODO(gregorynisbet): Change this to the log root.
-				SourceDir: ".",
-				// TODO(gregorynisbet): Allow this parameter to be overridden from outside.
-				GSURL:             fmt.Sprintf("gs://chromeos-autotest-results/swarming-%s", swarmingTaskID),
+				SourceDir:         ".",
+				GSURL:             gsURL,
 				MaxConcurrentJobs: 10,
 			})
 		})
