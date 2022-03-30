@@ -33,6 +33,7 @@ type Client interface {
 	DownloadWithGsutil(ctx context.Context, gsPath gs.Path, localPath string) error
 	Read(gsPath gs.Path) ([]byte, error)
 	SetTTL(ctx context.Context, gsPath gs.Path, ttl time.Duration) error
+	SetMetadata(ctx context.Context, gsPath gs.Path, key, value string) error
 	List(ctx context.Context, bucket string, prefix string) ([]string, error)
 }
 
@@ -177,6 +178,11 @@ func (g *ProdClient) List(ctx context.Context, bucket string, prefix string) ([]
 
 // Set TTL sets the object's time to live.
 func (g *ProdClient) SetTTL(ctx context.Context, gsPath gs.Path, ttl time.Duration) error {
+	return g.SetMetadata(ctx, gsPath, "timetolive", strconv.Itoa(int(ttl.Seconds())))
+}
+
+// SetMetadata sets object metadata for an arbitrary key-value pair.
+func (g *ProdClient) SetMetadata(ctx context.Context, gsPath gs.Path, key, value string) error {
 	if g.noAuth {
 		return fmt.Errorf("client was initialized without auth, this method is unsupported")
 	}
@@ -184,7 +190,7 @@ func (g *ProdClient) SetTTL(ctx context.Context, gsPath gs.Path, ttl time.Durati
 	path := gsPath.Filename()
 	_, err := g.plainClient.Bucket(bucket).Object(path).Update(ctx, storage.ObjectAttrsToUpdate{
 		Metadata: map[string]string{
-			"timetolive": strconv.Itoa(int(ttl.Seconds())),
+			key: value,
 		},
 	})
 	return err

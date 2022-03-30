@@ -7,7 +7,9 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
@@ -102,17 +104,39 @@ func (b *publicBuildspec) Run(a subcommands.Application, args []string, env subc
 	return 0
 }
 
-func (b *publicBuildspec) copyExternalBuildspec(ctx context.Context, gsClient gs.Client, gerritClient gerrit.Client, externalBuildspec string) error {
+func (b *publicBuildspec) copyExternalBuildspec(ctx context.Context, gsClient gs.Client, gerritClient gerrit.Client, externalBuildspec string) (lgs.Path, error) {
 	data, err := gerritClient.DownloadFileFromGitiles(ctx, chromeExternalHost,
 		externalManifestVersionsProject, "HEAD", externalBuildspec)
 	if err != nil {
-		return errors.Annotate(err, "failed to download %s from %s", externalBuildspec, externalManifestVersionsProject).Err()
+		return "", errors.Annotate(err, "failed to download %s from %s", externalBuildspec, externalManifestVersionsProject).Err()
 	}
 	if b.push {
 		uploadPath := lgs.MakePath(b.externalBuildspecsGSBucket, externalBuildspec)
 		if err := gsClient.WriteFileToGS(uploadPath, []byte(data)); err != nil {
-			return errors.Annotate(err, "failed to write external buildspec to %s", string(uploadPath)).Err()
+			return "", errors.Annotate(err, "failed to write external buildspec to %s", string(uploadPath)).Err()
 		}
+		return uploadPath, nil
+	}
+	return "", nil
+}
+
+func (b *publicBuildspec) setCreateTimeMetadata(ctx context.Context, gsClient gs.Client, gerritClient gerrit.Client, gsPath lgs.Path) error {
+	// Get create time from Gitiles.
+	// We use the upload time of the internal buildspec as a rough estimate
+	// of when the corresponding build completed. b/224575508 for context.
+	commits, err := gerritClient.GetFileLog(ctx, chromeInternalHost,
+		internalManifestVersionsProject, "HEAD", gsPath.Filename())
+	if err != nil {
+		return errors.Annotate(err, "error fetching git history for %s: ", gsPath.Filename()).Err()
+	}
+
+	submitTime, err := time.Parse(time.ANSIC, commits[0].Committer.Time)
+	if err != nil {
+		return errors.Annotate(err, "invalid time '%s' for %s: ", commits[0].Author.Time, gsPath.Filename()).Err()
+	}
+	createTimeSeconds := strconv.FormatInt(submitTime.Unix(), 10)
+	if err := gsClient.SetMetadata(ctx, gsPath, "create_time_seconds", createTimeSeconds); err != nil {
+		return errors.Annotate(err, "failed to set `create_time_seconds` metadata to %s for %s: ", createTimeSeconds, gsPath).Err()
 	}
 	return nil
 }
@@ -203,15 +227,30 @@ func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient g
 					errs = append(errs, err)
 					continue
 				}
+				// If we're uploading a legacy buildspec, set the create time metadata.
+				if err := b.setCreateTimeMetadata(ctx, gsClient, gerritClient, uploadPath); err != nil {
+					LogErr(err.Error())
+					errs = append(errs, err)
+					continue
+				}
 			}
 
 			// If we're reading from legacy and an external buildspec already exists, we should
 			// use that instead of creating a new one.
 			if _, ok := legacyExternalBuildspecMap[externalBuildspec]; ok {
-				if err := b.copyExternalBuildspec(ctx, gsClient, gerritClient, externalBuildspec); err != nil {
+				uploadPath, err := b.copyExternalBuildspec(ctx, gsClient, gerritClient, externalBuildspec)
+				if err != nil {
 					LogErr(err.Error())
 					errs = append(errs, err)
 					continue
+				}
+				if uploadPath != "" {
+					if err := b.setCreateTimeMetadata(ctx, gsClient, gerritClient, uploadPath); err != nil {
+						// If we're uploading a legacy buildspec, set the create time metadata.
+						LogErr(err.Error())
+						errs = append(errs, err)
+						continue
+					}
 				}
 			} else {
 				// Create and upload external buildspec.
@@ -220,6 +259,15 @@ func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient g
 				if err := createPublicBuildspec(gsClient, gerritClient, buildspec, uploadPath, b.push); err != nil {
 					LogErr(errors.Annotate(err, "failed to create external buildspec %s", externalBuildspec).Err().Error())
 					errs = append(errs, err)
+					continue
+				}
+				if b.readFromManifestVersions {
+					// If we're uploading a legacy buildspec, set the create time metadata.
+					if err := b.setCreateTimeMetadata(ctx, gsClient, gerritClient, uploadPath); err != nil {
+						LogErr(err.Error())
+						errs = append(errs, err)
+						continue
+					}
 				}
 			}
 		}

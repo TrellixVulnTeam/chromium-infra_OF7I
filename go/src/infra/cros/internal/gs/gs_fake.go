@@ -25,6 +25,7 @@ type FakeClient struct {
 	ExpectedDownloads map[string][]byte
 	ExpectedReads     map[string][]byte
 	ExpectedSetTTL    map[string]time.Duration
+	ExpectedMetadata  map[string]map[string]string
 }
 
 // WriteFileToGS writes the specified data to the specified gs path.
@@ -90,6 +91,21 @@ func (f *FakeClient) SetTTL(_ context.Context, gsPath gs.Path, ttl time.Duration
 	}
 	if !reflect.DeepEqual(expectedTTL, ttl) {
 		f.T.Fatalf("mismatch on call SetTTL for %s: expected:\n%v\ngot:\n%v\n", string(gsPath), expectedTTL, ttl)
+	}
+	return nil
+}
+
+func (f *FakeClient) SetMetadata(ctx context.Context, gsPath gs.Path, key, value string) error {
+	expectedMetadata, ok := f.ExpectedMetadata[string(gsPath)]
+	if !ok {
+		f.T.Fatalf("unexpected call to SetTTL for object %s", gsPath)
+	}
+	expected, ok := expectedMetadata[key]
+	if !ok {
+		f.T.Fatalf("unexpected call to SetTTL for object %s, key %s", gsPath, key)
+	}
+	if expected != value {
+		f.T.Fatalf("mismatch on call SetMetadata for %s, key %s: expected:\n%v\ngot:%v\n", gsPath, key, expected, value)
 	}
 	return nil
 }

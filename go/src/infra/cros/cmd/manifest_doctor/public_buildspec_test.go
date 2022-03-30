@@ -276,6 +276,22 @@ func legacyTest(t *testing.T, externalList []string, externalDownloads map[strin
 			}: externalList,
 		},
 		ExpectedDownloads: expectedDownloads,
+		ExpectedFileLogs: map[gerrit.ExpectedPathParams][]gerrit.Commit{
+			{
+				Host:    chromeInternalHost,
+				Project: "chromeos/manifest-versions",
+				Ref:     "HEAD",
+				Path:    "test/foo.xml",
+			}: {
+				{
+					Committer: gerrit.User{
+						Name:  "Jack Neus",
+						Email: "jackneus@google.com",
+						Time:  "Wed Mar 16 11:17:10 2022",
+					},
+				},
+			},
+		},
 	}
 
 	expectedLists := map[string]map[string][]string{
@@ -290,10 +306,19 @@ func legacyTest(t *testing.T, externalList []string, externalDownloads map[strin
 	if expectedGSWrites != nil {
 		expectedWrites = expectedGSWrites
 	}
+	expectedMetadata := map[string]map[string]string{
+		"gs://chromeos-manifest-versions/test/foo.xml": {
+			"create_time_seconds": "1647429430",
+		},
+		"gs://chromiumos-manifest-versions/test/foo.xml": {
+			"create_time_seconds": "1647429430",
+		},
+	}
 	f := &gs.FakeClient{
-		T:              t,
-		ExpectedLists:  expectedLists,
-		ExpectedWrites: expectedWrites,
+		T:                t,
+		ExpectedLists:    expectedLists,
+		ExpectedWrites:   expectedWrites,
+		ExpectedMetadata: expectedMetadata,
 	}
 	return f, gc
 }

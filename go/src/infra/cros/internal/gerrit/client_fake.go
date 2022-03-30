@@ -35,6 +35,7 @@ type MockClient struct {
 	ExpectedBranches map[string]map[string]map[string]string
 	ExpectedProjects map[string][]string
 	ExpectedLists    map[ExpectedPathParams][]string
+	ExpectedFileLogs map[ExpectedPathParams][]Commit
 }
 
 func contains(arr []string, str string) bool {
@@ -140,4 +141,19 @@ func (c *MockClient) ListFiles(ctx context.Context, host, project, ref, path str
 		c.T.Fatalf("unexpected ListFiles for %+v", expectedList)
 	}
 	return files, nil
+}
+
+// GetFileLog returns a list of commits that touch the specified file.
+func (c *MockClient) GetFileLog(ctx context.Context, host, project, ref, filepath string) ([]Commit, error) {
+	expectedLog := ExpectedPathParams{
+		Host:    host,
+		Project: project,
+		Ref:     ref,
+		Path:    filepath,
+	}
+	commits, ok := c.ExpectedFileLogs[expectedLog]
+	if !ok {
+		c.T.Fatalf("unexpected GetFileLog for %+v", expectedLog)
+	}
+	return commits, nil
 }

@@ -10,12 +10,15 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	gerrs "errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"infra/cros/internal/shared"
@@ -26,6 +29,26 @@ import (
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 )
 
+type User struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Time  string `json:"time"`
+}
+
+type Commit struct {
+	Commit    string   `json:"commit"`
+	Tree      string   `json:"tree"`
+	Parents   []string `json:"parents"`
+	Author    User     `json:"author"`
+	Committer User     `json:"committer"`
+	Message   string   `json:"message"`
+}
+
+type commitLog struct {
+	Commits    []Commit `json:"log"`
+	NextCommit string   `json:"next"`
+}
+
 type Client interface {
 	FetchFilesFromGitiles(ctx context.Context, host, project, ref string, paths []string) (*map[string]string, error)
 	DownloadFileFromGitiles(ctx context.Context, host, project, ref, path string) (string, error)
@@ -33,6 +56,7 @@ type Client interface {
 	Branches(ctx context.Context, host, project string) (map[string]string, error)
 	Projects(ctx context.Context, host string) ([]string, error)
 	ListFiles(ctx context.Context, host, project, ref, path string) ([]string, error)
+	GetFileLog(ctx context.Context, host, project, ref, filepath string) ([]Commit, error)
 }
 
 // Client is a client for interacting with gerrit.
@@ -287,4 +311,31 @@ func (c *ProdClient) ListFiles(ctx context.Context, host, project, ref, path str
 		names[i] = file.GetPath()
 	}
 	return names, err
+}
+
+// GetFileLog returns a list of commits that touch the specified file.
+// Times are in UTC.
+func (c *ProdClient) GetFileLog(ctx context.Context, host, project, ref, filepath string) ([]Commit, error) {
+	url := fmt.Sprintf("%s/+log/%s/%s?format=JSON", path.Join(host, project), ref, filepath)
+	if c.isTestClient {
+		url = "http://" + url
+	} else {
+		url = "https://" + url
+	}
+	res, err := c.authedClient.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	// The REST API sometimes prepends )]}' to the response body.
+	// Trim this.
+	body = []byte(strings.TrimPrefix(string(body), ")]}'"))
+	var log commitLog
+	if err := json.Unmarshal(body, &log); err != nil {
+		return nil, err
+	}
+	return log.Commits, nil
 }

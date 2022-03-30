@@ -7,8 +7,11 @@ import (
 	"context"
 	"encoding/base64"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"infra/cros/internal/assert"
@@ -273,4 +276,71 @@ func TestList(t *testing.T) {
 
 	assert.NilError(t, err)
 	assert.Assert(t, reflect.DeepEqual(got, files))
+}
+
+const logJSON = `)]}'
+{
+  "log": [
+    {
+      "commit": "1234",
+      "tree": "6789",
+      "parents": [
+        "0123"
+      ],
+      "author": {
+        "name": "Jack Neus",
+        "email": "jackneus@google.com",
+        "time": "Wed Mar 16 11:04:48 2022"
+      },
+	  "committer": {
+        "name": "Jack Neus",
+        "email": "jackneus@google.com",
+        "time": "Wed Mar 16 11:17:10 2022"
+      },
+      "message": "commit message\n\nfoo"
+    }
+  ],
+  "next": "1235"
+}`
+
+func TestGetFileLog(t *testing.T) {
+	expectedPath := "/chromiumos/foo/+log/refs/heads/branch/path/to/file"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != expectedPath {
+			t.Errorf("Expected to request '%s', got: %s", expectedPath, r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(logJSON))
+	}))
+	defer server.Close()
+
+	ctx := context.Background()
+	gc := &ProdClient{
+		isTestClient: true,
+		authedClient: &http.Client{},
+	}
+	commits, err := gc.GetFileLog(ctx,
+		strings.TrimPrefix(server.URL, "http://"), "chromiumos/foo",
+		"refs/heads/branch", "path/to/file")
+	assert.NilError(t, err)
+
+	expectedCommits := []Commit{
+		{
+			Commit:  "1234",
+			Tree:    "6789",
+			Parents: []string{"0123"},
+			Author: User{
+				Name:  "Jack Neus",
+				Email: "jackneus@google.com",
+				Time:  "Wed Mar 16 11:04:48 2022",
+			},
+			Committer: User{
+				Name:  "Jack Neus",
+				Email: "jackneus@google.com",
+				Time:  "Wed Mar 16 11:17:10 2022",
+			},
+			Message: "commit message\n\nfoo",
+		},
+	}
+	assert.Assert(t, reflect.DeepEqual(commits, expectedCommits))
 }
