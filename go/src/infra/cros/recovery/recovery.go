@@ -243,6 +243,8 @@ func defaultConfiguration(tn tasknames.TaskName, ds tlw.DUTSetupType) (*config.C
 			return config.CrosRepairConfig(), nil
 		case tlw.DUTSetupTypeLabstation:
 			return config.LabstationRepairConfig(), nil
+		case tlw.DUTSetupTypeAndroid:
+			return config.AndroidRepairConfig(), nil
 		default:
 			return nil, errors.Reason("Setup type: %q is not supported for task: %q!", ds, tn).Err()
 		}
@@ -252,6 +254,8 @@ func defaultConfiguration(tn tasknames.TaskName, ds tlw.DUTSetupType) (*config.C
 			return config.CrosDeployConfig(), nil
 		case tlw.DUTSetupTypeLabstation:
 			return config.LabstationDeployConfig(), nil
+		case tlw.DUTSetupTypeAndroid:
+			return config.AndroidDeployConfig(), nil
 		default:
 			return nil, errors.Reason("Setup type: %q is not supported for task: %q!", ds, tn).Err()
 		}
@@ -444,7 +448,7 @@ func runDUTPlanPerResource(ctx context.Context, resource, planName string, plan 
 // resources and then we will run the same plan for each resource.
 func collectResourcesForPlan(planName string, dut *tlw.Dut) []string {
 	switch planName {
-	case config.PlanCrOS, config.PlanClosing:
+	case config.PlanCrOS, config.PlanAndroid, config.PlanClosing:
 		if dut.Name != "" {
 			return []string{dut.Name}
 		}

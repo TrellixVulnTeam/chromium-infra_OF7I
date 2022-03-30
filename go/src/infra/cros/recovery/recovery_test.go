@@ -97,6 +97,36 @@ var dutPlansCases = []struct {
 		tasknames.Custom,
 		nil,
 	},
+	{
+		"android no task",
+		tlw.DUTSetupTypeAndroid,
+		tasknames.TaskName(""),
+		nil,
+	},
+	{
+		"android recovery",
+		tlw.DUTSetupTypeAndroid,
+		tasknames.Recovery,
+		[]string{"android"},
+	},
+	{
+		"android deploy",
+		tlw.DUTSetupTypeAndroid,
+		tasknames.Deploy,
+		[]string{"android"},
+	},
+	{
+		"android custom",
+		tlw.DUTSetupTypeAndroid,
+		tasknames.Custom,
+		nil,
+	},
+	{
+		"android no task",
+		tlw.DUTSetupTypeAndroid,
+		tasknames.TaskName(""),
+		nil,
+	},
 }
 
 // TestLoadConfiguration tests default configuration used for recovery flow is loading right and parsibale without any issue.

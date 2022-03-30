@@ -138,6 +138,8 @@ const (
 	DUTSetupTypeJetstream DUTSetupType = "JETSTREAM"
 	// Special setup for ChromeOS devices.
 	DUTSetupTypeCros DUTSetupType = "CROS"
+	// Special setup for Android devices.
+	DUTSetupTypeAndroid DUTSetupType = "ANDROID"
 )
 
 // PowerSupplyType describes different power supply types for a DUT.

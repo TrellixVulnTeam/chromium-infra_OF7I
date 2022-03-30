@@ -6,6 +6,7 @@ package config
 
 // List of known plans.
 const (
+	PlanAndroid       = "android"
 	PlanCrOS          = "cros"
 	PlanServo         = "servo"
 	PlanChameleon     = "chameleon"
