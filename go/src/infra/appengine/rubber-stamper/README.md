@@ -160,13 +160,37 @@ value.
 The format of `excluded_paths` is also the same as that for clean revert
 patterns.
 
-Here is an example of a clean cherry-pick pattern. Any cherry-pick that is 
+Here is an example of a clean cherry-pick pattern. Any cherry-pick that is
 cherry-picked more than 3 hours ago or modifies any files ending in `.md`
 will not be approved.
 
     clean_cherry_pick_pattern {
       time_window: "3h"
       excluded_paths: "*.md"
+    }
+
+##### Bypass File Check
+We also provide a way to bypass file check in clean cherry-pick patterns, that
+is, all the cherry-pick rules still apply except "The current revision doesn't
+make any file changes compared with the initial revision".
+
+The cherry-pick needs to meet the following requirements:
+1. The file changes between the initial revision and current revision will only
+be in configured `included_paths`.
+2. The CL should have a configured `hashtag`.
+3. The CL owner has to be one of `allowed_owners`.
+
+Here is an example of clean cherry-pick pattern with a bypassFileCheck rule.
+
+    clean_cherry_pick_pattern {
+      time_window: "3h"
+      excluded_paths: "*.md"
+
+      file_check_bypass_rule {
+        included_paths: "dir/*.md"
+        hashtag: "Example-Hashtag"
+        allowed_owners: "user@example.com"
+      }
     }
 
 ## Found a bug?
