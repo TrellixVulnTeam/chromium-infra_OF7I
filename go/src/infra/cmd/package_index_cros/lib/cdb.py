@@ -96,9 +96,8 @@ class Cdb:
     * Add several clang args.
     """
     if self.package.is_highly_volatile:
-      g_logger.warning(
-          '%s: Is highly volatile package. Not all checks performed',
-          self.package.name)
+      g_logger.debug('%s: Is highly volatile package. Not all checks performed',
+                     self.package.name)
 
     if self.package.additional_include_paths:
       for include_path in self.package.additional_include_paths:
@@ -208,12 +207,12 @@ class Cdb:
 
     if temp_file != actual_file:
       if not os.path.isfile(temp_file) or not os.path.isfile(actual_file):
-        g_logger.error(
+        g_logger.debug(
             '%s: Cannot verify if temp and actual file are the same: %s vs %s',
             self.package.name, temp_file, actual_file)
       elif not filecmp.cmp(temp_file, actual_file):
         if self.package.is_highly_volatile:
-          g_logger.error(
+          g_logger.debug(
               '%s: Temp and actual files differ. Possibly patches: %s vs %s',
               self.package.name, temp_file, actual_file)
         else:
@@ -266,7 +265,8 @@ class CdbGenerator:
                setup: Setup,
                *,
                result_build_dir: str = None,
-               file_conflicts: Dict = {}):
+               file_conflicts: Dict = {},
+               keep_going: bool = False):
     """
     CdbGenerator constructor.
 
@@ -281,6 +281,7 @@ class CdbGenerator:
     self.setup = setup
     self.result_build_dir = result_build_dir
     self.file_conflicts = file_conflicts
+    self.keep_going = keep_going
 
   def _GenerateCdbForPackage(self, package: Package,
                              packages_to_include_args: Dict) -> Cdb:
@@ -306,9 +307,16 @@ class CdbGenerator:
 
     packages_to_include_args = {}
     for package in packages:
-      result_cdb_data.extend(
-          self._GenerateCdbForPackage(package,
-                                      packages_to_include_args).Fix().data)
+      try:
+        cdb_data = self._GenerateCdbForPackage(
+            package, packages_to_include_args).Fix().data
+        result_cdb_data.extend(cdb_data)
+      except (Cdb.CdbException, PackagePathException) as e:
+        if self.keep_going:
+          g_logger.error('%s: Failed to fix compile commands: %s', package.name,
+                         e)
+        else:
+          raise e
 
     return result_cdb_data
 

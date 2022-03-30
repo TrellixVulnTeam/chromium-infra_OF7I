@@ -256,25 +256,24 @@ class PathHandler:
 
       if ignore_generated and path.startswith(package.build_dir):
         # Path inside build dir and ignorable, return as is.
-        g_logger.warning('%s: Failed to fix generated path: %s', package.name,
-                         path)
+        g_logger.debug('%s: Failed to fix generated path: %s', package.name,
+                       path)
         return PathHandler.FixedPath(path, path)
 
       can_ignore = False
       if ignore_highly_volatile and package.is_highly_volatile:
-        g_logger.warning(
-            '%s: Failed to fix path for highly volatile package: %s',
-            package.name, path)
+        g_logger.debug('%s: Failed to fix path for highly volatile package: %s',
+                       package.name, path)
         can_ignore = True
       elif ignorable_dirs:
-        g_logger.warning('%s: Failed to fix path in ignorable dir: %s',
-                         package.name, path)
+        g_logger.debug('%s: Failed to fix path in ignorable dir: %s',
+                       package.name, path)
         can_ignore = True
       elif ignorable_extensions and any(
           path.endswith(ignoreable_ext)
           for ignoreable_ext in ignorable_extensions):
-        g_logger.warning('%s: Failed to fix path with ignorable extension: %s',
-                         package.name, path)
+        g_logger.debug('%s: Failed to fix path with ignorable extension: %s',
+                       package.name, path)
         can_ignore = True
 
       if can_ignore:

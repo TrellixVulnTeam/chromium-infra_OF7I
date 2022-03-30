@@ -48,7 +48,7 @@ class _BuildDirMerger:
       if os.path.exists(dest) and not filecmp.cmp(source, dest):
         dest = os.path.join(os.path.dirname(dest),
                             package.simple_name + '_' + os.path.basename(dest))
-        g_logger.warning(
+        g_logger.debug(
             '%s: Copying conflicting file with package prefix: %s to %s',
             package.name, source, dest)
         source_dest_conflicts[source] = dest
@@ -86,7 +86,7 @@ class BuildDirGenerator:
       shutil.rmtree(result_build_dir)
 
     os.makedirs(result_build_dir)
-    g_logger.info('Build dir created: %s', result_build_dir)
+    g_logger.debug('Build dir created: %s', result_build_dir)
 
   def Generate(self, packages: List[Package], result_build_dir: str) -> Dict:
     """
@@ -105,7 +105,7 @@ class BuildDirGenerator:
     source_dest_conflicts = {}
     for package in packages:
       source_dest_conflicts.update(merger.Append(package))
-      g_logger.info('Added %s to result build dir: %s', package.name,
-                    package.build_dir)
+      g_logger.debug('Added %s to result build dir: %s', package.name,
+                     package.build_dir)
 
     return source_dest_conflicts

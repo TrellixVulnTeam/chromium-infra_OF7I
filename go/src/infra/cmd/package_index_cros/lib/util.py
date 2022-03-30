@@ -20,7 +20,7 @@ class Setup:
     * manifest: manifest handler
   """
 
-  def __init__(self, board: str):
+  def __init__(self, board: str, *, skip_packages: List[str] = None):
     self.board = board
 
     checkout_info = path_util.DetermineCheckout()
@@ -44,7 +44,11 @@ class Setup:
         os.path.join(self.chroot_dir, 'usr', 'lib64', 'shill'),
         os.path.join(self.chroot_dir, 'usr', 'libexec', 'ipsec'),
         os.path.join(self.chroot_dir, 'usr', 'libexec', 'l2tpipsec_vpn'),
+        os.path.join(self.chroot_dir, 'usr', 'share', 'cros-camera'),
+        os.path.join(self.chroot_dir, 'build', 'share'),
     ]
+
+    self.skip_packages = skip_packages
 
   @property
   def manifest(self) -> git.ManifestCheckout:

@@ -55,8 +55,8 @@ class PackageSleuth:
     if self.cache and self.cache.HasCachedPackages():
       g_logger.debug('Restoring packages from cache')
       cached_packages = self.cache.Restore()
-      g_logger.info('Number of packages restored from cache: %s',
-                    len(cached_packages))
+      g_logger.debug('Number of packages restored from cache: %s',
+                     len(cached_packages))
     else:
       cached_packages = []
 

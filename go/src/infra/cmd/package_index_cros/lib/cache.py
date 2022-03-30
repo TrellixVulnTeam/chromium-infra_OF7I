@@ -37,8 +37,8 @@ class PackageCache:
         try:
           packages.append(Package.Deserialize(cache[p_name], self.setup))
         except Package.UnsupportedPackageException as e:
-          g_logger.warning('%s: Skipping cached unsupported package: %s',
-                           e.package_name, e.reason)
+          g_logger.debug('%s: Skipping cached unsupported package: %s',
+                         e.package_name, e.reason)
       return packages
 
 

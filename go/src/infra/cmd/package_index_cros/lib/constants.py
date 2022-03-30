@@ -48,25 +48,43 @@ TEMPORARY_UNSUPPORTED_PACKAGES = {
     # Reason: build dir does not contain out/Debug
     # Is built with Makefile but lists .gn in CROS_WORKON_SUBTREE.
     'chromeos-base/avtest_label_detect',
-    # Target //croslog/log_rotator:_log_rotator-install_config has metadata field
-    # which makes merge complicated.
+    # Target //croslog/log_rotator:_log_rotator-install_config has metadata
+    # field which makes merge complicated.
     'chromeos-base/bootid-logger',
+
+    # Has cryptohome-flatbuffers-binding gn target which has sources field which
+    # is almost the same as the target in chromeos-base/cryptohome except that
+    # it uses paths generated for this package.
+    'chromeos-base/cryptohome-dev-utils',
 
     # Reason: sys-cluster/fcp dependency fails build.
     # Perfectly fine package otherwise.
     'chromeos-base/federated-service',
 
+    # Target //u2fd:webauthntool-install_config has metadata field
+    # which makes merge complicated.
+    'chromeos-base/g2f_tools',
+
     # Has lorgnette-proxies gn target which has args field which is almost the
-    # same as the smae target in chromeos-base/lorgnette except for one path.
+    # same as the target in chromeos-base/lorgnette except for one path.
     'chromeos-base/lorgnette_cli',
 
     # Reason: Include path ./third_party/libuweave/ does not exist.
     # https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/weave/libweave/BUILD.gn;l=29
     'chromeos-base/libweave',
 
+    # Has libmanatee-client-headers gn target which has args field which is
+    # almost the same as the target in chromeos-base/vm_host_tools except for
+    # one path and one additional arg.
+    'chromeos-base/manatee-client',
+
     # Reason: REQUIRED_USE="minios" fails build.
     # Perfectly fine package otherwise.
     'chromeos-base/minios',
+
+    # Target //ml:_ml_cmdline-install_config has metadata field which makes
+    # merge complicated.
+    'chromeos-base/ml-cmdline',
 
     # Reason: /etc/init/ocr_service.conf: missing 'oom score' line
     # Perfectly fine package otherwise.
@@ -89,6 +107,11 @@ TEMPORARY_UNSUPPORTED_PACKAGES = {
     # Reason: REQUIRED_USE="kvm_guest" fails build.
     # Perfectly fine package otherwise.
     'chromeos-base/vm_guest_tools',
+
+    # Reason: Fails build because it cannot find src/aosp/external/perfetto.
+    # It's a go package that pretends to be an actual package. Should be
+    # properly ignored.
+    'dev-go/perfetto-protos',
 
     # Reason: Requires media-libs/intel-ipu6-camera-bins which is missing.
     # Perfectly fine package otherwise.

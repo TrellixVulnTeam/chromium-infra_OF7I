@@ -92,7 +92,7 @@ class GnTargets:
 
     if not filecmp.cmp(temp_script_file, actual_script_file):
       if self.package.is_highly_volatile:
-        g_logger.error(
+        g_logger.debug(
             '%s: Temp and actual scripts differ. Possibly patches: %s vs %s',
             self.package.name, temp_script_file, actual_script_file)
       else:
@@ -176,6 +176,9 @@ class GnTargets:
 class GnTargetsMerger:
   """Responsible for merging targets."""
 
+  class GnTargetsMergeException(Exception):
+    """Exception to indicate failure while merging gn targets."""
+
   def __init__(self):
     self.data = {}
     self.fields_to_resolve = {
@@ -225,7 +228,7 @@ class GnTargetsMerger:
                        new_targets.package.name, target, field)
 
         if not field in self.fields_to_resolve:
-          raise NotImplementedError(
+          raise GnTargetsMerger.GnTargetsMergeException(
               f"{new_targets.package.name}: Unknown '{field}' in '{target}'")
 
         self.data[target][field] = self.fields_to_resolve[field](field_data,
@@ -243,7 +246,8 @@ class GnTargetsGenerator:
                setup: Setup,
                *,
                result_build_dir: str = None,
-               file_conflicts: Dict = {}):
+               file_conflicts: Dict = {},
+               keep_going: bool = False):
     """
     GnTargetsGenerator constructor.
 
@@ -258,6 +262,7 @@ class GnTargetsGenerator:
     self.setup = setup
     self.result_build_dir = result_build_dir
     self.file_conflicts = file_conflicts
+    self.keep_going = keep_going
 
   def _FindRootDir(self, package: Package) -> str:
     """Returns a dir from which it's possible to generate gn targets."""
@@ -297,9 +302,17 @@ class GnTargetsGenerator:
     result_targets = GnTargetsMerger()
 
     for package in packages:
-      new_targets = self._GenerateTargetsForPackage(package).Fix()
-      result_targets.Append(new_targets)
-      g_logger.debug('%s: targets merged', package.name)
+      try:
+        new_targets = self._GenerateTargetsForPackage(package).Fix()
+        result_targets.Append(new_targets)
+        g_logger.debug('%s: targets merged', package.name)
+      except (GnTargets.TargetPathException,
+              GnTargetsMerger.GnTargetsMergeException,
+              PackagePathException) as e:
+        if self.keep_going:
+          g_logger.error('%s: Failed to fix gn targets: %s', package.name, e)
+        else:
+          raise e
 
     return result_targets.data
 

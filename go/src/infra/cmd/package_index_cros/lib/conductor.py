@@ -59,9 +59,11 @@ class Conductor:
         self.cros_sdk.BuildPackages(package_names)
 
   def DoMagic(self,
+              *,
               cdb_output_file: str = None,
               targets_output_file: str = None,
-              build_output_dir: str = None):
+              build_output_dir: str = None,
+              keep_going: bool = False):
     """
     Calls generators one by one. |Prepare| should be called prior this method.
     """
@@ -75,17 +77,19 @@ class Conductor:
       g_logger.info('Generated build dir: %s', build_output_dir)
 
     if cdb_output_file:
-      CdbGenerator(self.setup,
-                   result_build_dir=build_output_dir,
-                   file_conflicts=build_dir_conflicts).Generate(
-                       self.packages, cdb_output_file)
+      CdbGenerator(
+          self.setup,
+          result_build_dir=build_output_dir,
+          file_conflicts=build_dir_conflicts,
+          keep_going=keep_going).Generate(self.packages, cdb_output_file)
       g_logger.info('Generated cdb file: %s', cdb_output_file)
 
     if targets_output_file:
-      GnTargetsGenerator(self.setup,
-                         result_build_dir=build_output_dir,
-                         file_conflicts=build_dir_conflicts).Generate(
-                             self.packages, targets_output_file)
+      GnTargetsGenerator(
+          self.setup,
+          result_build_dir=build_output_dir,
+          file_conflicts=build_dir_conflicts,
+          keep_going=keep_going).Generate(self.packages, targets_output_file)
       g_logger.info('Generated targets file: %s', targets_output_file)
 
     g_logger.info('Done')

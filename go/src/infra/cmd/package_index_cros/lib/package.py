@@ -139,6 +139,9 @@ def IsPackageSupported(ebuild: portage_util.EBuild,
   if ebuild.package in constants.TEMPORARY_UNSUPPORTED_PACKAGES:
     return PackageSupport.TEMP_NO_SUPPORT
 
+  if ebuild.package in setup.skip_packages:
+    return PackageSupport.TEMP_NO_SUPPORT
+
   return PackageSupport.SUPPORTED
 
 
@@ -245,7 +248,7 @@ class Package:
     Raises:
       * DirsException if build, source or temp source dir(s) is not found.
     """
-    g_logger.info('%s: Initializing', self.name)
+    g_logger.debug('%s: Initializing', self.name)
 
     self.temp_dir = self._GetTempDir()
     g_logger.debug('%s: Temp dir: %s', self.name, self.temp_dir)
