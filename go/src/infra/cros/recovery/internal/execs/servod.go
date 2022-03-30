@@ -40,7 +40,6 @@ func (s *iServod) Call(ctx context.Context, method string, args ...interface{}) 
 		Resource: s.dut.Name,
 		Method:   method,
 		Args:     packToXMLRPCValues(args...),
-		Options:  &tlw.ServodOptions{RecoveryMode: true},
 		Timeout:  s.timeout,
 	})
 	if res.Fault {

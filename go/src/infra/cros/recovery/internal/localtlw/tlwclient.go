@@ -261,14 +261,14 @@ func (c *tlwClient) InitServod(ctx context.Context, req *tlw.InitServodRequest) 
 		return errors.Reason("init servod %q: servo is not found", req.Resource).Err()
 	}
 	if isServodContainer(dut) {
-		err := c.startServodContainer(ctx, dut)
+		err := c.startServodContainer(ctx, dut, req.Options)
 		return errors.Annotate(err, "init servod %q", req.Resource).Err()
 	}
 	s, err := c.servodPool.Get(
 		localproxy.BuildAddr(dut.ServoHost.Name),
 		int32(dut.ServoHost.ServodPort),
 		func() ([]string, error) {
-			return dutinfo.GenerateServodParams(dut, req.Options)
+			return servod.GenerateParams(req.Options), nil
 		})
 	if err != nil {
 		return errors.Annotate(err, "init servod %q", req.Resource).Err()
@@ -299,7 +299,7 @@ func createServodContainerArgs(detached bool, envVar, cmd []string) *docker.Cont
 }
 
 // startServodContainer start servod container if required.
-func (c *tlwClient) startServodContainer(ctx context.Context, dut *tlw.Dut) error {
+func (c *tlwClient) startServodContainer(ctx context.Context, dut *tlw.Dut, o *tlw.ServodOptions) error {
 	containerName := servoContainerName(dut)
 	d, err := c.dockerClient(ctx)
 	if err != nil {
@@ -311,34 +311,7 @@ func (c *tlwClient) startServodContainer(ctx context.Context, dut *tlw.Dut) erro
 		log.Debugf(ctx, "Servod container %s is already up!", containerName)
 		return nil
 	}
-	// TODO: Receive timeout from request.
-	sp := fmt.Sprintf("%d", dut.ServoHost.ServodPort)
-	// TODO(otabek): move servod param preparation to separate method.
-	envVar := []string{
-		fmt.Sprintf("PORT=%s", sp),
-		fmt.Sprintf("BOARD=%s", dut.Board),
-		fmt.Sprintf("MODEL=%s", dut.Model),
-		"REC_MODE=1",
-	}
-	if sn := dut.ServoHost.Servo.SerialNumber; sn != "" {
-		envVar = append(envVar, fmt.Sprintf("SERIAL=%s", sn))
-	}
-	if vs, ok := dut.ExtraAttributes[tlw.ExtraAttributeServoSetup]; ok {
-		for _, v := range vs {
-			if v == tlw.ExtraAttributeServoSetupDual {
-				envVar = append(envVar, "DUAL_V4=1")
-				break
-			}
-		}
-	}
-	if pools, ok := dut.ExtraAttributes[tlw.ExtraAttributePools]; ok {
-		for _, p := range pools {
-			if strings.Contains(p, "faft-cr50") {
-				envVar = append(envVar, "CONFIG=cr50.xml")
-				break
-			}
-		}
-	}
+	envVar := servod.GenerateParams(o)
 	containerArgs := createServodContainerArgs(true, envVar, []string{"bash", "/start_servod.sh"})
 	res, err := d.Start(ctx, containerName, containerArgs, time.Hour)
 	if err != nil {
@@ -352,7 +325,7 @@ func (c *tlwClient) startServodContainer(ctx context.Context, dut *tlw.Dut) erro
 	// Waiting to finish servod initialization.
 	eReq := &docker.ExecRequest{
 		Timeout: 2 * time.Minute,
-		Cmd:     []string{"servodtool", "instance", "wait-for-active", "-p", sp},
+		Cmd:     []string{"servodtool", "instance", "wait-for-active", "-p", fmt.Sprintf("%d", o.ServodPort)},
 	}
 	if _, err := d.Exec(ctx, containerName, eReq); err != nil {
 		return errors.Annotate(err, "start servod container").Err()
@@ -388,11 +361,15 @@ func (c *tlwClient) StopServod(ctx context.Context, resourceName string) error {
 			return errors.Annotate(err, "stop servod %q", resourceName).Err()
 		}
 	}
+	// TODO: Move options to stop request.
+	o := &tlw.ServodOptions{
+		ServodPort: int32(dut.ServoHost.ServodPort),
+	}
 	s, err := c.servodPool.Get(
 		localproxy.BuildAddr(dut.ServoHost.Name),
-		int32(dut.ServoHost.ServodPort),
+		o.ServodPort,
 		func() ([]string, error) {
-			return dutinfo.GenerateServodParams(dut, nil)
+			return servod.GenerateParams(o), nil
 		})
 	if err != nil {
 		return errors.Annotate(err, "stop servod %q", resourceName).Err()
@@ -447,10 +424,7 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 		// For labstation using port forward by ssh.
 		s, err := c.servodPool.Get(
 			localproxy.BuildAddr(dut.ServoHost.Name),
-			int32(dut.ServoHost.ServodPort),
-			func() ([]string, error) {
-				return dutinfo.GenerateServodParams(dut, req.Options)
-			})
+			int32(dut.ServoHost.ServodPort), nil)
 		if err != nil {
 			return fail(err)
 		}

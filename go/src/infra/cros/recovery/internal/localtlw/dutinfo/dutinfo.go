@@ -53,55 +53,6 @@ func CreateUpdateDutRequest(dutID string, dut *tlw.Dut) (req *ufsAPI.UpdateDutSt
 	}, nil
 }
 
-// GenerateServodParams generates servod command based on device info.
-// Expected output parameters for servod:
-//  "BOARD=${VALUE}" - name of DUT board.
-//  "MODEL=${VALUE}" - name of DUT model.
-//  "PORT=${VALUE}" - port specified to run servod on servo-host.
-//  "SERIAL=${VALUE}" - serial number of root servo.
-//  "CONFIG=cr50.xml" - special parameter, for extra ability of CR50.
-//  "REC_MODE=1" - start servod in recovery-mode, if root device found then servod will start event not all components detected.
-func GenerateServodParams(dut *tlw.Dut, o *tlw.ServodOptions) (cmd []string, err error) {
-	if dut == nil || dut.Name == "" {
-		return nil, errors.Reason("get servod params: device is not provided").Err()
-	}
-	if dut.ServoHost == nil || dut.ServoHost.Servo == nil {
-		return nil, errors.Reason("get servod params for %q: servo is not specified by device", dut.Name).Err()
-	}
-	var parts []string
-	if dut.Board != "" {
-		parts = append(parts, fmt.Sprintf("BOARD=%s", dut.Board))
-		if dut.Model != "" {
-			parts = append(parts, fmt.Sprintf("MODEL=%s", dut.Model))
-		}
-	}
-	parts = append(parts, fmt.Sprintf("PORT=%d", dut.ServoHost.ServodPort))
-
-	if dut.ServoHost.Servo.SerialNumber != "" {
-		parts = append(parts, fmt.Sprintf("SERIAL=%s", dut.ServoHost.Servo.SerialNumber))
-	}
-	if vs, ok := dut.ExtraAttributes[tlw.ExtraAttributeServoSetup]; ok {
-		for _, v := range vs {
-			if v == tlw.ExtraAttributeServoSetupDual {
-				parts = append(parts, "DUAL_V4=1")
-				break
-			}
-		}
-	}
-	if pools, ok := dut.ExtraAttributes[tlw.ExtraAttributePools]; ok {
-		for _, p := range pools {
-			if strings.Contains(p, "faft-cr50") {
-				parts = append(parts, "CONFIG=cr50.xml")
-				break
-			}
-		}
-	}
-	if o != nil && o.RecoveryMode {
-		parts = append(parts, "REC_MODE=1")
-	}
-	return parts, nil
-}
-
 func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 	lc := data.GetLabConfig()
 	dut := lc.GetChromeosMachineLse().GetDeviceLse().GetDut()

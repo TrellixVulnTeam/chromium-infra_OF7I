@@ -118,7 +118,6 @@ type CallServodRequest struct {
 	Resource string
 	Method   ServodMethod
 	Args     []*xmlrpc.Value
-	Options  *ServodOptions
 	Timeout  time.Duration
 }
 
