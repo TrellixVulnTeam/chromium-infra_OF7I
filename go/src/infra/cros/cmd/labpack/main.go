@@ -53,14 +53,16 @@ const DescribeMyDirectoryAndEnvironment = true
 // DescriptionCommand describes the environment where labpack was run. It must write all of its output to stdout.
 const DescriptionCommand = `( echo BEGIN; echo PWD; pwd ; echo FIND; find . ; echo ENV; env; echo END )`
 
+type ResponseUpdater func(*steps.LabpackResponse)
+
 func main() {
 	log.SetPrefix(fmt.Sprintf("%s: ", filepath.Base(os.Args[0])))
 	log.Printf("Running version: %s", site.VersionNumber)
 	log.Printf("Running in buildbucket mode")
 
 	input := &steps.LabpackInput{}
-	var writeOutputProps func(*steps.LabpackResponse)
-	var mergeOutputProps func(*steps.LabpackResponse)
+	var writeOutputProps ResponseUpdater
+	var mergeOutputProps ResponseUpdater
 	if LuciexeProtocolPassthru {
 		log.Printf("Bypassing luciexe.")
 		log.Fatalf("Bypassing luciexe not yet supported.")
@@ -83,79 +85,114 @@ func main() {
 				// for the process as a whole. This will also indirectly influence lg.
 				log.SetOutput(os.Stderr)
 
-				res := &steps.LabpackResponse{Success: true}
-				err := internalRun(ctx, input, state, lg)
-				if err != nil {
-					res.Success = false
-					res.FailReason = err.Error()
-					lg.Debugf("Finished with err: %s", err)
-				}
-				writeOutputProps(res)
-
-				// Construct the client that we will need to push the logs first.
-				// Eventually, we will make this error fatal. However, for right now, we will
-				// just log whether we succeeded or failed to build the client.
-				authenticator := luciauth.NewAuthenticator(ctx, luciauth.SilentLogin, luciauth.Options{})
-				if authenticator != nil {
-					lg.Infof("NewAuthenticator(...): successfully authed!")
-				} else {
-					lg.Errorf("NewAuthenticator(...): did not successfully auth!")
-				}
-				rt, err := authenticator.Transport()
-				if err == nil {
-					lg.Infof("authenticator.Transport(): successfully authed!")
-				} else {
-					lg.Errorf("authenticator.Transport(...): error: %s", err)
-				}
-				client, err := lucigs.NewProdClient(ctx, rt)
-				if err == nil {
-					lg.Infof("Successfully created client")
-				} else {
-					lg.Errorf("Failed to create client: %s", err)
-				}
-
-				// Actually persist the logs
-				swarmingTaskID := state.Infra().GetSwarming().GetTaskId()
-				if swarmingTaskID == "" {
-					// Failed to get the swarming task, since this is the last thing.
-					lg.Errorf("Swarming task is empty!")
-					return err
-				} else {
-					// upload.Upload can potentially run for a long time. Set a timeout of 30s.
-					//
-					// upload.Upload does respond to cancellation (which callFuncWithTimeout uses internally), but
-					// the correct of this code does not and should not depend on this fact.
-					//
-					// callFuncWithTimeout synchronously calls a function with a timeout and then unconditionally hands control
-					// back to its caller. The goroutine that's created in the background will not by itself keep the process alive.
-					status, err := callFuncWithTimeout(ctx, 30*time.Second, func(ctx context.Context) error {
-						return upload.Upload(ctx, client, &upload.Params{
-							// TODO(gregorynisbet): Change this to the log root.
-							SourceDir: ".",
-							// TODO(gregorynisbet): Allow this parameter to be overridden from outside.
-							GSURL:             fmt.Sprintf("gs://chromeos-autotest-results/swarming-%s", swarmingTaskID),
-							MaxConcurrentJobs: 10,
-						})
-					})
-					lg.Infof("Upload log subtask status: %s", status)
-					if err != nil {
-						lg.Errorf("Upload task error: %s", err)
-					}
-				}
-
-				// if err is nil then will marked as SUCCESS
-				return err
-
+				err := mainRunInternal(ctx, input, state, lg, writeOutputProps)
+				return errors.Annotate(err, "main").Err()
 			},
 		)
 	}
-	log.Printf("Exited successfully")
+	log.Printf("Labpack done!")
+}
+
+// mainRun runs function for BB and provide result.
+func mainRunInternal(ctx context.Context, input *steps.LabpackInput, state *build.State, lg logger.Logger, writeOutputProps ResponseUpdater) error {
+	// Result errors which specify the result of main run.
+	var resultErrors []error
+	// Run recovery lib and get response.
+	// Set result as fail by default in case it fail to finish by some reason.
+	res := &steps.LabpackResponse{
+		Success:    false,
+		FailReason: "Fail by unknown reason!",
+	}
+	defer func() {
+		// Write result as last step.
+		writeOutputProps(res)
+	}()
+	if err := internalRun(ctx, input, state, lg); err != nil {
+		res.Success = false
+		res.FailReason = err.Error()
+		resultErrors = append(resultErrors, err)
+	}
+	if err := uploadLogs(ctx, state, lg); err != nil {
+		res.Success = false
+		if len(resultErrors) == 0 {
+			// We should not override runerror reason as it more important.
+			// If upload logs error is only exits then set it as reason.
+			res.FailReason = err.Error()
+		}
+		resultErrors = append(resultErrors, err)
+	}
+	// if err is nil then will marked as SUCCESS
+	if len(resultErrors) == 0 {
+		// Reset reason and state as no errors detected.
+		res.Success = true
+		res.FailReason = ""
+		return nil
+	}
+	return errors.Annotate(errors.MultiError(resultErrors), "run recovery").Err()
+}
+
+// Upload logs to google cloud.
+// The function has to fail only if that is critical fro the process.
+// TODO: Need collect metrics of success collected logs per run to Karte.
+func uploadLogs(ctx context.Context, state *build.State, lg logger.Logger) (rErr error) {
+	step, ctx := build.StartStep(ctx, "Upload logs")
+	defer func() { step.End(rErr) }()
+	// Construct the client that we will need to push the logs first.
+	// Eventually, we will make this error fatal. However, for right now, we will
+	// just log whether we succeeded or failed to build the client.
+	authenticator := luciauth.NewAuthenticator(ctx, luciauth.SilentLogin, luciauth.Options{})
+	if authenticator != nil {
+		lg.Infof("NewAuthenticator(...): successfully authed!")
+	} else {
+		lg.Errorf("NewAuthenticator(...): did not successfully auth!")
+	}
+	rt, err := authenticator.Transport()
+	if err == nil {
+		lg.Infof("authenticator.Transport(): successfully authed!")
+	} else {
+		lg.Errorf("authenticator.Transport(...): error: %s", err)
+	}
+	client, err := lucigs.NewProdClient(ctx, rt)
+	if err == nil {
+		lg.Infof("Successfully created client")
+	} else {
+		lg.Errorf("Failed to create client: %s", err)
+	}
+
+	// Actually persist the logs
+	swarmingTaskID := state.Infra().GetSwarming().GetTaskId()
+	if swarmingTaskID == "" {
+		lg.Errorf("Swarming task is empty! Skipping upload logs")
+	} else {
+		// upload.Upload can potentially run for a long time. Set a timeout of 30s.
+		//
+		// upload.Upload does respond to cancellation (which callFuncWithTimeout uses internally), but
+		// the correct of this code does not and should not depend on this fact.
+		//
+		// callFuncWithTimeout synchronously calls a function with a timeout and then unconditionally hands control
+		// back to its caller. The goroutine that's created in the background will not by itself keep the process alive.
+		status, err := callFuncWithTimeout(ctx, 30*time.Second, func(ctx context.Context) error {
+			return upload.Upload(ctx, client, &upload.Params{
+				// TODO(gregorynisbet): Change this to the log root.
+				SourceDir: ".",
+				// TODO(gregorynisbet): Allow this parameter to be overridden from outside.
+				GSURL:             fmt.Sprintf("gs://chromeos-autotest-results/swarming-%s", swarmingTaskID),
+				MaxConcurrentJobs: 10,
+			})
+		})
+		lg.Infof("Upload log subtask status: %s", status)
+		if err != nil {
+			// TODO: Register error to Karte.
+			lg.Errorf("Upload task error: %s", err)
+		}
+	}
+	return nil
 }
 
 // internalRun main entry point to execution received request.
 func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State, lg logger.Logger) (err error) {
-	// Catching the panic here as luciexe just set a step as fail and but not exit execution.
 	defer func() {
+		// Catching the panic here as luciexe just set a step as fail and but not exit execution.
 		if r := recover(); r != nil {
 			lg.Debugf("Received panic!")
 			err = errors.Reason("panic: %s", r).Err()
@@ -172,6 +209,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	}
 	defer access.Close(ctx)
 
+	// TODO: Need to use custom plan as default.
 	task := tasknames.Recovery
 	if t, ok := supportedTasks[in.TaskName]; ok {
 		task = t
@@ -215,8 +253,10 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	}
 	lg.Debugf("Labpack: started recovery engine.")
 	if err := recovery.Run(ctx, runArgs); err != nil {
+		lg.Debugf("Labpack: finished recovery run with error: %v", err)
 		return errors.Annotate(err, "internal run").Err()
 	}
+	lg.Debugf("Labpack: finished recovery successful")
 	return nil
 }
 
