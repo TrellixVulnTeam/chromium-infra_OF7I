@@ -323,15 +323,15 @@ func (c *tlwClient) startServodContainer(ctx context.Context, dut *tlw.Dut) erro
 	if sn := dut.ServoHost.Servo.SerialNumber; sn != "" {
 		envVar = append(envVar, fmt.Sprintf("SERIAL=%s", sn))
 	}
-	if vs, ok := dut.ExtraAttributes[dutinfo.ExtraAttributesServoSetup]; ok {
+	if vs, ok := dut.ExtraAttributes[tlw.ExtraAttributeServoSetup]; ok {
 		for _, v := range vs {
-			if v == dutinfo.ExtraAttributesServoSetupDual {
+			if v == tlw.ExtraAttributeServoSetupDual {
 				envVar = append(envVar, "DUAL_V4=1")
 				break
 			}
 		}
 	}
-	if pools, ok := dut.ExtraAttributes[dutinfo.ExtraAttributesPools]; ok {
+	if pools, ok := dut.ExtraAttributes[tlw.ExtraAttributePools]; ok {
 		for _, p := range pools {
 			if strings.Contains(p, "faft-cr50") {
 				envVar = append(envVar, "CONFIG=cr50.xml")

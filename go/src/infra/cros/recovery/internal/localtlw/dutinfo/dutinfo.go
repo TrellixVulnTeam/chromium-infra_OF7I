@@ -53,13 +53,6 @@ func CreateUpdateDutRequest(dutID string, dut *tlw.Dut) (req *ufsAPI.UpdateDutSt
 	}, nil
 }
 
-const (
-	// Extra attributes for DUT to provide custom info.
-	ExtraAttributesPools          = "pools"
-	ExtraAttributesServoSetup     = "servo_setup"
-	ExtraAttributesServoSetupDual = "servo_setup_dual"
-)
-
 // GenerateServodParams generates servod command based on device info.
 // Expected output parameters for servod:
 //  "BOARD=${VALUE}" - name of DUT board.
@@ -87,15 +80,15 @@ func GenerateServodParams(dut *tlw.Dut, o *tlw.ServodOptions) (cmd []string, err
 	if dut.ServoHost.Servo.SerialNumber != "" {
 		parts = append(parts, fmt.Sprintf("SERIAL=%s", dut.ServoHost.Servo.SerialNumber))
 	}
-	if vs, ok := dut.ExtraAttributes[ExtraAttributesServoSetup]; ok {
+	if vs, ok := dut.ExtraAttributes[tlw.ExtraAttributeServoSetup]; ok {
 		for _, v := range vs {
-			if v == ExtraAttributesServoSetupDual {
+			if v == tlw.ExtraAttributeServoSetupDual {
 				parts = append(parts, "DUAL_V4=1")
 				break
 			}
 		}
 	}
-	if pools, ok := dut.ExtraAttributes[ExtraAttributesPools]; ok {
+	if pools, ok := dut.ExtraAttributes[tlw.ExtraAttributePools]; ok {
 		for _, p := range pools {
 			if strings.Contains(p, "faft-cr50") {
 				parts = append(parts, "CONFIG=cr50.xml")
@@ -164,7 +157,7 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 		},
 		DeviceSku: machine.GetChromeosMachine().GetSku(),
 		ExtraAttributes: map[string][]string{
-			ExtraAttributesPools: dut.GetPools(),
+			tlw.ExtraAttributePools: dut.GetPools(),
 		},
 		ProvisionedInfo: &tlw.DUTProvisionedInfo{},
 	}
@@ -173,7 +166,7 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 		d.Audio.StaticCable = audio.AudioCable
 	}
 	if p.GetServo().GetServoSetup() == ufslab.ServoSetupType_SERVO_SETUP_DUAL_V4 {
-		d.ExtraAttributes[ExtraAttributesServoSetup] = []string{ExtraAttributesServoSetupDual}
+		d.ExtraAttributes[tlw.ExtraAttributeServoSetup] = []string{tlw.ExtraAttributeServoSetupDual}
 	}
 	return d, nil
 }
@@ -252,7 +245,7 @@ func adaptUfsLabstationToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error
 		Cr50KeyEnv:      convertCr50KeyEnv(ds.GetCr50KeyEnv()),
 		DeviceSku:       machine.GetChromeosMachine().GetSku(),
 		ExtraAttributes: map[string][]string{
-			"pool": l.GetPools(),
+			tlw.ExtraAttributePools: l.GetPools(),
 		},
 		ProvisionedInfo: &tlw.DUTProvisionedInfo{},
 	}

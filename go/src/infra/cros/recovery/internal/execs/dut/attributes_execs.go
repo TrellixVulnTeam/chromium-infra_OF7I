@@ -56,7 +56,7 @@ func isInPoolExec(ctx context.Context, info *execs.ExecInfo) error {
 // getDUTPoolMap extract map of pools listed under DUT.
 func getDUTPoolMap(ctx context.Context, d *tlw.Dut) map[string]bool {
 	poolMap := make(map[string]bool)
-	pools := d.ExtraAttributes["pool"]
+	pools := d.ExtraAttributes[tlw.ExtraAttributePools]
 	if len(pools) == 0 {
 		log.Debugf(ctx, "device does not have any pools.")
 		return poolMap

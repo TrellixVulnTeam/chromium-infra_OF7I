@@ -12,6 +12,7 @@ import (
 
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
+	"infra/cros/recovery/tlw"
 )
 
 // servoVerifyV3Exec verifies whether the servo attached to the servo
@@ -73,9 +74,13 @@ func servoVerifyServoMicroExec(ctx context.Context, info *execs.ExecInfo) error 
 // been setup in dual mode.
 func servoIsDualSetupConfiguredExec(ctx context.Context, info *execs.ExecInfo) error {
 	if info.RunArgs.DUT != nil && info.RunArgs.DUT.ExtraAttributes != nil {
-		if _, ok := info.RunArgs.DUT.ExtraAttributes["servo_setup_dual"]; ok {
-			log.Debugf(ctx, "Servo Is Dual Setup Configured: servo device is configured to be in dual-setup mode.")
-			return nil
+		if attrs, ok := info.RunArgs.DUT.ExtraAttributes[tlw.ExtraAttributeServoSetup]; ok {
+			for _, a := range attrs {
+				if a == tlw.ExtraAttributeServoSetupDual {
+					log.Debugf(ctx, "Servo Is Dual Setup Configured: servo device is configured to be in dual-setup mode.")
+					return nil
+				}
+			}
 		}
 	}
 	return errors.Reason("servo is dual setup configured: servo device is not configured to be in dual-setup mode").Err()

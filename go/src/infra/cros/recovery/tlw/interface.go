@@ -172,6 +172,13 @@ const (
 	Cr50KeyEnvDev         Cr50KeyEnv = "CR50_KEYENV_DEV"
 )
 
+const (
+	// Extra attributes for DUT to provide custom info.
+	ExtraAttributePools          = "POOLS"
+	ExtraAttributeServoSetup     = "SERVO_SETUP"
+	ExtraAttributeServoSetupDual = "SERVO_SETUP_DUAL"
+)
+
 // Dut holds info about setup used as testbed.
 type Dut struct {
 	// Unique identifier in inventory.
