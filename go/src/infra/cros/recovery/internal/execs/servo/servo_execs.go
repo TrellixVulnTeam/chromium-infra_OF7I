@@ -82,10 +82,45 @@ const (
 	boolValueExtraArgToken = "expected_bool_value"
 )
 
+// servodInitActionExec init servod options and start servod on servo-host.
 func servodInitActionExec(ctx context.Context, info *execs.ExecInfo) error {
+	d := info.RunArgs.DUT
+	if d == nil || d.Name == "" {
+		return errors.Reason("init servod: DUT is not specified").Err()
+	}
+	sh := d.ServoHost
+	if sh == nil || sh.Servo == nil {
+		return errors.Reason("init servod: servo-host or servo is not specified").Err()
+	}
+	o := &tlw.ServodOptions{
+		RecoveryMode:  true,
+		DutBoard:      d.Board,
+		DutModel:      d.Model,
+		ServodPort:    int32(sh.ServodPort),
+		ServoSerial:   sh.Servo.SerialNumber,
+		ServoDual:     false,
+		UseCr50Config: false,
+	}
+	if vs, ok := d.ExtraAttributes[tlw.ExtraAttributeServoSetup]; ok {
+		for _, v := range vs {
+			if v == tlw.ExtraAttributeServoSetupDual {
+				o.ServoDual = true
+				break
+			}
+		}
+	}
+	if pools, ok := d.ExtraAttributes[tlw.ExtraAttributePools]; ok {
+		for _, p := range pools {
+			if strings.Contains(p, "faft-cr50") {
+				o.UseCr50Config = true
+				break
+			}
+		}
+	}
+	info.NewLogger().Debugf("Servod options: %s", o)
 	req := &tlw.InitServodRequest{
 		Resource: info.RunArgs.DUT.Name,
-		Options:  &tlw.ServodOptions{RecoveryMode: true},
+		Options:  o,
 	}
 	if err := info.RunArgs.Access.InitServod(ctx, req); err != nil {
 		return errors.Annotate(err, "init servod").Err()
