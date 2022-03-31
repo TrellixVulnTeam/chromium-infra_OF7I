@@ -64,11 +64,13 @@ def try_builder(
             mode_allowlist = mode_allowlist,
         )
 
-# Linux Xenial as the main platform to test for go1.16 (aka "bleeding_edge").
-# It was picked arbitrarily.
+# Linux as the main platform to test with the most recent Go version (aka
+# "bleeding_edge"). It was picked arbitrarily.
 #
-# All OSX builders are testing specifically for go1.15 (aka "legacy") to reflect
-# the fact that we have only go1.15 OSX amd64 binaries.
+# All OSX builders are testing specifically with the older Go version
+# (aka "legacy") to reflect the fact that OSX amd64 binaries we build need to
+# run on relatively ancient OSX versions that don't support the bleeding edge
+# Go.
 
 ci_builder(name = "luci-go-continuous-bionic-64", os = "Ubuntu-18.04", tree_closing = True, properties = {
     "go_version_variant": "bleeding_edge",

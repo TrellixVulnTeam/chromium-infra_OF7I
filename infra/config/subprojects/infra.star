@@ -65,11 +65,13 @@ def try_builder(
             experiment_percentage = experiment_percentage,
         )
 
-# Linux Xenial as the main platform to test for go1.16 (aka "bleeding_edge").
-# It was picked arbitrarily.
+# Linux as the main platform to test with the most recent Go version (aka
+# "bleeding_edge"). It was picked arbitrarily.
 #
-# All OSX builders are testing specifically for go1.15 (aka "legacy") to reflect
-# the fact that we have only go1.15 OSX amd64 binaries.
+# All OSX builders are testing specifically with the older Go version
+# (aka "legacy") to reflect the fact that OSX amd64 binaries we build need to
+# run on relatively ancient OSX versions that don't support the bleeding edge
+# Go.
 
 # CI Linux.
 ci_builder(name = "infra-continuous-bionic-arm64", os = "Ubuntu-18.04", cpu = "arm64", console_category = "linux|18.04|ARM", properties = {
