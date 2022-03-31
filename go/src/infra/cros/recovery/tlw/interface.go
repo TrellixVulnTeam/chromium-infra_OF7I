@@ -131,7 +131,7 @@ type CallServodResponse struct {
 type DUTSetupType string
 
 const (
-	DUTSetupTypeDefault DUTSetupType = "DEFAULT"
+	DUTSetupTypeUnspecified DUTSetupType = "UNSPECIFIED"
 	// Special setup of servo-host represented as labstation.
 	DUTSetupTypeLabstation DUTSetupType = "LABSTATION"
 	// Special setup for routers.
@@ -140,6 +140,8 @@ const (
 	DUTSetupTypeCros DUTSetupType = "CROS"
 	// Special setup for Android devices.
 	DUTSetupTypeAndroid DUTSetupType = "ANDROID"
+	// Special setup for IOS devices.
+	DUTSetupTypeIOS DUTSetupType = "IOS"
 )
 
 // PowerSupplyType describes different power supply types for a DUT.

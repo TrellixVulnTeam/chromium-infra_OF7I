@@ -27,25 +27,25 @@ var dutPlansCases = []struct {
 }{
 	{
 		"default no task",
-		tlw.DUTSetupTypeDefault,
+		tlw.DUTSetupTypeUnspecified,
 		tasknames.TaskName(""),
 		nil,
 	},
 	{
 		"default recovery",
-		tlw.DUTSetupTypeDefault,
+		tlw.DUTSetupTypeUnspecified,
 		tasknames.Recovery,
 		nil,
 	},
 	{
 		"default deploy",
-		tlw.DUTSetupTypeDefault,
+		tlw.DUTSetupTypeUnspecified,
 		tasknames.Deploy,
 		nil,
 	},
 	{
 		"default custom",
-		tlw.DUTSetupTypeDefault,
+		tlw.DUTSetupTypeUnspecified,
 		tasknames.Custom,
 		nil,
 	},

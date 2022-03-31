@@ -51,6 +51,7 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 	if err != nil {
 		return errors.Annotate(err, "run recovery %q", args.UnitName).Err()
 	}
+	log.Infof(ctx, "Unit %q contains resources: %v", args.UnitName, resources)
 	if args.Metrics == nil {
 		log.Debugf(ctx, "run: metrics is nil")
 	} else { // Guard against incorrectly setting up Karte client. See b:217746479 for details.

@@ -44,14 +44,37 @@ func ConvertAttachedDeviceToTlw(data *ufsAPI.AttachedDeviceData) (dut *tlw.Dut, 
 			err = errors.Reason("convert dut: %v\n%s", r, debug.Stack()).Err()
 		}
 	}()
-	if lse := data.GetLabConfig(); lse != nil {
-		return &tlw.Dut{
-			Name: lse.GetName(),
-			// TODO (b:226652582): always set twl.Dut.State Ready till android plan are ready
-			State: dutstate.Ready,
-		}, nil
+	machine := data.GetMachine()
+	machineLSE := data.GetLabConfig()
+	if machine == nil || machineLSE == nil {
+		return nil, errors.Reason("convert attached device to tlw: unexpected case!").Err()
 	}
-	return nil, errors.Reason("convert attached device to tlw: unexpected case!").Err()
+	// Determine type of device.
+	setup := tlw.DUTSetupTypeUnspecified
+	switch machine.GetAttachedDevice().GetDeviceType() {
+	case ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_ANDROID_PHONE,
+		ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_ANDROID_TABLET:
+		setup = tlw.DUTSetupTypeAndroid
+	case ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_APPLE_PHONE,
+		ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_APPLE_TABLET:
+		setup = tlw.DUTSetupTypeIOS
+	default:
+		setup = tlw.DUTSetupTypeUnspecified
+	}
+	return &tlw.Dut{
+		Id:              machine.GetName(),
+		Name:            machineLSE.GetHostname(),
+		Board:           machine.GetAttachedDevice().GetBuildTarget(),
+		Model:           machine.GetAttachedDevice().GetModel(),
+		SerialNumber:    machine.GetSerialNumber(),
+		SetupType:       setup,
+		State:           dutstate.ConvertFromUFSState(machineLSE.GetResourceState()),
+		ExtraAttributes: map[string][]string{
+			// Attached device does not have pools. Need read from Scheduling unit.
+			// tlw.ExtraAttributePools: pools,
+		},
+		ProvisionedInfo: &tlw.DUTProvisionedInfo{},
+	}, nil
 }
 
 // CreateUpdateDutRequest creates request instance to update UFS.
