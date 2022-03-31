@@ -19,6 +19,8 @@ const (
 	// The execution path for tests in Skylab envrionemnt. As of 2021Q3, all tests
 	// are run inside a lxc container.
 	SkylabLxcJobFolder = "/usr/local/autotest/results/lxc_job_folder"
+	// The execution path for tests in CFT (F20) containers.
+	CFTJobFolder = "/tmp/test/results"
 )
 
 type TastResults struct {
@@ -94,6 +96,8 @@ func (r *TastResults) ToProtos(ctx context.Context, processArtifacts func(string
 		// result folder we can access on Drone server.
 		if strings.HasPrefix(d, SkylabLxcJobFolder) {
 			d = strings.Replace(d, SkylabLxcJobFolder, r.BaseDir, 1)
+		} else if strings.HasPrefix(d, CFTJobFolder) {
+			d = strings.Replace(d, CFTJobFolder, r.BaseDir, 1)
 		}
 		normPathToFullPath, err := processArtifacts(d)
 		if err != nil {
