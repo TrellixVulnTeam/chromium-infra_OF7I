@@ -7,18 +7,37 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"infra/appengine/gofindit/compilefailureanalysis"
 	"infra/appengine/gofindit/model"
 	gfipb "infra/appengine/gofindit/proto"
 	gfis "infra/appengine/gofindit/server"
+	"net/http"
 
+	"github.com/golang/protobuf/proto"
+	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server"
+	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/encryptedcookies"
+	"go.chromium.org/luci/server/templates"
+
+	// Store auth sessions in the datastore.
+	_ "go.chromium.org/luci/server/encryptedcookies/session/datastore"
+
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
 	"go.chromium.org/luci/server/router"
+	"go.chromium.org/luci/server/secrets"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+const (
+	ACCESS_GROUP = "gofindit-access"
 )
 
 func init() {
@@ -26,23 +45,96 @@ func init() {
 	datastore.EnableSafeGet()
 }
 
+// checkAccess is middleware that checks if the user is authorized to
+// access GoFindit.
+func checkAccess(ctx *router.Context, next router.Handler) {
+	user := auth.CurrentIdentity(ctx.Context)
+	// User is not logged in
+	if user.Kind() == identity.Anonymous {
+		url, err := auth.LoginURL(ctx.Context, ctx.Request.URL.RequestURI())
+		if err != nil {
+			logging.Errorf(ctx.Context, "error in getting loginURL: %w", err)
+			http.Error(ctx.Writer, "Error in getting loginURL", http.StatusInternalServerError)
+		} else {
+			http.Redirect(ctx.Writer, ctx.Request, url, http.StatusFound)
+		}
+		return
+	}
+
+	// User is logged in, check access group
+	switch yes, err := auth.IsMember(ctx.Context, ACCESS_GROUP); {
+	case err != nil:
+		logging.Errorf(ctx.Context, "error in checking membership %s", err.Error())
+		http.Error(ctx.Writer, "Error in authorizing the user.", http.StatusInternalServerError)
+	case !yes:
+		ctx.Writer.WriteHeader(http.StatusForbidden)
+		templates.MustRender(ctx.Context, ctx.Writer, "pages/access-denied.html", nil)
+	default:
+		next(ctx)
+	}
+}
+
+// prepareTemplates configures templates.Bundle used by all UI handlers.
+func prepareTemplates(opts *server.Options) *templates.Bundle {
+	return &templates.Bundle{
+		Loader: templates.FileSystemLoader("templates"),
+		// Controls whether templates are cached.
+		DebugMode: func(context.Context) bool { return !opts.Prod },
+		DefaultArgs: func(ctx context.Context, e *templates.Extra) (templates.Args, error) {
+			logoutURL, err := auth.LogoutURL(ctx, e.Request.URL.RequestURI())
+			if err != nil {
+				return nil, err
+			}
+
+			return templates.Args{
+				"User":      auth.CurrentUser(ctx).Email,
+				"LogoutURL": logoutURL,
+			}, nil
+		},
+	}
+}
+
+func pageMiddlewareChain(srv *server.Server) router.MiddlewareChain {
+	return router.NewMiddlewareChain(
+		auth.Authenticate(srv.CookieAuth),
+		templates.WithTemplates(prepareTemplates(&srv.Options)),
+		checkAccess,
+	)
+}
+
+func checkAPIAccess(ctx context.Context, methodName string, req proto.Message) (context.Context, error) {
+	switch yes, err := auth.IsMember(ctx, ACCESS_GROUP); {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "error when checking group membership")
+	case !yes:
+		return nil, status.Errorf(codes.PermissionDenied, "%s does not have access to method %s of GoFindit", auth.CurrentIdentity(ctx), methodName)
+	default:
+		return ctx, nil
+	}
+}
+
 func main() {
 	modules := []module.Module{
 		gaeemulation.NewModuleFromFlags(),
+		encryptedcookies.NewModuleFromFlags(), // Required for auth sessions.
+		secrets.NewModuleFromFlags(),          // Needed by encryptedcookies.
 	}
 
 	server.Main(nil, modules, func(srv *server.Server) error {
-		srv.Routes.GET("/", router.MiddlewareChain{}, func(c *router.Context) {
-			c.Writer.Write([]byte("Placeholder for GoFindit UI"))
+		mwc := pageMiddlewareChain(srv)
+
+		srv.Routes.GET("/", mwc, func(c *router.Context) {
+			text := fmt.Sprintf("You are logged in as %s", auth.CurrentUser(c.Context).Identity.Email())
+			c.Writer.Write([]byte(text))
 		})
 
 		// Installs PRPC service.
 		gfipb.RegisterGoFinditServiceServer(srv.PRPC, &gfipb.DecoratedGoFinditService{
-			// TODO(nqmtuan): Check for auth here.
 			Service: &gfis.GoFinditServer{},
+			Prelude: checkAPIAccess,
 		})
 
-		srv.Routes.GET("/test", router.MiddlewareChain{}, func(c *router.Context) {
+		srv.Routes.GET("/test", mwc, func(c *router.Context) {
 			// For testing the flow
 			// TODO (nqmtuan) remove this endpoint later
 			failed_build := &model.LuciFailedBuild{
