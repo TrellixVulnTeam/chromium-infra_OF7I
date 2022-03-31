@@ -6,6 +6,8 @@ package cron
 
 import (
 	"context"
+	"os"
+	"strings"
 	"time"
 
 	"go.chromium.org/luci/common/clock"
@@ -145,14 +147,20 @@ func Run(ctx context.Context, cronTab *CronTab) {
 		panic(err)
 	}
 
+	var count = 0
 	for {
 		start := clock.Now(ctx)
 		start = start.In(location)
 		var trigTime time.Time
 		switch cronTab.TrigType {
 		case EVERY:
-			// Just add the interval specified to the start time.
-			trigTime = start.Add(cronTab.Time)
+			// Introduce env DUMPER_IMMEDIATELY_TRIGGER for local test
+			// Otherwise, just add the interval specified to the start time.
+			if strings.ToLower(os.Getenv("DUMPER_IMMEDIATELY_TRIGGER")) == "true" && count == 0 {
+				trigTime = start
+			} else {
+				trigTime = start.Add(cronTab.Time)
+			}
 
 		case HOURLY:
 			trigTime = estimateTriggerTime(ctx, start, cronTab.Time, 1*time.Hour)
@@ -195,6 +203,6 @@ func Run(ctx context.Context, cronTab *CronTab) {
 		if err := call(ctx); err != nil {
 			logging.Errorf(ctx, "Iteration failed: %s", err)
 		}
-
+		count++
 	}
 }
