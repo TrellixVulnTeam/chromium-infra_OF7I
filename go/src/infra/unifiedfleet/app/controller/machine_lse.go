@@ -1730,8 +1730,7 @@ func updateRecoveryLabData(ctx context.Context, hostname string, resourceState u
 			}
 
 			if err = updateBluetoothPeerStates(peri, labData.GetBlueoothPeers()); err != nil {
-				// TODO(b/227151806): Return error once BTP data is backfilled.
-				// return err
+				return err
 			}
 		}
 		if _, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
