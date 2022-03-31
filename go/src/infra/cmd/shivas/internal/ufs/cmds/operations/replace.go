@@ -16,6 +16,7 @@ var ReplaceCmd = &subcommands.Command{
 	UsageLine: "replace <sub-command>",
 	ShortDesc: "Replace a resource/entity",
 	LongDesc: `Replace a single or set of
+	peripheral-wifi
 	bluetooth-peers`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &replace{}
@@ -41,6 +42,7 @@ type replaceApp struct {
 func (c replaceApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		peripherals.ReplaceBluetoothPeersCmd,
+		peripherals.ReplacePeripheralWifiCmd,
 	}
 }
 

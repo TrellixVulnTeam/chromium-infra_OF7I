@@ -2105,13 +2105,32 @@ requires specifying an action which is either add, delete, or replace. Multiple 
 be specified for each action.
 
 Add adds specified BTPs to the DUT and leaves what is already there untouched.
-Delete deletes sepcified BTPs in the DUT and leaves remamining.
+Delete deletes specified BTPs in the DUT and leaves remaining untouched.
 Replace replaces the entire set of BTPs with the specified list.
 
 Examples:
 shivas add bluetooth-peers -dut {d} -hostname {h1} -hostname {h2}
 shivas delete bluetooth-peers -dut {d} -hostname {h2}
 shivas replace bluetooth-peers -dut {d} -hostname {h3} -hostname {h4} -hostname {h5}
+`
+
+	// ManagePeripheralWifiLongDesc is a long description for peripheral wifi management subcommands.
+	ManagePeripheralWifiLongDesc string = `Manage peripheral wifi associated to a DUT.
+
+This cmd always runs in the OS namespace. A single DUT can have multiple wifi routers. The command
+requires specifying an action which is either add, delete, or replace. Multiple routers can
+be specified for each action.
+
+Add adds specified routers or wifi features to the DUT and leaves what is already there untouched.
+Delete deletes specified routers or wifi features in the DUT and leaves remainining untouched.
+Replace replaces the entire set of routers or wifi features with the specified list.
+
+Examples:
+shivas add peripheral-wifi -dut {d} -wifi-feature {f1} -wifi-feature {f2} -router {hostname:h1,build_target:b1,model:m1,feature:f2} -router {hostname:h2,build_target:b1,model:m1,feature:f3}
+shivas delete peripheral-wifi -dut {d} -router {hostanme:h1} -router {hostname:h2}
+shivas replace peripheral-wifi -dut {d} -wifi-feature {f3} -wifi-feature {f4}
+shivas replace peripheral-wifi -dut {d} -router {hostname:h3,build_target:b1}
+shivas replace peripheral-wifi -dut {d} -wifi-feature {f5} -wifi-feature {f6} -router {hostname:h6,build_target:b2}
 `
 )
 
