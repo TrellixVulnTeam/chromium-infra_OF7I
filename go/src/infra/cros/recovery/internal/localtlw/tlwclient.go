@@ -19,7 +19,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/cros/dutstate"
 	"infra/cros/recovery/docker"
 	"infra/cros/recovery/internal/localtlw/dutinfo"
 	tlwio "infra/cros/recovery/internal/localtlw/io"
@@ -32,7 +31,6 @@ import (
 	"infra/cros/recovery/internal/rpm"
 	"infra/cros/recovery/tlw"
 	"infra/libs/sshpool"
-	ufslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 )
 
@@ -52,8 +50,6 @@ type UFSClient interface {
 	GetDeviceData(ctx context.Context, req *ufsAPI.GetDeviceDataRequest, opts ...grpc.CallOption) (rsp *ufsAPI.GetDeviceDataResponse, err error)
 	// UpdateDeviceRecoveryData updates the labdata, dutdata, resource state, dut states for a DUT
 	UpdateDeviceRecoveryData(ctx context.Context, in *ufsAPI.UpdateDeviceRecoveryDataRequest, opts ...grpc.CallOption) (*ufsAPI.UpdateDeviceRecoveryDataResponse, error)
-	// UpdateDutState updates the state config for a DUT
-	UpdateDutState(ctx context.Context, in *ufsAPI.UpdateDutStateRequest, opts ...grpc.CallOption) (*ufslab.DutState, error)
 }
 
 // CSAClient is a client that knows how to respond to the GetStableVersion RPC call.
@@ -809,21 +805,15 @@ func (c *tlwClient) UpdateDut(ctx context.Context, dut *tlw.Dut) error {
 		return errors.Annotate(err, "update DUT %q", dut.Name).Err()
 	}
 	log.Debugf(ctx, "Update DUT: update request: %s", req)
-	if _, err := c.ufsClient.UpdateDutState(ctx, req); err != nil {
+	rsp, err := c.ufsClient.UpdateDeviceRecoveryData(ctx, req)
+	if err != nil {
 		return errors.Annotate(err, "update DUT %q", dut.Name).Err()
 	}
+	log.Debugf(ctx, "Update DUT: update response: %s", rsp)
 	c.unCacheDevice(dut)
-	if ufs, ok := c.ufsClient.(dutstate.UFSClient); ok {
-		if err := dutstate.Update(ctx, ufs, dut.Name, dut.State); err != nil {
-			return errors.Annotate(err, "update DUT %q", dut.Name).Err()
-		}
-	} else {
-		return errors.Reason("update DUT %q: dutstate.UFSClient interface is not implemented by client", dut.Name).Err()
-	}
-	if err := localinfo.UpdateProvisionInfo(ctx, dut); err != nil {
-		return errors.Annotate(err, "update dut").Err()
-	}
-	return nil
+	// Update provisioning data on the execution env.
+	err = localinfo.UpdateProvisionInfo(ctx, dut)
+	return errors.Annotate(err, "udpate dut").Err()
 }
 
 // Provision triggers provisioning of the device.
