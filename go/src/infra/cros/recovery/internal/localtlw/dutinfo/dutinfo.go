@@ -6,13 +6,11 @@
 package dutinfo
 
 import (
-	"context"
 	"fmt"
 	"runtime/debug"
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/logging"
 
 	"infra/cros/dutstate"
 	"infra/cros/recovery/tlw"
@@ -113,7 +111,7 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 		WifiRouterHosts:     createWifiRouterHosts(p.GetWifi()),
 		PeripheralWifiState: convertPeripheralWifiState(ds.GetWifiPeripheralState()),
 		Bluetooth:           createDUTBluetooth(ds, dc),
-		BluetoothPeerHosts:  createBluetoothPeerHosts(dut, ds, name, p),
+		BluetoothPeerHosts:  createBluetoothPeerHosts(p),
 		Battery:             battery,
 		ServoHost:           createServoHost(p, ds),
 		ChameleonHost:       createChameleonHost(name, ds),
@@ -139,14 +137,9 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 	return d, nil
 }
 
-func createBluetoothPeerHosts(
-	dut *ufslab.DeviceUnderTest,
-	dutState *ufslab.DutState,
-	labConfigName string,
-	peripherals *ufslab.Peripherals,
-) []*tlw.BluetoothPeerHost {
-	// Generate list of peers we can have with states.
-	// TODO(ashishgandhi@): Switch to using this once we have all BTPs in UFS.
+// createBluetoothPeerHosts use the UFS states for Bluetooth peer devices to create
+// the equivalent tlw slice.
+func createBluetoothPeerHosts(peripherals *ufslab.Peripherals) []*tlw.BluetoothPeerHost {
 	var bluetoothPeerHosts []*tlw.BluetoothPeerHost
 	for _, btp := range peripherals.GetBluetoothPeers() {
 		var (
@@ -158,7 +151,10 @@ func createBluetoothPeerHosts(
 			hostname = d.RaspberryPi.GetHostname()
 			state = convertBluetoothPeerState(d.RaspberryPi.GetState())
 		default:
-			logging.Warningf(context.TODO(), "Unknown device type: %v", d)
+			// We never want this to fail. It does create a risk
+			// for silent errors however. Introduction of new device
+			// types is very infrequent and also a very conscious
+			// event, which helps counterweight that risk.
 			continue
 		}
 		bluetoothPeerHosts = append(bluetoothPeerHosts, &tlw.BluetoothPeerHost{
@@ -166,25 +162,6 @@ func createBluetoothPeerHosts(
 			State: state,
 		})
 	}
-	logging.Infof(context.TODO(), "Bluetooth peers found via UFS for DUT %q: %v", dut.GetHostname(), bluetoothPeerHosts)
-
-	// Resetting slice to continue populating with the old system.
-	bluetoothPeerHosts = bluetoothPeerHosts[:0]
-	goodPeerCount := dutState.GetWorkingBluetoothBtpeer()
-	for i := 1; i <= 4; i++ {
-		state := tlw.BluetoothPeerStateUnspecified
-		if i <= int(goodPeerCount) {
-			// As e do not have data which peer is good we set state for
-			// the first peers. Later when peripherals will be supported by UFS
-			// we can reeive proper information.
-			state = tlw.BluetoothPeerStateWorking
-		}
-		bluetoothPeerHosts = append(bluetoothPeerHosts, &tlw.BluetoothPeerHost{
-			Name:  fmt.Sprintf("%s-btpeer%d", labConfigName, i),
-			State: state,
-		})
-	}
-	logging.Infof(context.TODO(), "Bluetooth peers populated based on counts for DUT %q: %v", dut.GetHostname(), bluetoothPeerHosts)
 
 	return bluetoothPeerHosts
 }
