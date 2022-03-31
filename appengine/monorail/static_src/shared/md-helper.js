@@ -77,7 +77,7 @@ const HTML_ESCAPE_MAP = Object.freeze({
  * @return {string} Same text content after escaping HTML characters.
  */
 const escapeHtml = (text) => {
-  return text.replace(/[<>"'`]/g, (s) => {
+  return text.replace(/[<>"']/g, (s) => {
     return HTML_ESCAPE_MAP[s];
   });
 };

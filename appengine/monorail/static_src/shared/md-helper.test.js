@@ -51,6 +51,12 @@ describe('renderMarkdown', () => {
         '<h1>Heading level 1</h1>\n<h2>Heading level 2</h2>\n');
   });
 
+  it('can render codeblocks', () => {
+    const actual = renderMarkdown('```\nhello world\n```');
+    assert.equal(actual,
+      '<pre><code>hello world\n</code></pre>\n');
+  });
+
   describe('can render links', () => {
     it('for simple links', () => {
       const actual = renderMarkdown('[clickme](http://google.com)');
