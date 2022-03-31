@@ -1,0 +1,28 @@
+// Copyright 2022 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package poros;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "gae/api/proto;poros";
+
+message AssetEntity {
+  // Unique identifier of the asset
+  string asset_id = 1;
+  // Name of the asset
+  string name = 2;
+  // Description of the asset
+  string description = 3;
+  // User who created the record.
+  string created_by = 4;
+  // Timestamp for the creation of the record.
+  google.protobuf.Timestamp created_at = 5;
+  // Timestamp for the last update of the record.
+  google.protobuf.Timestamp modified_at = 6;
+  // User who modified the record.
+  string modified_by = 7;
+}
