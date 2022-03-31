@@ -174,7 +174,8 @@ func uploadLogs(ctx context.Context, state *build.State, lg logger.Logger) (rErr
 		// callFuncWithTimeout synchronously calls a function with a timeout and then unconditionally hands control
 		// back to its caller. The goroutine that's created in the background will not by itself keep the process alive.
 		// TODO(gregorynisbet): Allow this parameter to be overridden from outside.
-		gsURL := fmt.Sprintf("gs://chromeos-autotest-results/swarming-%s", swarmingTaskID)
+		// TODO(crbug/1311842): Switch this bucket back to chromeos-autotest-results.
+		gsURL := fmt.Sprintf("gs://chrome-fleet-karte-autotest-results/swarming-%s", swarmingTaskID)
 		lg.Infof("Swarming task %q is non-empty. Uploading to %q", swarmingTaskID, gsURL)
 		status, err := callFuncWithTimeout(ctx, 5*time.Minute, func(ctx context.Context) error {
 			lg.Infof("Beginning upload attempt. Starting five minute timeout.")
