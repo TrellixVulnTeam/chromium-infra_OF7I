@@ -119,6 +119,18 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (project st
 			continue
 		}
 
+		if tj.Reuse {
+			// Do not ingest re-used tryjobs.
+			// Builds should be ingested with the CV run that initiated
+			// them, not a CV run that re-used them.
+			// Tryjobs can also be marked re-used if they were user
+			// initiated through gerrit. In this case, the build would
+			// not have been tagged as being part of a CV run (e.g.
+			// through user_agent: cq), so it will not expect to be
+			// joined to a CV run.
+			continue
+		}
+
 		buildID := buildID(bbHost, b.Id)
 		if _, ok := presubmitResultByBuildID[buildID]; ok {
 			logging.Warningf(ctx, "CV Run %s has build %s as tryjob multiple times, ignoring the second occurances", psRun.Id, buildID)

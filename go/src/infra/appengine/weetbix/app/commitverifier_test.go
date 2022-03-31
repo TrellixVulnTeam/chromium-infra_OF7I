@@ -190,6 +190,16 @@ func TestHandleCVRun(t *testing.T) {
 				So(sortTasks(tasks), ShouldResembleProto,
 					sortTasks(expectedTasks(expectedTaskTemplate, buildIDs)))
 			})
+			Convey(`With re-used tryjob`, func() {
+				// Assume that this tryjob was created by another CV run,
+				// so should not be ingested with this CV run.
+				run.Tryjobs[0].Reuse = true
+
+				processed, tasks := processCVRun(run)
+				So(processed, ShouldBeTrue)
+				So(sortTasks(tasks), ShouldResembleProto,
+					sortTasks(expectedTasks(expectedTaskTemplate, buildIDs[1:])))
+			})
 			Convey(`Failing Run`, func() {
 				run.Status = cvv0.Run_FAILED
 				expectedTaskTemplate.PresubmitRun.PresubmitRunSucceeded = false
