@@ -17,10 +17,10 @@ import (
 //
 // Test based on testing returned errors and check error messages.
 func TestLimitCount(t *testing.T) {
-	t.Parallel()
+	// t.Parallel() -- b:227523207
 	ctx := context.Background()
 	t.Run("Fail as reached limit", func(t *testing.T) {
-		t.Parallel()
+		// t.Parallel() -- b:227523207
 		if err := LimitCount(ctx, 4, time.Nanosecond, createFunc(4, 0), "Retry test by count"); err == nil {
 			t.Errorf("Expected to fail")
 		} else if !strings.Contains(err.Error(), simpleErrorMsg) {
@@ -30,19 +30,19 @@ func TestLimitCount(t *testing.T) {
 		}
 	})
 	t.Run("Passed as not reached limit", func(t *testing.T) {
-		t.Parallel()
+		// t.Parallel() -- b:227523207
 		if err := LimitCount(ctx, 2, time.Nanosecond, createFunc(1, 0), "Retry test by count"); err != nil {
 			t.Errorf("Expected to pass: %s", err)
 		}
 	})
 	t.Run("Passed with first attempt", func(t *testing.T) {
-		t.Parallel()
+		// t.Parallel() -- b:227523207
 		if err := LimitCount(ctx, 0, time.Nanosecond, createFunc(0, 0), "Retry test by count"); err != nil {
 			t.Errorf("Expected to pass: %s", err)
 		}
 	})
 	t.Run("Break before reached the time count", func(t *testing.T) {
-		t.Parallel()
+		// t.Parallel() -- b:227523207
 		if err := LimitCount(ctx, 10, time.Nanosecond, createFunc(8, 5), "Retry test by count"); err == nil {
 			t.Errorf("Expected to fail: %s", err)
 		} else if !strings.Contains(err.Error(), abortErrorMsg) {
@@ -52,7 +52,7 @@ func TestLimitCount(t *testing.T) {
 		}
 	})
 	t.Run("Cancel by parent context", func(t *testing.T) {
-		t.Parallel()
+		// t.Parallel() -- b:227523207
 		ctx, cancel := context.WithTimeout(ctx, time.Nanosecond)
 		defer func() { cancel() }()
 		if err := LimitCount(ctx, 10, time.Second, createFunc(10, 0), "Retry test by count"); err == nil {
@@ -67,10 +67,10 @@ func TestLimitCount(t *testing.T) {
 //
 // Test based on testing returned errors and check error messages.
 func TestLimitTime(t *testing.T) {
-	t.Parallel()
+	// t.Parallel() -- b:227523207
 	ctx := context.Background()
 	t.Run("Fail as reached limit", func(t *testing.T) {
-		t.Parallel()
+		// t.Parallel() -- b:227523207
 		if err := WithTimeout(ctx, time.Millisecond, 50*time.Millisecond, createFunc(50, 0), "Retry test by time"); err == nil {
 			t.Errorf("Expected to fail")
 		} else if !strings.Contains(err.Error(), "context deadline exceeded") {
@@ -78,19 +78,19 @@ func TestLimitTime(t *testing.T) {
 		}
 	})
 	t.Run("Passed as not reached limit", func(t *testing.T) {
-		t.Parallel()
+		// t.Parallel() -- b:227523207
 		if err := WithTimeout(ctx, time.Millisecond, time.Second, createFunc(10, 0), "Retry test by time"); err != nil {
 			t.Errorf("Expected to pass: %s", err)
 		}
 	})
 	t.Run("Passed with first attempt", func(t *testing.T) {
-		t.Parallel()
+		// t.Parallel() -- b:227523207
 		if err := WithTimeout(ctx, time.Millisecond, 50*time.Millisecond, createFunc(0, 0), "Retry test by time"); err != nil {
 			t.Errorf("Expected to pass: %s", err)
 		}
 	})
 	t.Run("Break before reached the time count", func(t *testing.T) {
-		t.Parallel()
+		// t.Parallel() -- b:227523207
 		if err := WithTimeout(ctx, time.Millisecond, 5*time.Second, createFunc(8, 5), "Retry test by time"); err == nil {
 			t.Errorf("Expected to fail: %s", err)
 		} else if !strings.Contains(err.Error(), abortErrorMsg) {
@@ -98,7 +98,7 @@ func TestLimitTime(t *testing.T) {
 		}
 	})
 	t.Run("Cancel by parent context", func(t *testing.T) {
-		t.Parallel()
+		// t.Parallel() -- b:227523207
 		ctx, cancel := context.WithTimeout(ctx, time.Nanosecond)
 		defer func() { cancel() }()
 		if err := WithTimeout(ctx, time.Second, time.Second, createFunc(10, 0), "Retry test by time"); err == nil {
