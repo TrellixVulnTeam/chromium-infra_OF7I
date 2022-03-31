@@ -765,6 +765,9 @@ func (r *UpdateDeviceRecoveryDataRequest) Validate() error {
 	if err := r.validateDutWifiRouterHostnames(); err != nil {
 		return err
 	}
+	if err := r.validateBluetoothPeerHostnames(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -796,18 +799,41 @@ func (r *UpdateDeviceRecoveryDataRequest) validateDutId() error {
 	return nil
 }
 
-func (r *UpdateDeviceRecoveryDataRequest) validateDutWifiRouterHostnames() error {
-	if r.GetLabData() != nil {
-		// check no duplicate wifi routers
-		var routerMap map[string]bool
-		for _, router := range r.GetLabData().GetWifiRouters() {
-			if routerMap[router.GetHostname()] {
-				return status.Errorf(codes.InvalidArgument, "Duplicate wifi router (%q) in labdata.wifirouters %q", router.GetHostname(), r.GetLabData().GetWifiRouters())
-			}
-			routerMap[router.GetHostname()] = true
+// validateHostnames checks for empty or duplicates in hostnames. Uses typ to construct error message.
+func validateHostnames(hostnames []string, typ string) error {
+	set := make(map[string]bool)
+	for _, h := range hostnames {
+		if len(strings.TrimSpace(h)) == 0 {
+			return status.Errorf(codes.InvalidArgument, "Empty hostname in %s lab data: %v", typ, hostnames)
 		}
+		if set[h] {
+			return status.Errorf(codes.InvalidArgument, "Duplicate hostname (%q) in %s lab data: %v", h, typ, hostnames)
+		}
+		set[h] = true
 	}
 	return nil
+}
+
+func (r *UpdateDeviceRecoveryDataRequest) validateDutWifiRouterHostnames() error {
+	if r.GetLabData() == nil {
+		return nil
+	}
+	var hostnames []string
+	for _, r := range r.GetLabData().GetWifiRouters() {
+		hostnames = append(hostnames, r.GetHostname())
+	}
+	return validateHostnames(hostnames, "WiFi")
+}
+
+func (r *UpdateDeviceRecoveryDataRequest) validateBluetoothPeerHostnames() error {
+	if r.GetLabData() == nil {
+		return nil
+	}
+	var hostnames []string
+	for _, b := range r.GetLabData().GetBlueoothPeers() {
+		hostnames = append(hostnames, b.GetHostname())
+	}
+	return validateHostnames(hostnames, "Blueooth peers")
 }
 
 // Validate validates input requests of GetDutStateRequest.
