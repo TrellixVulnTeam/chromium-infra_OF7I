@@ -252,6 +252,14 @@ adhoc_builder(
     ),
     properties = {
         "status": "SUCCESS",
+        "steps": [
+            {
+                "name": "hello",
+                "fake_step": {
+                    "duration_secs": 90,
+                },
+            },
+        ],
     },
 )
 
