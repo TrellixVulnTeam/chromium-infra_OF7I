@@ -23,6 +23,7 @@ import (
 
 var (
 	fooManifest = &repo.Manifest{
+		Revision: "123",
 		Default: repo.Default{
 			RemoteName: "chromeos",
 			Revision:   "123",
@@ -53,7 +54,7 @@ var (
 		},
 	}
 	fooXML = `<?xml version="1.0" encoding="UTF-8"?>
-<manifest>
+<manifest revision="123">
   <include name="bar.xml" />
   <default remote="chromeos" revision="123"/>
   <remote fetch="https://chromium.org/remote" name="chromium" alias="chromeos"/>

@@ -23,6 +23,7 @@ var (
 // Manifest is a top-level Repo definition file.
 type Manifest struct {
 	XMLName  xml.Name  `xml:"manifest"`
+	Revision string    `xml:"revision,attr,omitempty"`
 	Includes []Include `xml:"include"`
 	Remotes  []Remote  `xml:"remote"`
 	Default  Default   `xml:"default"`
