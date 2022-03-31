@@ -154,7 +154,8 @@ func TestPackageIndexWindows(t *testing.T) {
 					err := clangTargets.ProcessClangTargets(ip.ctx, ip.rootPath, ip.outDir, ip.corpus,
 						ip.buildConfig, ip.hashMaps, dataFileChannel, unitProtoChannel)
 					if err != nil {
-						t.Fatal(err)
+						// See b:227367175 for context.
+						panic(err.Error())
 					}
 				}()
 			}
@@ -172,7 +173,8 @@ func TestPackageIndexWindows(t *testing.T) {
 					err := gnTargets.ProcessGnTargets(ip.ctx, ip.rootPath, ip.outDir, ip.corpus, ip.buildConfig, ip.hashMaps,
 						dataFileChannel, unitProtoChannel)
 					if err != nil {
-						t.Fatal(err)
+						// See b:227367175 for context.
+						panic(err.Error())
 					}
 				}()
 			}
@@ -223,7 +225,8 @@ func TestPackageIndexWindows(t *testing.T) {
 			go func() {
 				err := ip.writeToKzip(kzipEntryChannel)
 				if err != nil {
-					t.Fatal(err)
+					// See b:227367175 for context.
+					panic(err.Error())
 				}
 				writeWg.Done()
 			}()
