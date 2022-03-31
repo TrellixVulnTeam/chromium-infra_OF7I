@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync/atomic"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -232,7 +233,7 @@ func createLogger(ctx context.Context) (context.Context, *recoveryLogger) {
 type recoveryLogger struct {
 	log logging.Logger
 	// Logger indentation for messages.
-	indentation int
+	indentation int32
 	// callDepth sets desired stack depth (code line at which logging message is reported).
 	callDepth int
 }
@@ -257,20 +258,22 @@ func (l *recoveryLogger) Errorf(format string, args ...interface{}) {
 	l.log.LogCall(logging.Error, l.callDepth, l.indentString(format), args)
 }
 
-// IndentLogging increment indentation for logger.
-func (l *recoveryLogger) IndentLogging() {
-	l.indentation += 1
+// Indent increment indentation for logger.
+func (l *recoveryLogger) Indent() {
+	atomic.AddInt32(&l.indentation, 1)
 }
 
-// DedentLogging decrement indentation for logger.
-func (l *recoveryLogger) DedentLogging() {
-	if l.indentation > 0 {
-		l.indentation -= 1
-	}
+// Dedent decrement indentation for logger.
+func (l *recoveryLogger) Dedent() {
+	atomic.AddInt32(&l.indentation, -1)
 }
 
 // Apply indent to the string.
 func (l *recoveryLogger) indentString(v string) string {
-	indent := strings.Repeat("  ", l.indentation)
+	i := atomic.LoadInt32(&l.indentation)
+	if i <= 0 {
+		return v
+	}
+	indent := strings.Repeat("  ", int(i))
 	return indent + v
 }

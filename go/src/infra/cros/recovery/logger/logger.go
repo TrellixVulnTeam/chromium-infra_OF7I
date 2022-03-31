@@ -7,22 +7,15 @@ package logger
 
 import (
 	"log"
-	"strings"
-	"sync/atomic"
 )
 
 // NewLogger creates default logger.
 func NewLogger() Logger {
-	return &logger{
-		indentation: 0,
-	}
+	return &logger{}
 }
 
 // logger provides default implementation of Logger interface.
-type logger struct {
-	// if negative then treated as 0.
-	indentation int32
-}
+type logger struct{}
 
 // Debugf log message at Debug level.
 func (l *logger) Debugf(format string, args ...interface{}) {
@@ -44,32 +37,8 @@ func (l *logger) Errorf(format string, args ...interface{}) {
 	l.print(format, args...)
 }
 
-// IndentLogging increment indentation for logger.
-func (l *logger) IndentLogging() {
-	atomic.AddInt32(&l.indentation, 1)
-}
-
-// DedentLogging decrement indentation for logger.
-func (l *logger) DedentLogging() {
-	atomic.AddInt32(&l.indentation, -1)
-}
-
 // print currently implements logging for all log levels. Filtering
 // on log levels has not yet been implemented (b/222863687).
 func (l *logger) print(format string, args ...interface{}) {
-	prefix := l.getIndentationPrefix("  ")
-	log.Printf(prefix+format, args...)
-}
-
-// getIndentationPrefix returns the prefix to use in logging based on current
-// indentation level. If indentStr is empty tab is used.
-func (l *logger) getIndentationPrefix(indentStr string) string {
-	indentation := atomic.LoadInt32(&l.indentation)
-	if indentation <= 0 {
-		return ""
-	}
-	if indentStr == "" {
-		indentStr = "\t"
-	}
-	return strings.Repeat(indentStr, int(indentation))
+	log.Printf(format, args...)
 }

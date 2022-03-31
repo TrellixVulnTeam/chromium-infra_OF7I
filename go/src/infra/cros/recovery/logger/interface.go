@@ -10,8 +10,13 @@ type Logger interface {
 	Warningf(format string, args ...interface{})
 	// Errorf is like Debug, but logs at Errorf level.
 	Errorf(format string, args ...interface{})
-	// IndentLogging increment indentation for logger.
-	IndentLogging()
-	// DedentLogging decrement indentation for logger.
-	DedentLogging()
+}
+
+// LogIndenter represents a simple interface to provide option to set indent logs.
+// Interface mostly used for local debugging and testing.
+type LogIndenter interface {
+	// Indent increment indentation for logger.
+	Indent()
+	// Dedent decrement indentation for logger.
+	Dedent()
 }

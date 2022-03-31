@@ -15,9 +15,9 @@ import (
 
 var want = `
 Line 1
-  Line 2
-      Line 3
-    Line 4
+Line 2
+Line 3
+Line 4
 Line 5
 `
 
@@ -35,26 +35,9 @@ func TestBasicLogging(t *testing.T) {
 	// Empty first line to keep want string neat.
 	l.Infof("")
 	l.Infof("Line 1")
-
-	// Single indent
-	l.IndentLogging()
 	l.Infof("Line 2")
-
-	// Multi-indent
-	l.IndentLogging()
-	l.IndentLogging()
 	l.Infof("Line 3")
-
-	// Dedent
-	l.DedentLogging()
 	l.Infof("Line 4")
-
-	// Negative indent safety check
-	l.DedentLogging()
-	l.DedentLogging()
-	l.DedentLogging()
 	l.Infof("Line 5")
-
-	assert.IntsEqual(t, int(l.(*logger).indentation), -1)
 	assert.StringsEqual(t, buf.String(), want)
 }

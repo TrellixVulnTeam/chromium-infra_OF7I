@@ -17,6 +17,7 @@ import (
 	"infra/cros/recovery/config"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
+	"infra/cros/recovery/logger"
 	"infra/cros/recovery/logger/metrics"
 )
 
@@ -148,9 +149,9 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 			step, ctx = build.StartStep(ctx, fmt.Sprintf("Run %s", actionName))
 			defer func() { step.End(rErr) }()
 		}
-		if r.args.Logger != nil {
-			r.args.Logger.IndentLogging()
-			defer func() { r.args.Logger.DedentLogging() }()
+		if i, ok := r.args.Logger.(logger.LogIndenter); ok {
+			i.Indent()
+			defer func() { i.Dedent() }()
 		}
 	}
 	log.Infof(ctx, "Action %q: started.", actionName)
@@ -281,9 +282,9 @@ func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName str
 			step, ctx = build.StartStep(ctx, "Run continions")
 			defer func() { step.End(err) }()
 		}
-		if r.args.Logger != nil {
-			r.args.Logger.IndentLogging()
-			defer func() { r.args.Logger.DedentLogging() }()
+		if i, ok := r.args.Logger.(logger.LogIndenter); ok {
+			i.Indent()
+			defer func() { i.Dedent() }()
 		}
 	}
 	log.Debugf(ctx, "Action %q: running conditions...", actionName)
@@ -310,9 +311,9 @@ func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string,
 			step, ctx = build.StartStep(ctx, "Run dependencies")
 			defer func() { step.End(rErr) }()
 		}
-		if r.args.Logger != nil {
-			r.args.Logger.IndentLogging()
-			defer func() { r.args.Logger.DedentLogging() }()
+		if i, ok := r.args.Logger.(logger.LogIndenter); ok {
+			i.Indent()
+			defer func() { i.Dedent() }()
 		}
 	}
 	err := r.runActions(ctx, a.GetDependencies(), enableRecovery)
@@ -335,9 +336,9 @@ func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) (
 			step, ctx = build.StartStep(ctx, "Run recoveries")
 			defer func() { step.End(rErr) }()
 		}
-		if r.args.Logger != nil {
-			r.args.Logger.IndentLogging()
-			defer func() { r.args.Logger.DedentLogging() }()
+		if i, ok := r.args.Logger.(logger.LogIndenter); ok {
+			i.Indent()
+			defer func() { i.Dedent() }()
 		}
 	}
 	for _, recoveryName := range a.GetRecoveryActions() {

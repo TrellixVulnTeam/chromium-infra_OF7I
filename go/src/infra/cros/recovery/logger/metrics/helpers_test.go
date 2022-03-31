@@ -53,13 +53,3 @@ func (l *fakeLogger) Warningf(format string, args ...interface{}) {
 func (l *fakeLogger) Errorf(format string, args ...interface{}) {
 	l.messages["error"] = append(l.messages["error"], fmt.Sprintf(format, args...))
 }
-
-// IndentLogging intercepts an indent attempt.
-func (l *fakeLogger) IndentLogging() {
-	// Intentionally do nothing.
-}
-
-// DedentLogging intercepts a dedent attempt.
-func (l *fakeLogger) DedentLogging() {
-	// Intentionally do nothing.
-}
