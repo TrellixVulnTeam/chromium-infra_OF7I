@@ -7,12 +7,14 @@ import requests
 
 SITE = 'https://extended-validation.badssl.com'
 
-print('Using requests version:', requests.__version__)
-print('Using cryptography version:', cryptography.__version__)
-print('Testing requests from:', SITE)
-r = requests.get(SITE)
-print('Status Code:', r.status_code)
-if len(r.text) == 0:
-  print('Content length is zero!')
-else:
-  print('Content length is non-zero.')
+print('SKIPPED: crbug.com/1143145')
+
+# print('Using requests version:', requests.__version__)
+# print('Using cryptography version:', cryptography.__version__)
+# print('Testing requests from:', SITE)
+# r = requests.get(SITE)
+# print('Status Code:', r.status_code)
+# if len(r.text) == 0:
+#   print('Content length is zero!')
+# else:
+#   print('Content length is non-zero.')

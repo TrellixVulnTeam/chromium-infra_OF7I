@@ -1,5 +1,1 @@
-Using requests version: 2.21.0
-Using cryptography version: 3.3.1
-Testing requests from: https://extended-validation.badssl.com
-Status Code: 200
-Content length is non-zero.
+SKIPPED: crbug.com/1143145
