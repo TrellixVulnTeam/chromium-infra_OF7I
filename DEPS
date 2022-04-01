@@ -110,7 +110,17 @@ deps = {
         "{chromium_git}/infra/third_party/npm_modules.git@" +
         "f83fafaa22f5ff396cf5306285ca3806d1b2cf1b",
      "condition": "checkout_linux or checkout_mac",
-  }
+  },
+
+  "gcloud": {
+    'packages': [
+      {
+        'package': 'infra/3pp/tools/gcloud/${{os=mac,linux}}-${{arch=amd64}}',
+        'version': 'version:2@379.0.0.chromium1',
+      }
+    ],
+    'dep_type': 'cipd',
+  },
 }
 
 hooks = [
@@ -132,12 +142,6 @@ hooks = [
     "pattern": ".",
     "action": [
       "python", "-u", "./infra/bootstrap/install_cipd_packages.py", "-v",
-    ],
-  },
-  {
-    "pattern": ".",
-    "action": [
-      "python", "-u", "./infra/bootstrap/get_gcloud.py", "--dest=.",
     ],
   },
   {
