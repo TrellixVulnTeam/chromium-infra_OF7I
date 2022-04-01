@@ -179,7 +179,7 @@ uprev_build=$(echo $output | head -n1 | awk '{printf $1}')
 packages=$(grep package_name <<< $output | awk '{printf "%s\n", substr($NF, 2, length($NF)-3)}')
 
 email_subject="ChromeOS ${which_golang} Golang Release - $(TZ='America/Los_Angeles' date)"
-email_message="We've deployed ${which_golang} Golang to prod!
+email_message="We've yeeted ${which_golang} Golang to prod!
 
 Uprev build: ${uprev_build}
 
