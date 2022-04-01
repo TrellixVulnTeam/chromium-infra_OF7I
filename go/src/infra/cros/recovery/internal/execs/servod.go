@@ -36,6 +36,7 @@ func (ei *ExecInfo) NewServod() components.Servod {
 
 // Call calls servod method with params.
 func (s *iServod) Call(ctx context.Context, method string, args ...interface{}) (*xmlrpc.Value, error) {
+	log.Debugf(ctx, "Servod call %q with %v: starting...", method, args)
 	res := s.a.CallServod(ctx, &tlw.CallServodRequest{
 		Resource: s.dut.Name,
 		Method:   method,

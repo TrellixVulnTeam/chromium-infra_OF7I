@@ -405,7 +405,9 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, c *config.Configuration, arg
 
 // runSinglePlan run single plan for all resources associated with plan.
 func runSinglePlan(ctx context.Context, planName string, plan *config.Plan, execArgs *execs.RunArgs) error {
+	log.Infof(ctx, "------====================-----")
 	log.Infof(ctx, "Run plan %q: starting...", planName)
+	log.Infof(ctx, "------====================-----")
 	resources := collectResourcesForPlan(planName, execArgs.DUT)
 	if len(resources) == 0 {
 		log.Infof(ctx, "Run plan %q: no resources found.", planName)
