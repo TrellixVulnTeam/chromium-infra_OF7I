@@ -633,6 +633,7 @@ SPECS.update({
             ],
             packaged=[],
             pyversions=['py3'],
+            default=False,
         ),
         SourceOrPrebuilt(
             'numpy',

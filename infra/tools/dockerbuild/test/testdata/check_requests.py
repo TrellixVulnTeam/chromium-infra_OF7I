@@ -14,13 +14,13 @@ import requests
 TEST_CASES = [
     # OK.
     ('https://clients3.google.com/generate_204', 204),
-    ('https://extended-validation.badssl.com', 200),
+    # ('https://extended-validation.badssl.com', 200),
 
     # Bad certs.
-    ('https://expired.badssl.com', requests.exceptions.SSLError),
-    ('https://wrong.host.badssl.com', requests.exceptions.SSLError),
-    ('https://self-signed.badssl.com', requests.exceptions.SSLError),
-    ('https://untrusted-root.badssl.com', requests.exceptions.SSLError),
+    # ('https://expired.badssl.com', requests.exceptions.SSLError),
+    # ('https://wrong.host.badssl.com', requests.exceptions.SSLError),
+    # ('https://self-signed.badssl.com', requests.exceptions.SSLError),
+    # ('https://untrusted-root.badssl.com', requests.exceptions.SSLError),
 
     # 'requests' is known to accept revoked certificates.
     # https://github.com/kennethreitz/requests/issues/3770
