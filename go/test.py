@@ -82,6 +82,26 @@ def get_adapter_path():
   return os.path.join(ADAPTER_DIR, adapter_fname)
 
 
+def run_vet(package_root):
+  """Runs 'go vet <package_root>/...'
+
+  Returns:
+   0 if and only if all tests pass.
+  """
+  if not check_go_available():
+    print('Can\'t find Go executable in PATH.')
+    print('Go vet not supported')
+    return 1
+
+  # Turn off copylock analysis. Eventually, when we stop copying protobufs
+  # in various places, we can turn it on.
+  command = ['go', 'vet', '-copylocks=false', '%s/...' % package_root]
+
+  # TODO: adapt results of go vet to resultdb.
+
+  return subprocess.Popen(command).wait()
+
+
 def run_tests(package_root):
   """Runs 'go test <package_root>/...'.
 
@@ -108,6 +128,23 @@ def run_tests(package_root):
     os.environ.update(prev_env)
 
 
+def run_all(package_root):
+  """Run go vet and then go tests
+
+  Returns:
+    0 if and only if all tests pass.
+  """
+
+  # Always run every applicable action so we give the user as much information
+  # as possible.
+  results = [run_vet(package_root), run_tests(package_root)]
+
+  for res in results:
+    if res:
+      return res
+  return 0
+
+
 def main(args):
   if not args:
     package_root = 'infra'
@@ -116,7 +153,7 @@ def main(args):
   else:
     print(sys.modules['__main__'].__doc__.strip(), file=sys.stderr)
     return 1
-  return run_tests(package_root)
+  return run_all(package_root)
 
 
 if __name__ == '__main__':
