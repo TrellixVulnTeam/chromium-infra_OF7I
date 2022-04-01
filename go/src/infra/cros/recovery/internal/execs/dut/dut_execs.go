@@ -7,6 +7,7 @@ package dut
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
@@ -175,9 +176,31 @@ func hasDutSerialNumberExec(ctx context.Context, info *execs.ExecInfo) error {
 	return errors.Reason("dut serial number is empty").Err()
 }
 
+// regexNameMatchExec checks if name match to provided regex.
+func regexNameMatchExec(ctx context.Context, info *execs.ExecInfo) error {
+	actionMap := info.GetActionArgs(ctx)
+	d := info.RunArgs.DUT
+	if d == nil {
+		return errors.Reason("regex name match: DUT not found").Err()
+	}
+	regex := actionMap.AsString(ctx, "regex", "")
+	if regex == "" {
+		return errors.Reason("regex name match: regex is empty").Err()
+	}
+	m, err := regexp.MatchString(regex, d.Name)
+	if err != nil {
+		return errors.Annotate(err, "regex name match").Err()
+	}
+	if !m {
+		return errors.Reason("regex name match: not match").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("dut_servo_host_present", servoHostPresentExec)
 	execs.Register("dut_has_name", hasDutNameActionExec)
+	execs.Register("dut_regex_name_match", regexNameMatchExec)
 	execs.Register("dut_has_board_name", hasDutBoardActionExec)
 	execs.Register("dut_has_model_name", hasDutModelActionExec)
 	execs.Register("dut_has_device_sku", hasDutDeviceSkuActionExec)
