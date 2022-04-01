@@ -85,8 +85,8 @@ func crosRepairActions() map[string]*Action {
 			Dependencies: []string{
 				"cros_default_boot",
 				"cros_boot_in_normal_mode",
-				"cros_hwid_info",
-				"cros_serial_number_info",
+				"Match HWID",
+				"Match serial-number",
 				"cros_tpm_fwver_match",
 				"cros_tpm_kernver_match",
 			},
@@ -382,7 +382,8 @@ func crosRepairActions() map[string]*Action {
 			Docs: []string{
 				"Verifies if battery present is reported as present in power supply info.",
 			},
-			ExecName: "cros_is_battery_present",
+			ExecName:   "cros_is_battery_present",
+			RunControl: 1,
 		},
 		"No Battery is present on device": {
 			Conditions: []string{
@@ -465,36 +466,84 @@ func crosRepairActions() map[string]*Action {
 			},
 			ExecName: "cros_is_not_in_dev_mode",
 		},
-		"cros_hwid_info": {
+		"Match HWID": {
 			Conditions: []string{
 				"is_not_flex_board",
-				"dut_has_hwid",
+				"Not Satlab device",
+				"Is HWID known",
 			},
 			Dependencies: []string{
 				"cros_storage_writing",
 			},
 			ExecName: "cros_match_hwid_to_inventory",
 		},
-		"cros_serial_number_info": {
+		"Match serial-number": {
 			Conditions: []string{
 				"is_not_flex_board",
-				"dut_has_serial_number",
+				"Not Satlab device",
+				"Is serial-number known",
 			},
 			Dependencies: []string{
 				"cros_storage_writing",
 			},
 			ExecName: "cros_match_serial_number_inventory",
 		},
-		"dut_has_hwid": {
+		"Is HWID known": {
 			Docs: []string{
 				"Check whether the DUT information includes its HWID.",
 			},
+			ExecName: "dut_has_hwid",
 		},
-		"dut_has_serial_number": {
+		"Is serial-number known": {
 			Docs: []string{
 				"Check whether the DUT information includes its ",
 				"serial number.",
 			},
+			ExecName: "dut_has_serial_number",
+		},
+		"Not Satlab device": {
+			Docs: []string{
+				"Verify that DUT name is not belong Satlab.",
+			},
+			Conditions: []string{
+				"Is Satlab device",
+			},
+			ExecName: "sample_fail",
+		},
+		"Is Satlab device": {
+			Docs: []string{
+				"Verify that DUT name is belong Satlab.",
+			},
+			ExecName: "dut_regex_name_match",
+			ExecExtraArgs: []string{
+				"regex:^satlab",
+			},
+		},
+		"Read DUT serial-number from DUT": {
+			Conditions: []string{
+				"Not Satlab device",
+			},
+			ExecName: "cros_update_hwid_to_inventory",
+		},
+		"Read DUT serial-number from DUT (Satlab)": {
+			Conditions: []string{
+				"Is Satlab device",
+			},
+			ExecName:               "cros_update_hwid_to_inventory",
+			AllowFailAfterRecovery: true,
+		},
+		"Read HWID from DUT": {
+			Conditions: []string{
+				"Not Satlab device",
+			},
+			ExecName: "cros_update_hwid_to_inventory",
+		},
+		"Read HWID from DUT (Satlab)": {
+			Conditions: []string{
+				"Is Satlab device",
+			},
+			ExecName:               "cros_update_hwid_to_inventory",
+			AllowFailAfterRecovery: true,
 		},
 		"cros_storage_writing": {
 			Dependencies: []string{
@@ -661,6 +710,7 @@ func crosRepairActions() map[string]*Action {
 			},
 			ExecName:    "servo_download_image_to_usb",
 			ExecTimeout: &durationpb.Duration{Seconds: 3000},
+			RunControl:  1,
 		},
 		"cros_is_time_to_force_download_image_to_usbkey": {
 			Docs: []string{
@@ -905,6 +955,7 @@ func crosRepairActions() map[string]*Action {
 			Docs: []string{
 				"Force to set GBB flags to 0x18 to boot in DEV mode and enable to boot from USB-drive.",
 				"Set 40 minutes as some FW BIOS is too big and take time to flash it.",
+				"Allowed to fail as flags can applied but fail by some reason",
 			},
 			Dependencies: []string{
 				"Read BIOS from DUT by servo",
@@ -913,7 +964,8 @@ func crosRepairActions() map[string]*Action {
 			ExecExtraArgs: []string{
 				"gbb_flags:0x18",
 			},
-			ExecTimeout: &durationpb.Duration{Seconds: 2400},
+			ExecTimeout:            &durationpb.Duration{Seconds: 2400},
+			AllowFailAfterRecovery: true,
 		},
 		"Power cycle DUT by RPM and wait": {
 			Docs: []string{
@@ -978,6 +1030,7 @@ func crosRepairActions() map[string]*Action {
 			ExecExtraArgs:          []string{"fprom:host"},
 			ExecTimeout:            &durationpb.Duration{Seconds: 300},
 			AllowFailAfterRecovery: true,
+			RunControl:             1,
 		},
 		"Disable software-controlled write-protect for 'ec'": {
 			Docs:                   []string{"Disable write-protect fprom 'ec'."},
@@ -986,6 +1039,7 @@ func crosRepairActions() map[string]*Action {
 			ExecExtraArgs:          []string{"fprom:ec"},
 			ExecTimeout:            &durationpb.Duration{Seconds: 300},
 			AllowFailAfterRecovery: true,
+			RunControl:             1,
 		},
 		"Set needs_deploy state": {
 			ExecName: "dut_state_needs_deploy",
@@ -1114,13 +1168,15 @@ func crosRepairActions() map[string]*Action {
 			RecoveryActions: []string{
 				"Set default boot as disk and reboot",
 			},
-			ExecName: "sample_fail",
+			ExecName:   "sample_fail",
+			RunControl: 1,
 		},
 		"Device booted from USB-drive": {
 			Docs: []string{
 				"Verify that device was booted from USB-drive.",
 			},
-			ExecName: "cros_booted_from_external_storage",
+			ExecName:   "cros_booted_from_external_storage",
+			RunControl: 1,
 		},
 		"Write factory-install-reset to file system": {
 			ExecName: "cros_run_shell_command",
@@ -1180,6 +1236,66 @@ func crosRepairActions() map[string]*Action {
 			Docs:        []string{"Perform install process"},
 			ExecName:    "cros_run_chromeos_install_command_after_boot_usbdrive",
 			ExecTimeout: &durationpb.Duration{Seconds: 1200},
+		},
+		"Perfrom RPM config verification": {
+			Docs: []string{
+				"Verify if RPM verification is required fo setup",
+				"Setup with PD control temprarely excluded from testing.",
+			},
+			Conditions: []string{
+				"dut_servo_host_present",
+				"has_rpm_info",
+				"servo_state_is_working",
+				"Setup does't have Servo PD control",
+			},
+			ExecName: "sample_pass",
+		},
+		"Setup has Servo PD control": {
+			Docs: []string{
+				"Verify that servo has build in PD control.",
+			},
+			ExecName: "servo_build_in_pd_present",
+		},
+		"Setup does't have Servo PD control": {
+			Docs: []string{
+				"Verify that servo does not have build in PD control.",
+			},
+			Conditions: []string{
+				"Setup has Servo PD control",
+			},
+			ExecName: "sample_fail",
+		},
+		"Verify RPM config (without battery)": {
+			Docs: []string{
+				"Verify RPM configs and set RPM state",
+				"Not applicable for cr50 servos based on b/205728276",
+				"Action is not critical as it updates own state.",
+			},
+			Conditions: []string{
+				"Perfrom RPM config verification",
+				"No Battery is present on device",
+			},
+			ExecName:               "rpm_audit_without_battery",
+			ExecTimeout:            &durationpb.Duration{Seconds: 600},
+			AllowFailAfterRecovery: true,
+		},
+		"Verify RPM config with battery": {
+			Docs: []string{
+				"Verify RPM when battery is present",
+				"Not applicable for cr50 servos based on b/205728276",
+				"Action is not critical as it updates own state.",
+			},
+			Conditions: []string{
+				"Perfrom RPM config verification",
+				"Battery is present on device",
+			},
+			ExecName:    "rpm_audit_with_battery",
+			ExecTimeout: &durationpb.Duration{Seconds: 600},
+			ExecExtraArgs: []string{
+				"timeout:120",
+				"wait_interval:5",
+			},
+			AllowFailAfterRecovery: true,
 		},
 	}
 }
