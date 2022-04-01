@@ -36,7 +36,7 @@ func RecoveryModeRequiredPDOff(ctx context.Context, run components.Runner, pinge
 	if !hasBattery {
 		return false, nil
 	}
-	if pdControlSupported, err := servo.ServoSupportsBuiltInPDControl(ctx, run, servod); err != nil {
+	if pdControlSupported, err := servo.ServoSupportsBuiltInPDControl(ctx, servod); err != nil {
 		return false, errors.Annotate(err, "require sink mode in recovery").Err()
 	} else if !pdControlSupported {
 		log.Debugf(ctx, "Require Sink Mode in Recovery: power delivery is no tsupported on this servo, snk mode is not needed for recovery.")

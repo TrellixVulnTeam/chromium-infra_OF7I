@@ -17,7 +17,7 @@ import (
 // servo device supports power-deliver related servod controls.
 //
 // This is applicable only with Servo V4 Type-C.
-func ServoSupportsBuiltInPDControl(ctx context.Context, run components.Runner, servod components.Servod) (bool, error) {
+func ServoSupportsBuiltInPDControl(ctx context.Context, servod components.Servod) (bool, error) {
 	if connectionType, err := GetString(ctx, servod, "root.dut_connection_type"); err != nil {
 		return false, errors.Annotate(err, "servo supports built-in PD control").Err()
 	} else if connectionType != "type-c" {

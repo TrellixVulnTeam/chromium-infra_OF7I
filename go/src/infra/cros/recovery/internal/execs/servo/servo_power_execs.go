@@ -119,7 +119,22 @@ func servoRecoverAcPowerExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+// buildInPDSupportedExec verify if build in PD control is supported.
+func buildInPDSupportedExec(ctx context.Context, info *execs.ExecInfo) error {
+	servod := info.NewServod()
+	pdControlSupported, err := servo.ServoSupportsBuiltInPDControl(ctx, servod)
+	if err != nil {
+		return errors.Annotate(err, "build in PD supported").Err()
+	}
+	if !pdControlSupported {
+		return errors.Reason("build in PD supported").Err()
+	}
+	info.NewLogger().Debugf("Build in PD is supported!")
+	return nil
+}
+
 func init() {
 	execs.Register("servo_servod_toggle_pd_role", servoServodPdRoleToggleExec)
 	execs.Register("servo_recover_ac_power", servoRecoverAcPowerExec)
+	execs.Register("servo_build_in_pd_present", buildInPDSupportedExec)
 }
