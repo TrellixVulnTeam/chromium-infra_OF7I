@@ -172,6 +172,8 @@ func TestIngestTestResults(t *testing.T) {
 			})
 		})
 		Convey(`valid payload`, func() {
+			config.SetTestProjectConfig(ctx, createProjectsConfig())
+
 			ctl := gomock.NewController(t)
 			defer ctl.Finish()
 
@@ -358,6 +360,43 @@ func TestIngestTestResults(t *testing.T) {
 				"ninja://test_has_unexpected":     1,
 			}
 			So(actualClusteredFailures, ShouldResemble, expectedClusteredFailures)
+		})
+		Convey(`no project config`, func() {
+			ctl := gomock.NewController(t)
+			defer ctl.Finish()
+
+			mbc := buildbucket.NewMockedClient(ctx, ctl)
+			ctx = mbc.Ctx
+
+			bID := int64(87654321)
+			inv := "invocations/build-87654321"
+
+			request := &bbpb.GetBuildRequest{
+				Id: bID,
+				Mask: &bbpb.BuildMask{
+					Fields: &field_mask.FieldMask{
+						Paths: []string{"builder", "infra.resultdb", "status"},
+					},
+				},
+			}
+			mbc.GetBuild(request, mockedGetBuildRsp(inv))
+
+			payload := &taskspb.IngestTestResults{
+				Build: &ctrlpb.BuildResult{
+					Host: "host",
+					Id:   bID,
+				},
+				PartitionTime: timestamppb.New(clock.Now(ctx).Add(-1 * time.Hour)),
+			}
+			err := ri.ingestTestResults(ctx, payload)
+			So(err, ShouldBeNil)
+
+			// Confirm no tasks have been scheduled.
+			So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
+			// Confirm no chunks have been written to GCS.
+			So(len(chunkStore.Contents), ShouldEqual, 0)
+			// Confirm no clustering has occurred.
+			So(clusteredFailures.InsertionsByProject, ShouldHaveLength, 0)
 		})
 	})
 }

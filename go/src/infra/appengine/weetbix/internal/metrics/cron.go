@@ -18,7 +18,6 @@ import (
 
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/config"
-	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/ingestion/control"
 )
 
@@ -103,33 +102,31 @@ func GlobalMetrics(ctx context.Context) error {
 	if err != nil {
 		return errors.Annotate(err, "collect buildbucket build join statistics").Err()
 	}
-	reportJoinStats(ctx, joinToBuildGauge, projectConfigs, buildJoinStats)
+	reportJoinStats(ctx, joinToBuildGauge, buildJoinStats)
 
 	// Performance joining to presubmit runs in ingestion.
 	psRunJoinStats, err := control.ReadPresubmitRunJoinStatistics(span.Single(ctx))
 	if err != nil {
 		return errors.Annotate(err, "collect presubmit run join statistics").Err()
 	}
-	reportJoinStats(ctx, joinToPresubmitGauge, projectConfigs, psRunJoinStats)
+	reportJoinStats(ctx, joinToPresubmitGauge, psRunJoinStats)
 
 	return nil
 }
 
-func reportJoinStats(ctx context.Context, metric metric.NonCumulativeDistribution, projectConfigs map[string]*configpb.ProjectConfig, resultsByProject map[string]control.JoinStatistics) {
-	for project := range projectConfigs {
+func reportJoinStats(ctx context.Context, metric metric.NonCumulativeDistribution, resultsByProject map[string]control.JoinStatistics) {
+	for project, stats := range resultsByProject {
 		joinedDist := distribution.New(metric.Bucketer())
 		unjoinedDist := distribution.New(metric.Bucketer())
 
-		if stats, ok := resultsByProject[project]; ok {
-			for hoursAgo := 0; hoursAgo < control.JoinStatsHours; hoursAgo++ {
-				joinedBuilds := stats.JoinedByHour[hoursAgo]
-				unjoinedBuilds := stats.TotalByHour[hoursAgo] - joinedBuilds
-				for i := int64(0); i < joinedBuilds; i++ {
-					joinedDist.Add(float64(hoursAgo))
-				}
-				for i := int64(0); i < unjoinedBuilds; i++ {
-					unjoinedDist.Add(float64(hoursAgo))
-				}
+		for hoursAgo := 0; hoursAgo < control.JoinStatsHours; hoursAgo++ {
+			joinedBuilds := stats.JoinedByHour[hoursAgo]
+			unjoinedBuilds := stats.TotalByHour[hoursAgo] - joinedBuilds
+			for i := int64(0); i < joinedBuilds; i++ {
+				joinedDist.Add(float64(hoursAgo))
+			}
+			for i := int64(0); i < unjoinedBuilds; i++ {
+				unjoinedDist.Add(float64(hoursAgo))
 			}
 		}
 

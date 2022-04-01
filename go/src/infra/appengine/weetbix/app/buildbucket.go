@@ -17,7 +17,6 @@ import (
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"infra/appengine/weetbix/internal/config"
 	ctlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 )
 
@@ -126,15 +125,6 @@ func processBBMessage(ctx context.Context, message *buildBucketMessage) (process
 	if chromiumMilestoneProjectRE.MatchString(message.Build.Project) {
 		// Chromium milestone projects are currently not supported.
 		return false, nil
-	}
-
-	if _, err := config.Project(ctx, message.Build.Project); err != nil {
-		if err == config.NotExistsErr {
-			// Project not configured in Weetbix, ignore it.
-			return false, nil
-		} else {
-			return false, errors.Annotate(err, "get project config").Err()
-		}
 	}
 
 	isPresubmit := false

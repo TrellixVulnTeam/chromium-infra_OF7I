@@ -15,12 +15,9 @@ import (
 	bbv1 "go.chromium.org/luci/common/api/buildbucket/buildbucket/v1"
 	. "go.chromium.org/luci/common/testing/assertions"
 	cvv0 "go.chromium.org/luci/cv/api/v0"
-	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/server/tq"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"infra/appengine/weetbix/internal/config"
-	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/cv"
 	controlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 	_ "infra/appengine/weetbix/internal/services/resultingester" // Needed to ensure task class is registered.
@@ -33,37 +30,8 @@ func TestHandleBuild(t *testing.T) {
 	Convey(`With Spanner Test Database`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
 		ctx, skdr := tq.TestingContext(ctx, nil)
-		ctx = memory.Use(ctx) // For test config.
-
-		// Builds and CV runs can come from different projects
-		// and still join. We test this by using two projects,
-		// one for builds, one for cv runs. Only the project
-		// for builds needs to be configured, as that is the
-		// project where data is ingested into.
-		configs := map[string]*configpb.ProjectConfig{
-			"buildproject": config.CreatePlaceholderProjectConfig(),
-		}
-
-		err := config.SetTestProjectConfig(ctx, configs)
-		So(err, ShouldBeNil)
 
 		Convey(`Test BuildbucketPubSubHandler`, func() {
-			Convey(`build from non-configured project is ignored`, func() {
-				buildExp := bbv1.LegacyApiCommonBuildMessage{
-					Project:   "fake",
-					Bucket:    "luci.fake.bucket",
-					Id:        87654321,
-					Status:    bbv1.StatusCompleted,
-					CreatedTs: bbv1.FormatTimestamp(time.Now()),
-				}
-				r := &http.Request{Body: makeBBReq(buildExp, "bb-hostname")}
-				project, processed, err := bbPubSubHandlerImpl(ctx, r)
-				So(err, ShouldBeNil)
-				So(processed, ShouldBeFalse)
-				So(project, ShouldEqual, "fake")
-				So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
-			})
-
 			Convey(`CI build is processed`, func() {
 				// Buildbucket timestamps are only in microsecond precision.
 				t := time.Now().Truncate(time.Nanosecond * 1000)

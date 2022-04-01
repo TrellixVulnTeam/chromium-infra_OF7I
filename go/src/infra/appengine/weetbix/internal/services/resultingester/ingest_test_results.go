@@ -123,6 +123,15 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 		return err
 	}
 
+	if _, err := config.Project(ctx, b.Builder.Project); err != nil {
+		if err == config.NotExistsErr {
+			// Project not configured in Weetbix, ignore it.
+			return nil
+		} else {
+			return errors.Annotate(err, "get project config").Err()
+		}
+	}
+
 	if b.Infra.GetResultdb().GetInvocation() == "" {
 		// Build does not have a ResultDB invocation to ingest.
 		logging.Debugf(ctx, "Skipping ingestion of build %s-%d because it has no ResultDB invocation.",

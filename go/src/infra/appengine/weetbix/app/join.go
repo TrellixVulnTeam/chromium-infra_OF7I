@@ -18,6 +18,7 @@ import (
 	"infra/appengine/weetbix/internal/ingestion/control"
 	ctlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 	"infra/appengine/weetbix/internal/services/resultingester"
+	"infra/appengine/weetbix/internal/services/testverdictingester"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 )
 
@@ -118,7 +119,7 @@ func JoinBuildResult(ctx context.Context, buildID, buildProject string, isPresub
 			return err
 		}
 		saved = true
-		taskCreated = createTaskIfNeeded(ctx, entry)
+		taskCreated = createTasksIfNeeded(ctx, entry)
 
 		// Will only populated if IsPresubmit is not empty.
 		cvProject = entry.PresubmitProject
@@ -199,7 +200,7 @@ func JoinPresubmitResult(ctx context.Context, presubmitResultByBuildID map[strin
 			if err := control.SetPresubmitResult(ctx, entry); err != nil {
 				return err
 			}
-			created := createTaskIfNeeded(ctx, entry)
+			created := createTasksIfNeeded(ctx, entry)
 			if created {
 				buildsOutputByBuildProject[entry.BuildProject]++
 			}
@@ -222,21 +223,24 @@ func JoinPresubmitResult(ctx context.Context, presubmitResultByBuildID map[strin
 	return nil
 }
 
-// createTaskIfNeeded creates the task if all necessary data for the ingestion is available.
-func createTaskIfNeeded(ctx context.Context, e *control.Entry) bool {
+// createTaskIfNeeded creates a test-result-ingestion task if all necessary
+// data for the ingestion is available. If the BuildProject is "fuchsia", it
+// also creates a test-verdict-ingestion task.
+// Returns true if the test-result-ingestion task is created.
+func createTasksIfNeeded(ctx context.Context, e *control.Entry) (itrTaskCreated bool) {
 	if e.BuildResult == nil || (e.IsPresubmit && e.PresubmitResult == nil) {
 		return false
 	}
 
-	var task *taskspb.IngestTestResults
+	var itrTask *taskspb.IngestTestResults
 	if e.IsPresubmit {
-		task = &taskspb.IngestTestResults{
+		itrTask = &taskspb.IngestTestResults{
 			PartitionTime: e.PresubmitResult.CreationTime,
 			Build:         e.BuildResult,
 			PresubmitRun:  e.PresubmitResult,
 		}
 	} else {
-		task = &taskspb.IngestTestResults{
+		itrTask = &taskspb.IngestTestResults{
 			PartitionTime: e.BuildResult.CreationTime,
 			Build:         e.BuildResult,
 		}
@@ -245,8 +249,22 @@ func createTaskIfNeeded(ctx context.Context, e *control.Entry) bool {
 	// Copy the task to avoid aliasing issues if the caller ever
 	// decides the modify e.PresubmitResult or e.BuildResult
 	// after we return.
-	task = proto.Clone(task).(*taskspb.IngestTestResults)
+	itrTask = proto.Clone(itrTask).(*taskspb.IngestTestResults)
+	resultingester.Schedule(ctx, itrTask)
 
-	resultingester.Schedule(ctx, task)
+	// Only ingest test verdicts from fuchsia to limit the amount the verdicts we
+	// ingest during development phase.
+	// TODO(crbug.com/1266759): remove this filter and update the function
+	// documentation once we are ready to ingest test verdicts from every project.
+	if e.BuildProject != "fuchsia" {
+		return true
+	}
+
+	itvTask := &taskspb.IngestTestVerdicts{
+		PartitionTime: itrTask.PartitionTime,
+		Build:         itrTask.Build,
+		PresubmitRun:  itrTask.PresubmitRun,
+	}
+	testverdictingester.Schedule(ctx, itvTask)
 	return true
 }

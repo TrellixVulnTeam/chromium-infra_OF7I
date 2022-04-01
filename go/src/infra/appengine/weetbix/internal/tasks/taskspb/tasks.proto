@@ -137,3 +137,19 @@ message ReclusterChunkState {
   // The last progress value which was reported.
   int64 last_reported_progress = 4;
 }
+
+// Payload of IngestTestVerdicts task.
+message IngestTestVerdicts {
+  // Timestamp representing the start of the data retention period
+  // for the ingested test results. In case of multiple builds
+  // ingested for one CV run, the partition_time used for all
+  // builds must be the same.
+  google.protobuf.Timestamp partition_time = 1;
+
+  // The build that is being ingested.
+  weetbix.internal.ingestion.control.BuildResult build = 2;
+
+  // Context about the presubmit run the build was a part of. Only
+  // populated if the build is a presubmit run.
+  weetbix.internal.ingestion.control.PresubmitResult presubmit_run = 3;
+}
