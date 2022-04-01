@@ -53,8 +53,14 @@ func UpdateProvisionInfo(ctx context.Context, dut *tlw.Dut) error {
 		return errors.Annotate(err, "update provision info").Err()
 	}
 	log.Debugf(ctx, "Update provision info to %s", dut.ProvisionedInfo)
-	s.LocalDUTState.ProvisionableLabels[CrosVersionKey] = dut.ProvisionedInfo.CrosVersion
-	s.LocalDUTState.ProvisionableAttributes[JobRepoURLKey] = dut.ProvisionedInfo.JobRepoURL
+	s.LocalDUTState.ProvisionableAttributes = make(provisionableAttributes)
+	s.LocalDUTState.ProvisionableLabels = make(provisionableLabels)
+	if dut.ProvisionedInfo.CrosVersion != "" {
+		s.LocalDUTState.ProvisionableLabels[CrosVersionKey] = dut.ProvisionedInfo.CrosVersion
+	}
+	if dut.ProvisionedInfo.JobRepoURL != "" {
+		s.LocalDUTState.ProvisionableAttributes[JobRepoURLKey] = dut.ProvisionedInfo.JobRepoURL
+	}
 	return errors.Annotate(s.writeStore(), "update provision info").Err()
 }
 
