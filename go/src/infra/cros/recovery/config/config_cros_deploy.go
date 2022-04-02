@@ -17,7 +17,7 @@ func crosDeployPlan() *Plan {
 			"Clean up",
 			"Servo has USB-key with require image",
 			"Device is pingable before deploy",
-			"DUT has expected OS version",
+			"DUT has expected OS",
 			"DUT has expected dev firmware",
 			"Switch to secure-mode and reboot",
 			"Deployment checks",
@@ -64,21 +64,27 @@ func deployActions() map[string]*Action {
 				"Power cycle DUT by RPM and wait",
 				"Set GBB flags to 0x18 by servo",
 				"Install OS in DEV mode",
+				"Install OS in DEV mode, with force to DEV-mode",
 				"Install OS in DEV mode with fresh image",
+				"Install OS in DEV mode, with force to DEV-mode (2)",
 			},
 		},
-		"DUT has expected OS version": {
-			Docs: []string{"Verify that device has stable version OS on it and version is match."},
+		"DUT has expected OS": {
+			Docs: []string{
+				"Verify that device has OS version from test channel, if not then install it.",
+			},
 			Dependencies: []string{
 				"Device is pingable before deploy",
 				"has_stable_version_cros_image",
 				"Device NOT booted from USB-drive",
 			},
-			ExecName: "cros_is_on_stable_version",
+			ExecName: "cros_is_os_test_channel",
 			RecoveryActions: []string{
 				"Quick provision OS",
 				"Install OS in DEV mode",
+				"Install OS in DEV mode, with force to DEV-mode",
 				"Install OS in DEV mode with fresh image",
+				"Install OS in DEV mode, with force to DEV-mode (2)",
 			},
 		},
 		"DUT has expected dev firmware": {
@@ -218,11 +224,40 @@ func deployActions() map[string]*Action {
 				"servo_state_is_working",
 			},
 			Dependencies: []string{
+				"Boot DUT from USB in DEV mode",
+				"Run install after boot from USB-drive",
+				"Cold reset DUT by servo and wait to boot",
+				"Wait DUT to be SSHable after reset",
+			},
+			ExecName:   "sample_pass",
+			RunControl: RunControl_ALWAYS_RUN,
+		},
+		"Install OS in DEV mode, with force to DEV-mode": {
+			Docs: []string{
+				"Install OS on the device from USB-key when device is in DEV-mode.",
+			},
+			Conditions: []string{
+				"servo_state_is_working",
+			},
+			Dependencies: []string{
 				"Set GBB flags to 0x18 by servo",
 				"Boot DUT from USB in DEV mode",
 				"Run install after boot from USB-drive",
 				"Cold reset DUT by servo and wait to boot",
 				"Wait DUT to be SSHable after reset",
+			},
+			ExecName:   "sample_pass",
+			RunControl: RunControl_ALWAYS_RUN,
+		},
+		"Install OS in DEV mode, with force to DEV-mode (2)": {
+			Docs: []string{
+				"Second attempt to install image in DEV mode",
+			},
+			Conditions: []string{
+				"servo_state_is_working",
+			},
+			Dependencies: []string{
+				"Install OS in DEV mode, with force to DEV-mode",
 			},
 			ExecName: "sample_pass",
 		},
@@ -237,7 +272,8 @@ func deployActions() map[string]*Action {
 				"Download stable image to USB-key",
 				"Install OS in DEV mode",
 			},
-			ExecName: "sample_pass",
+			ExecName:   "sample_pass",
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"Clean up": {
 			Docs: []string{

@@ -10,23 +10,21 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/components/cros"
 	"infra/cros/recovery/internal/execs"
-	"infra/cros/recovery/internal/execs/cros"
-)
-
-const (
-	labstationKeyWord = "labstation"
 )
 
 // servoHostIsLabstationExec confirms the servo host is a labstation
-// TODO (yunzhiyu@): Revisit when we onboard dockers.
 func servoHostIsLabstationExec(ctx context.Context, info *execs.ExecInfo) error {
-	r := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
-	board, err := cros.ReleaseBoard(ctx, r)
+	argsMap := info.GetActionArgs(ctx)
+	expected := argsMap.AsString(ctx, "board", "labstation")
+	run := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
+	log := info.NewLogger()
+	board, err := cros.ReleaseBoard(ctx, run, log)
 	if err != nil {
 		return errors.Annotate(err, "servo host is labstation").Err()
 	}
-	if !strings.Contains(board, labstationKeyWord) {
+	if !strings.Contains(board, expected) {
 		return errors.Reason("servo host is not labstation").Err()
 	}
 	return nil
