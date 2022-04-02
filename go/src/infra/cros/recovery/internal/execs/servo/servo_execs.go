@@ -237,8 +237,17 @@ func servoAuditUSBKeyExec(ctx context.Context, info *execs.ExecInfo) error {
 }
 
 // Verify that the root servo is enumerated/present on the host.
+// To force re-read topology please specify `update_topology:true`.
 func isRootServoPresentExec(ctx context.Context, info *execs.ExecInfo) error {
 	runner := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
+	am := info.GetActionArgs(ctx)
+	if am.AsBool(ctx, "update_topology", false) {
+		servoTopology, err := topology.RetrieveServoTopology(ctx, runner, info.RunArgs.DUT.ServoHost.Servo.SerialNumber)
+		if err != nil {
+			return errors.Annotate(err, "is root servo present exec").Err()
+		}
+		info.RunArgs.DUT.ServoHost.ServoTopology = servoTopology
+	}
 	rootServo, err := topology.GetRootServo(ctx, runner, info.RunArgs.DUT.ServoHost.Servo.SerialNumber)
 	if err != nil {
 		return errors.Annotate(err, "is root servo present exec").Err()
