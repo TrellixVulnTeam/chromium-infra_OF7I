@@ -46,11 +46,6 @@ class SomApp extends Polymer.mixinBehaviors([TimeBehavior], Polymer.Element) {
         value: false,
         computed: '_computeShowAlertView(_selectedPage)',
       },
-      _showAlertTableView: {
-        type: Boolean,
-        value: false,
-        computed: '_computeShowAlertTableView(_selectedPage)',
-      },
       _showTestExpectations: {
         type: Boolean,
         value: false,
@@ -215,11 +210,6 @@ class SomApp extends Polymer.mixinBehaviors([TimeBehavior], Polymer.Element) {
       if (pathParts && pathParts.length > 2 && pathParts[2] == 'status') {
         return 'treeStatusView';
       }
-
-      if (pathParts && pathParts.length > 2 && pathParts[2] == 'alerttable') {
-        return 'alertTableView';
-      }
-
       // On the page for a tree.
       return 'alertView';
     }
@@ -229,10 +219,6 @@ class SomApp extends Polymer.mixinBehaviors([TimeBehavior], Polymer.Element) {
 
   _computeShowAlertView(selectedPage) {
     return selectedPage == 'alertView';
-  }
-
-  _computeShowAlertTableView(selectedPage) {
-    return selectedPage == 'alertTableView';
   }
 
   _computeShowTestExpectations(selectedPage) {

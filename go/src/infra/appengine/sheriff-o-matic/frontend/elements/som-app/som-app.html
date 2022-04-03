@@ -204,10 +204,6 @@
       </div>
       <div id="somDrawerOverlay" on-tap="_toggleDrawer"></div>
       <iron-pages id="somContent" attr-for-selected='id' selected="[[_selectedPage]]">
-        <template is="dom-if" if="[[_showAlertTableView]]">
-          <som-table-view id="alertTableView" class="page-body" tree="[[_tree]]">
-            </som-alert-view>
-        </template>
         <template is="dom-if" if="[[_showAlertView]]">
           <som-alert-view id="alertView" class="page-body" alerts-times="{{alertsTimes}}"
             examined-alert-key="[[_examinedAlertKey]]" fetching-alerts="{{_fetchingAlerts}}" trees="[[_trees]]"

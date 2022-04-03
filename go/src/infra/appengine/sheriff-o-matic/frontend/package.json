@@ -7,15 +7,20 @@
     "test": "test"
   },
   "dependencies": {
-    "@popeindustries/lit-html-server": "^0.13.0",
+    "@emotion/react": "^11.8.2",
+    "@emotion/styled": "^11.8.1",
+    "@mui/icons-material": "^5.5.0",
+    "@mui/material": "^5.5.0",
     "bower-locker": "^1.0.7",
-    "lit": "^2.0.2",
-    "lit-html": "^0.13.0",
     "polylint": "^2.9.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "vulcanize": "~1.14.8"
   },
   "devDependencies": {
     "@chopsui/wct-runner": "0.0.1",
+    "@types/react": "^17.0.40",
+    "@types/react-dom": "^17.0.13",
     "bower": "^1.8.8",
     "esbuild": "^0.13.12",
     "istanbul": "^0.4.4",
@@ -25,8 +30,8 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit --skipLibCheck",
-    "build": "esbuild --bundle lit_elements/all.ts --minify --outfile=scripts/bundle.js",
-    "dev": "esbuild --bundle lit_elements/all.ts --minify --sourcemap --outfile=scripts/bundle.js --watch",
+    "build": "esbuild --bundle src/index.tsx --minify --outfile=scripts/bundle.js",
+    "dev": "esbuild --bundle src/index.tsx --minify --sourcemap --outfile=scripts/bundle.js --watch",
     "test": "mocha"
   },
   "author": "",

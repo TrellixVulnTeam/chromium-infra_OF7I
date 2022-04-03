@@ -9,6 +9,7 @@
         "module": "es2015",
         "moduleResolution": "node",
         "strict": true,
+        "jsx": "react",
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noImplicitReturns": true,
@@ -16,7 +17,7 @@
         "experimentalDecorators": true,
     },
     "include": [
-        "lit_elements/**/*.ts"
+        "src/**/*.ts"
     ],
     "exclude": [
         "node_modules/**"
