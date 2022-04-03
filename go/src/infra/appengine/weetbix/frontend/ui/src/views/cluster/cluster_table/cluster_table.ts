@@ -41,7 +41,7 @@ export class ClusterTable extends LitElement {
         super.connectedCallback()
         fetch(`/api/projects/${encodeURIComponent(this.project)}/clusters`)
             .then(r => r.json())
-            .then(clusters => this.clusters = clusters);
+            .then(clusters => this.clusters = clusters || []);
     }
 
     onDaysChanged() {
@@ -64,6 +64,14 @@ export class ClusterTable extends LitElement {
         if (this.clusters === undefined) {
             return html`Loading...`;
         }
+        if (this.clusters.length === 0) {
+            return html`
+            <div class="empty">
+                <h3>Hooray!</h3>
+                <p>No clusters in ${this.project} currently have enough impact to have bugs filed for them.</p>
+            </div>`;
+        }
+
         const clusterLink = (cluster: Cluster): string => {
             return linkToCluster(this.project, cluster.clusterId);
         }
@@ -206,6 +214,11 @@ export class ClusterTable extends LitElement {
         }
         a[data-suggested] {
             font-style: italic;
+        }
+        .empty {
+            margin: 50px auto;
+            max-width: 600px;
+            font-size: 24px;
         }
         `];
 }
