@@ -40,7 +40,7 @@ const (
 // btpsCmd creates command for adding, removing, or completely replacing Bluetooth peers on a DUT.
 func btpsCmd(mode action) *subcommands.Command {
 	return &subcommands.Command{
-		UsageLine: "bluetooth-peers add|replace|delete -dut {DUT name} -hostname {BTP hostname} [-hostname {BTP hostname}...]",
+		UsageLine: "bluetooth-peers -dut {DUT name} -hostname {BTP hostname} [-hostname {BTP hostname}...]",
 		ShortDesc: "Manage Bluetooth peers connect to a DUT",
 		LongDesc:  cmdhelp.ManageBTPsLongDesc,
 		CommandRun: func() subcommands.CommandRun {
