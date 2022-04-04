@@ -10,6 +10,8 @@ import (
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
+
+	"infra/appengine/poros/api/asset"
 )
 
 func init() {
@@ -23,6 +25,8 @@ func main() {
 		gaeemulation.NewModuleFromFlags(),
 	}
 	server.Main(nil, modules, func(srv *server.Server) error {
+		assetHandler := &asset.AssetHandler{}
+		asset.RegisterAssetServer(srv.PRPC, assetHandler)
 		return nil
 	})
 }

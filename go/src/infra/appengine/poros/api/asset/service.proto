@@ -1,0 +1,81 @@
+// Copyright 2022 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package poros;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "api/proto/resources.proto";
+
+option go_package = "infra/appengine/poros/api/asset;";
+
+// Performs operations on Assets.
+service Asset {
+  // Creates the given Asset.
+  rpc Create(CreateAssetRequest) returns (AssetEntity);
+
+  // Retrieves a Asset for a given unique value.
+  rpc Get(GetAssetRequest) returns (AssetEntity);
+
+  // Update a single asset in EnterpriseAsset.
+  rpc Update(UpdateAssetRequest) returns (AssetEntity);
+
+  // Deletes the given Asset.
+  rpc Delete(DeleteAssetRequest) returns (.google.protobuf.Empty);
+
+  // Lists all Assets.
+  rpc List(ListAssetsRequest) returns (ListAssetsResponse);
+}
+// Request to create a single asset in AssetServ
+message CreateAssetRequest {
+  // The new asset to add to the database.
+  string name = 1;
+  string description = 2;
+}
+
+// Gets a Asset resource.
+message GetAssetRequest {
+  // The unique identifier of the asset to retrieve.
+  // Format: publishers/{publisher}/assets/{asset}
+  string asset_id = 1;
+}
+
+// Request to update a single asset in EnterpriseAsset.
+message UpdateAssetRequest {
+  // The existing asset to update in the database.
+  AssetEntity asset = 1;
+
+  // The list of fields to update.
+  .google.protobuf.FieldMask update_mask = 2;
+}
+
+// Request to delete a single asset from EnterpriseAsset.
+message DeleteAssetRequest {
+  // The unique identifier of the asset to delete from the database.
+  string asset_id = 1;
+}
+
+// Request to list all assets in EnterpriseAsset.
+message ListAssetsRequest {
+  // Fields to include on each result
+  .google.protobuf.FieldMask read_mask = 1;
+
+  // Number of results per page
+  int32 page_size = 2;
+
+  // Page token from a previous page's ListAssetsResponse
+  string page_token = 3;
+}
+
+// Response to ListAssetsRequest.
+message ListAssetsResponse {
+  // The result set.
+  repeated AssetEntity assets = 1;
+
+  // A page token that can be passed into future requests to get the next page.
+  // Empty if there is no next page.
+  string next_page_token = 2;
+}
