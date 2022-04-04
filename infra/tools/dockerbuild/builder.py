@@ -467,7 +467,7 @@ def BuildPackageFromSource(system,
     if env:
       extra_env.update(env)
 
-    with util.tempdir(build_dir, 'deps') as tdeps:
+    with util.tempdir(tdir, 'deps') as tdeps:
       if tpp_libs:
         cflags = extra_env.get('CFLAGS', '')
         ldflags = extra_env.get('LDFLAGS', '')
