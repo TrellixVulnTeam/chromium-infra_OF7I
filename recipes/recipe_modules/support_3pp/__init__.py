@@ -5,7 +5,6 @@
 PYTHON_VERSION_COMPATIBILITY = "PY3"
 
 DEPS = [
-  'infra/provenance',
   'infra/snoopy',
 
   'recipe_engine/archive',

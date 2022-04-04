@@ -1717,129 +1717,6 @@
   },
   {
     "cmd": [],
-    "name": "building build_tools/tool.attach provenance",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "file_hash",
-      "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64/40-chars-fake-of-the-package-instance_id"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "infra_step": true,
-    "name": "building build_tools/tool.attach provenance.Compute file hash",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
-      "[CLEANUP]/tmp_tmp_6/manifest.json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "infra_step": true,
-    "name": "building build_tools/tool.attach provenance.Provenance manifest",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
-      "@@@STEP_LOG_END@manifest.json@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "ensure",
-      "-root",
-      "[START_DIR]/provenance",
-      "-ensure-file",
-      "infra/tools/provenance/${platform} git_revision:1b94785f1e15dc6c54840db4988d6c5bf0f4714c",
-      "-max-threads",
-      "0",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "name": "building build_tools/tool.attach provenance.ensure_installed",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:1b9\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/provenance/resolved-platform\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    ]@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "[START_DIR]/provenance/provenance",
-      "generate",
-      "-input",
-      "[CLEANUP]/tmp_tmp_6/manifest.json",
-      "-output",
-      "[CLEANUP]/tmp_tmp_6/provenance.attestation",
-      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "name": "building build_tools/tool.attach provenance.generate",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [],
     "name": "building build_tools/tool.do upload",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -1885,8 +1762,6 @@
       "3pp_ecosystem_hash:c2719ea17aebff53d40f52891cdc3c4758212d89987565de4a740d6c46f8deb2",
       "-tag",
       "version:2@1.5.0-rc1",
-      "-metadata-from-file",
-      "provenance:[CLEANUP]/tmp_tmp_6/provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2299,7 +2174,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/git/go.repo/tool\", \"preserve_writable\": true, \"root\": \"[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/v1.4.1/checkout\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_7",
+      "[CLEANUP]/tmp_tmp_6",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -2361,7 +2236,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_7",
+      "[CLEANUP]/tmp_tmp_6",
       "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/tool/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -2636,7 +2511,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/build_tools/tool/linux-amd64\", \"root\": \"[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/v1.4.1/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_8",
+      "[CLEANUP]/tmp_tmp_7",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -2698,7 +2573,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_8",
+      "[CLEANUP]/tmp_tmp_7",
       "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -2714,91 +2589,6 @@
     "name": "building build_tools/tool (2).mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [],
-    "name": "building build_tools/tool (2).attach provenance",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "file_hash",
-      "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64/40-chars-fake-of-the-package-instance_id"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.4.1"
-    },
-    "infra_step": true,
-    "name": "building build_tools/tool (2).attach provenance.Compute file hash",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
-      "[CLEANUP]/tmp_tmp_9/manifest.json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.4.1"
-    },
-    "infra_step": true,
-    "name": "building build_tools/tool (2).attach provenance.Provenance manifest",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
-      "@@@STEP_LOG_END@manifest.json@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "[START_DIR]/provenance/provenance",
-      "generate",
-      "-input",
-      "[CLEANUP]/tmp_tmp_9/manifest.json",
-      "-output",
-      "[CLEANUP]/tmp_tmp_9/provenance.attestation",
-      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.4.1"
-    },
-    "name": "building build_tools/tool (2).attach provenance.generate",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -2850,8 +2640,6 @@
       "3pp_ecosystem_hash:c2719ea17aebff53d40f52891cdc3c4758212d89987565de4a740d6c46f8deb2",
       "-tag",
       "version:2@v1.4.1",
-      "-metadata-from-file",
-      "provenance:[CLEANUP]/tmp_tmp_9/provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],

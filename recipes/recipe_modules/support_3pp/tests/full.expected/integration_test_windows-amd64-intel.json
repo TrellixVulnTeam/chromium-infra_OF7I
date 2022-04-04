@@ -2564,177 +2564,6 @@
   },
   {
     "cmd": [],
-    "name": "building deps/bottom_dep_git.attach provenance",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "file_hash",
-      "[CACHE]\\3pp_cipd\\3pp\\deps\\bottom_dep_git\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_git",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building deps/bottom_dep_git.attach provenance.Compute file hash",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
-      "[CLEANUP]\\tmp_tmp_4\\manifest.json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_git",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building deps/bottom_dep_git.attach provenance.Provenance manifest",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
-      "@@@STEP_LOG_END@manifest.json@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd.bat",
-      "ensure",
-      "-root",
-      "[START_DIR]\\provenance",
-      "-ensure-file",
-      "infra/tools/provenance/${platform} git_revision:1b94785f1e15dc6c54840db4988d6c5bf0f4714c",
-      "-max-threads",
-      "0",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_git",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building deps/bottom_dep_git.attach provenance.ensure_installed",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:1b9\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/provenance/resolved-platform\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    ]@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "[START_DIR]\\provenance\\provenance",
-      "generate",
-      "-input",
-      "[CLEANUP]\\tmp_tmp_4\\manifest.json",
-      "-output",
-      "[CLEANUP]\\tmp_tmp_4\\provenance.attestation",
-      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_git",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building deps/bottom_dep_git.attach provenance.generate",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [],
     "name": "building deps/bottom_dep_git.do upload",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -2796,8 +2625,6 @@
       "build_id:8945511751514863184",
       "-tag",
       "version:2@1.5.0-rc1",
-      "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_4\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2833,6 +2660,44 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/deps/bottom_dep_git/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/deps/bottom_dep_git/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CACHE]\\3pp_cipd\\3pp\\deps\\bottom_dep_git\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_git",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building deps/bottom_dep_git.do upload.Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
     ]
   },
   {
@@ -3139,7 +3004,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/url/deps/bottom_dep_url/windows-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\deps\\\\bottom_dep_url\\\\windows-amd64\\\\1.2.3\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_5",
+      "[CLEANUP]\\tmp_tmp_4",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -3225,7 +3090,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_5",
+      "[CLEANUP]\\tmp_tmp_4",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\url\\deps\\bottom_dep_url\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -3687,7 +3552,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/bottom_dep_url/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\deps\\\\bottom_dep_url\\\\windows-amd64\\\\1.2.3\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_6",
+      "[CLEANUP]\\tmp_tmp_5",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -3773,7 +3638,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_6",
+      "[CLEANUP]\\tmp_tmp_5",
       "[CACHE]\\3pp_cipd\\3pp\\deps\\bottom_dep_url\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -3801,127 +3666,6 @@
     "name": "building deps/bottom_dep_url.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [],
-    "name": "building deps/bottom_dep_url.attach provenance",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "file_hash",
-      "[CACHE]\\3pp_cipd\\3pp\\deps\\bottom_dep_url\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_url",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.2.3"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building deps/bottom_dep_url.attach provenance.Compute file hash",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
-      "[CLEANUP]\\tmp_tmp_7\\manifest.json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_url",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.2.3"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building deps/bottom_dep_url.attach provenance.Provenance manifest",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
-      "@@@STEP_LOG_END@manifest.json@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "[START_DIR]\\provenance\\provenance",
-      "generate",
-      "-input",
-      "[CLEANUP]\\tmp_tmp_7\\manifest.json",
-      "-output",
-      "[CLEANUP]\\tmp_tmp_7\\provenance.attestation",
-      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_url",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.2.3"
-    },
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building deps/bottom_dep_url.attach provenance.generate",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -3987,8 +3731,6 @@
       "build_id:8945511751514863184",
       "-tag",
       "version:2@1.2.3",
-      "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_7\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4024,6 +3766,44 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/deps/bottom_dep_url/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/deps/bottom_dep_url/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CACHE]\\3pp_cipd\\3pp\\deps\\bottom_dep_url\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_url",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.2.3"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building deps/bottom_dep_url.do upload.Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
     ]
   },
   {
@@ -4266,7 +4046,7 @@
       "-version",
       "version:1.2.3",
       "-out",
-      "[CLEANUP]\\tmp_tmp_8",
+      "[CLEANUP]\\tmp_tmp_6",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4353,7 +4133,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_8",
+      "[CLEANUP]\\tmp_tmp_6",
       "[CACHE]\\3pp_cipd\\source\\deep_dep\\resolved-instance_id-of-version:1.2.3---"
     ],
     "env": {
@@ -4475,7 +4255,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/deep_dep/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\deps\\\\deep_dep\\\\windows-amd64\\\\1.2.3\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_9",
+      "[CLEANUP]\\tmp_tmp_7",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -4563,7 +4343,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_9",
+      "[CLEANUP]\\tmp_tmp_7",
       "[CACHE]\\3pp_cipd\\3pp\\deps\\deep_dep\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -4592,130 +4372,6 @@
     "name": "building deps/deep_dep.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [],
-    "name": "building deps/deep_dep.attach provenance",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "file_hash",
-      "[CACHE]\\3pp_cipd\\3pp\\deps\\deep_dep\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
-      "_3PP_PATCH_VERSION": "cr0",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.2.3"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building deps/deep_dep.attach provenance.Compute file hash",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
-      "[CLEANUP]\\tmp_tmp_10\\manifest.json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
-      "_3PP_PATCH_VERSION": "cr0",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.2.3"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building deps/deep_dep.attach provenance.Provenance manifest",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
-      "@@@STEP_LOG_END@manifest.json@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "[START_DIR]\\provenance\\provenance",
-      "generate",
-      "-input",
-      "[CLEANUP]\\tmp_tmp_10\\manifest.json",
-      "-output",
-      "[CLEANUP]\\tmp_tmp_10\\provenance.attestation",
-      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
-      "_3PP_PATCH_VERSION": "cr0",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.2.3"
-    },
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building deps/deep_dep.attach provenance.generate",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -4782,8 +4438,6 @@
       "build_id:8945511751514863184",
       "-tag",
       "version:2@1.2.3.cr0",
-      "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_10\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4820,6 +4474,45 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/deps/deep_dep/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/deps/deep_dep/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CACHE]\\3pp_cipd\\3pp\\deps\\deep_dep\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.2.3"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building deps/deep_dep.do upload.Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
     ]
   },
   {
@@ -5143,7 +4836,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/url/tools/pkg/windows-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg_override_and_no_latest\\\\windows-amd64\\\\1.1.2\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_11",
+      "[CLEANUP]\\tmp_tmp_8",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -5229,7 +4922,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_11",
+      "[CLEANUP]\\tmp_tmp_8",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\url\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -5691,7 +5384,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/pkg/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg_override_and_no_latest\\\\windows-amd64\\\\1.1.2\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_12",
+      "[CLEANUP]\\tmp_tmp_9",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -5777,7 +5470,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_12",
+      "[CLEANUP]\\tmp_tmp_9",
       "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -5805,127 +5498,6 @@
     "name": "building tools/pkg_override_and_no_latest.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [],
-    "name": "building tools/pkg_override_and_no_latest.attach provenance",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "file_hash",
-      "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.1.2"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building tools/pkg_override_and_no_latest.attach provenance.Compute file hash",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
-      "[CLEANUP]\\tmp_tmp_13\\manifest.json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.1.2"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building tools/pkg_override_and_no_latest.attach provenance.Provenance manifest",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
-      "@@@STEP_LOG_END@manifest.json@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "[START_DIR]\\provenance\\provenance",
-      "generate",
-      "-input",
-      "[CLEANUP]\\tmp_tmp_13\\manifest.json",
-      "-output",
-      "[CLEANUP]\\tmp_tmp_13\\provenance.attestation",
-      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.1.2"
-    },
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building tools/pkg_override_and_no_latest.attach provenance.generate",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -5989,8 +5561,6 @@
       "build_id:8945511751514863184",
       "-tag",
       "version:2@1.1.2",
-      "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_13\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -6026,6 +5596,44 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/tools/pkg/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/tools/pkg/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/pkg_override_and_no_latest.do upload.Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
     ]
   },
   {
@@ -6358,7 +5966,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"experimental/3pp/sources/script/tools/windows_experiment/windows-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\windows_experiment\\\\windows-amd64\\\\2.0.0.windows.1\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_14",
+      "[CLEANUP]\\tmp_tmp_10",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -6444,7 +6052,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_14",
+      "[CLEANUP]\\tmp_tmp_10",
       "[CACHE]\\3pp_cipd\\experimental\\3pp\\sources\\script\\tools\\windows_experiment\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -6905,7 +6513,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"experimental/3pp/tools/windows_experiment/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\windows_experiment\\\\windows-amd64\\\\2.0.0.windows.1\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_15",
+      "[CLEANUP]\\tmp_tmp_11",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -6991,7 +6599,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_15",
+      "[CLEANUP]\\tmp_tmp_11",
       "[CACHE]\\3pp_cipd\\experimental\\3pp\\tools\\windows_experiment\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -7019,127 +6627,6 @@
     "name": "building tools/windows_experiment.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [],
-    "name": "building tools/windows_experiment.attach provenance",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "file_hash",
-      "[CACHE]\\3pp_cipd\\experimental\\3pp\\tools\\windows_experiment\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/windows_experiment",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0.windows.1"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building tools/windows_experiment.attach provenance.Compute file hash",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
-      "[CLEANUP]\\tmp_tmp_16\\manifest.json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/windows_experiment",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0.windows.1"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building tools/windows_experiment.attach provenance.Provenance manifest",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
-      "@@@STEP_LOG_END@manifest.json@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "[START_DIR]\\provenance\\provenance",
-      "generate",
-      "-input",
-      "[CLEANUP]\\tmp_tmp_16\\manifest.json",
-      "-output",
-      "[CLEANUP]\\tmp_tmp_16\\provenance.attestation",
-      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/windows_experiment",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0.windows.1"
-    },
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building tools/windows_experiment.attach provenance.generate",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -7207,8 +6694,6 @@
       "real_version:2.0.0.windows.1",
       "-tag",
       "version:2@2.0.0",
-      "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_16\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -7244,6 +6729,44 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@experimental/3pp/tools/windows_experiment/windows-amd64@https://chrome-infra-packages.appspot.com/p/experimental/3pp/tools/windows_experiment/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CACHE]\\3pp_cipd\\experimental\\3pp\\tools\\windows_experiment\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/windows_experiment",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "2.0.0.windows.1"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/windows_experiment.do upload.Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
     ]
   },
   {
@@ -7427,7 +6950,7 @@
       "-version",
       "version:2@0.9.0.chops.1",
       "-out",
-      "[CLEANUP]\\tmp_tmp_17",
+      "[CLEANUP]\\tmp_tmp_12",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -7514,7 +7037,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_17",
+      "[CLEANUP]\\tmp_tmp_12",
       "[CACHE]\\3pp_cipd\\3pp\\build_tools\\tool\\windows-amd64\\resolved-instance_id-of-version:2@0.9.0."
     ],
     "env": {
@@ -8073,7 +7596,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/git/go.repo/git_tool\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\build_tools\\\\git_tool\\\\windows-amd64\\\\1.5.0-rc1\\\\checkout\\\\src\\\\go.repo\\\\tool\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_18",
+      "[CLEANUP]\\tmp_tmp_13",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -8161,7 +7684,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_18",
+      "[CLEANUP]\\tmp_tmp_13",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\git\\go.repo\\git_tool\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -8789,7 +8312,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}, {\"version_file\": \".versions/tool.cipd_version\"}], \"install_mode\": \"copy\", \"package\": \"3pp/build_tools/git_tool/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\build_tools\\\\git_tool\\\\windows-amd64\\\\1.5.0-rc1\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_19",
+      "[CLEANUP]\\tmp_tmp_14",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -8877,7 +8400,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_19",
+      "[CLEANUP]\\tmp_tmp_14",
       "[CACHE]\\3pp_cipd\\3pp\\build_tools\\git_tool\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -9186,130 +8709,6 @@
   },
   {
     "cmd": [],
-    "name": "building build_tools/git_tool.attach provenance",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "file_hash",
-      "[CACHE]\\3pp_cipd\\3pp\\build_tools\\git_tool\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/git_tool",
-      "_3PP_PATCH_VERSION": "chops.1",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building build_tools/git_tool.attach provenance.Compute file hash",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
-      "[CLEANUP]\\tmp_tmp_20\\manifest.json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/git_tool",
-      "_3PP_PATCH_VERSION": "chops.1",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building build_tools/git_tool.attach provenance.Provenance manifest",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
-      "@@@STEP_LOG_END@manifest.json@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "[START_DIR]\\provenance\\provenance",
-      "generate",
-      "-input",
-      "[CLEANUP]\\tmp_tmp_20\\manifest.json",
-      "-output",
-      "[CLEANUP]\\tmp_tmp_20\\provenance.attestation",
-      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/git_tool",
-      "_3PP_PATCH_VERSION": "chops.1",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building build_tools/git_tool.attach provenance.generate",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [],
     "name": "building build_tools/git_tool.do upload",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -9372,8 +8771,6 @@
       "build_id:8945511751514863184",
       "-tag",
       "version:2@1.5.0-rc1.chops.1",
-      "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_20\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -9410,6 +8807,45 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/build_tools/git_tool/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/build_tools/git_tool/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CACHE]\\3pp_cipd\\3pp\\build_tools\\git_tool\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "build_tools/git_tool",
+      "_3PP_PATCH_VERSION": "chops.1",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building build_tools/git_tool.do upload.Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
     ]
   },
   {
@@ -10036,7 +9472,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/git/go.repo/tool\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\build_tools\\\\tool\\\\windows-amd64\\\\1.5.0-rc1\\\\checkout\\\\src\\\\go.repo\\\\tool\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_21",
+      "[CLEANUP]\\tmp_tmp_15",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -10124,7 +9560,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_21",
+      "[CLEANUP]\\tmp_tmp_15",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\git\\go.repo\\tool\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -10750,7 +10186,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}, {\"version_file\": \".versions/tool.cipd_version\"}], \"install_mode\": \"copy\", \"package\": \"3pp/build_tools/tool/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\build_tools\\\\tool\\\\windows-amd64\\\\1.5.0-rc1\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_22",
+      "[CLEANUP]\\tmp_tmp_16",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -10838,7 +10274,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_22",
+      "[CLEANUP]\\tmp_tmp_16",
       "[CACHE]\\3pp_cipd\\3pp\\build_tools\\tool\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -11147,130 +10583,6 @@
   },
   {
     "cmd": [],
-    "name": "building build_tools/tool.attach provenance",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "file_hash",
-      "[CACHE]\\3pp_cipd\\3pp\\build_tools\\tool\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
-      "_3PP_PATCH_VERSION": "chops.1",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building build_tools/tool.attach provenance.Compute file hash",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
-      "[CLEANUP]\\tmp_tmp_23\\manifest.json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
-      "_3PP_PATCH_VERSION": "chops.1",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building build_tools/tool.attach provenance.Provenance manifest",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
-      "@@@STEP_LOG_END@manifest.json@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "[START_DIR]\\provenance\\provenance",
-      "generate",
-      "-input",
-      "[CLEANUP]\\tmp_tmp_23\\manifest.json",
-      "-output",
-      "[CLEANUP]\\tmp_tmp_23\\provenance.attestation",
-      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
-      "_3PP_PATCH_VERSION": "chops.1",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building build_tools/tool.attach provenance.generate",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [],
     "name": "building build_tools/tool.do upload",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -11331,8 +10643,6 @@
       "build_id:8945511751514863184",
       "-tag",
       "version:2@1.5.0-rc1.chops.1",
-      "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_23\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -11369,6 +10679,45 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/build_tools/tool/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/build_tools/tool/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CACHE]\\3pp_cipd\\3pp\\build_tools\\tool\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
+      "_3PP_PATCH_VERSION": "chops.1",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building build_tools/tool.do upload.Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
     ]
   },
   {
@@ -11687,7 +11036,7 @@
       "-version",
       "version:1.0.0",
       "-out",
-      "[CLEANUP]\\tmp_tmp_24",
+      "[CLEANUP]\\tmp_tmp_17",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -11772,7 +11121,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_24",
+      "[CLEANUP]\\tmp_tmp_17",
       "[CACHE]\\3pp_cipd\\source\\dep\\resolved-instance_id-of-version:1.0.0---"
     ],
     "env": {
@@ -12334,7 +11683,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/dep/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\deps\\\\dep\\\\windows-amd64\\\\1.0.0\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_25",
+      "[CLEANUP]\\tmp_tmp_18",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -12420,7 +11769,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_25",
+      "[CLEANUP]\\tmp_tmp_18",
       "[CACHE]\\3pp_cipd\\3pp\\deps\\dep\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -12448,127 +11797,6 @@
     "name": "building deps/dep.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [],
-    "name": "building deps/dep.attach provenance",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "file_hash",
-      "[CACHE]\\3pp_cipd\\3pp\\deps\\dep\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/dep",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.0.0"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building deps/dep.attach provenance.Compute file hash",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
-      "[CLEANUP]\\tmp_tmp_26\\manifest.json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/dep",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.0.0"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building deps/dep.attach provenance.Provenance manifest",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
-      "@@@STEP_LOG_END@manifest.json@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "[START_DIR]\\provenance\\provenance",
-      "generate",
-      "-input",
-      "[CLEANUP]\\tmp_tmp_26\\manifest.json",
-      "-output",
-      "[CLEANUP]\\tmp_tmp_26\\provenance.attestation",
-      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/dep",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "1.0.0"
-    },
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building deps/dep.attach provenance.generate",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -12634,8 +11862,6 @@
       "build_id:8945511751514863184",
       "-tag",
       "version:2@1.0.0",
-      "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_26\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -12671,6 +11897,44 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/deps/dep/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/deps/dep/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CACHE]\\3pp_cipd\\3pp\\deps\\dep\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/dep",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building deps/dep.do upload.Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
     ]
   },
   {
@@ -13146,7 +12410,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/script/tools/pkg/windows-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg\\\\windows-amd64\\\\2.0.0\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_27",
+      "[CLEANUP]\\tmp_tmp_19",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -13232,7 +12496,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_27",
+      "[CLEANUP]\\tmp_tmp_19",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\script\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -13884,7 +13148,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/pkg/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg\\\\windows-amd64\\\\2.0.0\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_28",
+      "[CLEANUP]\\tmp_tmp_20",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -13970,7 +13234,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_28",
+      "[CLEANUP]\\tmp_tmp_20",
       "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -13998,127 +13262,6 @@
     "name": "building tools/pkg.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [],
-    "name": "building tools/pkg.attach provenance",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "file_hash",
-      "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building tools/pkg.attach provenance.Compute file hash",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
-      "[CLEANUP]\\tmp_tmp_29\\manifest.json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building tools/pkg.attach provenance.Provenance manifest",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
-      "@@@STEP_LOG_END@manifest.json@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "[START_DIR]\\provenance\\provenance",
-      "generate",
-      "-input",
-      "[CLEANUP]\\tmp_tmp_29\\manifest.json",
-      "-output",
-      "[CLEANUP]\\tmp_tmp_29\\provenance.attestation",
-      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
-    },
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building tools/pkg.attach provenance.generate",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -14184,8 +13327,6 @@
       "build_id:8945511751514863184",
       "-tag",
       "version:2@2.0.0",
-      "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_29\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -14221,6 +13362,44 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/tools/pkg/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/tools/pkg/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/pkg.do upload.Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
     ]
   },
   {
@@ -14649,7 +13828,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/script/tools/pkg_checkout/windows-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg_checkout\\\\windows-amd64\\\\2.0.0\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_30",
+      "[CLEANUP]\\tmp_tmp_21",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -14735,7 +13914,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_30",
+      "[CLEANUP]\\tmp_tmp_21",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\script\\tools\\pkg_checkout\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -15387,7 +14566,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/pkg_checkout/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg_checkout\\\\windows-amd64\\\\2.0.0\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_31",
+      "[CLEANUP]\\tmp_tmp_22",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -15473,7 +14652,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_31",
+      "[CLEANUP]\\tmp_tmp_22",
       "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg_checkout\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -15501,127 +14680,6 @@
     "name": "building tools/pkg_checkout.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [],
-    "name": "building tools/pkg_checkout.attach provenance",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "file_hash",
-      "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg_checkout\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building tools/pkg_checkout.attach provenance.Compute file hash",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
-      "[CLEANUP]\\tmp_tmp_32\\manifest.json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
-    },
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building tools/pkg_checkout.attach provenance.Provenance manifest",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
-      "@@@STEP_LOG_END@manifest.json@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "[START_DIR]\\provenance\\provenance",
-      "generate",
-      "-input",
-      "[CLEANUP]\\tmp_tmp_32\\manifest.json",
-      "-output",
-      "[CLEANUP]\\tmp_tmp_32\\provenance.attestation",
-      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "windows",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
-      "_3PP_PLATFORM": "windows-amd64",
-      "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
-    },
-    "luci_context": {
-      "realm": {
-        "name": "project:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "building tools/pkg_checkout.attach provenance.generate",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -15687,8 +14745,6 @@
       "build_id:8945511751514863184",
       "-tag",
       "version:2@2.0.0",
-      "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_32\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -15724,6 +14780,44 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/tools/pkg_checkout/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/tools/pkg_checkout/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg_checkout\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/pkg_checkout.do upload.Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
     ]
   },
   {
