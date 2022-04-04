@@ -13,6 +13,7 @@ import (
 
 	pb "go.chromium.org/luci/resultdb/proto/v1"
 	sinkpb "go.chromium.org/luci/resultdb/sink/proto/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -88,6 +89,7 @@ func (r *TastResults) ToProtos(ctx context.Context, processArtifacts func(string
 			ret = append(ret, tr)
 			continue
 		}
+		tr.StartTime = timestamppb.New(c.Start)
 		tr.Duration = msToDuration(float64(c.End.Sub(c.Start).Milliseconds()))
 
 		d := c.OutDir

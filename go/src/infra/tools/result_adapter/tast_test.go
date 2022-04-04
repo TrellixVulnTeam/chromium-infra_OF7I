@@ -16,6 +16,7 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 	pb "go.chromium.org/luci/resultdb/proto/v1"
 	sinkpb "go.chromium.org/luci/resultdb/sink/proto/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func parseTime(s string) time.Time {
@@ -108,7 +109,8 @@ func TestTastConversions(t *testing.T) {
 				TestMetadata: &pb.TestMetadata{
 					Name: "lacros.Basic",
 				},
-				Duration: &duration.Duration{Seconds: 1},
+				StartTime: timestamppb.New(parseTime("2021-07-26T18:53:33.983328614Z")),
+				Duration:  &duration.Duration{Seconds: 1},
 			})
 		})
 		Convey(`Skipped`, func() {
@@ -173,7 +175,8 @@ func TestTastConversions(t *testing.T) {
 				FailureReason: &pb.FailureReason{
 					PrimaryErrorMessage: "Failed due to dummy error",
 				},
-				Duration: &duration.Duration{Seconds: 1},
+				StartTime: timestamppb.New(parseTime("2021-07-26T18:53:33.983328614Z")),
+				Duration:  &duration.Duration{Seconds: 1},
 			})
 		})
 	})
