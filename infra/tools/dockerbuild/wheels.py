@@ -1632,6 +1632,7 @@ SPECS.update({
         Universal('ruamel.yaml', '0.17.16', pyversions=['py3']),
         Universal('selenium', '3.4.1'),
         Universal('selenium', '3.14.0'),
+        Universal('selenium', '4.1.0', pyversions=['py3']),
         Universal('setuptools', '34.3.2'),
         Universal('setuptools', '44.1.0'),
         Universal('setuptools', '46.1.3', pyversions=['py3']),

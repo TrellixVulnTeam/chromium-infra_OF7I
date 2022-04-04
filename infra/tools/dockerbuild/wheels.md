@@ -6972,6 +6972,20 @@ wheel: <
 
 * *universal*
 
+## **selenium-py3**
+
+### 4.1.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/selenium-py3"
+  version: "version:4.1.0"
+>
+```
+
+
+* *universal*
+
 ## **setuptools**
 
 ### 34.3.2
