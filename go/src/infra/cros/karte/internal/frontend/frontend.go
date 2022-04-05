@@ -20,6 +20,7 @@ import (
 	kartepb "infra/cros/karte/api"
 	"infra/cros/karte/internal/datastore"
 	"infra/cros/karte/internal/errors"
+	"infra/cros/karte/internal/idserialize"
 	"infra/cros/karte/internal/idstrategy"
 	"infra/cros/karte/internal/scalars"
 )
@@ -78,7 +79,7 @@ func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateAct
 	logging.Infof(ctx, "Creating action of kind %q", req.GetAction().GetKind())
 	actionEntity, err := convertActionToActionEntity(req.GetAction())
 	if err != nil {
-		logging.Errorf(ctx, "error converting action: %s", err)
+		logging.Errorf(ctx, "Error converting action: %s", err)
 		return nil, errors.Annotate(err, "create action").Err()
 	}
 	if err := PutActionEntities(ctx, actionEntity); err != nil {
@@ -152,25 +153,89 @@ func (k *karteFrontend) PersistAction(ctx context.Context, req *kartepb.PersistA
 	}, nil
 }
 
+// persistBqClient is a wrapper around the bigquery client that exposes only the interface necessary to persist to
+// persist ranges of actions.
+type persistBqClient struct {
+	client *cloudBQ.Client
+}
+
+// bqInserter persists ranges of actions to BigQuery.
+type bqInserter = func(context.Context, interface{}) error
+
+// getInserter gets the inserter for a table in a dataset.
+func (c persistBqClient) getInserter(dataset string, table string) bqInserter {
+	return c.client.Dataset(dataset).Table(table).Inserter().Put
+}
+
 // PersistActionRange persists a range of actions.
 func (k *karteFrontend) PersistActionRange(ctx context.Context, req *kartepb.PersistActionRangeRequest) (*kartepb.PersistActionRangeResponse, error) {
 	client, err := cloudBQ.NewClient(ctx, cloudBQ.DetectProjectID)
 	if err != nil {
 		logging.Errorf(ctx, "Cannot create bigquery client: %s", err)
-		return nil, status.Errorf(codes.Aborted, "persist action: cannot create bigquery client: %s", err)
+		return nil, status.Errorf(codes.Aborted, "persist action range: cannot create bigquery client: %s", err)
 	}
 
-	return k.persistActionRangeImpl(ctx, client)
+	return k.persistActionRangeImpl(ctx, persistBqClient{client}, req)
 }
 
 // bqPersister is the subset of the BigQuery interface used by the implementation of persistAction.
-type bqPersister interface{}
+type bqPersister interface {
+	getInserter(dataset string, table string) bqInserter
+}
 
 // persistActionRangeImpl is the implementation of persist range action.
-func (_ *karteFrontend) persistActionRangeImpl(ctx context.Context, _ bqPersister) (*kartepb.PersistActionRangeResponse, error) {
+func (k *karteFrontend) persistActionRangeImpl(ctx context.Context, client bqPersister, req *kartepb.PersistActionRangeRequest) (*kartepb.PersistActionRangeResponse, error) {
+	start := idserialize.IDInfo{
+		Version:        req.GetStartVersion(),
+		CoarseTime:     uint64(req.GetStartTime().GetSeconds()),
+		FineTime:       uint32(req.GetStartTime().GetNanos()),
+		Disambiguation: 0,
+	}
+
+	stop := idserialize.IDInfo{
+		Version:        req.GetStopVersion(),
+		CoarseTime:     uint64(req.GetStopTime().GetSeconds()),
+		FineTime:       uint32(req.GetStopTime().GetNanos()),
+		Disambiguation: 0,
+	}
+
+	q, err := newActionNameRangeQuery(start, stop)
+	if err != nil {
+		return nil, status.Errorf(codes.Aborted, "persist action range impl: failed to build query: %s", err)
+	}
+
+	const stride = 1000
+
+	logging.Infof(ctx, "Beginning to insert record to bigquery")
+
+	insertCb := client.getInserter("entities", "actions")
+
+	tally := 0
+
+	for {
+		batch, err := q.Next(ctx, stride)
+		if err != nil {
+			return nil, errors.Annotate(err, "persist action range").Err()
+		}
+
+		tally += len(batch)
+
+		// TODO(gregorynisbet): A batch length of zero signals the successful end of the offload attempt.
+		//                      Replace this with a better API for next.
+		if len(batch) == 0 {
+			break
+		}
+
+		// TODO(gregorynisbet): Retry this multiple times.
+		if err := insertCb(ctx, batch); err != nil {
+			logging.Errorf(ctx, "cannot insert action: %s", err)
+			return nil, status.Errorf(codes.Aborted, "error persisting single record: %s", err)
+		}
+	}
+
 	return &kartepb.PersistActionRangeResponse{
 		Succeeded:      true,
-		CreatedRecords: 1,
+		CreatedRecords: int32(tally),
 	}, nil
 }
 

@@ -5,6 +5,7 @@
 package frontend
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -249,6 +250,17 @@ func TestListObservations(t *testing.T) {
 	}
 }
 
+type fakeClient struct {
+	items []interface{}
+}
+
+func (c *fakeClient) getInserter(dataset string, table string) bqInserter {
+	return func(ctx context.Context, item interface{}) error {
+		c.items = append(c.items, item)
+		return nil
+	}
+}
+
 // TestPersistActionRangeImpl_SmokeTest tests that persisting a range of actions
 // returns a non-error response given an empty dataset
 func TestPersistActionRangeImpl_SmokeTest(t *testing.T) {
@@ -256,7 +268,12 @@ func TestPersistActionRangeImpl_SmokeTest(t *testing.T) {
 	k := NewKarteFrontend().(*karteFrontend)
 	ctx := gaetesting.TestingContext()
 	datastore.GetTestable(ctx).Consistent(true)
-	resp, err := k.persistActionRangeImpl(ctx, 4)
+	fake := &fakeClient{}
+
+	resp, err := k.persistActionRangeImpl(ctx, fake, &kartepb.PersistActionRangeRequest{
+		StartTime: scalars.ConvertTimeToTimestampPtr(time.Unix(1, 0)),
+		StopTime:  scalars.ConvertTimeToTimestampPtr(time.Unix(2, 0)),
+	})
 	if resp == nil {
 		t.Errorf("expected resp not to be nil")
 	}

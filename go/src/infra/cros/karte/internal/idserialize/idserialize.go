@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"time"
 
 	"infra/cros/karte/internal/lex64"
 )
@@ -50,4 +51,9 @@ func (i *IDInfo) Encoded() (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("%s%s", i.Version, encoded), nil
+}
+
+// Time returns the time component associated with IDInfo.
+func (i *IDInfo) Time() time.Time {
+	return time.Unix(int64(i.CoarseTime), int64(i.FineTime)).UTC()
 }
