@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW `APP_ID.chrome.step_status_transitions`
+CREATE OR REPLACE VIEW `APP_ID.PROJECT_NAME.step_status_transitions`
 AS
 /*
 Step status transition table.
@@ -30,8 +30,7 @@ WITH
     `cr-buildbucket.raw.completed_builds_prod` b,
     UNNEST(steps) AS step
   WHERE
-    create_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
-    AND (b.builder.project = "chrome" or b.builder.project="chromium" or b.builder.project LIKE "chromium-m%")
+    PROJECT_FILTER_CONDITIONS
 )
 SELECT
   end_time,

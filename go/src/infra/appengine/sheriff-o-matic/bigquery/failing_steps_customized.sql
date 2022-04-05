@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW `APP_ID.chrome.failing_steps`
+CREATE OR REPLACE VIEW `APP_ID.PROJECT_NAME.failing_steps`
 AS
 /*
 Failing steps table.
@@ -25,8 +25,7 @@ WITH
   FROM
     `cr-buildbucket.raw.completed_builds_prod` AS b
   WHERE
-    create_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
-    AND REGEXP_CONTAINS(b.builder.project, "^((chrome|chromium)(-m[0-9]+(-.*)?)?)$")
+    PROJECT_FILTER_CONDITIONS
   GROUP BY
     1,
     2,
