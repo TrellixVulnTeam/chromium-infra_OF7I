@@ -29,12 +29,17 @@ func servoRepairPlan() *Plan {
 			"set_state_not_connected",
 			"Cache latest servod start time",
 			"servo_root_check",
+			"set_state_need_replacement",
+			"servo_fw_need_update",
 			"set_state_servod_issue",
 			"servo_host_servod_start",
+			"set_state_dut_not_connected",
+			"servo_dut_detected",
+			"servo_cr50_checks",
+			"set_state_servod_dut_controller_missing",
+			"dut_controller_missing_fault_off",
 			"set_state_topology_issue",
 			"servo_topology",
-			"set_state_servo_updater_issue",
-			"servo_fw_need_update",
 			"set_state_servo_host_issue",
 			"servod_get_serialname",
 			"set_state_servod_proxy_issue",
@@ -43,17 +48,10 @@ func servoRepairPlan() *Plan {
 			"servo_cold_reset_pin",
 			"set_state_warm_reset_pin_issue",
 			"servo_warm_reset_pin",
-			"set_state_dut_not_connected",
-			"servo_dut_detected",
 			"set_state_servod_issue",
 			"servod_servo_pd",
-			"set_state_cr50_not_enumerated",
-			"servo_cr50_checks",
-			"set_state_servod_dut_controller_missing",
-			"dut_controller_missing_fault_off",
 			"set_state_cr50_console_missing",
 			"servo_cr50_console",
-			"set_state_ec_broken",
 			"servo_ec_check",
 			"set_state_servod_issue",
 			"servod_set_main_device",
@@ -173,6 +171,7 @@ func servoRepairPlan() *Plan {
 			"servo_root_check": {
 				Dependencies: []string{
 					"cros_ssh",
+					"set_state_need_replacement",
 					"servo_v3_root_present",
 					"servo_v4_root_present",
 				},
@@ -230,7 +229,6 @@ func servoRepairPlan() *Plan {
 					"reflash_cr_50_fw_on_dut",
 					"reset_ec_on_dut",
 				},
-				AllowFailAfterRecovery: true,
 			},
 			"servo_v3_root_present": {
 				Docs:            []string{"This remains to be implemented."},
@@ -242,6 +240,7 @@ func servoRepairPlan() *Plan {
 			"servo_v4_root_present": {
 				Dependencies:    []string{"cros_ssh"},
 				Conditions:      []string{"is_not_servo_v3"},
+				ExecExtraArgs:   []string{"update_topology:true"},
 				RecoveryActions: []string{"cros_create_reboot_request"},
 			},
 			"servo_fw_need_update": {
@@ -295,7 +294,9 @@ func servoRepairPlan() *Plan {
 			"servo_cr50_checks": {
 				Conditions: []string{"is_not_servo_v3"},
 				Dependencies: []string{
+					"set_state_sbu_low_voltage",
 					"servo_cr50_low_sbu",
+					"set_state_cr50_not_enumerated",
 					"servo_cr50_enumerated",
 				},
 				ExecName: "sample_pass",
@@ -460,8 +461,11 @@ func servoRepairPlan() *Plan {
 					"dut_has_cros_ec",
 				},
 				Dependencies: []string{
+					"set_state_ec_broken",
 					"servo_ec_console",
+					"set_state_bad_ribbon_cable",
 					"servo_pwr_button_pin",
+					"set_state_lid_open_failed",
 					"servo_lid_open",
 					"servo_battery_charging",
 				},
@@ -568,8 +572,11 @@ func servoRepairPlan() *Plan {
 					"Try to update in  normal ways 3 times",
 					"if fail allow run force update",
 				},
-				Conditions:   []string{"is_not_servo_v3"},
-				Dependencies: []string{"servo_host_servod_stop"},
+				Conditions: []string{"is_not_servo_v3"},
+				Dependencies: []string{
+					"set_state_servo_updater_issue",
+					"servo_host_servod_stop",
+				},
 				ExecExtraArgs: []string{
 					"try_attempt_count:3",
 					"try_force_update_after_fail:true",
@@ -809,6 +816,10 @@ func servoRepairPlan() *Plan {
 				ExecExtraArgs: []string{"state:NOT_CONNECTED"},
 				ExecName:      "servo_set_servo_state",
 			},
+			"set_state_need_replacement": {
+				ExecExtraArgs: []string{"state:NEED_REPLACEMENT"},
+				ExecName:      "servo_set_servo_state",
+			},
 			"set_state_topology_issue": {
 				ExecExtraArgs: []string{"state:TOPOLOGY_ISSUE"},
 				ExecName:      "servo_set_servo_state",
@@ -841,6 +852,10 @@ func servoRepairPlan() *Plan {
 				ExecExtraArgs: []string{"state:DUT_NOT_CONNECTED"},
 				ExecName:      "servo_set_servo_state",
 			},
+			"set_state_sbu_low_voltage": {
+				ExecExtraArgs: []string{"state:SBU_LOW_VOLTAGE"},
+				ExecName:      "servo_set_servo_state",
+			},
 			"set_state_cr50_not_enumerated": {
 				ExecExtraArgs: []string{"state:DUT_NOT_CONNECTED"},
 				ExecName:      "servo_set_servo_state",
@@ -855,6 +870,14 @@ func servoRepairPlan() *Plan {
 			},
 			"set_state_ec_broken": {
 				ExecExtraArgs: []string{"state:EC_BROKEN"},
+				ExecName:      "servo_set_servo_state",
+			},
+			"set_state_bad_ribbon_cable": {
+				ExecExtraArgs: []string{"state:BAD_RIBBON_CABLE"},
+				ExecName:      "servo_set_servo_state",
+			},
+			"set_state_lid_open_failed": {
+				ExecExtraArgs: []string{"state:LID_OPEN_FAILED"},
 				ExecName:      "servo_set_servo_state",
 			},
 			"set_state_ccd_testlab_issue": {
