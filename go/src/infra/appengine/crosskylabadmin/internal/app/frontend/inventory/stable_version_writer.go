@@ -25,16 +25,16 @@ func (is *ServerImpl) SetSatlabStableVersion(ctx context.Context, req *fleet.Set
 	}()
 
 	if err := validateSetSatlabStableVersion(req); err != nil {
-		return nil, errors.Annotate(err, "set satlab stable version").Err()
+		return nil, status.Errorf(codes.InvalidArgument, "set satlab stable version: %s", err)
 	}
 
 	newEntry, err := satlab.MakeSatlabStableVersionEntry(req, true)
 	if err != nil {
-		return nil, errors.Annotate(err, "set satlab stable version").Err()
+		return nil, status.Errorf(codes.InvalidArgument, "set satlab stable version: %s", err)
 	}
 
 	if pErr := satlab.PutSatlabStableVersionEntry(ctx, newEntry); pErr != nil {
-		return nil, errors.Annotate(pErr, "set satlab stable version").Err()
+		return nil, status.Errorf(codes.Aborted, "set satlab stable version: %s", pErr)
 	}
 	return &fleet.SetSatlabStableVersionResponse{}, nil
 }
@@ -58,11 +58,11 @@ func (is *ServerImpl) DeleteSatlabStableVersion(ctx context.Context, req *fleet.
 
 	id := satlab.MakeSatlabStableVersionID(hostname, board, model)
 	if id == "" {
-		return nil, errors.Reason("delete satlab stable version: failed to produce identifier").Err()
+		return nil, status.Error(codes.InvalidArgument, "delete satlab stable version: failed to produce identifier")
 	}
 
 	if err := satlab.DeleteSatlabStableVersionEntryByRawID(ctx, id); err != nil {
-		return nil, errors.Annotate(err, "delete satlab stable version").Err()
+		return nil, status.Errorf(codes.Aborted, "delete satlab stable version: %s", err)
 	}
 	return &fleet.DeleteSatlabStableVersionResponse{}, nil
 }
