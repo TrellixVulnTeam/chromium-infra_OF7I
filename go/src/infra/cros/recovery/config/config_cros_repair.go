@@ -840,6 +840,7 @@ func crosRepairActions() map[string]*Action {
 			},
 			ExecTimeout: &durationpb.Duration{Seconds: 150},
 			ExecName:    "cros_ssh",
+			RunControl:  RunControl_ALWAYS_RUN,
 		},
 		"Wait DUT to be pingable after reset": {
 			Docs: []string{
@@ -850,7 +851,8 @@ func crosRepairActions() map[string]*Action {
 				"Install OS in recovery mode by booting from servo USB-drive",
 				"Repair by powerwash",
 			},
-			ExecName: "cros_ping",
+			ExecName:   "cros_ping",
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"Trigger kernel panic to reset the whole board and try ssh to DUT": {
 			Docs: []string{
