@@ -15,6 +15,7 @@ import (
 	"infra/cros/internal/buildplan"
 	igerrit "infra/cros/internal/gerrit"
 	"infra/cros/internal/manifestutil"
+	"infra/cros/internal/shared"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
@@ -324,10 +325,20 @@ func (c *checkBuild) getRepoToSourceRoot(gc *bbproto.GitilesCommit) (*map[string
 		log.Print("No manifest commit provided. Using 'snapshot' instead.")
 		gc.Id = "snapshot"
 	}
-	repoToRemoteBranchToSrcRoot, err := manifestutil.GetRepoToRemoteBranchToSourceRootFromGitiles(ctx, gerritClient, gc)
+	ch := make(chan map[string]map[string]string, 1)
+	err = shared.DoWithRetry(ctx, shared.LongerOpts, func() error {
+		repoToRemoteBranchToSrcRoot, err := manifestutil.GetRepoToRemoteBranchToSourceRootFromGitiles(ctx, gerritClient, gc)
+		if err != nil {
+			return err
+		}
+		ch <- repoToRemoteBranchToSrcRoot
+		return nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("Error with repo tool call\n%v", err)
+		return nil, fmt.Errorf("Error with GetRepoToRemoteBranchToSourceRootFromGitiles\n%v", err)
 	}
+	repoToRemoteBranchToSrcRoot := <-ch
+
 	return &repoToRemoteBranchToSrcRoot, nil
 }
 
