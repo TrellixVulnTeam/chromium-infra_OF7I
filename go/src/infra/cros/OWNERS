@@ -1,11 +1,9 @@
-andrewlamb@chromium.org
+include chromiumos/chromite:/OWNERS.ci
+
 ayatane@chromium.org
 ayatane@google.com
-dhanyaganesh@chromium.org
-engeg@google.com
 guocb@chromium.org
 guocb@google.com
-jackneus@google.com
 jaredloucks@google.com
 xixuan@chromium.org
 xixuan@google.com
