@@ -16,9 +16,12 @@ import (
 
 	"github.com/bmatcuk/doublestar"
 	cros_pb "go.chromium.org/chromiumos/infra/proto/go/chromiumos"
+	"go.chromium.org/chromiumos/infra/proto/go/testplans"
 	testplans_pb "go.chromium.org/chromiumos/infra/proto/go/testplans"
 	bbproto "go.chromium.org/luci/buildbucket/proto"
 )
+
+var manifestFilePattern = testplans.FilePattern{Pattern: "{manifest,manifest-internal}/*.xml"}
 
 // CheckBuildersInput is the input for a CheckBuilders call.
 type CheckBuildersInput struct {
@@ -37,9 +40,16 @@ func (c *CheckBuildersInput) CheckBuilders() (*cros_pb.GenerateBuildPlanResponse
 
 	response := &cros_pb.GenerateBuildPlanResponse{}
 
+	// Get all of the files referenced by each GerritCommit in the Build.
+	affectedFiles, err := extractAffectedFiles(c.Changes, c.ChangeRevs, c.RepoToBranchToSrcRoot)
+	if err != nil {
+		return nil, fmt.Errorf("error in extractAffectedFiles: %+v", err)
+	}
+	hasAffectedFiles := len(affectedFiles) > 0
+
 	// TODO(crbug/1169870): Be more selective once we have a way to know what source paths are
 	// relevant for each builder.
-	hasXMLChange, err := hasManifestXMLChange(c.Changes, c.ChangeRevs)
+	hasXMLChange, err := hasManifestXMLChange(affectedFiles)
 	if err != nil {
 		return nil, fmt.Errorf("error in hasManifestXMLChange: %+v", err)
 	}
@@ -52,12 +62,6 @@ func (c *CheckBuildersInput) CheckBuilders() (*cros_pb.GenerateBuildPlanResponse
 		return response, nil
 	}
 
-	// Get all of the files referenced by each GerritCommit in the Build.
-	affectedFiles, err := extractAffectedFiles(c.Changes, c.ChangeRevs, c.RepoToBranchToSrcRoot)
-	if err != nil {
-		return nil, fmt.Errorf("error in extractAffectedFiles: %+v", err)
-	}
-	hasAffectedFiles := len(affectedFiles) > 0
 	ignoreImageBuilders := ignoreImageBuilders(affectedFiles, c.BuildIrrelevanceCfg, c.Changes)
 	allowSlimBuilds := allowSlimBuilds(affectedFiles, c.SlimBuildCfg)
 
@@ -240,19 +244,15 @@ func stringInSlice(a string, list []string) bool {
 	return false
 }
 
-func hasManifestXMLChange(changes []*bbproto.GerritChange, changeRevs *gerrit.ChangeRevData) (bool, error) {
-	for _, gc := range changes {
-		rev, err := changeRevs.GetChangeRev(gc.Host, gc.Change, int32(gc.Patchset))
+func hasManifestXMLChange(files []string) (bool, error) {
+	for _, f := range files {
+		match, err := match.FilePatternMatches(&manifestFilePattern, f)
 		if err != nil {
-			return false, err
+			log.Fatalf("Failed to match pattern %s against file %s: %v", &manifestFilePattern, f, err)
 		}
-		if rev.Project != "chromiumos/manifest" && rev.Project != "chromeos/manifest-internal" {
-			continue
-		}
-		for _, file := range rev.Files {
-			if strings.HasSuffix(file, ".xml") {
-				return true, nil
-			}
+		if match {
+			log.Printf("File %s matches pattern %s", f, &manifestFilePattern)
+			return true, nil
 		}
 	}
 	return false, nil

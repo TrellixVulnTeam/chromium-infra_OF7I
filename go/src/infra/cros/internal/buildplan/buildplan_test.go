@@ -119,7 +119,7 @@ func TestCheckBuilders_hasManifestXMLChange(t *testing.T) {
 		},
 	})
 	repoToBranchToSrcRoot := map[string]map[string]string{
-		"chromiumos/manifest-internal": {"refs/heads/main": "src/pub/ex"},
+		"chromiumos/manifest-internal": {"refs/heads/main": "manifest-internal"},
 	}
 
 	buildIrrelevanceCfg := &testplans_pb.BuildIrrelevanceCfg{}
@@ -128,8 +128,8 @@ func TestCheckBuilders_hasManifestXMLChange(t *testing.T) {
 	builderConfigs := &cros_pb.BuilderConfigs{}
 
 	b := []*cros_pb.BuilderConfig{
-		makeBuilderConfig("my_image_builder", cros_pb.BuilderConfig_Id_TYPE_UNSPECIFIED, cros_pb.BuilderConfig_General_RunWhen_ALWAYS_RUN, []string{}),
-		makeBuilderConfig("chromite-not_an_image_builder", cros_pb.BuilderConfig_Id_TYPE_UNSPECIFIED, cros_pb.BuilderConfig_General_RunWhen_ALWAYS_RUN, []string{}),
+		makeBuilderConfig("my_image_builder", cros_pb.BuilderConfig_Id_TYPE_UNSPECIFIED, cros_pb.BuilderConfig_General_RunWhen_ONLY_RUN_ON_FILE_MATCH, []string{"some/path"}),
+		makeBuilderConfig("chromite-not_an_image_builder", cros_pb.BuilderConfig_Id_TYPE_UNSPECIFIED, cros_pb.BuilderConfig_General_RunWhen_ONLY_RUN_ON_FILE_MATCH, []string{"other/path"}),
 	}
 
 	checkBuildersInput := &CheckBuildersInput{
