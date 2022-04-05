@@ -20,7 +20,11 @@ class Setup:
     * manifest: manifest handler
   """
 
-  def __init__(self, board: str, *, skip_packages: List[str] = None):
+  def __init__(self,
+               board: str,
+               *,
+               skip_packages: List[str] = None,
+               with_tests: bool = False):
     self.board = board
 
     checkout_info = path_util.DetermineCheckout()
@@ -49,6 +53,7 @@ class Setup:
     ]
 
     self.skip_packages = skip_packages
+    self.with_tests = with_tests
 
   @property
   def manifest(self) -> git.ManifestCheckout:
@@ -144,9 +149,12 @@ class CrosSdk:
     Raises:
       * cros_build_lib.CommandResult if command failed.
     """
+    features = ['noclean']
+    if self.setup.with_tests:
+      features.append('test')
     cmd = ' '.join([
-        'sudo', 'FEATURES=noclean', 'parallel_emerge', '--board',
-        self.setup.board
+        'sudo', f'FEATURES="{" ".join(features)}"', 'parallel_emerge',
+        '--board', self.setup.board
     ] + package_names)
     CrosSdk._Exec(cmd)
 

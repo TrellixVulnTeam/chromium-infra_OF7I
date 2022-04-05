@@ -121,3 +121,10 @@ TEMPORARY_UNSUPPORTED_PACKAGES = {
     # Perfectly fine package otherwise.
     'media-libs/cros-camera-libjda_test',
 }
+
+# Set of packages that are not currently supported when building with tests.
+TEMPORARY_UNSUPPORTED_PACKAGES_WITH_TESTS = {
+    'chromeos-base/screen-capture-utils',
+    'chromeos-base/update_engine',
+    'chromeos-base/mtpd',
+}

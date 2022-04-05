@@ -81,6 +81,16 @@ def _BuildParser():
     and want to regenerate, you may
     skip this option."""))
 
+  parser.add_argument(
+      '--with-tests',
+      '--with_tests',
+      action='store_true',
+      default=False,
+      dest='with_tests',
+      help=textwrap.dedent("""\
+    Build tests alongside packages before generating.
+    This assumes --with-build is set."""))
+
   parser.add_argument('--board',
                       '-b',
                       type=str,
@@ -189,7 +199,10 @@ def main():
   from lib.conductor import Conductor
   from lib.util import Setup
 
-  setup = Setup(args.board, skip_packages=args.skip_packages.split(' '))
+  setup = Setup(
+      args.board,
+      skip_packages=args.skip_packages.split(' '),
+      with_tests=args.with_tests)
   cache_provider = CacheProvider(package_cache=PackageCache(setup))
 
   if args.force:
