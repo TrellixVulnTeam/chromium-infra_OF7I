@@ -33,6 +33,7 @@ func newApplication() *cli.Application {
 			kartecli.ListActions,
 			kartecli.ListSwarmingTasks,
 			kartecli.PersistSingleAction,
+			kartecli.PersistActionRange,
 			kartecli.ExampleCreateUpdateAction,
 		},
 	}
