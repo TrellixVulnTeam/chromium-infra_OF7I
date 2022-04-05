@@ -422,13 +422,19 @@ CREATE TABLE TestVerdicts (
   PassedAvgDurationUsec INT64,
 
   -- Whether the invocation was part of a build that has unsubmitted changes
-  -- applied (such as Gerrit changes).
+  -- applied (such as Gerrit changes). (This includes unsubmitted changes
+  -- that were later submitted, e.g. because of a successful presubmit run.)
   HasUnsubmittedChanges BOOL NOT NULL,
+
+  -- Whether the invocation was part of a build that has unsubmitted changes
+  -- applied (such as Gerrit changes) AND the changes were later submitted
+  -- because the build was part of a successful presubmit run.
+  HasContributedToClSubmission BOOL NOT NULL,
 ) PRIMARY KEY(Project, TestId, PartitionTime, VariantHash, IngestedInvocationId, SubRealm)
 -- The following DDL query needs to be uncommented when applied to real Spanner
 -- instances. But it is commented out for Cloud Spanner Emulator:
 -- https://github.com/GoogleCloudPlatform/cloud-spanner-emulator/issues/32
--- , DELETION POLICY (OLDER_THAN(PartitionTime, INTERVAL 90 DAY));
+--, ROW DELETION POLICY (OLDER_THAN(PartitionTime, INTERVAL 90 DAY));
 
 -- Stores top-level invocations which were ingested.
 --
@@ -452,18 +458,24 @@ CREATE TABLE IngestedInvocations (
   -- Partition time, as determined by Weetbix ingestion. Start time of the
   -- ingested build (for postsubmit results) or start time of the presubmit run
   -- (for presubmit results).
-  PartitionTime TIMESTAMP NOT NULL
+  PartitionTime TIMESTAMP NOT NULL,
 
   -- Whether the invocation was part of a build that has unmerged changes
-  -- applied (such as Gerrit changes).
+  -- applied (such as Gerrit changes). (This includes unsubmitted changes
+  -- that were later submitted, e.g. because of a successful presubmit run.)
   HasUnmergedChanges BOOL NOT NULL,
+
+  -- Whether the invocation was part of a build that has unsubmitted changes
+  -- applied (such as Gerrit changes) AND the changes were later submitted
+  -- because the build was part of a successful presubmit run.
+  HasContributedToClSubmission BOOL NOT NULL,
 ) PRIMARY KEY(Project, IngestedInvocationId)
 -- The following DDL query needs to be uncommented when applied to real Spanner
 -- instances. But it is commented out for Cloud Spanner Emulator:
 -- https://github.com/GoogleCloudPlatform/cloud-spanner-emulator/issues/32
 -- Use a slightly longer retention period to prevent the invocation being
 -- dropped before the associated TestVerdicts.
--- , DELETION POLICY (OLDER_THAN(PartitionTime, INTERVAL 100 DAY));
+--, ROW DELETION POLICY (OLDER_THAN(PartitionTime, INTERVAL 100 DAY));
 
 -- Serves three purposes:
 -- - Permits listing of distinct tests observed for a project, filtered by Realm.
@@ -516,4 +528,4 @@ CREATE TABLE TestVariantRealms (
 -- The following DDL query needs to be uncommented when applied to real Spanner
 -- instances. But it is commented out for Cloud Spanner Emulator:
 -- https://github.com/GoogleCloudPlatform/cloud-spanner-emulator/issues/32
--- , DELETION POLICY (OLDER_THAN(PartitionTime, INTERVAL 90 DAY));
+--, ROW DELETION POLICY (OLDER_THAN(LastIngestionTime, INTERVAL 90 DAY));
