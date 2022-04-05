@@ -118,7 +118,7 @@ If you don't have access to prod or staging, you can manually enter this for
 "Trees in SOM" to get started with a reasonable default:
 
 ```
-android:Android,chrome_browser_release:Chrome Browser Release,chromeos:Chrome OS,chromium:Chromium,chromium.clang:Chromium Clang,chromium.gpu:Chromium GPU,chromium.perf:Chromium Perf,fuchsia:Fuchsia,ios:iOS,lacros_skylab:Lacros Skylab
+android:Android,chrome_browser_release:Chrome Browser Release,chromeos:Chrome OS,chromium:Chromium,chromium.clang:Chromium Clang,chromium.gpu:Chromium GPU,chromium.perf:Chromium Perf,fuchsia:Fuchsia,ios:iOS,lacros_skylab:Lacros Skylab,angle:Angle
 ```
 
 After this step, you should see the trees appearing in SoM, but without any

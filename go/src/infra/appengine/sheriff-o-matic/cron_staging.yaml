@@ -85,6 +85,11 @@ cron:
   schedule: every 24 hours
   target: analyzer
 
+- description: Update Angle alerts
+  url: /_cron/analyze/angle
+  schedule: every 24 hours
+  target: analyzer
+
 - description: Query BigQuery Chrome Project
   url: /_cron/bq_query/chrome
   schedule: every 24 hours
