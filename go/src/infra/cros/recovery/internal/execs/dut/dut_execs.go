@@ -79,7 +79,7 @@ const (
 func dutCheckModelExec(ctx context.Context, info *execs.ExecInfo) error {
 	argsMap := info.GetActionArgs(ctx)
 	invertResultsFlag := argsMap.AsBool(ctx, invertResultToken, false)
-	for _, m := range argsMap.AsStringSlice(ctx, stringValuesExtraArgToken) {
+	for _, m := range argsMap.AsStringSlice(ctx, stringValuesExtraArgToken, nil) {
 		m = strings.TrimSpace(m)
 		if strings.EqualFold(m, info.RunArgs.DUT.Model) {
 			msg := fmt.Sprintf("DUT Model %s found in the list of models in config", info.RunArgs.DUT.Model)
@@ -104,7 +104,7 @@ func dutCheckModelExec(ctx context.Context, info *execs.ExecInfo) error {
 func dutCheckBoardExec(ctx context.Context, info *execs.ExecInfo) error {
 	argsMap := info.GetActionArgs(ctx)
 	invertResultsFlag := argsMap.AsBool(ctx, invertResultToken, false)
-	for _, m := range argsMap.AsStringSlice(ctx, stringValuesExtraArgToken) {
+	for _, m := range argsMap.AsStringSlice(ctx, stringValuesExtraArgToken, nil) {
 		m = strings.TrimSpace(m)
 		if strings.EqualFold(m, info.RunArgs.DUT.Board) {
 			msg := fmt.Sprintf("DUT Board %s found in the list of boards in config", info.RunArgs.DUT.Model)

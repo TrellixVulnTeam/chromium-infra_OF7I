@@ -272,7 +272,7 @@ func isGscToolPresentExec(ctx context.Context, info *execs.ExecInfo) error {
 // The actionArgs should be in the format of ["tools:dfu-programmer,python,..."]
 func isToolPresentExec(ctx context.Context, info *execs.ExecInfo) error {
 	toolMap := info.GetActionArgs(ctx)
-	toolNames := toolMap.AsStringSlice(ctx, "tools")
+	toolNames := toolMap.AsStringSlice(ctx, "tools", nil)
 	if len(toolNames) == 0 {
 		return errors.Reason("tool present: tools argument is empty or not provided").Err()
 	}

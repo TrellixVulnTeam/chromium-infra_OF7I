@@ -235,13 +235,14 @@ func servoRepairPlan() *Plan {
 				Dependencies:    []string{"cros_ssh"},
 				Conditions:      []string{"is_servo_v3"},
 				RecoveryActions: []string{"servo_host_v3_reboot"},
-				ExecName:        "sample_pass",
+				ExecName:        "servo_v3_root_present",
 			},
 			"servo_v4_root_present": {
 				Dependencies:    []string{"cros_ssh"},
 				Conditions:      []string{"is_not_servo_v3"},
 				ExecExtraArgs:   []string{"update_topology:true"},
 				RecoveryActions: []string{"cros_create_reboot_request"},
+				ExecName:        "servo_v4_root_present",
 			},
 			"servo_fw_need_update": {
 				Conditions:      []string{"is_not_servo_v3"},

@@ -56,12 +56,12 @@ func (parsedArgs ParsedArgs) AsString(ctx context.Context, key, defaultValue str
 
 // AsStringSlice returns the value for the passed key as a slice of string.
 // If the key does not exist in the parsed arguments, an empty slice is returned.
-func (parsedArgs ParsedArgs) AsStringSlice(ctx context.Context, key string) []string {
+func (parsedArgs ParsedArgs) AsStringSlice(ctx context.Context, key string, defaultValue []string) []string {
 	value := parsedArgs.AsString(ctx, key, "")
 	if len(value) > 0 {
 		return strings.Split(value, MultiValueSplitter)
 	}
-	return make([]string, 0)
+	return defaultValue
 }
 
 // AsInt returns the value for the passed key as a int.
