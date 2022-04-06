@@ -226,7 +226,7 @@ func (k *karteFrontend) persistActionRangeImpl(ctx context.Context, client bqPer
 			break
 		}
 
-		// TODO(gregorynisbet): Retry this multiple times.
+		// We do not need to worry about retries. The default implementation will retry for us in a reasonable way.
 		if err := insertCb(ctx, batch); err != nil {
 			logging.Errorf(ctx, "cannot insert action: %s", err)
 			return nil, status.Errorf(codes.Aborted, "error persisting single record: %s", err)
