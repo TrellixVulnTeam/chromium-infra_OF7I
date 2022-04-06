@@ -240,7 +240,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Something not listed here',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
-    component: 'Cr-Type-Bug',
+    component: '',
     customQuestions: [
       {
         type: CustomQuestionType.Select,
