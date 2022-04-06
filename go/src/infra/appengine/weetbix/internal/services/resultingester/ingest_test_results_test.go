@@ -143,7 +143,6 @@ func TestIngestTestResults(t *testing.T) {
 		ctx = caching.WithEmptyProcessCache(ctx) // For failure association rules cache.
 		ctx, skdr := tq.TestingContext(ctx, nil)
 		ctx = memory.Use(ctx)
-		config.SetTestProjectConfig(ctx, createProjectsConfig())
 
 		chunkStore := chunkstore.NewFakeClient()
 		clusteredFailures := clusteredfailures.NewFakeClient()
@@ -266,7 +265,7 @@ func TestIngestTestResults(t *testing.T) {
 					TestId:      "ninja://test_known_flake",
 					VariantHash: "hash",
 					Status:      pb.AnalyzedTestVariantStatus_FLAKY,
-					Tags:        pbutil.StringPairs("test_name", "test_known_flake", "monorail_component", "Monorail>Component", "os", "Mac"),
+					Tags:        pbutil.StringPairs("monorail_component", "Monorail>Component", "os", "Mac", "test_name", "test_known_flake"),
 				},
 			}
 
@@ -362,6 +361,8 @@ func TestIngestTestResults(t *testing.T) {
 			So(actualClusteredFailures, ShouldResemble, expectedClusteredFailures)
 		})
 		Convey(`no project config`, func() {
+			config.SetTestProjectConfig(ctx, map[string]*configpb.ProjectConfig{})
+
 			ctl := gomock.NewController(t)
 			defer ctl.Finish()
 

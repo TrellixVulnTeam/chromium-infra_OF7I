@@ -268,6 +268,9 @@ func extractRequiredTags(tv *rdbpb.TestVariant) []*pb.StringPair {
 			})
 		}
 	}
+
+	// Ensure determinism by leaving tags in sorted order.
+	sortTags(tags)
 	return tags
 }
 
@@ -320,5 +323,17 @@ func updatedTags(newTags, oldTags []*pb.StringPair) []*pb.StringPair {
 	for _, t := range resultMap {
 		result = append(result, t)
 	}
+
+	// Ensure determinism by leaving tags in sorted order.
+	// This is primarily to avoid flakes in unit tests.
+	sortTags(result)
 	return result
+}
+
+// sortTags performs an in-place sort of tags to be in
+// ascending key order.
+func sortTags(tags []*pb.StringPair) {
+	sort.Slice(tags, func(i, j int) bool {
+		return tags[i].Key < tags[j].Key
+	})
 }

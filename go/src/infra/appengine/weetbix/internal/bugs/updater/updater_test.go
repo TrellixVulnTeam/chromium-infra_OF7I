@@ -91,6 +91,7 @@ func TestRun(t *testing.T) {
 			project:            project,
 			analysisClient:     ac,
 			monorailClient:     mc,
+			enableBugUpdates:   true,
 			maxBugsFiledPerRun: 1,
 		}
 
@@ -292,6 +293,14 @@ func TestRun(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				expectCreate = true
+				test()
+			})
+			Convey("With bug updates disabled", func() {
+				suggestedClusters[1].Failures1d.ResidualPreWeetbix = 100
+
+				opts.enableBugUpdates = false
+
+				expectCreate = false
 				test()
 			})
 			Convey("Without re-clustering caught up to latest algorithms", func() {
