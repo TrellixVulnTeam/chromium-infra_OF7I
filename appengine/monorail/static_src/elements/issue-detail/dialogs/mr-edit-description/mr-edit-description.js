@@ -80,6 +80,7 @@ export class MrEditDescription extends connectStore(LitElement) {
           id="description"
           class="content"
           @keyup=${this._setEditedDescription}
+          @beforeinput=${this._setEditedDescription}
           @change=${this._setEditedDescription}
           .value=${this._editedDescription}
         ></textarea>
