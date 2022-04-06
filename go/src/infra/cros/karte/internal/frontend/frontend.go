@@ -29,8 +29,15 @@ import (
 // used in the application.
 type karteFrontend struct{}
 
+// KarteFrontend is a combination of the Karte RPCs and the cron RPCs.
+// In the future, any other services exposes by Karte should also be added here.
+type KarteFrontend interface {
+	kartepb.KarteServer
+	kartepb.KarteCronServer
+}
+
 // NewKarteFrontend produces a new Karte frontend.
-func NewKarteFrontend() kartepb.KarteServer {
+func NewKarteFrontend() KarteFrontend {
 	return &karteFrontend{}
 }
 
@@ -302,7 +309,13 @@ func (k *karteFrontend) UpdateAction(ctx context.Context, req *kartepb.UpdateAct
 	return entity.ConvertToAction(), err
 }
 
+// PersistToBigquery persists all Karte-tracked records in a given time range to BigQuery.
+func (k *karteFrontend) PersistToBigquery(ctx context.Context, req *kartepb.PersistToBigqueryRequest) (*kartepb.PersistToBigqueryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "persist to bigquery is not yet implemented")
+}
+
 // InstallServices takes a Karte frontend and exposes it to a LUCI prpc.Server.
 func InstallServices(srv *prpc.Server) {
 	kartepb.RegisterKarteServer(srv, NewKarteFrontend())
+	kartepb.RegisterKarteCronServer(srv, NewKarteFrontend())
 }
