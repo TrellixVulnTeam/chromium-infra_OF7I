@@ -194,22 +194,30 @@ func crosRepairActions() map[string]*Action {
 			},
 			ExecName: "sample_pass",
 		},
-		"cros is firmware in good state": {
+		"Ensure firmware is in good state": {
+			Docs: []string{
+				"Ensure that firmware is in good state.",
+			},
 			RecoveryActions: []string{
-				"Install OS in recovery mode by booting from servo USB-drive",
+				"Cold reset DUT by servo",
 				"Quick provision OS",
+				"Fix FW on the DUT to match stable-version",
 				"Update FW from fw-image by servo",
+				"Update firmware from USB-Drive and when booted in recovery mode",
 			},
 			ExecName: "cros_is_firmware_in_good_state",
 		},
 		"firmware_check": {
+			Docs: []string{
+				"Run all firmware checks on the DUT.",
+			},
 			Conditions: []string{
 				"is_not_flex_board",
 			},
 			Dependencies: []string{
 				"cros_storage_writing",
-				"cros is firmware in good state",
-				"cros_rw_firmware_stable_verion",
+				"Ensure firmware is in good state",
+				"Check if firmware version matches the stable-version",
 			},
 			ExecName: "sample_pass",
 		},
@@ -334,13 +342,62 @@ func crosRepairActions() map[string]*Action {
 			},
 			ExecName: "sample_fail",
 		},
-		"cros_rw_firmware_stable_verion": {
+		"Check if firmware version matches the stable-version": {
+			Docs: []string{
+				"Check if the version of RW firmware on DUT matches the stable firmware version.",
+			},
+			Conditions: []string{
+				"Pools required to be in Secure mode",
+				"has_stable_version_fw_version",
+			},
 			Dependencies: []string{
 				"cros_storage_writing",
 				"cros_is_on_rw_firmware_stable_verion",
-				"cros_is_rw_firmware_stable_version_available",
 			},
-			ExecName: "sample_pass",
+			RecoveryActions: []string{
+				"Fix FW on the DUT to match stable-version",
+				"Cold reset DUT by servo",
+				"Simple reboot",
+			},
+			ExecName: "cros_is_rw_firmware_stable_version_available",
+		},
+		"Fix FW on the DUT to match stable-version": {
+			Docs: []string{
+				"Run Fw update from the DUT to set expected FW version on the DUT",
+				"Update FW required the DUT to be run on stable-version OS.",
+			},
+			Conditions: []string{
+				"has_stable_version_cros_image",
+				"has_stable_version_fw_version",
+			},
+			Dependencies: []string{
+				"Provision OS if needed",
+				"Check if stable version is availabe on installed OS",
+				"Disable software-controlled write-protect for 'host'",
+				"Disable software-controlled write-protect for 'ec'",
+			},
+			ExecTimeout: &durationpb.Duration{Seconds: 900},
+			ExecName:    "cros_run_firmware_update",
+			ExecExtraArgs: []string{
+				"mode:recovery",
+				"force:true",
+				"reboot:by_host",
+				"updater_timeout:600",
+			},
+		},
+		"Provision OS if needed": {
+			Docs: []string{
+				"Perfrom provision OS if device is not running on it.",
+			},
+			Conditions: []string{
+				"has_stable_version_cros_image",
+				"cros_not_on_stable_version",
+			},
+			Dependencies: []string{
+				"cros_ssh",
+			},
+			ExecName:    "cros_provision",
+			ExecTimeout: &durationpb.Duration{Seconds: 3600},
 		},
 		"cros_gsctool": {
 			Docs: []string{
@@ -1238,6 +1295,53 @@ func crosRepairActions() map[string]*Action {
 			Docs:        []string{"Perform install process"},
 			ExecName:    "cros_run_chromeos_install_command_after_boot_usbdrive",
 			ExecTimeout: &durationpb.Duration{Seconds: 1200},
+		},
+		"DUT not on stable version": {
+			Docs: []string{
+				"Confirm that DUT does not have stable version.",
+			},
+			ExecName: "cros_not_on_stable_version",
+		},
+		"Install OS in recovery mode by booting from servo USB-drive if not on stable OS": {
+			Docs: []string{
+				"This action installs the test image on DUT utilizing ",
+				"the features of servo, only if the DUT is not ",
+				"already on stable OS. DUT will be booted in recovery ",
+				"mode.",
+			},
+			Conditions: []string{
+				"DUT not on stable version",
+				"has_stable_version_cros_image",
+			},
+			Dependencies: []string{
+				"Servo has USB-key with require image",
+				"cros_update_provision_os_version",
+			},
+			ExecName:      "os_install_repair",
+			ExecExtraArgs: []string{"halt_timeout:120"},
+			ExecTimeout:   &durationpb.Duration{Seconds: 3600},
+		},
+		"Check if stable version is availabe on installed OS": {
+			Docs: []string{
+				"Check that firmware manifest in OS tells that expected version nis present.",
+			},
+			Dependencies: []string{
+				"has_stable_version_fw_version",
+			},
+			ExecName: "cros_is_rw_firmware_stable_version_available",
+		},
+		"Update firmware from USB-Drive and when booted in recovery mode": {
+			Docs: []string{
+				"Update FW on the DUT using the USB-Drive.",
+			},
+			Dependencies: []string{
+				"Install OS in recovery mode by booting from servo USB-drive if not on stable OS",
+			},
+			ExecName: "cros_run_firmware_update",
+			ExecExtraArgs: []string{
+				"mode:recovery",
+				"reboot:by_host",
+			},
 		},
 		"Perfrom RPM config verification": {
 			Docs: []string{
