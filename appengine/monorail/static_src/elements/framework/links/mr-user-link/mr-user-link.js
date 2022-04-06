@@ -91,7 +91,7 @@ export class MrUserLink extends connectStore(LitElement) {
             rel="stylesheet">
       <i
         id="availability-icon"
-        class="material-icons inline-icon ${user.last_visit_timestamp ? "" : "inline-icon-unseen"}"
+        class=${"material-icons inline-icon ${user.last_visit_timestamp ? '': 'inline-icon-unseen'}"}
         title="${availability}"
         ?hidden="${!(this.showAvailabilityIcon && availability)}"
       >schedule</i>

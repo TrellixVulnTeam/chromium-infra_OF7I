@@ -1028,12 +1028,14 @@ class Converter(object):
       display_email = display_emails_by_id.get(user_id)
       availability = framework_helpers.GetUserAvailability(user)
       availability_message, _availability_status = availability
+      last_visit_timestamp = user.last_visit_timestamp
 
       user_ids_to_names[user_id] = user_objects_pb2.User(
           name=name,
           display_name=display_name,
           email=display_email,
-          availability_message=availability_message)
+          availability_message=availability_message,
+          last_visit_timestamp=last_visit_timestamp)
 
     return user_ids_to_names
 

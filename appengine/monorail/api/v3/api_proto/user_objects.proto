@@ -37,6 +37,8 @@ message User {
   string email = 4 [ (google.api.field_behavior) = OUTPUT_ONLY ];
   // User-written indication of their availability or working hours.
   string availability_message = 3;
+  // Timestamp of the user's last visit
+  int32 last_visit_timestamp = 5;
 }
 
 

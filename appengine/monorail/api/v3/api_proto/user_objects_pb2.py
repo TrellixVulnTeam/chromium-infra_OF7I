@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z!infra/monorailv2/api/v3/api_proto',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n#api/v3/api_proto/user_objects.proto\x12\x0bmonorail.v3\x1a\x19google/api/resource.proto\x1a\x1fgoogle/api/field_behavior.proto\"\x86\x01\n\x04User\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplay_name\x18\x02 \x01(\t\x12\x12\n\x05\x65mail\x18\x04 \x01(\tB\x03\xe0\x41\x03\x12\x1c\n\x14\x61vailability_message\x18\x03 \x01(\t:(\xea\x41%\n\x12\x61pi.crbug.com/User\x12\x0fusers/{user_id}\"\x9a\t\n\x0cUserSettings\x12-\n\x04name\x18\x01 \x01(\tB\x1f\xfa\x41\x1c\n\x1a\x61pi.crbug.com/UserSettings\x12:\n\tsite_role\x18\x02 \x01(\x0e\x32\".monorail.v3.UserSettings.SiteRoleB\x03\xe0\x41\x03\x12:\n\x16linked_secondary_users\x18\x03 \x03(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12>\n\x0bsite_access\x18\x04 \x01(\x0b\x32$.monorail.v3.UserSettings.SiteAccessB\x03\xe0\x41\x03\x12I\n\x13notification_traits\x18\x05 \x03(\x0e\x32,.monorail.v3.UserSettings.NotificationTraits\x12?\n\x0eprivacy_traits\x18\x06 \x03(\x0e\x32\'.monorail.v3.UserSettings.PrivacyTraits\x12P\n\x17site_interaction_traits\x18\x07 \x03(\x0e\x32/.monorail.v3.UserSettings.SiteInteractionTraits\x1a\x98\x01\n\nSiteAccess\x12;\n\x06status\x18\x01 \x01(\x0e\x32+.monorail.v3.UserSettings.SiteAccess.Status\x12\x0e\n\x06reason\x18\x02 \x01(\t\"=\n\x06Status\x12\x16\n\x12STATUS_UNSPECIFIED\x10\x00\x12\x0f\n\x0b\x46ULL_ACCESS\x10\x01\x12\n\n\x06\x42\x41NNED\x10\x02\"<\n\x08SiteRole\x12\x19\n\x15SITE_ROLE_UNSPECIFIED\x10\x00\x12\n\n\x06NORMAL\x10\x01\x12\t\n\x05\x41\x44MIN\x10\x02\"\xea\x01\n\x12NotificationTraits\x12#\n\x1fNOTIFICATION_TRAITS_UNSPECIFIED\x10\x00\x12\'\n#NOTIFY_ON_OWNED_OR_CC_ISSUE_CHANGES\x10\x01\x12#\n\x1fNOTIFY_ON_STARRED_ISSUE_CHANGES\x10\x02\x12\"\n\x1eNOTIFY_ON_STARRED_NOTIFY_DATES\x10\x03\x12\x18\n\x14\x43OMPACT_SUBJECT_LINE\x10\x04\x12#\n\x1fGMAIL_INCLUDE_ISSUE_LINK_BUTTON\x10\x05\"B\n\rPrivacyTraits\x12\x1e\n\x1aPRIVACY_TRAITS_UNSPECIFIED\x10\x00\x12\x11\n\rOBSCURE_EMAIL\x10\x01\"\x81\x01\n\x15SiteInteractionTraits\x12\'\n#SITE_INTERACTION_TRAITS_UNSPECIFIED\x10\x00\x12&\n\"REPORT_RESTRICT_VIEW_GOOGLE_ISSUES\x10\x01\x12\x17\n\x13PUBLIC_ISSUE_BANNER\x10\x02:7\xea\x41\x34\n\x1a\x61pi.crbug.com/UserSettings\x12\x16usersettings/{user_id}\"\xf4\x02\n\x0eUserSavedQuery\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplay_name\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\x12,\n\x08projects\x18\x04 \x03(\tB\x1a\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\x12G\n\x11subscription_mode\x18\x05 \x01(\x0e\x32,.monorail.v3.UserSavedQuery.SubscriptionMode\"f\n\x10SubscriptionMode\x12!\n\x1dSUBSCRIPTION_MODE_UNSPECIFIED\x10\x00\x12\x13\n\x0fNO_NOTIFICATION\x10\x01\x12\x1a\n\x16IMMEDIATE_NOTIFICATION\x10\x02:P\xea\x41M\n\x1c\x61pi.crbug.com/UserSavedQuery\x12-users/{user_id}/savedQueries/{saved_query_id}\"h\n\x0bProjectStar\x12\x0c\n\x04name\x18\x01 \x01(\t:K\xea\x41H\n\x19\x61pi.crbug.com/ProjectStar\x12+users/{user_id}/projectStars/{project_name}B#Z!infra/monorailv2/api/v3/api_protob\x06proto3'
+  serialized_pb=b'\n#api/v3/api_proto/user_objects.proto\x12\x0bmonorail.v3\x1a\x19google/api/resource.proto\x1a\x1fgoogle/api/field_behavior.proto\"\xa4\x01\n\x04User\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplay_name\x18\x02 \x01(\t\x12\x12\n\x05\x65mail\x18\x04 \x01(\tB\x03\xe0\x41\x03\x12\x1c\n\x14\x61vailability_message\x18\x03 \x01(\t\x12\x1c\n\x14last_visit_timestamp\x18\x05 \x01(\x05:(\xea\x41%\n\x12\x61pi.crbug.com/User\x12\x0fusers/{user_id}\"\x9a\t\n\x0cUserSettings\x12-\n\x04name\x18\x01 \x01(\tB\x1f\xfa\x41\x1c\n\x1a\x61pi.crbug.com/UserSettings\x12:\n\tsite_role\x18\x02 \x01(\x0e\x32\".monorail.v3.UserSettings.SiteRoleB\x03\xe0\x41\x03\x12:\n\x16linked_secondary_users\x18\x03 \x03(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12>\n\x0bsite_access\x18\x04 \x01(\x0b\x32$.monorail.v3.UserSettings.SiteAccessB\x03\xe0\x41\x03\x12I\n\x13notification_traits\x18\x05 \x03(\x0e\x32,.monorail.v3.UserSettings.NotificationTraits\x12?\n\x0eprivacy_traits\x18\x06 \x03(\x0e\x32\'.monorail.v3.UserSettings.PrivacyTraits\x12P\n\x17site_interaction_traits\x18\x07 \x03(\x0e\x32/.monorail.v3.UserSettings.SiteInteractionTraits\x1a\x98\x01\n\nSiteAccess\x12;\n\x06status\x18\x01 \x01(\x0e\x32+.monorail.v3.UserSettings.SiteAccess.Status\x12\x0e\n\x06reason\x18\x02 \x01(\t\"=\n\x06Status\x12\x16\n\x12STATUS_UNSPECIFIED\x10\x00\x12\x0f\n\x0b\x46ULL_ACCESS\x10\x01\x12\n\n\x06\x42\x41NNED\x10\x02\"<\n\x08SiteRole\x12\x19\n\x15SITE_ROLE_UNSPECIFIED\x10\x00\x12\n\n\x06NORMAL\x10\x01\x12\t\n\x05\x41\x44MIN\x10\x02\"\xea\x01\n\x12NotificationTraits\x12#\n\x1fNOTIFICATION_TRAITS_UNSPECIFIED\x10\x00\x12\'\n#NOTIFY_ON_OWNED_OR_CC_ISSUE_CHANGES\x10\x01\x12#\n\x1fNOTIFY_ON_STARRED_ISSUE_CHANGES\x10\x02\x12\"\n\x1eNOTIFY_ON_STARRED_NOTIFY_DATES\x10\x03\x12\x18\n\x14\x43OMPACT_SUBJECT_LINE\x10\x04\x12#\n\x1fGMAIL_INCLUDE_ISSUE_LINK_BUTTON\x10\x05\"B\n\rPrivacyTraits\x12\x1e\n\x1aPRIVACY_TRAITS_UNSPECIFIED\x10\x00\x12\x11\n\rOBSCURE_EMAIL\x10\x01\"\x81\x01\n\x15SiteInteractionTraits\x12\'\n#SITE_INTERACTION_TRAITS_UNSPECIFIED\x10\x00\x12&\n\"REPORT_RESTRICT_VIEW_GOOGLE_ISSUES\x10\x01\x12\x17\n\x13PUBLIC_ISSUE_BANNER\x10\x02:7\xea\x41\x34\n\x1a\x61pi.crbug.com/UserSettings\x12\x16usersettings/{user_id}\"\xf4\x02\n\x0eUserSavedQuery\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplay_name\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\x12,\n\x08projects\x18\x04 \x03(\tB\x1a\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\x12G\n\x11subscription_mode\x18\x05 \x01(\x0e\x32,.monorail.v3.UserSavedQuery.SubscriptionMode\"f\n\x10SubscriptionMode\x12!\n\x1dSUBSCRIPTION_MODE_UNSPECIFIED\x10\x00\x12\x13\n\x0fNO_NOTIFICATION\x10\x01\x12\x1a\n\x16IMMEDIATE_NOTIFICATION\x10\x02:P\xea\x41M\n\x1c\x61pi.crbug.com/UserSavedQuery\x12-users/{user_id}/savedQueries/{saved_query_id}\"h\n\x0bProjectStar\x12\x0c\n\x04name\x18\x01 \x01(\t:K\xea\x41H\n\x19\x61pi.crbug.com/ProjectStar\x12+users/{user_id}/projectStars/{project_name}B#Z!infra/monorailv2/api/v3/api_protob\x06proto3'
   ,
   dependencies=[google_dot_api_dot_resource__pb2.DESCRIPTOR,google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,])
 
@@ -52,8 +52,8 @@ _USERSETTINGS_SITEACCESS_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=811,
-  serialized_end=872,
+  serialized_start=841,
+  serialized_end=902,
 )
 _sym_db.RegisterEnumDescriptor(_USERSETTINGS_SITEACCESS_STATUS)
 
@@ -82,8 +82,8 @@ _USERSETTINGS_SITEROLE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=874,
-  serialized_end=934,
+  serialized_start=904,
+  serialized_end=964,
 )
 _sym_db.RegisterEnumDescriptor(_USERSETTINGS_SITEROLE)
 
@@ -127,8 +127,8 @@ _USERSETTINGS_NOTIFICATIONTRAITS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=937,
-  serialized_end=1171,
+  serialized_start=967,
+  serialized_end=1201,
 )
 _sym_db.RegisterEnumDescriptor(_USERSETTINGS_NOTIFICATIONTRAITS)
 
@@ -152,8 +152,8 @@ _USERSETTINGS_PRIVACYTRAITS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1173,
-  serialized_end=1239,
+  serialized_start=1203,
+  serialized_end=1269,
 )
 _sym_db.RegisterEnumDescriptor(_USERSETTINGS_PRIVACYTRAITS)
 
@@ -182,8 +182,8 @@ _USERSETTINGS_SITEINTERACTIONTRAITS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1242,
-  serialized_end=1371,
+  serialized_start=1272,
+  serialized_end=1401,
 )
 _sym_db.RegisterEnumDescriptor(_USERSETTINGS_SITEINTERACTIONTRAITS)
 
@@ -212,8 +212,8 @@ _USERSAVEDQUERY_SUBSCRIPTIONMODE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1619,
-  serialized_end=1721,
+  serialized_start=1649,
+  serialized_end=1751,
 )
 _sym_db.RegisterEnumDescriptor(_USERSAVEDQUERY_SUBSCRIPTIONMODE)
 
@@ -254,6 +254,13 @@ _USER = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='last_visit_timestamp', full_name='monorail.v3.User.last_visit_timestamp', index=4,
+      number=5, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -267,7 +274,7 @@ _USER = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=113,
-  serialized_end=247,
+  serialized_end=277,
 )
 
 
@@ -306,8 +313,8 @@ _USERSETTINGS_SITEACCESS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=720,
-  serialized_end=872,
+  serialized_start=750,
+  serialized_end=902,
 )
 
 _USERSETTINGS = _descriptor.Descriptor(
@@ -383,8 +390,8 @@ _USERSETTINGS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=250,
-  serialized_end=1428,
+  serialized_start=280,
+  serialized_end=1458,
 )
 
 
@@ -444,8 +451,8 @@ _USERSAVEDQUERY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1431,
-  serialized_end=1803,
+  serialized_start=1461,
+  serialized_end=1833,
 )
 
 
@@ -476,8 +483,8 @@ _PROJECTSTAR = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1805,
-  serialized_end=1909,
+  serialized_start=1835,
+  serialized_end=1939,
 )
 
 _USERSETTINGS_SITEACCESS.fields_by_name['status'].enum_type = _USERSETTINGS_SITEACCESS_STATUS
