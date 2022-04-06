@@ -155,6 +155,13 @@
   },
   {
     "cmd": [],
+    "name": "set_output_gitiles_commit",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@$recipe_engine/buildbucket/output_gitiles_commit@{\"host\": \"fake.org\", \"id\": \"a3249690d4dfb1acf9528df1ab239b041e9dd1dd\", \"position\": 184048, \"project\": \"gerrit_plugins_git_numberer\", \"ref\": \"refs/heads/main\"}@@@"
+    ]
+  },
+  {
+    "cmd": [],
     "name": "get node"
   },
   {

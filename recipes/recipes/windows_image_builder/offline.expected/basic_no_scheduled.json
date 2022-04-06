@@ -77,6 +77,14 @@
     ]
   },
   {
+    "cmd": [],
+    "name": "read user config.set_output_gitiles_commit",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@SET_BUILD_PROPERTY@$recipe_engine/buildbucket/output_gitiles_commit@{\"host\": \"fake.org\", \"id\": \"27767c7058a0f3bf6858c0c825230c6c63ce98d4\", \"position\": 209581, \"project\": \"infra-data-config\", \"ref\": \"refs/heads/main\"}@@@"
+    ]
+  },
+  {
     "cmd": [
       "vpython3",
       "-u",

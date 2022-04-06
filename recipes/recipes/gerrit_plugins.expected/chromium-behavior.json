@@ -155,6 +155,13 @@
   },
   {
     "cmd": [],
+    "name": "set_output_gitiles_commit",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@$recipe_engine/buildbucket/output_gitiles_commit@{\"host\": \"fake.org\", \"id\": \"22b0a493ace5d7229a0de8756246b8bb01ce0ce8\", \"position\": 1811, \"project\": \"gerrit_plugins_chromium_behavior\", \"ref\": \"refs/heads/main\"}@@@"
+    ]
+  },
+  {
+    "cmd": [],
     "name": "get node"
   },
   {
