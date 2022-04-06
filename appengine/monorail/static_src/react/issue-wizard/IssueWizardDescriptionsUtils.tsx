@@ -19,7 +19,7 @@ export function expandDescriptions(
     let expandDescription = "";
     let expandLabels = labels;
     let compVal = component || '';
-    let typeLabel = isRegression ? 'Type-Bug-Regression' : '';
+    let typeLabel = isRegression ? 'Type-Bug-Regression' : 'Type-Bug';
 
     customQuestionsAnswers.forEach((ans) => {
       if (ans.startsWith(LABELS_PREFIX)) {
