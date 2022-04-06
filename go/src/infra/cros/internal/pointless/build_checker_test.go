@@ -36,7 +36,8 @@ func TestCheckBuilder_irrelevantToRelevantPaths(t *testing.T) {
 	}
 	cfg := testplans_pb.BuildIrrelevanceCfg{}
 
-	res, err := CheckBuilder(changes, chRevData, relevantPaths, repoToBranchToSrcRoot, false, &cfg)
+	affectedFiles, err := ExtractAffectedFiles(changes, chRevData, repoToBranchToSrcRoot)
+	res, err := CheckBuilder(affectedFiles, relevantPaths, false, &cfg)
 	if err != nil {
 		t.Error(err)
 	}
@@ -82,7 +83,8 @@ func TestCheckBuilder_relevantToForcedRelevantPaths(t *testing.T) {
 		},
 	}
 
-	res, err := CheckBuilder(changes, chRevData, relevantPaths, repoToBranchToSrcRoot, false, &cfg)
+	affectedFiles, err := ExtractAffectedFiles(changes, chRevData, repoToBranchToSrcRoot)
+	res, err := CheckBuilder(affectedFiles, relevantPaths, false, &cfg)
 	if err != nil {
 		t.Error(err)
 	}
@@ -94,7 +96,7 @@ func TestCheckBuilder_relevantToForcedRelevantPaths(t *testing.T) {
 	}
 
 	// Test that if we force ignore the non portage paths that we respect the option.
-	res, err = CheckBuilder(changes, chRevData, relevantPaths, repoToBranchToSrcRoot, true, &cfg)
+	res, err = CheckBuilder(affectedFiles, relevantPaths, true, &cfg)
 	if err != nil {
 		t.Error(err)
 	}
@@ -141,7 +143,8 @@ func TestCheckBuilder_relevantToRelevantPaths(t *testing.T) {
 	}
 	cfg := testplans_pb.BuildIrrelevanceCfg{}
 
-	res, err := CheckBuilder(changes, chRevData, relevantPaths, repoToBranchToSrcRoot, false, &cfg)
+	affectedFiles, err := ExtractAffectedFiles(changes, chRevData, repoToBranchToSrcRoot)
+	res, err := CheckBuilder(affectedFiles, relevantPaths, false, &cfg)
 	if err != nil {
 		t.Error(err)
 	}
@@ -183,7 +186,8 @@ func TestCheckBuilder_buildIrrelevantPaths(t *testing.T) {
 		},
 	}
 
-	res, err := CheckBuilder(changes, chRevData, relevantPaths, repoToBranchToSrcRoot, false, &cfg)
+	affectedFiles, err := ExtractAffectedFiles(changes, chRevData, repoToBranchToSrcRoot)
+	res, err := CheckBuilder(affectedFiles, relevantPaths, false, &cfg)
 	if err != nil {
 		t.Error(err)
 	}
@@ -206,7 +210,8 @@ func TestCheckBuilder_noGerritChangesMeansPointlessBuild(t *testing.T) {
 	}
 	cfg := testplans_pb.BuildIrrelevanceCfg{}
 
-	res, err := CheckBuilder(changes, chRevData, relevantPaths, repoToBranchToSrcRoot, false, &cfg)
+	affectedFiles, err := ExtractAffectedFiles(changes, chRevData, repoToBranchToSrcRoot)
+	res, err := CheckBuilder(affectedFiles, relevantPaths, false, &cfg)
 	if err != nil {
 		t.Error(err)
 	}

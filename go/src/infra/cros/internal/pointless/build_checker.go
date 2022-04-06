@@ -23,18 +23,11 @@ import (
 // case if the commits in the CQ run don't affect any files that could possibly affect this
 // builder's relevant paths.
 func CheckBuilder(
-	changes []*bbproto.GerritChange,
-	changeRevs *gerrit.ChangeRevData,
+	affectedFiles []string,
 	relevantPaths []*testplans_pb.PointlessBuildCheckRequest_Path,
-	repoToBranchToSrcRoot map[string]map[string]string,
 	ignoreKnownNonPortageDirectories bool,
 	cfg *testplans_pb.BuildIrrelevanceCfg) (*testplans_pb.PointlessBuildCheckResponse, error) {
 
-	// Get all of the files referenced by each GerritCommit in the Build.
-	affectedFiles, err := extractAffectedFiles(changes, changeRevs, repoToBranchToSrcRoot)
-	if err != nil {
-		return nil, fmt.Errorf("error in extractAffectedFiles: %+v", err)
-	}
 	if len(affectedFiles) == 0 {
 		log.Printf("No affected files, so this run is irrelevant to the relevant paths")
 		return &testplans_pb.PointlessBuildCheckResponse{
@@ -87,7 +80,10 @@ func CheckBuilder(
 	}, nil
 }
 
-func extractAffectedFiles(changes []*bbproto.GerritChange,
+// Get all of the files referenced by each Gerrit Change in the build.
+// File paths are prefixed by the source path for the Gerrit project as
+// specified in the manifest.
+func ExtractAffectedFiles(changes []*bbproto.GerritChange,
 	changeRevs *gerrit.ChangeRevData, repoToSrcRoot map[string]map[string]string) ([]string, error) {
 	allAffectedFiles := make([]string, 0)
 	for _, gc := range changes {

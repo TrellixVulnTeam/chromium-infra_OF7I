@@ -77,42 +77,56 @@ func (c *checkBuild) Run(a subcommands.Application, args []string, env subcomman
 		return 2
 	}
 
-	changes, err := readGerritChanges(req.GerritChanges)
-	if err != nil {
-		log.Print(err)
-		return 3
-	}
-
-	changeRevs, err := c.fetchGerritData(changes)
-	if err != nil {
-		log.Print(err)
-		return 4
-	}
-
-	var repoToSrcRoot *map[string]map[string]string
-	if c.manifestFile == "" {
-		gitilesCommit, err := readGitilesCommit(req.GitilesCommit)
+	affectedFiles := []string{}
+	if len(req.AffectedPaths) > 0 {
+		for _, path := range req.AffectedPaths {
+			affectedFiles = append(affectedFiles, path.Path)
+		}
+	} else if len(req.GerritChanges) > 0 {
+		changes, err := readGerritChanges(req.GerritChanges)
 		if err != nil {
 			log.Print(err)
-			return 5
+			return 3
 		}
 
-		repoToSrcRoot, err = c.getRepoToSourceRoot(gitilesCommit)
+		changeRevs, err := c.fetchGerritData(changes)
 		if err != nil {
 			log.Print(err)
-			return 6
+			return 4
 		}
-	} else {
-		log.Printf("Reading local manifest from %s", c.manifestFile)
-		repoToSrcRootMap, err := manifestutil.GetRepoToRemoteBranchToSourceRootFromFile(c.manifestFile)
+
+		var repoToSrcRoot *map[string]map[string]string
+		if c.manifestFile == "" {
+			gitilesCommit, err := readGitilesCommit(req.GitilesCommit)
+			if err != nil {
+				log.Print(err)
+				return 5
+			}
+
+			repoToSrcRoot, err = c.getRepoToSourceRoot(gitilesCommit)
+			if err != nil {
+				log.Print(err)
+				return 6
+			}
+		} else {
+			log.Printf("Reading local manifest from %s", c.manifestFile)
+			repoToSrcRootMap, err := manifestutil.GetRepoToRemoteBranchToSourceRootFromFile(c.manifestFile)
+			if err != nil {
+				log.Print(err)
+				return 9
+			}
+			repoToSrcRoot = &repoToSrcRootMap
+		}
+
+		// Get all of the files referenced by each GerritCommit in the Build.
+		affectedFiles, err = pointless.ExtractAffectedFiles(changes, changeRevs, *repoToSrcRoot)
 		if err != nil {
 			log.Print(err)
-			return 9
+			return 10
 		}
-		repoToSrcRoot = &repoToSrcRootMap
 	}
 
-	resp, err := pointless.CheckBuilder(changes, changeRevs, req.RelevantPaths, *repoToSrcRoot, req.IgnoreKnownNonPortageDirectories, cfg)
+	resp, err := pointless.CheckBuilder(affectedFiles, req.RelevantPaths, req.IgnoreKnownNonPortageDirectories, cfg)
 	if err != nil {
 		log.Printf("Error checking if build is pointless:\n%v", err)
 		return 7
