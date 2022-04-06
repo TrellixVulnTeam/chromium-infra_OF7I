@@ -1,0 +1,36 @@
+// Copyright 2021 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package chromeos.karte;
+
+import "google/api/annotations.proto";
+
+option go_package = "infra/cros/karte/api;kartepb";
+
+// KarteCron is the Karte subservice for tasks that need to be periodically executed.
+// All of the routes that it installs should be under /v1/tasks/...
+service KarteCron {
+  rpc PersistToBigquery(PersistToBigqueryRequest) returns (PersistToBigqueryResponse) {
+    option (google.api.http) = {
+      get: "/v1/tasks/persist-to-bigquery-request"
+    };
+  };
+};
+
+// PersistToBigqueryRequest does not contain any info, since
+// PersistToBigquery is intended to be called as a cron job.
+message PersistToBigqueryRequest {};
+
+message PersistToBigqueryResponse {
+  // Created actions is a count of the actions that were created.
+  int32 created_actions = 1;
+
+  // Created observations is a count of the observations that were created.
+  int32 created_observations = 2;
+
+  // Succeeded is true if and only if no errors at all were encountered during persistence.
+  bool succeeded = 3;
+};
