@@ -46,6 +46,8 @@ PROPERTIES = {
             'mirror repo will have submodule baz.git in path bar.'),
     'internal':
         Property(default="", help="If should fetch internal source"),
+    'with_tags':
+        Property(default=True, help='Whether to clone, fetch and push tags.'),
 }
 
 COMMIT_USERNAME = 'Submodules bot'
@@ -56,7 +58,7 @@ SHA1_RE = re.compile(r'[0-9a-fA-F]{40}')
 
 
 def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays,
-             internal):
+             internal, with_tags):
   _, source_project = api.gitiles.parse_repo_url(source_repo)
 
   # NOTE: This name must match the definition in cr-buildbucket.cfg. Do not
@@ -85,13 +87,16 @@ def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays,
     # But we must supply *some* valid path, or it will fail to spawn the
     # process.
     with api.context(cwd=checkout_dir):
-      api.git('clone', source_repo, source_checkout_dir)
+      args = []
+      if not with_tags:
+        args.append('--no_tags')
+      api.git('clone', source_repo, source_checkout_dir, *args)
 
   # This is implicitly used as the cwd by all the git steps below.
   api.m.path['checkout'] = source_checkout_dir
 
   try:
-    api.git('fetch', '-t')
+    api.git('fetch', '-t' if with_tags else '-n')
     for ref in refs:
       if not ref.startswith('refs/heads'):
         api.git('fetch', 'origin', ref + ':' + RefToRemoteRef(ref))
@@ -165,10 +170,16 @@ def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays,
   api.git('push', '-o', 'nokeycheck', target_repo,
           'refs/remotes/origin/main:refs/heads/main-original')
 
-  # You can't use --all and --tags at the same time for some reason.
-  # --mirror pushes both, but it also pushes remotes, which we don't want.
-  api.git(
-      'push', '-o', 'nokeycheck', '--tags', target_repo, name='git push --tags')
+  if with_tags:
+    # You can't use --all and --tags at the same time for some reason.
+    # --mirror pushes both, but it also pushes remotes, which we don't want.
+    api.git(
+        'push',
+        '-o',
+        'nokeycheck',
+        '--tags',
+        target_repo,
+        name='git push --tags')
 
 
 def RefToRemoteRef(ref):
@@ -409,3 +420,14 @@ def GenTests(api):
           api.raw_io.stream_output_text('', stream='stdout')) + api.step_data(
               'Process refs/heads/main.gclient evaluate DEPS',
               api.raw_io.stream_output_text(fake_src_deps, stream='stdout')))
+
+  yield (api.test('with_tags_false') + api.properties(
+      source_repo='https://chromium.googlesource.com/chromium/src',
+      target_repo='https://chromium.googlesource.com/codesearch/src_mirror',
+      internal='true',
+      with_tags=False) +
+         api.step_data('Check for existing source checkout dir',
+                       api.raw_io.stream_output_text('', stream='stdout')) +
+         api.step_data(
+             'Process refs/heads/main.gclient evaluate DEPS',
+             api.raw_io.stream_output_text(fake_src_deps, stream='stdout')))
