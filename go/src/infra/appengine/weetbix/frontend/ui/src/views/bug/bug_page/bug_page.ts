@@ -85,6 +85,7 @@ export class BugPage extends LitElement {
                 const link = linkToRule(ruleKey.project, ruleKey.ruleId);
                 this.navigate(link);
             }
+            this.requestUpdate();
         } catch (e) {
             this.error = e;
         }

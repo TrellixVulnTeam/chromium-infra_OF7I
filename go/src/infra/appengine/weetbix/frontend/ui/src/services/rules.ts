@@ -4,10 +4,10 @@
 
 import { AuthorizedPrpcClient } from '../clients/authorized_client';
 
-export function getRulesService() : RulesService {
+export const getRulesService = () : RulesService => {
     const client = new AuthorizedPrpcClient();
     return new RulesService(client);
-}
+};
 
 // For handling errors, import:
 // import { GrpcError } from '@chopsui/prpc-client';
@@ -132,7 +132,7 @@ export interface LookupBugResponse {
     rules?: string[];
 }
 
-const ruleNameRE = /^projects\/(.*)\/rules\/(.*)$/
+const ruleNameRE = /^projects\/(.*)\/rules\/(.*)$/;
 
 // RuleKey represents the key parts of a rule resource name.
 export interface RuleKey {
@@ -141,13 +141,13 @@ export interface RuleKey {
 }
 
 // parseRuleName parses a rule resource name into its key parts.
-export function parseRuleName(name: string):RuleKey {
-    const results = name.match(ruleNameRE)
+export const parseRuleName = (name: string):RuleKey => {
+    const results = name.match(ruleNameRE);
     if (results == null) {
-        throw new Error('invalid rule resource name: ' + name)
+        throw new Error('invalid rule resource name: ' + name);
     }
     return {
         project: results[1],
         ruleId: results[2],
-    }
-}
+    };
+};

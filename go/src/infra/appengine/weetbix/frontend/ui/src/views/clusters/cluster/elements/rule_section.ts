@@ -1,3 +1,5 @@
+/* eslint-disable import/no-duplicates */
+/* eslint-disable @typescript-eslint/indent */
 // Copyright 2021 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -64,8 +66,8 @@ export class RuleSection extends LitElement {
         }
         const r = this.rule;
         const formatTime = (time: string): string => {
-            let t = DateTime.fromISO(time);
-            let d = DateTime.now().diff(t);
+            const t = DateTime.fromISO(time);
+            const d = DateTime.now().diff(t);
             if (d.as('seconds') < 60) {
                 return 'just now';
             }
@@ -73,13 +75,13 @@ export class RuleSection extends LitElement {
                 return t.toRelative()?.toLocaleLowerCase() || '';
             }
             return DateTime.fromISO(time).toLocaleString(DateTime.DATETIME_SHORT);
-        }
+        };
         const formatTooltipTime = (time: string): string => {
             // Format date/time with full month name, e.g. "January" and Timezone,
             // to disambiguate date/time even if the user's locale has been set
             // incorrectly.
             return DateTime.fromISO(time).toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS);
-        }
+        };
         const bugStatusClass = (status: string): string => {
             // In monorail, bug statuses are configurable per system. Right now,
             // we don't have a configurable mapping from status to semantic in
@@ -99,20 +101,20 @@ export class RuleSection extends LitElement {
                 // E.g. Won't fix, duplicate, archived.
                 return 'bug-status-other';
             }
-        }
+        };
         const formatUser = (user: string): TemplateResult => {
             if (user == 'weetbix') {
                 return html`Weetbix`;
-            } else if (user.endsWith("@google.com")) {
-                var ldap = user.substr(0, user.length - "@google.com".length)
+            } else if (user.endsWith('@google.com')) {
+                const ldap = user.substr(0, user.length - '@google.com'.length);
                 return html`<a href="http://who/${ldap}">${ldap}</a>`;
             } else {
                 return html`${user}`;
             }
-        }
+        };
         return html`
         <div>
-            <h1 data-cy="rule-title">${this.issue != null ? this.issue.summary : "..." }</h1>
+            <h1 data-cy="rule-title">${this.issue != null ? this.issue.summary : '...' }</h1>
             <div class="definition-box-container">
                 <pre class="definition-box" data-cy="rule-definition">${r.ruleDefinition}</pre>
                 <div class="definition-edit-button">
@@ -143,9 +145,9 @@ export class RuleSection extends LitElement {
                     <tr>
                         <th>Archived <mwc-icon class="inline-icon" title="Archived failure association rules do not match failures. If a rule is no longer needed, it should be archived.">help_outline</mwc-icon></th>
                         <td data-cy="rule-archived">
-                            ${r.isActive ? "No" : "Yes"}
+                            ${r.isActive ? 'No' : 'Yes'}
                             <div class="inline-button">
-                                <mwc-button outlined dense @click="${this.toggleArchived}" data-cy="rule-archived-toggle">${r.isActive ? "Archive" : "Restore"}</mwc-button>
+                                <mwc-button outlined dense @click="${this.toggleArchived}" data-cy="rule-archived-toggle">${r.isActive ? 'Archive' : 'Restore'}</mwc-button>
                             </div>
                         </td>
                     </tr>
@@ -195,11 +197,12 @@ export class RuleSection extends LitElement {
         const service = getRulesService();
         const rule = await service.get({
             name: `projects/${this.project}/rules/${this.ruleId}`
-        })
+        });
 
         this.rule = rule;
         this.fireRuleChanged();
         this.fetchBug(rule);
+        this.requestUpdate();
     }
 
     async fetchBug(rule: Rule) {
@@ -216,30 +219,31 @@ export class RuleSection extends LitElement {
             const service = getIssuesService();
             const request: GetIssueRequest = {
                 name: issueId
-            }
+            };
             const issue = await service.getIssue(request);
             this.issue = issue;
         } else {
             this.issue = null;
         }
+        this.requestUpdate();
     }
 
     editRule() {
         if (!this.rule) {
             throw new Error('invariant violated: editRule cannot be called before rule is loaded');
         }
-        const ruleDefinition = this.shadowRoot!.getElementById("rule-definition") as TextArea;
+        const ruleDefinition = this.shadowRoot!.getElementById('rule-definition') as TextArea;
         ruleDefinition.value = this.rule.ruleDefinition;
 
         this.editingRule = true;
-        this.validationMessage = "";
+        this.validationMessage = '';
     }
 
     editBug() {
         if (!this.rule) {
             throw new Error('invariant violated: editBug cannot be called before rule is loaded');
         }
-        const picker = this.shadowRoot!.getElementById("bug") as BugPicker;
+        const picker = this.shadowRoot!.getElementById('bug') as BugPicker;
         picker.bugSystem = this.rule.bug.system;
         picker.bugId = this.rule.bug.id;
 
@@ -274,7 +278,7 @@ export class RuleSection extends LitElement {
             },
             updateMask: 'ruleDefinition',
             etag: this.rule.etag,
-        }
+        };
 
         try {
             await this.applyUpdate(request);
@@ -282,13 +286,14 @@ export class RuleSection extends LitElement {
         } catch (e) {
             this.routeUpdateError(e);
         }
+        this.requestUpdate();
     }
 
     async saveBug() {
         if (!this.rule) {
             throw new Error('invariant violated: saveBug cannot be called before rule is loaded');
         }
-        const picker = this.shadowRoot!.getElementById("bug") as BugPicker;
+        const picker = this.shadowRoot!.getElementById('bug') as BugPicker;
         if (picker.bugSystem === this.rule.bug.system && picker.bugId === this.rule.bug.id) {
             this.editingBug = false;
             return;
@@ -304,13 +309,14 @@ export class RuleSection extends LitElement {
                     id: picker.bugId,
                 },
             },
-            updateMask: "bug",
+            updateMask: 'bug',
             etag: this.rule.etag,
-        }
+        };
 
         try {
             await this.applyUpdate(request);
             this.editingBug = false;
+            this.requestUpdate();
         } catch (e) {
             this.routeUpdateError(e);
         }
@@ -338,11 +344,12 @@ export class RuleSection extends LitElement {
                 name: this.rule.name,
                 isActive: !this.rule.isActive,
             },
-            updateMask: "isActive",
+            updateMask: 'isActive',
             etag: this.rule.etag,
-        }
+        };
         try {
             await this.applyUpdate(request);
+            this.requestUpdate();
         } catch (err) {
             this.showSnackbar(err as string);
         }
@@ -355,7 +362,7 @@ export class RuleSection extends LitElement {
 
         this.requestUpdate();
         // Revert the automatic toggle caused by the click.
-        const toggle = this.shadowRoot!.getElementById("bug-updates-toggle") as Switch;
+        const toggle = this.shadowRoot!.getElementById('bug-updates-toggle') as Switch;
         toggle.selected = this.rule.isManagingBug;
 
         const request: UpdateRuleRequest = {
@@ -363,11 +370,12 @@ export class RuleSection extends LitElement {
                 name: this.rule.name,
                 isManagingBug: !this.rule.isManagingBug,
             },
-            updateMask: "isManagingBug",
+            updateMask: 'isManagingBug',
             etag: this.rule.etag,
-        }
+        };
         try {
             await this.applyUpdate(request);
+            this.requestUpdate();
         } catch (err) {
             this.showSnackbar(err as string);
         }
@@ -378,17 +386,18 @@ export class RuleSection extends LitElement {
     // occurs, the validation message is returned.
     async applyUpdate(request: UpdateRuleRequest) : Promise<void> {
         const service = getRulesService();
-        const rule = await service.update(request)
+        const rule = await service.update(request);
         this.rule = rule;
         this.fireRuleChanged();
         this.fetchBug(rule);
+        this.requestUpdate();
     }
 
     showSnackbar(error: string) {
-        this.snackbarError = "Updating rule: " + error;
+        this.snackbarError = 'Updating rule: ' + error;
 
         // Let the snackbar manage its own closure after a delay.
-        const snackbar = this.shadowRoot!.getElementById("error-snackbar") as Snackbar;
+        const snackbar = this.shadowRoot!.getElementById('error-snackbar') as Snackbar;
         snackbar.show();
     }
 

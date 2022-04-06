@@ -76,7 +76,6 @@ export class NewRulePage extends LitElement {
         let rule = this.ruleString;
         if (rule) {
             this.defaultRule = rule;
-            console.log(rule);
         }
         let sourceClusterAlg = this.sourceAlg;
         let sourceClusterID = this.sourceId;
@@ -138,7 +137,8 @@ export class NewRulePage extends LitElement {
             const rule = await service.create(request);
             this.validationMessage = JSON.stringify(rule);
             // Apparently .<>? doesn't work with a function
-             this.navigate(linkToRule(rule.project, rule.ruleId));
+            this.navigate(linkToRule(rule.project, rule.ruleId));
+            this.requestUpdate();
         } catch (e) {
             let handled = false;
             if (e instanceof GrpcError) {

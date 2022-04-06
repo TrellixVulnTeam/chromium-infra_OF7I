@@ -1,11 +1,12 @@
+
 // Copyright 2021 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 import './elements/reclustering_progress_indicator';
-import './elements/reclustering_progress_indicator.ts';
 import '../../../shared_elements/failure_table';
-import './elements/rule_section.ts';
+import './elements/rule_section';
+import './elements/impact_table';
 
 import {
     css,
@@ -19,6 +20,7 @@ import {
 import { Ref } from 'react';
 import { NavigateFunction } from 'react-router-dom';
 
+import { Cluster, getCluster } from '../../../services/cluster';
 import { RuleChangedEvent } from './elements/rule_section';
 
 // ClusterPage lists the clusters tracked by Weetbix.
@@ -29,13 +31,13 @@ export class ClusterPage extends LitElement {
     ref: Ref<ClusterPage> | null = null;
 
     @property()
-    project: string = '';
+    project = '';
 
     @property()
-    clusterAlgorithm: string = '';
+    clusterAlgorithm = '';
 
     @property()
-    clusterId: string = '';
+    clusterId = '';
 
     navigate!: NavigateFunction;
 
@@ -46,42 +48,39 @@ export class ClusterPage extends LitElement {
     // When the displayed rule's predicate (if any) was last updated.
     // This is provided to the reclustering progress indicator to show
     // the correct re-clustering status.
-    rulePredicateLastUpdated: string = '';
+    rulePredicateLastUpdated = '';
 
     connectedCallback() {
         super.connectedCallback();
-        this.rulePredicateLastUpdated = "";
+        this.rulePredicateLastUpdated = '';
         this.refreshAnalysis();
     }
 
     render() {
-        const c = this.cluster;
-        const metric = (counts: Counts): number => {
-            return counts.nominal;
-        }
+        const currentCluster = this.cluster;
 
-        var definitionSection = html`Loading...`;
-        if (this.clusterAlgorithm.startsWith("rules-")) {
+        let definitionSection = html`Loading...`;
+        if (this.clusterAlgorithm.startsWith('rules-')) {
             definitionSection = html`
                 <rule-section project=${this.project} ruleId=${this.clusterId} @rulechanged=${this.onRuleChanged}>
                 </rule-section>
             `;
-        } else if (c !== undefined) {
-            var criteriaName = ""
-            if (this.clusterAlgorithm.startsWith("testname-")) {
-                criteriaName = "Test name-based clustering";
-            } else if (this.clusterAlgorithm.startsWith("reason-")) {
-                criteriaName = "Failure reason-based clustering";
+        } else if (currentCluster !== undefined) {
+            let criteriaName = '';
+            if (this.clusterAlgorithm.startsWith('testname-')) {
+                criteriaName = 'Test name-based clustering';
+            } else if (this.clusterAlgorithm.startsWith('reason-')) {
+                criteriaName = 'Failure reason-based clustering';
             }
-            let newRuleButton: TemplateResult = html``
-            if (c.failureAssociationRule) {
+            let newRuleButton: TemplateResult = html``;
+            if (currentCluster.failureAssociationRule) {
                 newRuleButton = html`<mwc-button class="new-rule-button" raised @click=${this.newRuleClicked}>New Rule from Cluster</mwc-button>`;
             }
 
             definitionSection = html`
             <h1>Cluster <span class="cluster-id">${this.clusterAlgorithm}/${this.clusterId}</span></h1>
             <div class="definition-box-container">
-                <pre class="definition-box">${c.title}</pre>
+                <pre class="definition-box">${currentCluster.title}</pre>
             </div>
             <table class="definition-table">
                 <tbody>
@@ -96,46 +95,18 @@ export class ClusterPage extends LitElement {
                 </tbody>
             </table>
             ${newRuleButton}
-            `
+            `;
         }
 
-        var impactTable = html`Loading...`;
-        if (c !== undefined) {
+        let impactTable = html`Loading...`;
+        if (currentCluster !== undefined) {
             impactTable = html`
-            <table>
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>1 day</th>
-                        <th>3 days</th>
-                        <th>7 days</th>
-                    </tr>
-                </thead>
-                <tbody class="data">
-                    <tr>
-                        <th>User Cls Failed Presubmit</th>
-                        <td class="number">${metric(c.presubmitRejects1d)}</td>
-                        <td class="number">${metric(c.presubmitRejects3d)}</td>
-                        <td class="number">${metric(c.presubmitRejects7d)}</td>
-                    </tr>
-                    <tr>
-                        <th>Test Runs Failed</th>
-                        <td class="number">${metric(c.testRunFailures1d)}</td>
-                        <td class="number">${metric(c.testRunFailures3d)}</td>
-                        <td class="number">${metric(c.testRunFailures7d)}</td>
-                    </tr>
-                    <tr>
-                        <th>Unexpected Failures</th>
-                        <td class="number">${metric(c.failures1d)}</td>
-                        <td class="number">${metric(c.failures3d)}</td>
-                        <td class="number">${metric(c.failures7d)}</td>
-                    </tr>
-                </tbody>
-            </table>`;
+            <impact-table .currentCluster=${currentCluster}></impact-table>
+            `;
         }
 
         return html`
-        <reclustering-progress-indicator project=${this.project} ?hasrule=${this.clusterAlgorithm.startsWith("rules-")}
+        <reclustering-progress-indicator project=${this.project} ?hasrule=${this.clusterAlgorithm.startsWith('rules-')}
             rulePredicateLastUpdated=${this.rulePredicateLastUpdated} @refreshanalysis=${this.refreshAnalysis}>
         </reclustering-progress-indicator>
         <div id="container">
@@ -173,10 +144,8 @@ export class ClusterPage extends LitElement {
     // is clicked at completion of re-clustering.
     async refreshAnalysis() {
         this.cluster = undefined;
-
-        const response = await fetch(`/api/projects/${encodeURIComponent(this.project)}/clusters/${encodeURIComponent(this.clusterAlgorithm)}/${encodeURIComponent(this.clusterId)}`);
-        const cluster = await response.json();
-        this.cluster = cluster;
+        this.cluster = await getCluster(this.project, this.clusterAlgorithm, this.clusterId);
+        this.requestUpdate();
     }
 
     static styles = [css`
@@ -235,32 +204,4 @@ export class ClusterPage extends LitElement {
             background-color: var(--light-active-color);
         }
     `];
-}
-
-// Cluster is the cluster information sent by the server.
-interface Cluster {
-    clusterId: ClusterId;
-    title: string;
-    failureAssociationRule: string;
-    presubmitRejects1d: Counts;
-    presubmitRejects3d: Counts;
-    presubmitRejects7d: Counts;
-    testRunFailures1d: Counts;
-    testRunFailures3d: Counts;
-    testRunFailures7d: Counts;
-    failures1d: Counts;
-    failures3d: Counts;
-    failures7d: Counts;
-}
-
-interface Counts {
-    nominal: number;
-    preExoneration: number;
-    residual: number;
-    residualPreExoneration: number;
-}
-
-interface ClusterId {
-    algorithm: string;
-    id: string;
 }

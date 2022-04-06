@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/indent */
+/* eslint-disable @typescript-eslint/no-inferrable-types */
 
 // Copyright 2021 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -6,8 +8,8 @@
 import { LitElement, html, customElement, property, css, state } from 'lit-element';
 import '@material/mwc-checkbox';
 import '@material/mwc-formfield';
-import "@material/mwc-icon/mwc-icon";
-import "@material/mwc-list/mwc-list-item";
+import '@material/mwc-icon/mwc-icon';
+import '@material/mwc-list/mwc-list-item';
 import '@material/mwc-select';
 
 import { linkToCluster } from '../../../tools/urlHandling/links';
@@ -38,10 +40,13 @@ export class ClusterTable extends LitElement {
     clusters: Cluster[] | undefined;
 
     connectedCallback() {
-        super.connectedCallback()
+        super.connectedCallback();
         fetch(`/api/projects/${encodeURIComponent(this.project)}/clusters`)
             .then(r => r.json())
-            .then(clusters => this.clusters = clusters || []);
+            .then(clusters => {
+                this.clusters = clusters || [];
+                this.requestUpdate();
+            });
     }
 
     onDaysChanged() {
@@ -74,7 +79,7 @@ export class ClusterTable extends LitElement {
 
         const clusterLink = (cluster: Cluster): string => {
             return linkToCluster(this.project, cluster.clusterId);
-        }
+        };
         const metric = (c: Cluster, metric: MetricName): number => {
             let counts: Counts;
             switch (metric) {
@@ -95,7 +100,7 @@ export class ClusterTable extends LitElement {
             } else {
                 return this.preexoneration ? counts.preExoneration : counts.nominal;
             }
-        }
+        };
         const sortedClusters = [...this.clusters];
         sortedClusters.sort((c1, c2) => {
             const m1 = metric(c1, this.sortMetric);

@@ -232,7 +232,7 @@ export class FailureTable extends LitElement {
                     ${this.variants.map(v => groupByButton(v))}
                 </div>
             </div>
-            <table>
+            <table data-testid="failures-table">
                 <thead>
                     <tr>
                         <th></th>

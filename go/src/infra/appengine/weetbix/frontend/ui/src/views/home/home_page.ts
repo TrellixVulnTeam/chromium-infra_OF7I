@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/indent */
 // Copyright 2022 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 import './elements/project_card';
 
-// found in the LICENSE file.
 import {
     css,
     customElement,
@@ -20,11 +22,11 @@ import {
 /**
  *  Represents the home page where the user selects their project.
  */
-@customElement("home-page")
+@customElement('home-page')
 export class HomePage extends LitElement {
 
     @state()
-    projects: Project[] | null = []
+    projects: Project[] | null = [];
 
     connectedCallback() {
         super.connectedCallback();
@@ -33,12 +35,12 @@ export class HomePage extends LitElement {
 
     async fetch() {
         const service = getProjectsService();
-        const request: ListProjectsRequest = {}
+        const request: ListProjectsRequest = {};
         const response = await service.list(request);
         // Chromium milestone projects are explicitly ignored by the backend, match this in the frontend.
         this.projects = response.projects?.filter(p => !/^chromium-m[0-9]+$/.test(p.project)) || null;
+        this.requestUpdate();
     }
-
 
     render() {
         return html`

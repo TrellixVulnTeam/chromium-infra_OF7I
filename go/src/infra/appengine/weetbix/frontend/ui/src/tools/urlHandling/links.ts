@@ -4,7 +4,7 @@
 
 import { ClusterId } from '../../services/rules';
 
-export function linkToCluster(project: string, c: ClusterId): string {
+export const linkToCluster = (project: string, c: ClusterId): string => {
     if (c.algorithm.startsWith('rules-')) {
         return linkToRule(project, c.id);
     } else {
@@ -13,10 +13,10 @@ export function linkToCluster(project: string, c: ClusterId): string {
         const idEncoded = encodeURIComponent(c.id);
         return `/p/${projectEncoded}/clusters/${algorithmEncoded}/${idEncoded}`;
     }
-}
+};
 
-export function linkToRule(project: string, ruleId: string): string {
+export const linkToRule = (project: string, ruleId: string): string => {
     const projectEncoded = encodeURIComponent(project);
     const ruleIdEncoded = encodeURIComponent(ruleId);
     return `/p/${projectEncoded}/rules/${ruleIdEncoded}`;
-}
+};

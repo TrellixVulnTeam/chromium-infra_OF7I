@@ -1,11 +1,29 @@
+/* eslint-disable @typescript-eslint/indent */
 // Copyright 2021 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { LitElement, html, customElement, property, css, state, TemplateResult } from 'lit-element';
-import { DateTime } from 'luxon';
 import '@material/mwc-button';
 import '@material/mwc-circular-progress';
+
+import {
+    css,
+    customElement,
+    html,
+    LitElement,
+    property,
+    state,
+    TemplateResult
+} from 'lit-element';
+import { DateTime } from 'luxon';
+
+import {
+    fetchProgress,
+    progressToLatestAlgorithms,
+    progressToLatestConfig,
+    progressToRulesVersion,
+    ReclusteringProgress
+} from '../../../../services/progress';
 
 /**
  * ReclusteringProgressIndicator displays the progress Weetbix is making
@@ -85,19 +103,19 @@ export class ReclusteringProgressIndicator extends LitElement {
             return html``;
         }
 
-        let reclusteringTarget = "updated clustering algorithms";
-        let progressPerMille = this.progressToLatestAlgorithms(this.progress);
+        let reclusteringTarget = 'updated clustering algorithms';
+        let progressPerMille = progressToLatestAlgorithms(this.progress);
 
-        const configProgress = this.progressToLatestConfig(this.progress);
+        const configProgress = progressToLatestConfig(this.progress);
         if (configProgress < progressPerMille) {
-            reclusteringTarget = "updated clustering configuration";
+            reclusteringTarget = 'updated clustering configuration';
             progressPerMille = configProgress;
         }
 
         if (this.hasRule && this.rulePredicateLastUpdated) {
-            const ruleProgress = this.progressToRulesVersion(this.progress, this.rulePredicateLastUpdated);
+            const ruleProgress = progressToRulesVersion(this.progress, this.rulePredicateLastUpdated);
             if (ruleProgress < progressPerMille) {
-                reclusteringTarget = "the latest rule definition";
+                reclusteringTarget = 'the latest rule definition';
                 progressPerMille = ruleProgress;
             }
         }
@@ -110,12 +128,12 @@ export class ReclusteringProgressIndicator extends LitElement {
         // Once shown, keep showing.
         this.show = true;
 
-        let progressText = "task queued";
+        let progressText = 'task queued';
         if (progressPerMille >= 0) {
-            progressText = (progressPerMille / 10).toFixed(1) + "%"
+            progressText = (progressPerMille / 10).toFixed(1) + '%';
         }
 
-        var content: TemplateResult
+        let content: TemplateResult;
         if (progressPerMille < 1000) {
             content = html`
             <span class="progress-description" data-cy="reclustering-progress-description">
@@ -123,7 +141,7 @@ export class ReclusteringProgressIndicator extends LitElement {
                 <span class="last-updated">
                     Last update ${this.lastRefreshed?.toLocaleString(DateTime.TIME_WITH_SECONDS)}.
                 </span>
-            </span>`
+            </span>`;
         } else {
             content = html`
             <span class="progress-description" data-cy="reclustering-progress-description">
@@ -131,7 +149,7 @@ export class ReclusteringProgressIndicator extends LitElement {
             </span>
             <mwc-button outlined @click=${this.refreshAnalysis}>
                 View Updated Impact
-            </mwc-button>`
+            </mwc-button>`;
         }
 
         return html`
@@ -146,11 +164,9 @@ export class ReclusteringProgressIndicator extends LitElement {
     }
 
     async fetch() {
-        const response = await fetch(`/api/projects/${encodeURIComponent(this.project)}/reclusteringProgress`);
-        const progress = await response.json();
-
+        this.progress = await fetchProgress(this.project);
         this.lastRefreshed = DateTime.now();
-        this.progress = progress;
+        this.requestUpdate();
     }
 
     refreshAnalysis() {
@@ -163,44 +179,7 @@ export class ReclusteringProgressIndicator extends LitElement {
             detail: {
             },
         });
-        this.dispatchEvent(event)
-    }
-
-    progressToLatestAlgorithms(p: ReclusteringProgress): number {
-        return this.progressTo(p, (t: ReclusteringTarget) => {
-            return t.algorithmsVersion >= p.latestAlgorithmsVersion
-        });
-    }
-
-    progressToLatestConfig(p: ReclusteringProgress): number {
-        const targetConfigVersion = DateTime.fromISO(p.latestConfigVersion)
-        return this.progressTo(p, (t: ReclusteringTarget) => {
-            return DateTime.fromISO(t.configVersion) >= targetConfigVersion
-        });
-    }
-
-    progressToRulesVersion(p: ReclusteringProgress, rulesVersion: string): number {
-        const d = DateTime.fromISO(rulesVersion)
-        return this.progressTo(p, (t: ReclusteringTarget) => {
-            return DateTime.fromISO(t.rulesVersion) >= d
-        });
-    }
-
-    // progressTo returns the progress to completing a re-clustering run
-    // satisfying the given re-clustering target, expressed as a predicate.
-    // If re-clustering has started, the returned value is value from 0 to
-    // 1000. If the run is pending, the value -1 is returned.
-    progressTo(p: ReclusteringProgress, predicate: (t: ReclusteringTarget) => boolean): number {
-        if (predicate(p.last)) {
-            // Completed
-            return 1000;
-        }
-        if (predicate(p.next)) {
-            return p.progressPerMille;
-        }
-        // Run not yet started (e.g. because we are still finishing a previous
-        // re-clustering).
-        return -1;
+        this.dispatchEvent(event);
     }
 
     static styles = [css`
@@ -223,33 +202,5 @@ export class ReclusteringProgressIndicator extends LitElement {
 
 // RefreshAnalysisEvent is an event that is triggered when the user requests
 // cluster analysis to be updated.
-export interface RefreshAnalysisEvent {
-}
-
-// ReclusteringTarget captures the rules and algorithms a re-clustering run
-// is re-clustering to.
-interface ReclusteringTarget {
-    rulesVersion: string; // RFC 3339 encoded date/time.
-    configVersion: string; // RFC 3339 encoded date/time.
-    algorithmsVersion: number;
-}
-
-// ReclusteringProgress captures the progress re-clustering a
-// given LUCI project's test results with a specific rules
-// version and/or algorithms version.
-interface ReclusteringProgress {
-    // ProgressPerMille is the progress of the current re-clustering run,
-    // measured in thousandths (per mille).
-    progressPerMille: number;
-    // LatestAlgorithmsVersion is the latest version of algorithms
-    // used in a Weetbix re-clustering run.
-    latestAlgorithmsVersion: number;
-    // LatestAlgorithmsVersion is the latest version of configuration
-    // used in a Weetbix re-clustering run, as a RFC 3339 encoded date/time.
-    latestConfigVersion: string;
-    // Next is the goal of the current re-clustering run. (For which
-    // ProgressPerMille is specified.)
-    next: ReclusteringTarget;
-    // Last is the goal of the last completed re-clustering run.
-    last: ReclusteringTarget;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface RefreshAnalysisEvent {}

@@ -4,7 +4,7 @@
 
 import React from 'react';
 import './home_page';
-import '../../../web_component_types'
+import '../../../web_component_types';
 
 const HomePageWrapper = () => {
     return (<home-page></home-page>);

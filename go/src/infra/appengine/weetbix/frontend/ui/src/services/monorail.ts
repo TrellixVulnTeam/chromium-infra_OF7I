@@ -12,7 +12,7 @@ export function getIssuesService() : IssuesService {
     const useIDToken = true;
     if (!window.monorailHostname)
         throw new Error('monorail hostname not set');
-    let client = new AuthorizedPrpcClient('api-dot-' + window.monorailHostname, useIDToken);
+    const client = new AuthorizedPrpcClient('api-dot-' + window.monorailHostname, useIDToken);
     return new IssuesService(client);
 }
 

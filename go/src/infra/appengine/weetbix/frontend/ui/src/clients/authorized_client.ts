@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import { PrpcClient } from '@chopsui/prpc-client';
-import { obtainAuthState } from '../state/auth_state';
+import { obtainAuthState } from '../api/auth_state';
 
 export class AuthorizedPrpcClient {
     client: PrpcClient;
@@ -15,10 +15,10 @@ export class AuthorizedPrpcClient {
     constructor(host?: string, useIDToken?: boolean) {
         // Only allow insecure connections in Weetbix in local development,
         // where risk of man-in-the-middle attack to server is negligible.
-        const insecure = document.location.protocol === "http:" && !host;
-        if (insecure && document.location.hostname !== "localhost") {
+        const insecure = document.location.protocol === 'http:' && !host;
+        if (insecure && document.location.hostname !== 'localhost') {
             // Server misconfiguration.
-            throw new Error("Weetbix should never be served over http: outside local development.");
+            throw new Error('Weetbix should never be served over http: outside local development.');
         }
         this.client = new PrpcClient({
             host: host,
@@ -29,6 +29,7 @@ export class AuthorizedPrpcClient {
 
     async call(service: string, method: string, message: object, additionalHeaders?: {
         [key: string]: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } | undefined): Promise<any> {
         // Although PrpcClient allows us to pass a token to the constructor,
         // we prefer to inject it at request time to ensure the most recent

@@ -20,10 +20,11 @@ export class ProjectService {
     }
 
     async list(request: ListProjectsRequest): Promise<ListProjectsResponse> {
-        return this.client.call(ProjectService.SERVICE, "List", request);
+        return this.client.call(ProjectService.SERVICE, 'List', request);
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ListProjectsRequest {}
 
 export interface Project {
