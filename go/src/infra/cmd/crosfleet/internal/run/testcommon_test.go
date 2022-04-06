@@ -532,6 +532,27 @@ var testSecondaryDevicesData = []struct {
 			},
 		},
 	},
+	{ // Test skip image on a secondary DUT.
+		testCommonFlags{
+			secondaryBoards: []string{"board1", "board2"},
+			secondaryImages: []string{"board1-release/10000.0.0", "skip"},
+		},
+		[]*test_platform.Request_Params_SecondaryDevice{
+			{
+				SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
+					BuildTarget: &chromiumos.BuildTarget{Name: "board1"},
+				},
+				SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
+					{Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "board1-release/10000.0.0"}},
+				},
+			},
+			{
+				SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
+					BuildTarget: &chromiumos.BuildTarget{Name: "board2"},
+				},
+			},
+		},
+	},
 }
 
 func TestSecondaryDevices(t *testing.T) {
