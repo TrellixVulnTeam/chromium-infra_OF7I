@@ -447,14 +447,6 @@ message ScriptSource {
   //     /path/to/checkout
   //   {"url": ["https://some_url/foo_1.2.3.zip"], "ext": ".zip"}'
   repeated string name = 1;
-  // TODO(akashmukherjee): Remove this field after complete migration.
-  // (optional) Boolean to use new downloader workflow.
-  //
-  // If present, script source will use new workflow and fetch scripts will only
-  // spit out download URL, recipe will use its downloader workflow to download
-  // the artifact.
-  //
-  bool use_fetch_raw_workflow = 1001;
   // TODO(crbug.com/1185395): Implement a permanent solution for this flow.
   // (optional) Boolean to use fetch scripts to download artifacts.
   //
@@ -469,6 +461,8 @@ message ScriptSource {
   //     /path/to/repo/subdir/package_name/fetch.py foo checkout \
   //     /path/to/checkout
   bool use_fetch_checkout_workflow = 1002;
+
+  reserved 1001;  // Reserved ids for removed fields
 }
 
 // This will provide a original download url to fetch sources from third party.
