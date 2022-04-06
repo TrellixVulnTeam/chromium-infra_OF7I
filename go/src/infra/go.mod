@@ -38,6 +38,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/google/subcommands v1.2.0
 	github.com/google/uuid v1.3.0
+	github.com/googleapis/gax-go/v2 v2.1.1
 	github.com/googleapis/google-cloud-go-testing v0.0.0-20210719221736-1c9a4c676720
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jdxcode/netrc v0.0.0-20210204082910-926c7f70242a

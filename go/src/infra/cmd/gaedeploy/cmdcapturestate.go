@@ -8,8 +8,10 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"time"
 
 	appengine "cloud.google.com/go/appengine/apiv1"
+	"github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	appenginepb "google.golang.org/genproto/googleapis/appengine/v1"
@@ -58,14 +60,19 @@ func (c *cmdCaptureStateRun) init() {
 }
 
 func (c *cmdCaptureStateRun) exec(ctx context.Context) error {
-	state, err := captureState(ctx, c.appID)
-	writeErr := writeOutput(c.jsonOutput, &modelpb.AssetState{
+	gaeState, err := captureState(ctx, c.appID)
+	assetState := &modelpb.AssetState{
 		Timestamp: timestamppb.Now(),
 		Status:    errorToStatus(err),
-		State: &modelpb.AssetState_Appengine{
-			Appengine: state,
-		},
-	})
+	}
+	// Report only fully captured GAE state, LUCI Deploy backend doesn't like
+	// incomplete states.
+	if err == nil {
+		assetState.State = &modelpb.AssetState_Appengine{
+			Appengine: gaeState,
+		}
+	}
+	writeErr := writeOutput(c.jsonOutput, assetState)
 	if err != nil {
 		return err
 	}
@@ -112,6 +119,24 @@ func captureState(ctx context.Context, appID string) (*modelpb.AppengineState, e
 		return state, err
 	}
 
+	retryOnErrors := func(method string) gax.CallOption {
+		return gax.WithRetry(func() gax.Retryer {
+			return gax.OnErrorFunc(gax.Backoff{
+				Initial:    100 * time.Millisecond,
+				Max:        30000 * time.Millisecond,
+				Multiplier: 1.30,
+			}, func(err error) bool {
+				switch status.Code(err) {
+				case codes.DeadlineExceeded, codes.Internal, codes.Unavailable, codes.Unknown:
+					logging.Errorf(ctx, "%s: %s, retrying", method, err)
+					return true
+				default:
+					return false
+				}
+			})
+		})
+	}
+
 	appsClient, err := appengine.NewApplicationsClient(ctx, option.WithTokenSource(creds))
 	if err != nil {
 		return state, err
@@ -129,6 +154,11 @@ func captureState(ctx context.Context, appID string) (*modelpb.AppengineState, e
 		return state, err
 	}
 	defer versionsClient.Close()
+
+	// Ask the Cloud library to do retries for us. It doesn't do so by default.
+	appsClient.CallOptions.GetApplication = append(appsClient.CallOptions.GetApplication, retryOnErrors("GetApplication"))
+	servicesClient.CallOptions.ListServices = append(servicesClient.CallOptions.ListServices, retryOnErrors("ListServices"))
+	versionsClient.CallOptions.ListVersions = append(versionsClient.CallOptions.ListVersions, retryOnErrors("ListVersions"))
 
 	// Note: we deliberately do not parallelize any calls below to avoid hitting
 	// (very low) limits on QPM to Appengine Admin API. Some parallelization
