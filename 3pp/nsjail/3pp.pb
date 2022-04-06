@@ -7,9 +7,9 @@ create {
       repo: "https://github.com/google/nsjail"
       tag_pattern: "%s"
 
-      # We would like to use a fixed version of nsjail so that we can keep a
-      # copy of its config proto in our codebase. Fixed to 3.0 for now.
-      version_restriction: { op: EQ val: "3.0"}
+      # We would like to use a fixed version of nsjail so that we can keep
+      # its config stable in our codebase. Fixed to 3.1 for now.
+      version_restriction: { op: EQ val: "3.1"}
     }
     patch_dir: "patches"
     patch_version: "chromium.1"
