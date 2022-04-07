@@ -128,13 +128,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "set_output_gitiles_commit",
-    "~followup_annotations": [
-      "@@@SET_BUILD_PROPERTY@$recipe_engine/buildbucket/output_gitiles_commit@{\"host\": \"fake.org\", \"id\": \"a4a409648021adff84b93440fe26364814cdf1b4\", \"position\": 81833, \"project\": \"infra/luci\", \"ref\": \"refs/heads/main\"}@@@"
-    ]
-  },
-  {
     "cmd": [
       "vpython3",
       "-u",

@@ -203,13 +203,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "set_output_gitiles_commit",
-    "~followup_annotations": [
-      "@@@SET_BUILD_PROPERTY@$recipe_engine/buildbucket/output_gitiles_commit@{\"host\": \"fake.org\", \"id\": \"d2571c8b2d27c5e5a14fd061581e46e802f1566a\", \"position\": 24299, \"project\": \"chrome_golo\", \"ref\": \"refs/heads/main\"}@@@"
-    ]
-  },
-  {
     "cmd": [
       "vpython3",
       "-u",

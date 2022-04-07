@@ -155,13 +155,6 @@
   },
   {
     "cmd": [],
-    "name": "set_output_gitiles_commit",
-    "~followup_annotations": [
-      "@@@SET_BUILD_PROPERTY@$recipe_engine/buildbucket/output_gitiles_commit@{\"host\": \"fake.org\", \"id\": \"43078778d1c089d32317825b401e0211facf4543\", \"position\": 166904, \"project\": \"gerrit_plugins_chumpdetector\", \"ref\": \"refs/heads/main\"}@@@"
-    ]
-  },
-  {
-    "cmd": [],
     "name": "get node"
   },
   {

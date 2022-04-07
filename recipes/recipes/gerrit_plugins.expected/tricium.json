@@ -155,13 +155,6 @@
   },
   {
     "cmd": [],
-    "name": "set_output_gitiles_commit",
-    "~followup_annotations": [
-      "@@@SET_BUILD_PROPERTY@$recipe_engine/buildbucket/output_gitiles_commit@{\"host\": \"fake.org\", \"id\": \"09f7265f8f65b6c15bc50b39b4b9a24f0fe7bc63\", \"position\": 92159, \"project\": \"gerrit_plugins_tricium\", \"ref\": \"refs/heads/main\"}@@@"
-    ]
-  },
-  {
-    "cmd": [],
     "name": "get node"
   },
   {
