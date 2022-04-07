@@ -26,10 +26,11 @@ func servoRepairPlan() *Plan {
 			"lock_labstation",
 			"set_state_broken",
 			"has_enough_disk_space",
-			"set_state_not_connected",
 			"Cache latest servod start time",
-			"servo_root_check",
+			"set_state_not_connected",
+			"servo_v4_root_present",
 			"set_state_need_replacement",
+			"servo_v3_root_present",
 			"servo_fw_need_update",
 			"set_state_servod_issue",
 			"servo_host_servod_start",
@@ -167,15 +168,6 @@ func servoRepairPlan() *Plan {
 			"is_not_container": {
 				Conditions: []string{"is_container"},
 				ExecName:   "sample_fail",
-			},
-			"servo_root_check": {
-				Dependencies: []string{
-					"cros_ssh",
-					"set_state_need_replacement",
-					"servo_v3_root_present",
-					"servo_v4_root_present",
-				},
-				ExecName: "sample_pass",
 			},
 			"servo_topology": {
 				Docs:       []string{"host.check_diskspace('/mnt/stateful_partition', 0.5)"},
