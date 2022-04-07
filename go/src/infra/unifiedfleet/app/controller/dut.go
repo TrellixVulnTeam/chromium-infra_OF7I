@@ -380,7 +380,8 @@ func validateDeviceConfig(ctx context.Context, dut *ufspb.Machine) error {
 			return nil
 		}
 	}
-	return status.Error(codes.InvalidArgument, fmt.Sprintf("Device config doesn't exist for %s", devConfigID.String()))
+	errStr := fmt.Sprintf("No device config for platform %q, model %q, config (%+v)", devConfigID.GetModelId(), devConfigID.GetModelId(), devConfigID)
+	return status.Error(codes.InvalidArgument, errStr)
 }
 
 // extractDeviceConfigID returns a corresponding ConfigID object from machine.

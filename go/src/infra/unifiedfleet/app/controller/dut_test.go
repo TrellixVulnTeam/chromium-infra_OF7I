@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -192,7 +191,7 @@ func TestCreateDUT(t *testing.T) {
 			dut1 := mockDUT("dut-2", "machine-21", "labstation-1", "serial-1", "dut-2-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err = CreateDUT(ctx, dut1)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Device config doesn't exist")
+			So(err.Error(), ShouldContainSubstring, "No device config")
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-2")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
@@ -3084,18 +3083,7 @@ func TestValidateDeviceconfig(t *testing.T) {
 			}
 			err := validateDeviceConfig(ctx, machine1)
 			So(err, ShouldNotBeNil)
-			devConfigID := &device.ConfigId{
-				PlatformId: &device.PlatformId{
-					Value: "test11",
-				},
-				ModelId: &device.ModelId{
-					Value: "test11",
-				},
-				VariantId: &device.VariantId{
-					Value: "test11",
-				},
-			}
-			So(err.Error(), ShouldContainSubstring, fmt.Sprintf("Device config doesn't exist for %s", devConfigID.String()))
+			So(err.Error(), ShouldContainSubstring, "No device config")
 		})
 	})
 }
