@@ -158,68 +158,8 @@ func TestCheckBuilders_hasManifestXMLChange(t *testing.T) {
 	}
 }
 
-func TestCheckBuilders_noGerritChanges(t *testing.T) {
-	// When there are no GerritChanges, we run all of the builders as full builds.
-
-	changes := []*bbproto.GerritChange{}
-	chRevData := gerrit.GetChangeRevsForTest([]*gerrit.ChangeRev{})
-	repoToBranchToSrcRoot := map[string]map[string]string{}
-
-	buildIrrelevanceCfg := &testplans_pb.BuildIrrelevanceCfg{
-		IrrelevantFilePatterns: []*testplans_pb.FilePattern{
-			{Pattern: "**/ignore_me.txt"},
-		},
-	}
-
-	slimBuildCfg := &testplans_pb.SlimBuildCfg{}
-
-	testReqsCfg := &testplans_pb.TargetTestRequirementsCfg{}
-
-	builderConfigs := &cros_pb.BuilderConfigs{}
-
-	b := []*cros_pb.BuilderConfig{
-		makeBuilderConfig("my_image_builder", cros_pb.BuilderConfig_Id_CQ, cros_pb.BuilderConfig_General_RunWhen_ALWAYS_RUN, []string{}),
-		makeBuilderConfig("not_an_image_builder", cros_pb.BuilderConfig_Id_CQ, cros_pb.BuilderConfig_General_RunWhen_ALWAYS_RUN, []string{}),
-		makeBuilderConfig("only_run_on_match", cros_pb.BuilderConfig_Id_CQ, cros_pb.BuilderConfig_General_RunWhen_ONLY_RUN_ON_FILE_MATCH, []string{"**/match_me.txt"}),
-		makeBuilderConfig("no_run_on_match", cros_pb.BuilderConfig_Id_CQ, cros_pb.BuilderConfig_General_RunWhen_NO_RUN_ON_FILE_MATCH, []string{"not/a/real/dir"}),
-	}
-
-	checkBuildersInput := &CheckBuildersInput{
-		Builders:              b,
-		Changes:               changes,
-		ChangeRevs:            chRevData,
-		RepoToBranchToSrcRoot: repoToBranchToSrcRoot,
-		BuildIrrelevanceCfg:   buildIrrelevanceCfg,
-		SlimBuildCfg:          slimBuildCfg,
-		TestReqsCfg:           testReqsCfg,
-		BuilderConfigs:        builderConfigs,
-	}
-
-	res, err := checkBuildersInput.CheckBuilders()
-	if err != nil {
-		t.Error(err)
-	}
-	if len(res.BuildsToRun) != 4 {
-		t.Errorf("Expected BuildsToRun to have 4 elements. Instead, %v", res.BuildsToRun)
-	}
-	expectedBuilderNames := []string{"my_image_builder", "not_an_image_builder", "only_run_on_match", "no_run_on_match"}
-	actualBuilderNames := make([]string, 0)
-	for _, b := range res.BuildsToRun {
-		actualBuilderNames = append(actualBuilderNames, b.GetName())
-	}
-	if len(sliceDiff(expectedBuilderNames, actualBuilderNames)) != 0 {
-		t.Errorf("Expected res.BuildsToRun to contain builder names %v. Instead, %v", expectedBuilderNames, actualBuilderNames)
-	}
-	if len(res.SkipForRunWhenRules) != 0 {
-		t.Errorf("Expected SkipForRunWhenRules to be empty. Instead, %v", res.SkipForRunWhenRules)
-	}
-	if len(res.SkipForGlobalBuildIrrelevance) != 0 {
-		t.Errorf("Expected SkipForGlobalBuildIrrelevance to be empty. Instead, %v", res.SkipForGlobalBuildIrrelevance)
-	}
-}
-
-func TestCheckBuilders_withGerritChangesNoAffectedFiles(t *testing.T) {
-	// When there are GerritChanges, but no affected files, we run no builds.
+func TestCheckBuilders_noAffectedFiles(t *testing.T) {
+	// When there are no affected files, we run no builds.
 
 	changes := []*bbproto.GerritChange{
 		{Host: "test-review.googlesource.com", Change: 123, Patchset: 2, Project: "chromiumos/public/example"}}

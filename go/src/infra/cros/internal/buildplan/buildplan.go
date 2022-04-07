@@ -62,7 +62,7 @@ func (c *CheckBuildersInput) CheckBuilders() (*cros_pb.GenerateBuildPlanResponse
 		return response, nil
 	}
 
-	ignoreImageBuilders := ignoreImageBuilders(affectedFiles, c.BuildIrrelevanceCfg, c.Changes)
+	ignoreImageBuilders := ignoreImageBuilders(affectedFiles, c.BuildIrrelevanceCfg)
 	allowSlimBuilds := allowSlimBuilds(affectedFiles, c.SlimBuildCfg)
 
 builderLoop:
@@ -161,12 +161,7 @@ func eligibleForGlobalIrrelevance(b *cros_pb.BuilderConfig) bool {
 	return true
 }
 
-func ignoreImageBuilders(affectedFiles []string, cfg *testplans_pb.BuildIrrelevanceCfg, changes []*bbproto.GerritChange) bool {
-	if len(changes) == 0 {
-		// This happens during postsubmit runs, for example.
-		log.Print("Cannot ignore image builders, since no changes were provided")
-		return false
-	}
+func ignoreImageBuilders(affectedFiles []string, cfg *testplans_pb.BuildIrrelevanceCfg) bool {
 	// Filter out files that are irrelevant to Portage because of the config.
 	affectedFiles = filterByBuildIrrelevantPaths(affectedFiles, cfg)
 	if len(affectedFiles) == 0 {
