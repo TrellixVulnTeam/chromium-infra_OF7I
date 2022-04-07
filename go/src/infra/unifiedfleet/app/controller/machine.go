@@ -380,12 +380,17 @@ func updateRecoveryAssetHelper(ctx context.Context, asset *ufspb.Asset, dutData 
 
 // processMachineUpdateMask process update field mask to get only specific update
 // fields and return a complete machine object with updated and existing fields
-func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, machine *ufspb.Machine, mask *field_mask.FieldMask, hc *HistoryClient) (*ufspb.Machine, error) {
+func processMachineUpdateMask(ctx context.Context, oldMachine, machine *ufspb.Machine, mask *field_mask.FieldMask, hc *HistoryClient) (*ufspb.Machine, error) {
+	// If we are updating zone. We need to reset all the fields in the Location
+	if util.ContainsAnyStrings(mask.Paths, "zone") && oldMachine.GetLocation().GetZone() != machine.GetLocation().GetZone() {
+		oldMachine.Location = &ufspb.Location{}
+	}
 	// update the fields in the existing nic
 	for _, path := range mask.Paths {
 		switch path {
 		case "zone":
 			if machine.GetLocation().GetZone().String() == oldMachine.GetLocation().GetZone().String() {
+				// If the zone is not updated, then don't do anything.
 				continue
 			}
 			indexMap := map[string]string{"zone": machine.GetLocation().GetZone().String()}
@@ -1096,10 +1101,14 @@ func validateMachineUpdateMask(machine *ufspb.Machine, mask *field_mask.FieldMas
 			case "zone":
 				if machine.GetLocation() == nil {
 					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - location cannot be empty/nil.")
+				} else if machine.GetLocation().GetZone() == ufspb.Zone_ZONE_UNSPECIFIED {
+					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - zone cannot be unspecified")
+				} else if machine.GetLocation().GetRack() == "" {
+					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - Cannot update zone without updating rack")
 				}
 			case "rack":
-				if machine.GetLocation() == nil {
-					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - location cannot be empty/nil.")
+				if machine.GetLocation() == nil || machine.GetLocation().GetRack() == "" {
+					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - location/rack cannot be empty/nil.")
 				}
 			case "platform":
 				if machine.GetChromeBrowserMachine() == nil {

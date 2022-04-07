@@ -94,7 +94,8 @@ func UpdateAsset(ctx context.Context, asset *ufspb.Asset, mask *field_mask.Field
 		if mask != nil && mask.Paths != nil {
 			// Construct updatableAsset from mask if given
 			updatableAsset = proto.Clone(proto.MessageV1(oldAsset)).(*ufspb.Asset)
-			if asset, err = processAssetUpdateMask(asset, updatableAsset, mask); err != nil {
+			updatableAsset, err = processAssetUpdateMask(asset, updatableAsset, mask)
+			if err != nil {
 				return err
 			}
 		}
@@ -107,7 +108,8 @@ func UpdateAsset(ctx context.Context, asset *ufspb.Asset, mask *field_mask.Field
 		if err := updateMachineHelper(ctx, a[0]); err != nil {
 			return err
 		}
-
+		// Return the updated asset
+		asset = a[0]
 		hc.LogAssetChanges(oldAsset, updatableAsset)
 		return hc.SaveChangeEvents(ctx)
 	}
@@ -363,6 +365,8 @@ func validateAssetUpdateMask(ctx context.Context, asset *ufspb.Asset, mask *fiel
 			case "location.zone":
 				if asset.GetLocation() == nil || asset.GetLocation().GetZone() == ufspb.Zone_ZONE_UNSPECIFIED {
 					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Zone is unspecified so cannot be updated")
+				} else if asset.GetLocation().GetRack() == "" {
+					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Zone is updated without updating rack")
 				}
 			case "location.rack":
 				if asset.GetLocation() == nil {
@@ -455,6 +459,10 @@ func processAssetUpdateMask(updatedAsset, oldAsset *ufspb.Asset, mask *field_mas
 	}
 	if updatedAsset.GetInfo() == nil {
 		updatedAsset.Info = &ufspb.AssetInfo{}
+	}
+	// If we are updating zone. We need to reset all the fields in the Location
+	if util.ContainsAnyStrings(mask.Paths, "location.zone") && updatedAsset.GetLocation().GetZone() != oldAsset.GetLocation().GetZone() {
+		oldAsset.Location = &ufspb.Location{}
 	}
 	if mask != nil {
 		for _, path := range mask.Paths {
