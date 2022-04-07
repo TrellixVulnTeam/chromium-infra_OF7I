@@ -97,15 +97,15 @@ const ROTATIONS = {
   ],
   'fuchsia': [
     {
-      name: 'Fuchsia Build Cop',
-      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:fuchsia-build-cop',
+      name: 'Fuchsia Build Gardener',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:fuchsia-build-gardener',
     },
     {
-      name: 'Fuchsia Infra',
+      name: 'Fuchsia Infra On-Call',
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:fuchsia-infra',
     },
     {
-      name: 'Fuchsia E2E',
+      name: 'Fuchsia E2E On-Call',
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/grotation:fuchsia-e2e',
     },
   ],

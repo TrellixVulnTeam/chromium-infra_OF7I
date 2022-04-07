@@ -71,11 +71,11 @@ const crosFailuresQuery = selectFromWhere + `
 
 const fuchsiaFailuresQuery = selectFromWhere + `
 	Project = %q
-	AND Bucket = "global.roller"
-	AND Builder NOT LIKE "%%bisect%%"
+	AND Bucket = "global.ci"
 LIMIT
 	1000
 `
+
 const angleFailuresQuery = selectFromWhere + `
 "angle" in UNNEST(SheriffRotations)
 `

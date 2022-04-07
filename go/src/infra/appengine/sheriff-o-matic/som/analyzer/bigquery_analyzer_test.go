@@ -225,8 +225,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 				` + "`sheriff-o-matic.fuchsia.sheriffable_failures`" + `
 			WHERE
 				Project = "fuchsia-test"
-				AND Bucket = "global.roller"
-				AND Builder NOT LIKE "%bisect%"
+				AND Bucket = "global.ci"
 			LIMIT
 				1000
 		`
