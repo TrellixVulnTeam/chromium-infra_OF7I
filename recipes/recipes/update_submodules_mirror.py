@@ -87,10 +87,9 @@ def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays,
     # But we must supply *some* valid path, or it will fail to spawn the
     # process.
     with api.context(cwd=checkout_dir):
-      args = []
-      if not with_tags:
-        args.append('--no-tags')
-      api.git('clone', source_repo, source_checkout_dir, *args)
+      # Don't use --no-tags even if with_tags is False here since clones may
+      # time out.
+      api.git('clone', source_repo, source_checkout_dir)
 
   # This is implicitly used as the cwd by all the git steps below.
   api.m.path['checkout'] = source_checkout_dir
