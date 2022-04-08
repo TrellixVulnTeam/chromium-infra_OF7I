@@ -7,7 +7,6 @@ package resultingester
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"time"
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
@@ -32,6 +31,7 @@ import (
 	"infra/appengine/weetbix/internal/resultdb"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
+	"infra/appengine/weetbix/utils"
 )
 
 const (
@@ -67,9 +67,6 @@ var resultIngestion = tq.RegisterTaskClass(tq.TaskClass{
 	Queue:     resultIngestionQueue,
 	Kind:      tq.Transactional,
 })
-
-// realmProjectRe extracts the LUCI project name from a LUCI Realm.
-var realmProjectRe = regexp.MustCompile(`^([a-z0-9\-_]{1,40}):.+$`)
 
 // RegisterTaskHandler registers the handler for result ingestion tasks.
 func RegisterTaskHandler(srv *server.Server) error {
@@ -157,7 +154,7 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 	if err != nil {
 		return err
 	}
-	project := projectFromRealm(inv.Realm)
+	project := utils.ProjectFromRealm(inv.Realm)
 	if project == "" {
 		return fmt.Errorf("invocation has invalid realm: %q", inv.Realm)
 	}
@@ -256,14 +253,6 @@ func validateRequest(ctx context.Context, payload *taskspb.IngestTestResults) er
 		return tq.Fatal.Apply(errors.New("build must be specified"))
 	}
 	return nil
-}
-
-func projectFromRealm(realm string) string {
-	match := realmProjectRe.FindStringSubmatch(realm)
-	if match != nil {
-		return match[1]
-	}
-	return ""
 }
 
 func retrieveBuild(ctx context.Context, payload *taskspb.IngestTestResults) (*bbpb.Build, error) {

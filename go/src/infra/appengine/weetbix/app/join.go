@@ -6,6 +6,7 @@ package app
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 
 	"go.chromium.org/luci/common/errors"
@@ -224,8 +225,8 @@ func JoinPresubmitResult(ctx context.Context, presubmitResultByBuildID map[strin
 }
 
 // createTaskIfNeeded creates a test-result-ingestion task if all necessary
-// data for the ingestion is available. If the BuildProject is "fuchsia", it
-// also creates a test-verdict-ingestion task.
+// data for the ingestion is available. It also has a 1/256 chance to create a
+// test-verdict-ingestion task.
 // Returns true if the test-result-ingestion task is created.
 func createTasksIfNeeded(ctx context.Context, e *control.Entry) (itrTaskCreated bool) {
 	if e.BuildResult == nil || (e.IsPresubmit && e.PresubmitResult == nil) {
@@ -252,11 +253,9 @@ func createTasksIfNeeded(ctx context.Context, e *control.Entry) (itrTaskCreated 
 	itrTask = proto.Clone(itrTask).(*taskspb.IngestTestResults)
 	resultingester.Schedule(ctx, itrTask)
 
-	// Only ingest test verdicts from fuchsia to limit the amount the verdicts we
-	// ingest during development phase.
-	// TODO(crbug.com/1266759): remove this filter and update the function
-	// documentation once we are ready to ingest test verdicts from every project.
-	if e.BuildProject != "fuchsia" {
+	// Only ingest 1/256 test verdicts to limit the amount the verdicts we ingest
+	// during development phase.
+	if sha256.Sum256([]byte(e.BuildID))[0] == 0 {
 		return true
 	}
 
