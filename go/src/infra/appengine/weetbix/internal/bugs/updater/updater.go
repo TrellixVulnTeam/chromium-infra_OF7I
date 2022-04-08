@@ -230,6 +230,11 @@ func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgres
 	}
 
 	for system, bugsToUpdate := range bugUpdatesBySystem {
+		if system == bugs.BuganizerSystem {
+			// Updating buganizer bugs is currently not supported. This is a
+			// known limitation.
+			continue
+		}
 		manager, ok := b.managers[system]
 		if !ok {
 			logging.Warningf(ctx, "Encountered bug(s) with an unrecognised manager: %q", manager)

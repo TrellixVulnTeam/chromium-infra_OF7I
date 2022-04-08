@@ -13,9 +13,16 @@ import (
 // MonorailSystem is the name of the monorail bug tracker system.
 const MonorailSystem = "monorail"
 
+// BuganizerSystem is the name of the buganizer bug tracker system.
+const BuganizerSystem = "buganizer"
+
 // MonorailBugIDRe matches identifiers of monorail bugs, like
 // "{monorail_project}/{numeric_id}".
-var MonorailBugIDRe = regexp.MustCompile(`^([a-z0-9\-_]+)/([0-9]+)$`)
+var MonorailBugIDRe = regexp.MustCompile(`^([a-z0-9\-_]+)/([1-9][0-9]*)$`)
+
+// BuganizerBugIDRe matches identifiers of buganizer bugs (excluding
+// the b/), like 1234567890.
+var BuganizerBugIDRe = regexp.MustCompile(`^([1-9][0-9]*)$`)
 
 // BugID represents the identity of a bug managed by Weetbix.
 type BugID struct {
@@ -35,6 +42,10 @@ func (b *BugID) Validate() error {
 	case MonorailSystem:
 		if !MonorailBugIDRe.MatchString(b.ID) {
 			return fmt.Errorf("invalid monorail bug ID %q", b.ID)
+		}
+	case BuganizerSystem:
+		if !BuganizerBugIDRe.MatchString(b.ID) {
+			return fmt.Errorf("invalid buganizer bug ID %q", b.ID)
 		}
 	default:
 		return fmt.Errorf("invalid bug tracking system %q", b.System)

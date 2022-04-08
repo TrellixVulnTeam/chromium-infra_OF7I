@@ -296,6 +296,28 @@ func TestSpan(t *testing.T) {
 					expectedRule.CreationTime = commitTime
 					testExists(expectedRule)
 				})
+				Convey(`With Buganizer Bug`, func() {
+					r.BugID = bugs.BugID{System: "buganizer", ID: "1234567890"}
+					commitTime, err := testCreate(r, "user@google.com")
+					So(err, ShouldBeNil)
+
+					expectedRule := *r
+					expectedRule.LastUpdated = commitTime
+					expectedRule.PredicateLastUpdated = commitTime
+					expectedRule.CreationTime = commitTime
+					testExists(expectedRule)
+				})
+				Convey(`With Monorail Bug`, func() {
+					r.BugID = bugs.BugID{System: "monorail", ID: "project/1234567890"}
+					commitTime, err := testCreate(r, "user@google.com")
+					So(err, ShouldBeNil)
+
+					expectedRule := *r
+					expectedRule.LastUpdated = commitTime
+					expectedRule.PredicateLastUpdated = commitTime
+					expectedRule.CreationTime = commitTime
+					testExists(expectedRule)
+				})
 			})
 			Convey(`With invalid Project`, func() {
 				Convey(`Missing`, func() {

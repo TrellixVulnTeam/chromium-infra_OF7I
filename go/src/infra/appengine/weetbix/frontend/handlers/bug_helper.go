@@ -6,6 +6,7 @@ package handlers
 
 import (
 	"fmt"
+
 	"infra/appengine/weetbix/internal/bugs"
 	configpb "infra/appengine/weetbix/internal/config/proto"
 )
@@ -33,7 +34,7 @@ func createBugLink(b bugs.BugID, cfg *configpb.ProjectConfig) *BugLink {
 	case bugs.MonorailSystem:
 		project, id, err := b.MonorailProjectAndID()
 		if err != nil {
-			// Fallback.
+			// Fallback to basic name and blank URL.
 			break
 		}
 		if project == cfg.Monorail.Project {
@@ -46,6 +47,9 @@ func createBugLink(b bugs.BugID, cfg *configpb.ProjectConfig) *BugLink {
 		if cfg.Monorail.MonorailHostname != "" {
 			url = fmt.Sprintf("https://%s/p/%s/issues/detail?id=%s", cfg.Monorail.MonorailHostname, project, id)
 		}
+	case bugs.BuganizerSystem:
+		name = fmt.Sprintf("b/%s", b.ID)
+		url = fmt.Sprintf("https://issuetracker.google.com/issues/%s", b.ID)
 	default:
 		// Fallback.
 	}

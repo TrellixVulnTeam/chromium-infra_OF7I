@@ -370,7 +370,7 @@ func createAssociatedBugPB(b bugs.BugID, cfg *configpb.ProjectConfig) *pb.Associ
 	case bugs.MonorailSystem:
 		project, id, err := b.MonorailProjectAndID()
 		if err != nil {
-			// Fallback.
+			// Fallback to basic name and blank URL.
 			break
 		}
 		if project == cfg.Monorail.Project {
@@ -383,6 +383,9 @@ func createAssociatedBugPB(b bugs.BugID, cfg *configpb.ProjectConfig) *pb.Associ
 		if cfg.Monorail.MonorailHostname != "" {
 			url = fmt.Sprintf("https://%s/p/%s/issues/detail?id=%s", cfg.Monorail.MonorailHostname, project, id)
 		}
+	case bugs.BuganizerSystem:
+		linkText = fmt.Sprintf("b/%s", b.ID)
+		url = fmt.Sprintf("https://issuetracker.google.com/issues/%s", b.ID)
 	default:
 		// Fallback.
 	}
@@ -422,6 +425,8 @@ func validateBugAgainstConfig(cfg *compiledcfg.ProjectConfig, bug bugs.BugID) er
 		if project != cfg.Config.Monorail.Project {
 			return fmt.Errorf("bug not in expected monorail project (%s)", cfg.Config.Monorail.Project)
 		}
+	case bugs.BuganizerSystem:
+		// Buganizer bugs are permitted for all Weetbix projects.
 	default:
 		return fmt.Errorf("unsupported bug system: %s", bug.System)
 	}

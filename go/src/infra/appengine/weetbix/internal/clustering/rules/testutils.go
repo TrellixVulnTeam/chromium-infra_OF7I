@@ -31,11 +31,18 @@ type RuleBuilder struct {
 // NewRule starts building a new Rule.
 func NewRule(uniqifier int) *RuleBuilder {
 	ruleIDBytes := sha256.Sum256([]byte(fmt.Sprintf("rule-id%v", uniqifier)))
+	var bugID bugs.BugID
+	if uniqifier%2 == 0 {
+		bugID = bugs.BugID{System: "monorail", ID: fmt.Sprintf("chromium/%v", uniqifier)}
+	} else {
+		bugID = bugs.BugID{System: "buganizer", ID: fmt.Sprintf("%v", uniqifier)}
+	}
+
 	rule := FailureAssociationRule{
 		Project:              testProject,
 		RuleID:               hex.EncodeToString(ruleIDBytes[0:16]),
 		RuleDefinition:       "reason LIKE \"%exit code 5%\" AND test LIKE \"tast.arc.%\"",
-		BugID:                bugs.BugID{System: "monorail", ID: fmt.Sprintf("chromium/%v", uniqifier)},
+		BugID:                bugID,
 		IsActive:             true,
 		IsManagingBug:        true,
 		CreationTime:         time.Date(1900, 1, 2, 3, 4, 5, uniqifier, time.UTC),
