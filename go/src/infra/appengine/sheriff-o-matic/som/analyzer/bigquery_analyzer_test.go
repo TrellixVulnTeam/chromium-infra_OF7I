@@ -234,47 +234,6 @@ func TestGenerateSQLQuery(t *testing.T) {
 		So(err, ShouldBeNil)
 	})
 
-	Convey("Test generate SQL query for angle", t, func() {
-		treeName := "angle"
-		tree := &model.Tree{
-			Name:                     treeName,
-			BuildBucketProjectFilter: "angle-test",
-		}
-		So(datastore.Put(c, tree), ShouldBeNil)
-		datastore.GetTestable(c).CatchupIndexes()
-		expected := `
-			SELECT
-			  Project,
-			  Bucket,
-			  Builder,
-			  BuilderGroup,
-			  SheriffRotations,
-			  StepName,
-			  TestNamesFingerprint,
-			  TestNamesTrunc,
-			  NumTests,
-			  BuildIdBegin,
-			  BuildIdEnd,
-			  BuildNumberBegin,
-			  BuildNumberEnd,
-			  CPRangeOutputBegin,
-			  CPRangeOutputEnd,
-			  CPRangeInputBegin,
-			  CPRangeInputEnd,
-			  CulpritIdRangeBegin,
-			  CulpritIdRangeEnd,
-			  StartTime,
-			  BuildStatus
-			FROM
-				` + "`sheriff-o-matic.angle.sheriffable_failures`" + `
-			WHERE
-				"angle" in UNNEST(SheriffRotations)
-		`
-		actual, err := generateSQLQuery(c, treeName, "sheriff-o-matic")
-		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
-		So(err, ShouldBeNil)
-	})
-
 	Convey("Test generate SQL query for invalid tree", t, func() {
 		_, err := generateSQLQuery(c, "abc", "sheriff-o-matic")
 		So(err, ShouldNotBeNil)
