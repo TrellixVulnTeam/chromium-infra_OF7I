@@ -122,6 +122,7 @@ func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, gcpProject string,
 			analysisClient:     ac,
 			monorailClient:     mc,
 			simulateBugUpdates: simulate,
+			enableBugUpdates:   enable,
 			maxBugsFiledPerRun: 1,
 		}
 		// Isolate other projects from bug update errors
