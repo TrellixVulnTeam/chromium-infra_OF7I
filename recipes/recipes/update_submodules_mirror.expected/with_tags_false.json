@@ -37,7 +37,7 @@
       "clone",
       "https://chromium.googlesource.com/chromium/src",
       "[CACHE]/codesearch_update_submodules_mirror/src/",
-      "--no_tags"
+      "--no-tags"
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror",
     "infra_step": true,

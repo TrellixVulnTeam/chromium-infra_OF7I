@@ -89,7 +89,7 @@ def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays,
     with api.context(cwd=checkout_dir):
       args = []
       if not with_tags:
-        args.append('--no_tags')
+        args.append('--no-tags')
       api.git('clone', source_repo, source_checkout_dir, *args)
 
   # This is implicitly used as the cwd by all the git steps below.
