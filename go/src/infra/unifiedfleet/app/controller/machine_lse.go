@@ -1691,7 +1691,6 @@ func updateRecoveryLabData(ctx context.Context, hostname string, resourceState u
 		}
 		hc := getHostHistoryClient(lse)
 		oldLSE := proto.Clone(lse).(*ufspb.MachineLSE)
-
 		// Apply resource_state edits
 		lse.ResourceState = resourceState
 		if labData == nil {
@@ -1701,36 +1700,36 @@ func updateRecoveryLabData(ctx context.Context, hostname string, resourceState u
 			dut := lse.GetChromeosMachineLse().GetDeviceLse().GetDut()
 			if dut == nil {
 				logging.Warningf(ctx, "%s is not a valid Chromeos DUT", lse.GetName())
-				return nil
-			}
-			// Periphrals cannot be nil for valid DUT
-			if dut.GetPeripherals() == nil {
-				dut.Peripherals = &chromeosLab.Peripherals{}
-			}
-			peri := dut.GetPeripherals()
-			// Copy for logging
-			// Apply smart usb hub edits
-			peri.SmartUsbhub = labData.GetSmartUsbhub()
+			} else {
+				// Periphrals cannot be nil for valid DUT
+				if dut.GetPeripherals() == nil {
+					dut.Peripherals = &chromeosLab.Peripherals{}
+				}
+				peri := dut.GetPeripherals()
+				// Copy for logging
+				// Apply smart usb hub edits
+				peri.SmartUsbhub = labData.GetSmartUsbhub()
 
-			// Servo cannot be nil for valid DUT
-			if peri.GetServo() == nil {
-				peri.Servo = &chromeosLab.Servo{}
-			}
-			// Apply servo edits
-			if err = editRecoveryPeripheralServo(peri.GetServo(), labData); err != nil {
-				return err
-			}
-			// Wifi cannot be nil for valid DUT
-			if peri.GetWifi() == nil {
-				peri.Wifi = &chromeosLab.Wifi{}
-			}
-			// Apply wifirouters edits
-			if err = editRecoveryPeripheralWifi(ctx, peri.GetWifi(), labData); err != nil {
-				return err
-			}
+				// Servo cannot be nil for valid DUT
+				if peri.GetServo() == nil {
+					peri.Servo = &chromeosLab.Servo{}
+				}
+				// Apply servo edits
+				if err = editRecoveryPeripheralServo(peri.GetServo(), labData); err != nil {
+					return err
+				}
+				// Wifi cannot be nil for valid DUT
+				if peri.GetWifi() == nil {
+					peri.Wifi = &chromeosLab.Wifi{}
+				}
+				// Apply wifirouters edits
+				if err = editRecoveryPeripheralWifi(ctx, peri.GetWifi(), labData); err != nil {
+					return err
+				}
 
-			if err = updateBluetoothPeerStates(peri, labData.GetBlueoothPeers()); err != nil {
-				return err
+				if err = updateBluetoothPeerStates(peri, labData.GetBlueoothPeers()); err != nil {
+					return err
+				}
 			}
 		}
 		if _, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {

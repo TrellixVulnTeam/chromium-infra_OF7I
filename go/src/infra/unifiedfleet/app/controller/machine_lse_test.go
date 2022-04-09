@@ -1621,12 +1621,13 @@ func TestUpdateRecoveryLabData(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(req.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetSmartUsbhub(), ShouldBeFalse)
 			So(req.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetWifi().GetWifiRouters()[0].GetState(), ShouldEqual, chromeosLab.PeripheralState_BROKEN)
+			So(req.GetResourceState(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED)
 			topology := &chromeosLab.ServoTopology{
 				Main: &chromeosLab.ServoTopologyItem{
 					Type: "v3",
 				},
 			}
-			err = updateRecoveryLabData(ctx, "machinelse-labdata-2", ufspb.State_STATE_UNSPECIFIED, &ufsAPI.UpdateDeviceRecoveryDataRequest_LabData{
+			err = updateRecoveryLabData(ctx, "machinelse-labdata-2", ufspb.State_STATE_REPAIR_FAILED, &ufsAPI.UpdateDeviceRecoveryDataRequest_LabData{
 				SmartUsbhub:   true,
 				ServoType:     "fake-type",
 				ServoTopology: topology,
@@ -1644,6 +1645,7 @@ func TestUpdateRecoveryLabData(t *testing.T) {
 			So(err, ShouldBeNil)
 			req, err = inventory.GetMachineLSE(ctx, "machinelse-labdata-2")
 			So(err, ShouldBeNil)
+			So(req.GetResourceState(), ShouldEqual, ufspb.State_STATE_REPAIR_FAILED)
 			peri := req.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals()
 			So(peri.GetSmartUsbhub(), ShouldBeTrue)
 			So(peri.Servo.GetServoType(), ShouldEqual, "fake-type")
@@ -1676,7 +1678,7 @@ func TestUpdateRecoveryLabData(t *testing.T) {
 			So(req.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetSmartUsbhub(), ShouldBeFalse)
 
 			topology := &chromeosLab.ServoTopology{}
-			err = updateRecoveryLabData(ctx, "machinelse-labdata-3", ufspb.State_STATE_UNSPECIFIED, &ufsAPI.UpdateDeviceRecoveryDataRequest_LabData{
+			err = updateRecoveryLabData(ctx, "machinelse-labdata-3", ufspb.State_STATE_READY, &ufsAPI.UpdateDeviceRecoveryDataRequest_LabData{
 				SmartUsbhub:   true,
 				ServoType:     "fake-type",
 				ServoTopology: topology,
@@ -1703,6 +1705,34 @@ func TestUpdateRecoveryLabData(t *testing.T) {
 			So(peri.GetWifi().GetWifiRouters()[0].GetState(), ShouldEqual, chromeosLab.PeripheralState_WORKING)
 			So(peri.GetWifi().GetWifiRouters()[1].GetHostname(), ShouldEqual, "machine-labdata-3-pcap")
 			So(peri.GetWifi().GetWifiRouters()[1].GetState(), ShouldEqual, chromeosLab.PeripheralState_WORKING)
+		})
+
+		Convey("Update a OS machine lse - update resource state", func() {
+			machineLSE2 := mockDutMachineLSE("machinelse-labdata-3a")
+			machineLSE2.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = &chromeosLab.Peripherals{
+				Servo: &chromeosLab.Servo{},
+				Wifi: &chromeosLab.Wifi{
+					WifiRouters: []*chromeosLab.WifiRouter{
+						{
+							Hostname: "machine-labdata-3-router",
+							State:    chromeosLab.PeripheralState_BROKEN,
+						},
+						{
+							Hostname: "machine-labdata-3-pcap",
+							State:    chromeosLab.PeripheralState_BROKEN,
+						},
+					},
+				},
+			}
+			req, err := inventory.CreateMachineLSE(ctx, machineLSE2)
+			So(err, ShouldBeNil)
+			So(req.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetSmartUsbhub(), ShouldBeFalse)
+
+			err = updateRecoveryLabData(ctx, "machinelse-labdata-3a", ufspb.State_STATE_READY, &ufsAPI.UpdateDeviceRecoveryDataRequest_LabData{})
+			So(err, ShouldBeNil)
+			req, err = inventory.GetMachineLSE(ctx, "machinelse-labdata-3a")
+			So(err, ShouldBeNil)
+			So(req.GetResourceState(), ShouldEqual, ufspb.State_STATE_READY)
 		})
 
 		Convey("Update a OS machine lse - with two servo componments", func() {
@@ -1858,6 +1888,18 @@ func TestUpdateRecoveryLabData(t *testing.T) {
 			So(peri.GetWifi().GetWifiRouters()[0].GetState(), ShouldEqual, chromeosLab.PeripheralState_WORKING)
 			So(peri.GetWifi().GetWifiRouters()[1].GetHostname(), ShouldEqual, "machine-labdata-99-pcap")
 			So(peri.GetWifi().GetWifiRouters()[1].GetState(), ShouldEqual, chromeosLab.PeripheralState_WORKING)
+		})
+
+		Convey("Update a OS machine lse - labstation with no labdata", func() {
+			machineLSE := mockLabstationMachineLSE("machinelse-labdata-8")
+			req, err := inventory.CreateMachineLSE(ctx, machineLSE)
+			So(err, ShouldBeNil)
+			So(req.GetChromeosMachineLse().GetDeviceLse().GetDut(), ShouldBeNil)
+			err = updateRecoveryLabData(ctx, "machinelse-labdata-8", ufspb.State_STATE_SERVING, &ufsAPI.UpdateDeviceRecoveryDataRequest_LabData{})
+			So(err, ShouldBeNil)
+			req, err = inventory.GetMachineLSE(ctx, "machinelse-labdata-8")
+			So(err, ShouldBeNil)
+			So(req.GetResourceState(), ShouldEqual, ufspb.State_STATE_SERVING)
 		})
 	})
 }
