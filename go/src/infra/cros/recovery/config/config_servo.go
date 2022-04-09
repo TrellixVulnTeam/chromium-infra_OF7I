@@ -32,7 +32,7 @@ func servoRepairPlan() *Plan {
 			"set_state_need_replacement",
 			"servo_v3_root_present",
 			"servo_fw_need_update",
-			"set_state_servod_issue",
+			"set_state_servo_host_issue",
 			"servo_host_servod_start",
 			"set_state_dut_not_connected",
 			"servo_dut_detected",
