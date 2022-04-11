@@ -255,7 +255,7 @@ func createTasksIfNeeded(ctx context.Context, e *control.Entry) (itrTaskCreated 
 
 	// Only ingest 1/256 test verdicts to limit the amount the verdicts we ingest
 	// during development phase.
-	if sha256.Sum256([]byte(e.BuildID))[0] == 0 {
+	if sha256.Sum256([]byte(e.BuildID))[0] != 0 {
 		return true
 	}
 
