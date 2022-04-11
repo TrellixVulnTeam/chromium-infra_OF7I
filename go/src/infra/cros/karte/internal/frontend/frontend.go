@@ -221,7 +221,7 @@ func (k *karteFrontend) persistActionRangeImpl(ctx context.Context, client bqPer
 	tally := 0
 
 	for {
-		batch, err := q.Next(ctx, stride)
+		batch, _, err := q.Next(ctx, stride)
 		if err != nil {
 			return nil, errors.Annotate(err, "persist action range").Err()
 		}
@@ -254,7 +254,7 @@ func (k *karteFrontend) ListActions(ctx context.Context, req *kartepb.ListAction
 		return nil, errors.Annotate(err, "list actions").Err()
 	}
 
-	es, err := q.Next(ctx, req.GetPageSize())
+	es, _, err := q.Next(ctx, req.GetPageSize())
 	if err != nil {
 		return nil, errors.Annotate(err, "list actions (page size: %d)", req.GetPageSize()).Err()
 	}

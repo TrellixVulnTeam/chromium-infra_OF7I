@@ -57,3 +57,14 @@ func (i *IDInfo) Encoded() (string, error) {
 func (i *IDInfo) Time() time.Time {
 	return time.Unix(int64(i.CoarseTime), int64(i.FineTime)).UTC()
 }
+
+// The first four bytes of a Karte action identifier are the version.
+const VersionPrefixLength = 4
+
+// GetIDVersion gets the id version from a serialized ID.
+func GetIDVersion(serialized string) string {
+	if len(serialized) >= VersionPrefixLength {
+		return serialized[:VersionPrefixLength]
+	}
+	return ""
+}

@@ -59,7 +59,7 @@ func TestCreateAction(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	datastoreActionEntities, err := q.Next(ctx, 0)
+	datastoreActionEntities, _, err := q.Next(ctx, 0)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}

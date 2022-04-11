@@ -32,7 +32,7 @@ func TestListActionsWithFilter(t *testing.T) {
 	if err != nil {
 		t.Errorf("building query: %s", err)
 	}
-	es, err := q.Next(ctx, 10)
+	es, _, err := q.Next(ctx, 10)
 	if err != nil {
 		t.Errorf("running query: %s", err)
 	}

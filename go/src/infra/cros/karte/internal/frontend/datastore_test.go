@@ -28,7 +28,7 @@ func TestReadActionEntityFromEmptyDatastore(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	es, err := q.Next(ctx, 100)
+	es, d, err := q.Next(ctx, 100)
 	token := q.Token
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
@@ -38,6 +38,9 @@ func TestReadActionEntityFromEmptyDatastore(t *testing.T) {
 	}
 	if token != "" {
 		t.Errorf("expected tok to be empty not %s", token)
+	}
+	if diff := cmp.Diff(ActionQueryAncillaryData{}, d); diff != "" {
+		t.Errorf("unexpected ancillary data (-want +got): %s", diff)
 	}
 }
 
@@ -71,7 +74,7 @@ func TestReadSingleActionEntityFromDatastore(t *testing.T) {
 	ctx := gaetesting.TestingContext()
 	datastore.GetTestable(ctx).Consistent(true)
 	if err := PutActionEntities(ctx, &ActionEntity{
-		ID: "hi",
+		ID: "zzzz-hi",
 	}); err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -79,12 +82,57 @@ func TestReadSingleActionEntityFromDatastore(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	es, err := q.Next(ctx, 100)
+	es, d, err := q.Next(ctx, 100)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 	if len(es) != 1 {
 		t.Errorf("unexpected entities: %v", es)
+	}
+	if diff := cmp.Diff(ActionQueryAncillaryData{
+		BiggestVersion:  "zzzz",
+		SmallestVersion: "zzzz",
+	},
+		d,
+	); diff != "" {
+		t.Errorf("unexpected ancillary data (-want +got): %s", diff)
+	}
+}
+
+// TestReadTwoActionEntitiesFromDatastore tests putting a two action entities into datastore
+// and then reading them back out.
+func TestReadTwoActionEntitiesFromDatastore(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContext()
+	datastore.GetTestable(ctx).Consistent(true)
+	if err := PutActionEntities(ctx, &ActionEntity{
+		ID: "zzzz-hi",
+	}); err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	if err := PutActionEntities(ctx, &ActionEntity{
+		ID: "aaaa-hi",
+	}); err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	q, err := newActionEntitiesQuery("", "")
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	es, d, err := q.Next(ctx, 100)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	if len(es) != 2 {
+		t.Errorf("unexpected entities: %v", es)
+	}
+	if diff := cmp.Diff(ActionQueryAncillaryData{
+		BiggestVersion:  "zzzz",
+		SmallestVersion: "aaaa",
+	},
+		d,
+	); diff != "" {
+		t.Errorf("unexpected ancillary data (-want +got): %s", diff)
 	}
 }
 
@@ -225,7 +273,7 @@ func TestReadActionEntitiesFromDatastoreOneAtAtime(t *testing.T) {
 		if err != nil {
 			t.Errorf("unexpected error: %s", err)
 		}
-		es, err := q.Next(ctx, 1)
+		es, _, err := q.Next(ctx, 1)
 		resultTok = q.Token
 		if err != nil {
 			t.Errorf("unexpected error: %s", err)
@@ -246,7 +294,7 @@ func TestReadActionEntitiesFromDatastoreOneAtAtime(t *testing.T) {
 		if err != nil {
 			t.Errorf("unexpected error: %s", err)
 		}
-		es, err := q.Next(ctx, 10)
+		es, _, err := q.Next(ctx, 10)
 		if err != nil {
 			t.Errorf("unexpected error: %s", err)
 		}
