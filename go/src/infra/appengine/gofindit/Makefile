@@ -13,7 +13,7 @@ test:
 	go test ./...
 
 deploy:
-	$(GAE_PY) upload -A gofindit-dev
+	$(GAE_PY) upload -A chops-gofindit-dev
 
 deploy-prod:
-	$(GAE_PY) upload -A gofindit
+	$(GAE_PY) upload -A chops-gofindit
