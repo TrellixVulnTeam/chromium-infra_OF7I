@@ -2125,12 +2125,28 @@ Add adds specified routers or wifi features to the DUT and leaves what is alread
 Delete deletes specified routers or wifi features in the DUT and leaves remainining untouched.
 Replace replaces the entire set of routers or wifi features with the specified list.
 
+A json file with wifi struct defined can be used in replace mode to update wifi struct
+
+A csv file with header dut, wifi_features, router can be used to update multiple duts.
+Example of CSV format:
+dut,wifi_features,router,router,[router,...]
+d1,f1;f2,hostname:h1;model:m1;feature:f1;feature:f2,hostname:h2
+d2,f2,,hostname:h3;model:m2
+
+
+
 Examples:
 shivas add peripheral-wifi -dut {d} -wifi-feature {f1} -wifi-feature {f2} -router {hostname:h1,build_target:b1,model:m1,feature:f2} -router {hostname:h2,build_target:b1,model:m1,feature:f3}
 shivas delete peripheral-wifi -dut {d} -router {hostanme:h1} -router {hostname:h2}
 shivas replace peripheral-wifi -dut {d} -wifi-feature {f3} -wifi-feature {f4}
 shivas replace peripheral-wifi -dut {d} -router {hostname:h3,build_target:b1}
 shivas replace peripheral-wifi -dut {d} -wifi-feature {f5} -wifi-feature {f6} -router {hostname:h6,build_target:b2}
+
+shivas replace peripheral-wifi -dut {d} -f {fpath.json}
+
+shivas add peripheral-wifi -f {fpath.csv}
+shivas replace peripheral-wifi -f {fpath.csv}
+shivas delete peripheral-wifi -f {fpath.csv}
 `
 )
 

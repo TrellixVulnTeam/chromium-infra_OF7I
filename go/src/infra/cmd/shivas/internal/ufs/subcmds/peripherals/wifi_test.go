@@ -100,8 +100,8 @@ func TestAddWifi(t *testing.T) {
 		},
 	}
 
-	if _, err := cmd.addWifi(current); err == nil {
-		t.Errorf("addWifi(%v) succeded, expect duplication failure", current)
+	if _, err := cmd.addWifi(current, cmd.dutName); err == nil {
+		t.Errorf("addWifi(%v) succeeded, expect duplication failure", current)
 	}
 
 	// Test adding two valid routers and one wifi feature
@@ -112,7 +112,7 @@ func TestAddWifi(t *testing.T) {
 			},
 		},
 	}
-	out, err := cmd.addWifi(current)
+	out, err := cmd.addWifi(current, cmd.dutName)
 	if err != nil {
 		t.Errorf("addWifi(%v) = %v, expect success", current, err)
 	}
@@ -152,7 +152,7 @@ func TestDeleteWifi(t *testing.T) {
 		},
 	}
 
-	if _, err := cmd.deleteWifi(current); err == nil {
+	if _, err := cmd.deleteWifi(current, cmd.dutName); err == nil {
 		t.Errorf("deleteWifi(%v) succeeded, expected non-existent delete failure", current)
 	}
 
@@ -171,7 +171,7 @@ func TestDeleteWifi(t *testing.T) {
 		},
 	}
 
-	out, err := cmd.deleteWifi(current)
+	out, err := cmd.deleteWifi(current, cmd.dutName)
 	if err != nil {
 		t.Errorf("deleteWifi(%v) = %v, expect success", current, err)
 	}
@@ -205,7 +205,7 @@ func TestReplaceWifi(t *testing.T) {
 		},
 	}
 	want := 2
-	if out, _ := cmd.replaceWifi(current); len(out.GetWifiRouters()) != want {
+	if out, _ := cmd.replaceWifi(current, cmd.dutName); len(out.GetWifiRouters()) != want {
 		t.Errorf("replaceWifi(%v) = %v, want %d replacing failure", current, out, want)
 	}
 
