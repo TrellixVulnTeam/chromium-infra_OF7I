@@ -61,8 +61,8 @@ func TestSpan(t *testing.T) {
 				rules, err := ReadActive(span.Single(ctx), testProject)
 				So(err, ShouldBeNil)
 				So(rules, ShouldResemble, []*FailureAssociationRule{
-					rulesToCreate[0],
 					rulesToCreate[3],
+					rulesToCreate[0],
 				})
 			})
 		})
@@ -119,16 +119,16 @@ func TestSpan(t *testing.T) {
 				rules, err := ReadDelta(span.Single(ctx), testProject, StartingEpoch)
 				So(err, ShouldBeNil)
 				So(rules, ShouldResemble, []*FailureAssociationRule{
+					rulesToCreate[3],
 					rulesToCreate[0],
 					rulesToCreate[2],
-					rulesToCreate[3],
 				})
 
 				rules, err = ReadDelta(span.Single(ctx), testProject, reference)
 				So(err, ShouldBeNil)
 				So(rules, ShouldResemble, []*FailureAssociationRule{
-					rulesToCreate[2],
 					rulesToCreate[3],
+					rulesToCreate[2],
 				})
 
 				rules, err = ReadDelta(span.Single(ctx), testProject, reference.Add(time.Minute))
@@ -298,7 +298,7 @@ func TestSpan(t *testing.T) {
 				})
 				Convey(`With Buganizer Bug`, func() {
 					r.BugID = bugs.BugID{System: "buganizer", ID: "1234567890"}
-					commitTime, err := testCreate(r, "user@google.com")
+					commitTime, err := testCreate(r, WeetbixSystem)
 					So(err, ShouldBeNil)
 
 					expectedRule := *r
@@ -309,7 +309,7 @@ func TestSpan(t *testing.T) {
 				})
 				Convey(`With Monorail Bug`, func() {
 					r.BugID = bugs.BugID{System: "monorail", ID: "project/1234567890"}
-					commitTime, err := testCreate(r, "user@google.com")
+					commitTime, err := testCreate(r, WeetbixSystem)
 					So(err, ShouldBeNil)
 
 					expectedRule := *r
