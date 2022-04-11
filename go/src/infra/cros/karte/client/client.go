@@ -97,3 +97,26 @@ func NewClient(ctx context.Context, c *Config, o ...Option) (kartepb.KarteClient
 		},
 	}), nil
 }
+
+// NewCronClient creates a new client for the Karte service.
+func NewCronClient(ctx context.Context, c *Config, o ...Option) (kartepb.KarteCronClient, error) {
+	if c == nil {
+		return nil, errors.New("karte cron client: cannot create new client from empty base config")
+	}
+	for _, f := range o {
+		f(c)
+	}
+
+	a := auth.NewAuthenticator(ctx, c.loginMode, c.authOption)
+	hc, err := a.Client()
+	if err != nil {
+		return nil, errors.Annotate(err, "create karte cron client").Err()
+	}
+	return kartepb.NewKarteCronPRPCClient(&prpc.Client{
+		C:    hc,
+		Host: c.karteService,
+		Options: &prpc.Options{
+			UserAgent: c.userAgent,
+		},
+	}), nil
+}
