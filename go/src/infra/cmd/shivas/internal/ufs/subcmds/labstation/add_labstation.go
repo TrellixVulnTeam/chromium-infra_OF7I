@@ -76,7 +76,7 @@ var AddLabstationCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.board, "board", "", "board the device is based on")
 		c.Flags.StringVar(&c.rack, "rack", "", "rack that the labstation is on")
 		c.Flags.StringVar(&c.zone, "zone", "", "zone that the labstation is on. "+cmdhelp.ZoneFilterHelpText)
-		c.Flags.BoolVar(&c.paris, "paris", false, "use paris for deployment")
+		c.Flags.BoolVar(&c.paris, "paris", true, "use paris flow for deployment")
 		return c
 	},
 }

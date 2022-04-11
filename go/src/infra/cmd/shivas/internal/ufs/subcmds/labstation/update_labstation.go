@@ -77,7 +77,7 @@ var UpdateLabstationCmd = &subcommands.Command{
 		c.Flags.BoolVar(&c.forceDeploy, "force-deploy", false, "forces a redeploy task.")
 		c.Flags.Var(utils.CSVString(&c.deployTags), "deploy-tags", "comma seperated tags for deployment task.")
 
-		c.Flags.BoolVar(&c.paris, "paris", false, "use paris for deployment")
+		c.Flags.BoolVar(&c.paris, "paris", true, "use paris flow for deployment")
 		return c
 	},
 }
