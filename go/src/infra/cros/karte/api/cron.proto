@@ -15,7 +15,7 @@ option go_package = "infra/cros/karte/api;kartepb";
 service KarteCron {
   rpc PersistToBigquery(PersistToBigqueryRequest) returns (PersistToBigqueryResponse) {
     option (google.api.http) = {
-      get: "/v1/tasks/persist-to-bigquery-request"
+      get: "/v1/tasks/persist-to-bigquery"
     };
   };
 };
