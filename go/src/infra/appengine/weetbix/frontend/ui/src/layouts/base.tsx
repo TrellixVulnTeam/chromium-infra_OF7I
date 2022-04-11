@@ -2,10 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import React from 'react'
-import { Outlet, useParams } from 'react-router-dom';
-import '../shared_elements/title_bar'
+import '../shared_elements/title_bar';
 import '../../web_component_types';
+
+import React from 'react';
+import {
+    Outlet,
+    useParams
+} from 'react-router-dom';
 
 declare global {
     interface Window {
@@ -24,6 +28,6 @@ const BaseLayout = () => {
         </>
     );
 
-}
+};
 
 export default BaseLayout;

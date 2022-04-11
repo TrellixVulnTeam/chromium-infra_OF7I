@@ -121,7 +121,7 @@ const BugInfo = ({
         <>
             {
                 issue && (
-                    <Paper elevation={3} sx={{ pt: 2, mt: 1 }}>
+                    <Paper elevation={3} sx={{ pt: 2, mt: 1, flexGrow: 1 }}>
                         <Container maxWidth={false}>
                             <Typography sx={{
                                 fontWeight: 600,

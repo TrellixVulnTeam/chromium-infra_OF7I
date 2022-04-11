@@ -33,7 +33,7 @@ describe('Test RuleEditDialog component', () => {
         const mockRule = createDefaultMockRule();
 
         renderWithClient(
-            <RuleEditDialog 
+            <RuleEditDialog
                 open
                 rule={mockRule}
                 setOpen={identityFunction}
@@ -75,8 +75,8 @@ describe('Test RuleEditDialog component', () => {
         await waitFor(() => fetchMock.lastCall() !== undefined && fetchMock.lastCall()![0] === 'http://localhost/prpc/weetbix.v1.Rules/Update');
 
         expect(fetchMock.lastCall()![1]!.body).toEqual('{"rule":{"name":"projects/chromium/rules/ce83f8395178a0f2edad59fc1a167818",' +
-        '"ruleDefinition":"new rule definition"},' + 
-        '"updateMask":"ruleDefinition","etag":"W/\\"2022-01-31T03:36:14.89643Z\\""' + 
+        '"ruleDefinition":"new rule definition"},' +
+        '"updateMask":"ruleDefinition","etag":"W/\\"2022-01-31T03:36:14.89643Z\\""' +
         '}');
     });
 
@@ -84,7 +84,7 @@ describe('Test RuleEditDialog component', () => {
         const mockRule = createDefaultMockRule();
 
         renderWithClient(
-            <RuleEditDialog 
+            <RuleEditDialog
                 open
                 rule={mockRule}
                 setOpen={identityFunction}

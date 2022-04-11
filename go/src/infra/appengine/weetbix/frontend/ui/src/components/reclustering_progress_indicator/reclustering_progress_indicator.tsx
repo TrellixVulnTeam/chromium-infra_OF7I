@@ -7,14 +7,19 @@ import React, {
     useEffect,
     useState
 } from 'react';
-import { useQuery } from 'react-query';
+import {
+    useQuery,
+    useQueryClient
+} from 'react-query';
 
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
-
 import Grid from '@mui/material/Grid';
+
 import {
     fetchProgress,
+    noProgressToShow,
+    progressNotYetStarted,
     progressToLatestAlgorithms,
     progressToLatestConfig,
     progressToRulesVersion
@@ -26,20 +31,19 @@ interface Props {
     project: string;
     hasRule?: boolean | undefined;
     rulePredicateLastUpdated?: string | undefined;
-    refreshAnalysis: () => void;
 }
 
 const ReclusteringProgressIndicator = ({
     project,
     hasRule,
     rulePredicateLastUpdated,
-    refreshAnalysis
 }: Props) => {
     const [show, setShow] = useState(false);
     const [lastRefreshed, setLastRefreshed] = useState(dayjs());
 
-    const [progressPerMille, setProgressPerMille] = useState(0);
+    const [progressPerMille, setProgressPerMille] = useState(noProgressToShow);
     const [reclusteringTarget, setReclusteringTarget] = useState('');
+    const queryClient = useQueryClient();
 
     const { isError, isLoading, data: progress, error } = useQuery(
         'reclusteringProgress',
@@ -82,10 +86,8 @@ const ReclusteringProgressIndicator = ({
     }, [progress, rulePredicateLastUpdated]);
 
     useEffect(() => {
-        if(progressPerMille < 1000) {
+        if(progressPerMille >= progressNotYetStarted && progressPerMille < 1000) {
             setShow(true);
-        } else {
-            setShow(false);
         }
     }, [progressPerMille]);
 
@@ -105,7 +107,7 @@ const ReclusteringProgressIndicator = ({
     }
 
     const handleRefreshAnalysis = () => {
-        refreshAnalysis();
+        queryClient.invalidateQueries('cluster');
         setShow(false);
     };
 

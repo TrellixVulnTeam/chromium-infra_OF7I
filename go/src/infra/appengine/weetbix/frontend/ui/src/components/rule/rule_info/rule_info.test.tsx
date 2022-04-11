@@ -24,7 +24,7 @@ describe('Test RuleInfo component', () => {
     it('given a rule, then should display rule details', async () => {
         const mockRule = createDefaultMockRule();
         renderWithRouterAndClient(
-            <RuleInfo 
+            <RuleInfo
                 project="chromium"
                 rule={mockRule}
             />
@@ -40,9 +40,9 @@ describe('Test RuleInfo component', () => {
 
     it('when clicking on archived, then should show confirmation dialog', async () => {
         const mockRule = createDefaultMockRule();
-        
+
         renderWithRouterAndClient(
-            <RuleInfo 
+            <RuleInfo
                 project="chromium"
                 rule={mockRule}
             />
@@ -59,7 +59,7 @@ describe('Test RuleInfo component', () => {
         mockFetchAuthState();
         const mockRule = createDefaultMockRule();
         renderWithRouterAndClient(
-            <RuleInfo 
+            <RuleInfo
                 project="chromium"
                 rule={mockRule}
             />
@@ -88,8 +88,8 @@ describe('Test RuleInfo component', () => {
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         expect(fetchMock.lastCall()![1]!.body).toEqual('{"rule":{"name":"projects/chromium/rules/ce83f8395178a0f2edad59fc1a167818",' +
-        '"isActive":false},' + 
-        '"updateMask":"isActive","etag":"W/\\"2022-01-31T03:36:14.89643Z\\""' + 
+        '"isActive":false},' +
+        '"updateMask":"isActive","etag":"W/\\"2022-01-31T03:36:14.89643Z\\""' +
         '}');
     });
 });

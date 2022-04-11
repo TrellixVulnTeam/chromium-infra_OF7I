@@ -29,7 +29,7 @@ const RuleTopPanel = ({ project, ruleId }: Props) => {
     if (isError) {
         return (
             <ErrorAlert
-                errorText={`An erro occured while fetching the rule: ${error}`}
+                errorText={`An error occured while fetching the rule: ${error}`}
                 errorTitle="Failed to load rule"
                 showError
             />
@@ -44,8 +44,6 @@ const RuleTopPanel = ({ project, ruleId }: Props) => {
                         <ReclusteringProgressIndicator
                             hasRule={true}
                             project={project}
-                            // eslint-disable-next-line @typescript-eslint/no-empty-function
-                            refreshAnalysis={() => {}}
                             rulePredicateLastUpdated={rule.predicateLastUpdateTime}
                         />
                     </Grid>
@@ -57,11 +55,11 @@ const RuleTopPanel = ({ project, ruleId }: Props) => {
                             updateTime={rule.lastUpdateTime}
                         />
                     </Grid>
-                    <Grid container item xs={12} alignItems="stretch" display="flex" columnSpacing={2}>
+                    <Grid container item xs={12} columnSpacing={2}>
                         <Grid item xs={6} display="flex" alignItems="stretch">
                             <RuleInfo project={project} rule={rule} />
                         </Grid>
-                        <Grid item xs={6} display="flex" alignItems="stretch">
+                        <Grid item xs={6} display="flex">
                             <BugInfo rule={rule} />
                         </Grid>
                     </Grid>

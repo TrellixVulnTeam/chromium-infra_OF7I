@@ -36,7 +36,7 @@ describe('Test RuleTopPanel component', () => {
         });
 
         renderWithRouterAndClient(
-            <RuleTopPanel 
+            <RuleTopPanel
                 project="chromium"
                 ruleId='12345'
             />,

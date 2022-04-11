@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 
 dayjs.extend(isSameOrAfter);
+
 export const fetchProgress = async (project: string): Promise<ReclusteringProgress> => {
     const response = await fetch(`/api/projects/${encodeURIComponent(project)}/reclusteringProgress`);
     return await response.json();
@@ -38,6 +39,9 @@ export interface ReclusteringProgress {
     // Last is the goal of the last completed re-clustering run.
     last: ReclusteringTarget;
 }
+
+export const progressNotYetStarted = -1;
+export const noProgressToShow = -2;
 
 export const  progressToLatestAlgorithms = (progress: ReclusteringProgress): number => {
     return progressTo(progress, (target: ReclusteringTarget) => {
@@ -73,5 +77,5 @@ const progressTo = (progress: ReclusteringProgress, predicate: (target: Recluste
     }
     // Run not yet started (e.g. because we are still finishing a previous
     // re-clustering).
-    return -1;
+    return progressNotYetStarted;
 };
