@@ -182,7 +182,7 @@ func (c *updateLabstation) innerRun(a subcommands.Application, args []string, en
 				return err
 			}
 		} else {
-			tc, err := swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService)
+			tc, err = swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService)
 			if err != nil {
 				return err
 			}
