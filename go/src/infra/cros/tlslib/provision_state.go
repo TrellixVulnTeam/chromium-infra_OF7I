@@ -292,7 +292,7 @@ func (p *provisionState) installStateful(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("install stateful: failed to get GS Cache URL, %s", err)
 	}
-	return runCmd(p.c, strings.Join([]string{
+	return runCmdRetry(ctx, p.c, 5, strings.Join([]string{
 		fmt.Sprintf("rm -rf %[1]s %[2]s/var_new %[2]s/dev_image_new", updateStatefulFilePath, statefulPath),
 		fmt.Sprintf("curl -S -s -v -# -C - --retry 3 --retry-delay 60 %s | tar --ignore-command-error --overwrite --directory=%s -xzf -", url, statefulPath),
 		fmt.Sprintf("echo -n clobber > %s", updateStatefulFilePath),
