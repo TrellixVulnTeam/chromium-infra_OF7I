@@ -21,14 +21,14 @@ func LabstationRepairConfig() *Configuration {
 					"cros_ping",
 					"cros_ssh",
 					"cros_is_on_stable_version",
-					"update_provision_info",
+					"Update provisioned info",
 					"booted_from_right_kernel",
 					"reboot_by_request",
 					"dut_state_ready",
 				},
 				Actions: map[string]*Action{
 					"dut_state_repair_failed": {
-						RunControl: 2,
+						RunControl: RunControl_RUN_ONCE,
 					},
 					"check_host_info": {
 						Docs:     []string{"Check basic info for deployment."},
@@ -73,7 +73,10 @@ func LabstationRepairConfig() *Configuration {
 							"labstation_phone_station",
 						},
 					},
-					"update_provision_info": {
+					"Update provisioned info": {
+						Docs: []string{
+							"Read and update cros-provision label.",
+						},
 						ExecName: "cros_update_provision_os_version",
 					},
 					"labstation_langid_check": {
@@ -172,7 +175,7 @@ func LabstationRepairConfig() *Configuration {
 						},
 						ExecName:    "cros_reboot",
 						ExecTimeout: &durationpb.Duration{Seconds: 120},
-						RunControl:  1,
+						RunControl:  RunControl_ALWAYS_RUN,
 					},
 					"rpm_power_cycle": {
 						Docs: []string{
@@ -181,7 +184,7 @@ func LabstationRepairConfig() *Configuration {
 						Conditions: []string{
 							"has_rpm_info",
 						},
-						RunControl: 1,
+						RunControl: RunControl_ALWAYS_RUN,
 					},
 				},
 			},
@@ -204,7 +207,7 @@ func LabstationDeployConfig() *Configuration {
 					"update_inv_info",
 					"install_stable_os",
 					"remove_reboot_requests",
-					"update_provisioned_info",
+					"Update provisioned info",
 					"validate_rpm",
 					"dut_state_ready",
 				},
@@ -252,7 +255,7 @@ func LabstationDeployConfig() *Configuration {
 						ExecName:               "cros_remove_all_reboot_request",
 						AllowFailAfterRecovery: true,
 					},
-					"update_provisioned_info": {
+					"Update provisioned info": {
 						Docs: []string{
 							"Read and update cros-provision label.",
 						},
