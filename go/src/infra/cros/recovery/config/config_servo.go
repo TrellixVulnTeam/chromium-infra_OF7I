@@ -89,7 +89,7 @@ func servoRepairPlan() *Plan {
 			},
 			"servo_host_servod_stop": {
 				Docs:       []string{"Stop the servod."},
-				RunControl: 1,
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"init_docker_host": {
 				Docs: []string{
@@ -754,7 +754,7 @@ func servoRepairPlan() *Plan {
 				Docs:         []string{"Toggle the servod command servo_pd_role only once. And then stop the servod afterwards. TODO: Add dependency for servo initialize."},
 				Dependencies: []string{"servo_pd_toggle_once"},
 				ExecTimeout:  &durationpb.Duration{Seconds: 120},
-				RunControl:   1,
+				RunControl:   RunControl_ALWAYS_RUN,
 				ExecName:     "servo_host_servod_stop",
 			},
 			"servo_pd_toggle_once": {
@@ -764,14 +764,14 @@ func servoRepairPlan() *Plan {
 					"wait_in_retry:5",
 					"wait_before_retry:1",
 				},
-				RunControl: 1,
+				RunControl: RunControl_ALWAYS_RUN,
 				ExecName:   "servo_servod_toggle_pd_role",
 			},
 			"servo_power_delivery_repair": {
 				Docs:         []string{"Toggle the servod command servo_pd_role 5 times. And then stop the servod afterwards. TODO: Add dependency for servo initialize."},
 				Dependencies: []string{"servo_pd_toggle_five_times"},
 				ExecTimeout:  &durationpb.Duration{Seconds: 600},
-				RunControl:   1,
+				RunControl:   RunControl_ALWAYS_RUN,
 				ExecName:     "servo_host_servod_stop",
 			},
 			"servo_pd_toggle_five_times": {
@@ -781,7 +781,7 @@ func servoRepairPlan() *Plan {
 					"wait_in_retry:5",
 					"wait_before_retry:1",
 				},
-				RunControl: 1,
+				RunControl: RunControl_ALWAYS_RUN,
 				ExecName:   "servo_servod_toggle_pd_role",
 			},
 			"set_state_missing_config": {
@@ -884,7 +884,7 @@ func servoRepairPlan() *Plan {
 				Docs:         []string{"Try to repair servod by mimic reconnection of servo."},
 				Dependencies: []string{"servo_fake_disconnect_dut"},
 				ExecTimeout:  &durationpb.Duration{Seconds: 600},
-				RunControl:   1,
+				RunControl:   RunControl_ALWAYS_RUN,
 				ExecName:     "servo_host_servod_stop",
 			},
 			"servo_fake_disconnect_dut": {
@@ -898,7 +898,7 @@ func servoRepairPlan() *Plan {
 				Docs:         []string{"Try to repair servod by toggling cc."},
 				Dependencies: []string{"servo_servod_cc_toggle"},
 				ExecTimeout:  &durationpb.Duration{Seconds: 600},
-				RunControl:   1,
+				RunControl:   RunControl_ALWAYS_RUN,
 				ExecName:     "servo_host_servod_stop",
 			},
 			"servo_servod_cc_toggle": {
@@ -907,7 +907,7 @@ func servoRepairPlan() *Plan {
 					"cc_off_timeout:10",
 					"cc_on_timeout:30",
 				},
-				RunControl: 1,
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"servo_reboot_ec_on_dut": {
 				Docs: []string{
@@ -919,18 +919,18 @@ func servoRepairPlan() *Plan {
 					"value:reboot",
 				},
 				ExecName:   "servo_set_ec_uart_cmd",
-				RunControl: 1,
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"reboot_dut_by_power_state:reset": {
 				Docs:          []string{"Try to reboot DUT by resetting power state command on servod."},
 				ExecExtraArgs: []string{"wait_timeout:1"},
-				RunControl:    1,
+				RunControl:    RunControl_ALWAYS_RUN,
 				ExecName:      "servo_power_state_reset",
 			},
 			"cros_create_reboot_request": {
 				Docs:       []string{"Try to create reboot flag file request."},
 				Conditions: []string{"cros_ssh"},
-				RunControl: 1,
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"reflash_cr_50_fw_on_dut": {
 				Docs: []string{"Try to reflash cr50 firmware and reboot AP from DUT side to wake it up."},
@@ -939,7 +939,7 @@ func servoRepairPlan() *Plan {
 					"cros_is_time_to_reflash_cr50_fw",
 				},
 				Dependencies: []string{"cros_reflash_cr50_fw"},
-				RunControl:   1,
+				RunControl:   RunControl_ALWAYS_RUN,
 				ExecName:     "servo_host_servod_stop",
 			},
 			"cros_reflash_cr50_fw": {
@@ -978,14 +978,14 @@ func servoRepairPlan() *Plan {
 				Docs:         []string{"Try to reset EC from DUT side to wake CR50 up. And then restart the servod."},
 				Conditions:   []string{"is_servo_type_ccd"},
 				Dependencies: []string{"cros_reset_ec"},
-				RunControl:   1,
+				RunControl:   RunControl_ALWAYS_RUN,
 				ExecName:     "servo_host_servod_stop",
 			},
 			"cros_reset_ec": {
 				Docs:          []string{"Try to wake up the device as it will trigger recovering ec, cr50, and other fw."},
 				Dependencies:  []string{"cros_ssh_dut"},
 				ExecExtraArgs: []string{"wait_timeout:30"},
-				RunControl:    1,
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"servo_power_cycle_root_servo": {
 				Docs:       []string{"Try to reset(power-cycle) the servo via smart usbhub."},
@@ -995,7 +995,7 @@ func servoRepairPlan() *Plan {
 					"wait_timeout:20",
 				},
 				ExecTimeout:            &durationpb.Duration{Seconds: 120},
-				RunControl:             2,
+				RunControl:             RunControl_RUN_ONCE,
 				AllowFailAfterRecovery: true,
 			},
 			"servo_host_v3_reboot": {
@@ -1003,7 +1003,7 @@ func servoRepairPlan() *Plan {
 				Conditions:    []string{"is_servo_v3"},
 				ExecTimeout:   &durationpb.Duration{Seconds: 300},
 				ExecExtraArgs: []string{"reboot_timeout:10"},
-				RunControl:    2,
+				RunControl:    RunControl_RUN_ONCE,
 			},
 		},
 	}

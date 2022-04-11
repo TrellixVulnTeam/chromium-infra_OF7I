@@ -49,7 +49,9 @@ func deployActions() map[string]*Action {
 				"validate_usb_boot_enabled:true",
 				"remove_file:false",
 			},
-			RecoveryActions: []string{"Set GBB flags to 0x18 by servo"},
+			RecoveryActions: []string{
+				"Switch DUT to dev mode by servo",
+			},
 		},
 		"Device is pingable before deploy": {
 			Docs: []string{
@@ -62,7 +64,6 @@ func deployActions() map[string]*Action {
 			RecoveryActions: []string{
 				"Cold reset DUT by servo and wait to boot",
 				"Power cycle DUT by RPM and wait",
-				"Set GBB flags to 0x18 by servo",
 				"Install OS in DEV mode",
 				"Install OS in DEV mode, with force to DEV-mode",
 				"Install OS in DEV mode with fresh image",
@@ -88,10 +89,14 @@ func deployActions() map[string]*Action {
 			},
 		},
 		"DUT has expected dev firmware": {
-			Docs:         []string{"Verify that FW on the DUT has dev keys."},
-			Dependencies: []string{"cros_ssh"},
-			ExecName:     "cros_has_dev_signed_firmware",
-			ExecTimeout:  &durationpb.Duration{Seconds: 600},
+			Docs: []string{
+				"Verify that FW on the DUT has dev keys.",
+			},
+			Dependencies: []string{
+				"Device is SSHable",
+			},
+			ExecName:    "cros_has_dev_signed_firmware",
+			ExecTimeout: &durationpb.Duration{Seconds: 600},
 			RecoveryActions: []string{
 				"Update DUT firmware with factory mode and restart by servo",
 				"Update DUT firmware with factory mode and restart by host",
@@ -103,14 +108,17 @@ func deployActions() map[string]*Action {
 				"Reboot device by servo",
 			},
 			Conditions: []string{
+				"dut_servo_host_present",
 				"servo_state_is_working",
 			},
 			Dependencies: []string{
-				"cros_ssh",
+				"Device is SSHable",
 				"Disable software-controlled write-protect for 'host'",
 				"Disable software-controlled write-protect for 'ec'",
 				"Update FW with factory mode",
-				"Cold reset DUT by servo and wait to boot",
+				"Cold reset DUT by servo",
+				"Wait DUT to be pingable after reset",
+				"Wait DUT to be SSHable after reset",
 			},
 			ExecName:   "sample_pass",
 			RunControl: RunControl_ALWAYS_RUN,
@@ -123,12 +131,13 @@ func deployActions() map[string]*Action {
 			// Allowed to try this repair action even when we fail with servo-reboot.
 			// Conditions: []string{"servo_state_is_not_working"},
 			Dependencies: []string{
-				"cros_ssh",
+				"Device is SSHable",
 				"Disable software-controlled write-protect for 'host'",
 				"Disable software-controlled write-protect for 'ec'",
 				"Update FW with factory mode",
 				"Simple reboot",
 				"Wait DUT to be pingable after reset",
+				"Wait DUT to be SSHable after reset",
 			},
 			ExecName:   "sample_pass",
 			RunControl: RunControl_ALWAYS_RUN,
@@ -231,40 +240,7 @@ func deployActions() map[string]*Action {
 				"servo_state_is_working",
 			},
 			Dependencies: []string{
-				"Boot DUT from USB in DEV mode",
-				"Run install after boot from USB-drive",
-				"Cold reset DUT by servo and wait to boot",
-				"Wait DUT to be SSHable after reset",
-			},
-			ExecName:   "sample_pass",
-			RunControl: RunControl_ALWAYS_RUN,
-		},
-		"Install OS in DEV mode, with force to DEV-mode": {
-			Docs: []string{
-				"Install OS on the device from USB-key when device is in DEV-mode.",
-			},
-			Conditions: []string{
-				"servo_state_is_working",
-			},
-			Dependencies: []string{
-				"Set GBB flags to 0x18 by servo",
-				"Boot DUT from USB in DEV mode",
-				"Run install after boot from USB-drive",
-				"Cold reset DUT by servo and wait to boot",
-				"Wait DUT to be SSHable after reset",
-			},
-			ExecName:   "sample_pass",
-			RunControl: RunControl_ALWAYS_RUN,
-		},
-		"Install OS in DEV mode, with force to DEV-mode (2)": {
-			Docs: []string{
-				"Second attempt to install image in DEV mode",
-			},
-			Conditions: []string{
-				"servo_state_is_working",
-			},
-			Dependencies: []string{
-				"Install OS in DEV mode, with force to DEV-mode",
+				"Install OS in DEV mode by booting from servo USB-drive",
 			},
 			ExecName: "sample_pass",
 		},
@@ -277,10 +253,35 @@ func deployActions() map[string]*Action {
 			},
 			Dependencies: []string{
 				"Download stable image to USB-key",
-				"Install OS in DEV mode",
+				"Install OS in DEV mode by booting from servo USB-drive",
 			},
-			ExecName:   "sample_pass",
-			RunControl: RunControl_ALWAYS_RUN,
+			ExecName: "sample_pass",
+		},
+		"Install OS in DEV mode, with force to DEV-mode": {
+			Docs: []string{
+				"Install OS on the device from USB-key when device is in DEV-mode.",
+			},
+			Conditions: []string{
+				"servo_state_is_working",
+			},
+			Dependencies: []string{
+				"Set GBB flags to 0x18 by servo",
+				"Install OS in DEV mode by booting from servo USB-drive",
+			},
+			ExecName: "sample_pass",
+		},
+		"Install OS in DEV mode, with force to DEV-mode (2)": {
+			Docs: []string{
+				"Second attempt to install image in DEV mode",
+			},
+			Conditions: []string{
+				"servo_state_is_working",
+			},
+			Dependencies: []string{
+				"Set GBB flags to 0x18 by servo",
+				"Install OS in DEV mode by booting from servo USB-drive",
+			},
+			ExecName: "sample_pass",
 		},
 		"Clean up": {
 			Docs: []string{
@@ -297,7 +298,7 @@ func deployActions() map[string]*Action {
 		"Collect DUT labels": {
 			Docs: []string{"Updating device info in inventory."},
 			Dependencies: []string{
-				"cros_ssh",
+				"Device is SSHable",
 				"Read HWID from DUT",
 				"Read HWID from DUT (Satlab)",
 				"Read DUT serial-number from DUT",

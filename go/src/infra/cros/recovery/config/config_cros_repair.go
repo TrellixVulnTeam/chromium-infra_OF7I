@@ -12,7 +12,7 @@ func crosRepairPlan() *Plan {
 	return &Plan{
 		CriticalActions: []string{
 			"dut_state_repair_failed",
-			"cros_ssh",
+			"Device is SSHable",
 			"internal_storage",
 			"last_provision_successful",
 			"device_system_info",
@@ -40,6 +40,10 @@ func crosRepairPlan() *Plan {
 func crosRepairActions() map[string]*Action {
 	return map[string]*Action{
 		"Device is pingable": {
+			Docs: []string{
+				"Verify that device is reachable by ping.",
+				"Limited to 15 seconds.",
+			},
 			Dependencies: []string{
 				"dut_has_name",
 				"dut_has_board_name",
@@ -54,11 +58,13 @@ func crosRepairActions() map[string]*Action {
 				Seconds: 15,
 			},
 		},
-		"cros_ssh": {
+		"Device is SSHable": {
+			Docs: []string{
+				"Verify that device is reachable by SSH.",
+				"Limited to 15 seconds.",
+			},
 			Dependencies: []string{
 				"dut_has_name",
-				"dut_has_board_name",
-				"dut_has_model_name",
 				"Device is pingable",
 			},
 			RecoveryActions: []string{
@@ -68,6 +74,9 @@ func crosRepairActions() map[string]*Action {
 				"Install OS in recovery mode by booting from servo USB-drive",
 				"Update FW from fw-image by servo",
 			},
+			ExecTimeout: &durationpb.Duration{Seconds: 15},
+			ExecName:    "cros_ssh",
+			RunControl:  RunControl_ALWAYS_RUN,
 		},
 		"internal_storage": {
 			Dependencies: []string{
@@ -135,7 +144,7 @@ func crosRepairActions() map[string]*Action {
 				"Cleanup the enrollment state.",
 			},
 			Dependencies: []string{
-				"cros_ssh",
+				"Device is SSHable",
 			},
 			ExecExtraArgs: []string{
 				"repair_timeout:120",
@@ -394,7 +403,7 @@ func crosRepairActions() map[string]*Action {
 				"cros_not_on_stable_version",
 			},
 			Dependencies: []string{
-				"cros_ssh",
+				"Device is SSHable",
 			},
 			ExecName:    "cros_provision",
 			ExecTimeout: &durationpb.Duration{Seconds: 3600},
@@ -440,7 +449,7 @@ func crosRepairActions() map[string]*Action {
 				"Verifies if battery present is reported as present in power supply info.",
 			},
 			ExecName:   "cros_is_battery_present",
-			RunControl: 1,
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"No Battery is present on device": {
 			Conditions: []string{
@@ -453,7 +462,7 @@ func crosRepairActions() map[string]*Action {
 				"Check wifi on the DUT is normal and update wifi hardware state accordingly.",
 			},
 			Dependencies: []string{
-				"cros_ssh",
+				"Device is SSHable",
 			},
 			ExecName:               "cros_audit_wifi",
 			AllowFailAfterRecovery: true,
@@ -463,7 +472,7 @@ func crosRepairActions() map[string]*Action {
 				"Check bluetooth on the DUT is normal and update bluetooth hardware state accordingly.",
 			},
 			Dependencies: []string{
-				"cros_ssh",
+				"Device is SSHable",
 			},
 			ExecName:               "cros_audit_bluetooth",
 			AllowFailAfterRecovery: true,
@@ -604,7 +613,7 @@ func crosRepairActions() map[string]*Action {
 		},
 		"cros_storage_writing": {
 			Dependencies: []string{
-				"cros_ssh",
+				"Device is SSHable",
 			},
 			RecoveryActions: []string{
 				"Switch to secure-mode and reboot",
@@ -616,7 +625,7 @@ func crosRepairActions() map[string]*Action {
 		},
 		"cros_storage_file_system": {
 			Dependencies: []string{
-				"cros_ssh",
+				"Device is SSHable",
 			},
 			RecoveryActions: []string{
 				"Install OS in recovery mode by booting from servo USB-drive",
@@ -767,7 +776,7 @@ func crosRepairActions() map[string]*Action {
 			},
 			ExecName:    "servo_download_image_to_usb",
 			ExecTimeout: &durationpb.Duration{Seconds: 3000},
-			RunControl:  1,
+			RunControl:  RunControl_ALWAYS_RUN,
 		},
 		"cros_is_time_to_force_download_image_to_usbkey": {
 			Docs: []string{
@@ -795,10 +804,10 @@ func crosRepairActions() map[string]*Action {
 				"Verify that cros-version match version on the host.",
 			},
 			Dependencies: []string{
-				"cros_ssh",
+				"Device is SSHable",
 			},
 			RecoveryActions: []string{
-				"cros_provisioning_labels_repair",
+				"Update provisioned info",
 			},
 		},
 		"cros_match_job_repo_url_version_to_inventory": {
@@ -806,21 +815,22 @@ func crosRepairActions() map[string]*Action {
 				"Verify that job_repo_url matches the version on the host.",
 			},
 			Dependencies: []string{
-				"cros_ssh",
+				"Device is SSHable",
 			},
 			RecoveryActions: []string{
-				"cros_provisioning_labels_repair",
+				"Update provisioned info",
 			},
 		},
-		"cros_provisioning_labels_repair": {
+		"Update provisioned info": {
 			Docs: []string{
-				"Cleanup the labels and job-repo-url.",
+				"Read and update cros-provision labels.",
 			},
 			Dependencies: []string{
 				"cros_update_provision_os_version",
 				"cros_update_job_repo_url",
 			},
-			ExecName: "sample_pass",
+			ExecName:   "sample_pass",
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"Switch to secure-mode and reboot": {
 			Docs: []string{
@@ -871,7 +881,7 @@ func crosRepairActions() map[string]*Action {
 				"has_stable_version_cros_image",
 			},
 			Dependencies: []string{
-				"cros_ssh",
+				"Device is SSHable",
 			},
 			ExecName:    "cros_provision",
 			ExecTimeout: &durationpb.Duration{Seconds: 3600},
@@ -999,7 +1009,7 @@ func crosRepairActions() map[string]*Action {
 			},
 			ExecTimeout: &durationpb.Duration{Seconds: 2400},
 		},
-		"Switch DUT to dev mode": {
+		"Switch DUT to dev mode by servo": {
 			Docs: []string{
 				"Force to set GBB flags to 0x18 to boot in DEV mode and enable to boot from USB-drive.",
 				"Reboot and wait for device to be back.",
@@ -1008,7 +1018,8 @@ func crosRepairActions() map[string]*Action {
 				"Set GBB flags to 0x18 by servo",
 				"Wait DUT to be pingable after reset",
 			},
-			ExecName: "sample_pass",
+			ExecName:   "sample_pass",
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"Set GBB flags to 0x18 by servo": {
 			Docs: []string{
@@ -1038,7 +1049,7 @@ func crosRepairActions() map[string]*Action {
 				"Wait DUT to be pingable after reset",
 			},
 			ExecName:   "sample_pass",
-			RunControl: 1,
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"Is not in audio box": {
 			Docs: []string{
@@ -1057,7 +1068,7 @@ func crosRepairActions() map[string]*Action {
 				"has_rpm_info",
 			},
 			ExecName:   "rpm_power_cycle",
-			RunControl: 1,
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"Collect dmesg logs from DUT": {
 			Docs: []string{
@@ -1083,22 +1094,34 @@ func crosRepairActions() map[string]*Action {
 			ExecName:    "servo_recover_ac_power",
 		},
 		"Disable software-controlled write-protect for 'host'": {
-			Docs:                   []string{"Disable write-protect fprom 'host'."},
-			Dependencies:           []string{"cros_ssh"},
-			ExecName:               "cros_disable_fprom_write_protect",
-			ExecExtraArgs:          []string{"fprom:host"},
+			Docs: []string{
+				"Disable write-protect fprom 'host'.",
+			},
+			Dependencies: []string{
+				"Device is SSHable",
+			},
+			ExecName: "cros_disable_fprom_write_protect",
+			ExecExtraArgs: []string{
+				"fprom:host",
+			},
 			ExecTimeout:            &durationpb.Duration{Seconds: 300},
 			AllowFailAfterRecovery: true,
-			RunControl:             1,
+			RunControl:             RunControl_ALWAYS_RUN,
 		},
 		"Disable software-controlled write-protect for 'ec'": {
-			Docs:                   []string{"Disable write-protect fprom 'ec'."},
-			Dependencies:           []string{"cros_ssh"},
-			ExecName:               "cros_disable_fprom_write_protect",
-			ExecExtraArgs:          []string{"fprom:ec"},
+			Docs: []string{
+				"Disable write-protect fprom 'ec'.",
+			},
+			Dependencies: []string{
+				"Device is SSHable",
+			},
+			ExecName: "cros_disable_fprom_write_protect",
+			ExecExtraArgs: []string{
+				"fprom:ec",
+			},
 			ExecTimeout:            &durationpb.Duration{Seconds: 300},
 			AllowFailAfterRecovery: true,
-			RunControl:             1,
+			RunControl:             RunControl_ALWAYS_RUN,
 		},
 		"Set needs_deploy state": {
 			ExecName: "dut_state_needs_deploy",
@@ -1108,7 +1131,7 @@ func crosRepairActions() map[string]*Action {
 				"This action installs the test image on DUT utilizing ",
 				"the features of servo. DUT will be booted in recovery ",
 				"mode. In some cases RO FW is not allowed to boot in ",
-				"reovery mode with active PD, so we will change it to ",
+				"recovery mode with active PD, so we will change it to ",
 				"sink-mode if required.",
 			},
 			Conditions: []string{
@@ -1117,13 +1140,12 @@ func crosRepairActions() map[string]*Action {
 			Dependencies: []string{
 				"Servo USB-Key needs to be reflashed",
 				"Servo has USB-key with require image",
-				"cros_update_provision_os_version",
 			},
 			ExecName:      "os_install_repair",
 			ExecExtraArgs: []string{"halt_timeout:120"},
 			ExecTimeout:   &durationpb.Duration{Seconds: 3600},
 		},
-		"Install OS in dev mode by booting from servo USB-drive": {
+		"Install OS in DEV mode by booting from servo USB-drive": {
 			Docs: []string{
 				"This action installs the test image on DUT after ",
 				"booking the DUT in dev mode.",
@@ -1138,10 +1160,13 @@ func crosRepairActions() map[string]*Action {
 				"Cold reset DUT by servo and wait to boot",
 				"Wait DUT to be SSHable after reset",
 			},
-			ExecName: "sample_pass",
+			ExecName:   "sample_pass",
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"Cold reset DUT by servo and wait to boot": {
-			Docs: []string{"Cold reset device by servo and wait for DUT to become ping-able."},
+			Docs: []string{
+				"Cold reset device by servo and wait for DUT to become ping-able.",
+			},
 			Dependencies: []string{
 				"dut_servo_host_present",
 				"servo_state_is_working",
@@ -1149,7 +1174,7 @@ func crosRepairActions() map[string]*Action {
 				"Wait DUT to be pingable after reset",
 			},
 			ExecName:   "sample_pass",
-			RunControl: 1,
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"Cold reset DUT by servo": {
 			Docs: []string{"Cold reset device by servo and do not wait."},
@@ -1162,7 +1187,7 @@ func crosRepairActions() map[string]*Action {
 				"command:power_state",
 				"string_value:reset",
 			},
-			RunControl: 1,
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"Pools allowed to stay in DEV mode": {
 			Docs: []string{
@@ -1196,7 +1221,7 @@ func crosRepairActions() map[string]*Action {
 				"Simple reboot",
 			},
 			ExecName:   "sample_pass",
-			RunControl: 1,
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"Simple reboot": {
 			Docs: []string{
@@ -1206,7 +1231,7 @@ func crosRepairActions() map[string]*Action {
 			ExecExtraArgs: []string{
 				"reboot && exit",
 			},
-			RunControl: 1,
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"Set default boot as disk": {
 			Docs: []string{
@@ -1223,19 +1248,21 @@ func crosRepairActions() map[string]*Action {
 			Docs: []string{
 				"Verify that device was not booted from USB-drive.",
 			},
-			Conditions: []string{"Device booted from USB-drive"},
+			Conditions: []string{
+				"Device booted from USB-drive",
+			},
 			RecoveryActions: []string{
 				"Set default boot as disk and reboot",
 			},
 			ExecName:   "sample_fail",
-			RunControl: 1,
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"Device booted from USB-drive": {
 			Docs: []string{
 				"Verify that device was booted from USB-drive.",
 			},
 			ExecName:   "cros_booted_from_external_storage",
-			RunControl: 1,
+			RunControl: RunControl_ALWAYS_RUN,
 		},
 		"Write factory-install-reset to file system": {
 			ExecName: "cros_run_shell_command",
@@ -1290,11 +1317,13 @@ func crosRepairActions() map[string]*Action {
 				"retry_interval:2",
 			},
 			ExecTimeout: &durationpb.Duration{Seconds: 900},
+			RunControl:  RunControl_ALWAYS_RUN,
 		},
 		"Run install after boot from USB-drive": {
 			Docs:        []string{"Perform install process"},
 			ExecName:    "cros_run_chromeos_install_command_after_boot_usbdrive",
 			ExecTimeout: &durationpb.Duration{Seconds: 1200},
+			RunControl:  RunControl_ALWAYS_RUN,
 		},
 		"DUT not on stable version": {
 			Docs: []string{
@@ -1315,7 +1344,6 @@ func crosRepairActions() map[string]*Action {
 			},
 			Dependencies: []string{
 				"Servo has USB-key with require image",
-				"cros_update_provision_os_version",
 			},
 			ExecName:      "os_install_repair",
 			ExecExtraArgs: []string{"halt_timeout:120"},
