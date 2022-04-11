@@ -238,7 +238,8 @@ class BuildRequest(_BuildRequestBase):
   def compute_experiments(sbr, builder_cfg, settings):
     """Returns a Dict[str, bool] of enabled/disabled experiments."""
     global_exps = []
-    ignored_exps = []
+    # not enable BBAGENT_DOWNLOAD_CIPD for swarmbucket or v1 related flow.
+    ignored_exps = [experiments.BBAGENT_DOWNLOAD_CIPD]
 
     for exp in settings.experiment.experiments:
       if exp.inactive:
