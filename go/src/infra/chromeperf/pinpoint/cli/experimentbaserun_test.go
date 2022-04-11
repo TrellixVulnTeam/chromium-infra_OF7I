@@ -59,6 +59,12 @@ func TestCLFlagParsing(t *testing.T) {
 			So(clFlag.clNum, ShouldEqual, 1234)
 			So(clFlag.patchSet, ShouldEqual, 12)
 		})
+		Convey("crrev.com", func() {
+			s := "https://crrev.com/c/1234/12"
+			So(fs.Parse([]string{"-cl", s}), ShouldBeNil)
+			So(clFlag.clNum, ShouldEqual, 1234)
+			So(clFlag.patchSet, ShouldEqual, 12)
+		})
 	})
 	Convey("When provided some invalid cases", t, func() {
 		fs := flag.NewFlagSet("cl-error-flag-parsing", flag.ContinueOnError)
@@ -82,6 +88,10 @@ func TestCLFlagParsing(t *testing.T) {
 		})
 		Convey("/c/+/<CL>", func() {
 			s := "https://chromium-review.googlesource.com/c/+/1234"
+			So(fs.Parse([]string{"-cl", s}), ShouldNotBeNil)
+		})
+		Convey("<CL>/<patch> wrong host", func() {
+			s := "https://crev.com/c/1234/12"
 			So(fs.Parse([]string{"-cl", s}), ShouldNotBeNil)
 		})
 	})

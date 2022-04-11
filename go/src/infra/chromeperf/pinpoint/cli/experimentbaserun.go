@@ -87,14 +87,15 @@ func (c *clValue) String() string {
 }
 
 var (
+	hostPattern      = `(?:chromium-review.googlesource.com|crrev.com)`
 	CLPattern        = `([1-9][\d]*)(?:/([1-9][\d]*))?`
 	simpleURLPattern = fmt.Sprintf(
 		`^https://%s/c/%s$`,
-		defaultGerritHost,
+		hostPattern,
 		CLPattern)
 	URLPattern = fmt.Sprintf(
 		`^https://%s/c/[^+]+/\+/%s$`,
-		defaultGerritHost,
+		hostPattern,
 		CLPattern)
 	simpleURLRe = regexp.MustCompile(simpleURLPattern)
 	URLRe       = regexp.MustCompile(URLPattern)
@@ -153,6 +154,7 @@ func (e *experimentBaseRun) RegisterFlags(p Param) {
 		https://chromium-review.googlesource.com/c/<repo name>/+/<cl number>/<patchset number>
 		or just https://chromium-review.googlesource.com/c/<repo name>/+/<cl number>.
 		When <patchset number> is not provided, we'll use the latest patchset of the CL.
+		crrev.com is also supported.
 	`))
 	e.Flags.StringVar(&e.expCommit, "exp-commit", "HEAD", text.Doc(`
 		git commit hash (symbolic like HEAD, short-form, or long-form)
@@ -161,10 +163,11 @@ func (e *experimentBaseRun) RegisterFlags(p Param) {
 	`))
 	e.Flags.Var(&e.expCL, "exp-patch-url", text.Doc(`
 		Gerrit CL to apply to exp-commit.
-                The input must be a valid Gerrit URL such as
-                https://chromium-review.googlesource.com/c/<repo name>/+/<cl number>/<patchset number>
-                or just https://chromium-review.googlesource.com/c/<repo name>/+/<cl number>.
-                When <patchset number> is not provided, we'll use the latest patchset of the CL.
+		The input must be a valid Gerrit URL such as
+		https://chromium-review.googlesource.com/c/<repo name>/+/<cl number>/<patchset number>
+		or just https://chromium-review.googlesource.com/c/<repo name>/+/<cl number>.
+		When <patchset number> is not provided, we'll use the latest patchset of the CL.
+		crrev.com is also supported.
 	`))
 
 	// We drop the error because we don't want to spam the user if they are
