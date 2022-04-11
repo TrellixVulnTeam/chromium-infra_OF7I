@@ -310,8 +310,30 @@ func (k *karteFrontend) UpdateAction(ctx context.Context, req *kartepb.UpdateAct
 }
 
 // PersistToBigquery persists all Karte-tracked records in a given time range to BigQuery.
+// This is a cron method and part of the cron group of API calls.
+// It is intentionally EXACTLY equivalent to calling the non-cron API persist-action-range with
+// "reasonable" arguments.
 func (k *karteFrontend) PersistToBigquery(ctx context.Context, req *kartepb.PersistToBigqueryRequest) (*kartepb.PersistToBigqueryResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "persist to bigquery is not yet implemented")
+	now := time.Now()
+	resp, err := k.PersistActionRange(
+		ctx,
+		&kartepb.PersistActionRangeRequest{
+			// Look twelve hours into the past. A karte record is sealed after 12 hours, so there's no way
+			// for us to miss an important update this way.
+			//
+			// Also, there will be duplicate records in the bq table this way but that's okay.
+			StartTime: scalars.ConvertTimeToTimestampPtr(now.Add(-12 * time.Hour)),
+			// Give ourselves some buffer and actually persist stuff that was created up to an hour in the future.
+			StopTime: scalars.ConvertTimeToTimestampPtr(now.Add(+1 * time.Hour)),
+		},
+	)
+	if err != nil {
+		return nil, status.Errorf(codes.Aborted, "persist to bigquery failed: %s", err)
+	}
+	return &kartepb.PersistToBigqueryResponse{
+		Succeeded:      true,
+		CreatedActions: resp.GetCreatedRecords(),
+	}, nil
 }
 
 // InstallServices takes a Karte frontend and exposes it to a LUCI prpc.Server.
