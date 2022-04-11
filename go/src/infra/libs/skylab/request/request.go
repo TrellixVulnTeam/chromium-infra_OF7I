@@ -57,8 +57,12 @@ type Args struct {
 	ParentRequestUID       string
 	// Pubsub Topic for status updates on the tests run for the request
 	StatusTopic string
+	// If CFT is enabled.
+	CFTIsEnabled bool
 	// Test describes the test to be run.
 	TestRunnerRequest *skylab_test_runner.Request
+	// Describes the test to be run via CFT workflow.
+	CFTTestRunnerRequest *skylab_test_runner.CFTTestRequest
 	// Experiments to pass on to test_runner builders.
 	Experiments []string
 	// The Gerrit Changes associated with the test_runner invocation.
@@ -78,16 +82,27 @@ func (a *Args) NewBBRequest(b *buildbucket_pb.BuilderID) (*buildbucket_pb.Schedu
 		return nil, errors.Annotate(err, "create bb request").Err()
 	}
 
-	// TODO(crbug.com/1036559#c1): Add timeouts.
-	req, err := requestToStructPB(a.TestRunnerRequest)
-	if err != nil {
-		return nil, errors.Annotate(err, "create bb request").Err()
-	}
-
 	props := &structpb.Struct{
 		Fields: map[string]*structpb.Value{
-			"request": req,
+			"cft_is_enabled": {
+				Kind: &structpb.Value_BoolValue{BoolValue: a.CFTIsEnabled},
+			},
 		},
+	}
+
+	if a.CFTIsEnabled {
+		cftReq, err := cftRequestToStructPB(a.CFTTestRunnerRequest)
+		if err != nil {
+			return nil, errors.Annotate(err, "create bb request: cftRequestToStructPB").Err()
+		}
+		props.Fields["cft_test_request"] = cftReq
+	} else {
+		// TODO(crbug.com/1036559#c1): Add timeouts.
+		req, err := requestToStructPB(a.TestRunnerRequest)
+		if err != nil {
+			return nil, errors.Annotate(err, "create bb request: requestToStructPB").Err()
+		}
+		props.Fields["request"] = req
 	}
 
 	exps := make(map[string]bool)
@@ -270,6 +285,23 @@ func parseBBStringPairs(tags []string) ([]*buildbucket_pb.StringPair, error) {
 // requestToStructPB converts a skylab_test_runner.Request into a Struct
 // with the same JSON presentation.
 func requestToStructPB(from *skylab_test_runner.Request) (*structpb.Value, error) {
+	m := jsonpb.Marshaler{}
+	jsonStr, err := m.MarshalToString(from)
+	if err != nil {
+		return nil, err
+	}
+	reqStruct := &structpb.Struct{}
+	if err := jsonpb.UnmarshalString(jsonStr, reqStruct); err != nil {
+		return nil, err
+	}
+	return &structpb.Value{
+		Kind: &structpb.Value_StructValue{StructValue: reqStruct},
+	}, nil
+}
+
+// cftRequestToStructPB converts a skylab_test_runner.CFTTestRequest into a Struct
+// with the same JSON presentation.
+func cftRequestToStructPB(from *skylab_test_runner.CFTTestRequest) (*structpb.Value, error) {
 	m := jsonpb.Marshaler{}
 	jsonStr, err := m.MarshalToString(from)
 	if err != nil {

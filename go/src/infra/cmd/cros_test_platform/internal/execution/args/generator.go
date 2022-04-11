@@ -18,6 +18,9 @@ import (
 	"infra/libs/skylab/request"
 	"infra/libs/skylab/worker"
 
+	goconfig "go.chromium.org/chromiumos/config/go"
+	testapi "go.chromium.org/chromiumos/config/go/test/api"
+	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -155,9 +158,25 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 		return request.Args{}, errors.Annotate(err, "create request args").Err()
 	}
 
-	trr, err := g.testRunnerRequest(ctx)
-	if err != nil {
-		return request.Args{}, errors.Annotate(err, "create request args").Err()
+	buildTarget := g.Params.GetSoftwareAttributes().GetBuildTarget().GetName()
+	containers := g.Params.GetExecutionParam().GetContainerMetadata().GetContainers()
+	cftIsEnabled := false
+	if containers != nil {
+		_, cftIsEnabled = containers[buildTarget]
+	}
+
+	trr := &skylab_test_runner.Request{}
+	cft_trr := &skylab_test_runner.CFTTestRequest{}
+	if cftIsEnabled {
+		cft_trr, err = g.cftTestRunnerRequest(ctx)
+		if err != nil {
+			return request.Args{}, errors.Annotate(err, "create request args").Err()
+		}
+	} else {
+		trr, err = g.testRunnerRequest(ctx)
+		if err != nil {
+			return request.Args{}, errors.Annotate(err, "create request args").Err()
+		}
 	}
 
 	return request.Args{
@@ -173,11 +192,12 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 		StatusTopic:                      pubSubTopicFullName(g.StatusUpdateChannel),
 		SwarmingTags:                     g.swarmingTags(ctx, kv, cmd),
 		TestRunnerRequest:                trr,
+		CFTTestRunnerRequest:             cft_trr,
+		CFTIsEnabled:                     cftIsEnabled,
 		Timeout:                          timeout,
 		Experiments:                      g.Experiments,
 		GerritChanges:                    g.GerritChanges,
 	}, nil
-
 }
 
 func pubSubTopicFullName(c *config.Config_PubSub) string {
@@ -573,5 +593,75 @@ func (g *Generator) testRunnerRequest(ctx context.Context) (*skylab_test_runner.
 		ParentBuildId:                g.ParentBuildID,
 		ExecutionParam:               g.Params.ExecutionParam,
 		DefaultTestExecutionBehavior: g.Params.TestExecutionBehavior,
+	}, nil
+}
+
+// cftTestRunnerRequest creates test runner request for cft workflow
+func (g *Generator) cftTestRunnerRequest(ctx context.Context) (*skylab_test_runner.CFTTestRequest, error) {
+	kv := g.keyvals(ctx)
+
+	var deadline *timestamppb.Timestamp
+	if !g.Deadline.IsZero() {
+		deadline = timestamppb.New(g.Deadline)
+	}
+
+	builds, err := extractBuilds(g.Params.GetSoftwareDependencies())
+	if err != nil {
+		return nil, errors.Annotate(err, "create cft test runner request: extractBuilds").Err()
+	}
+
+	imagePath := ""
+	if builds.LacrosGCSPath != "" {
+		imagePath = builds.LacrosGCSPath
+	} else if builds.ChromeOSBucket != "" && builds.ChromeOS != "" {
+		imagePath = fmt.Sprintf("gs://%s/%s", builds.ChromeOSBucket, builds.ChromeOS)
+	}
+	if imagePath == "" {
+		return nil, errors.Annotate(err, "create cft test runner request: imagePath").Err()
+	}
+
+	provsionState := &testapi.ProvisionState{
+		SystemImage: &testapi.ProvisionState_SystemImage{
+			SystemImagePath: &goconfig.StoragePath{
+				HostType: goconfig.StoragePath_GS,
+				Path:     imagePath,
+			},
+		},
+	}
+
+	buildTarget := g.Params.GetSoftwareAttributes().GetBuildTarget().GetName()
+	dutModel := &labapi.DutModel{
+		BuildTarget: buildTarget,
+		ModelName:   g.Params.GetHardwareAttributes().GetModel(),
+	}
+
+	testSuites := []*testapi.TestSuite{
+		{
+			Name: kv["suite"],
+			Spec: &testapi.TestSuite_TestCaseIds{
+				TestCaseIds: &testapi.TestCaseIdList{
+					TestCaseIds: []*testapi.TestCase_Id{
+						{
+							Value: fmt.Sprintf("tauto.%s", g.Invocation.Test.Name),
+						},
+					},
+				},
+			},
+		},
+	}
+	// TODO(b/220801220): Pass in companion duts info for multi-duts cases.
+	return &skylab_test_runner.CFTTestRequest{
+		Deadline:         deadline,
+		ParentRequestUid: g.ParentRequestUID,
+		ParentBuildId:    g.ParentBuildID,
+		PrimaryDut: &skylab_test_runner.CFTTestRequest_Device{
+			DutModel:             dutModel,
+			ProvisionState:       provsionState,
+			ContainerMetadataKey: buildTarget,
+		},
+		ContainerMetadata:            g.Params.GetExecutionParam().GetContainerMetadata(),
+		TestSuites:                   testSuites,
+		DefaultTestExecutionBehavior: g.Params.GetTestExecutionBehavior(),
+		AutotestKeyvals:              kv,
 	}, nil
 }

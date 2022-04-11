@@ -12,9 +12,14 @@ import (
 	"time"
 
 	"github.com/kylelemons/godebug/pretty"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/ptypes"
+	goconfig "go.chromium.org/chromiumos/config/go"
+	"go.chromium.org/chromiumos/config/go/build/api"
+	testapi "go.chromium.org/chromiumos/config/go/test/api"
+	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	buildbucket_pb "go.chromium.org/luci/buildbucket/proto"
@@ -151,6 +156,93 @@ func TestPropertiesBB(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				var got skylab_test_runner.Request
+				err = jsonpb.UnmarshalString(s, &got)
+				So(err, ShouldBeNil)
+
+				So(&got, ShouldResembleProto, &want)
+			})
+		})
+	})
+}
+
+func TestCFTPropertiesBB(t *testing.T) {
+	Convey("Given request arguments that specify a cft test runner request", t, func() {
+		want := skylab_test_runner.CFTTestRequest{
+			Deadline:         &timestamppb.Timestamp{Seconds: timestamppb.Now().Seconds},
+			ParentRequestUid: "foo-parentRequestUid",
+			ParentBuildId:    12345678,
+			PrimaryDut: &skylab_test_runner.CFTTestRequest_Device{
+				DutModel: &labapi.DutModel{
+					BuildTarget: "foo-buildTarget",
+					ModelName:   "foo-modelName",
+				},
+				ProvisionState: &testapi.ProvisionState{
+					SystemImage: &testapi.ProvisionState_SystemImage{
+						SystemImagePath: &goconfig.StoragePath{
+							HostType: goconfig.StoragePath_GS,
+							Path:     "gs://foo-image-bucket/foo-build-subdir",
+						},
+					},
+				},
+				ContainerMetadataKey: "foo-buildTarget",
+			},
+			ContainerMetadata: &api.ContainerMetadata{
+				Containers: map[string]*api.ContainerImageMap{
+					"foo-buildTarget": {
+						Images: map[string]*api.ContainerImageInfo{
+							"foo-image": {
+								Repository: &api.GcrRepository{
+									Hostname: "foo-hostName",
+									Project:  "foo-Project",
+								},
+								Name:   "foo-name",
+								Digest: "foo-digest",
+								Tags:   []string{"foo-tag1", "foo-tag2"},
+							},
+						},
+					},
+				},
+			},
+			TestSuites: []*testapi.TestSuite{
+				{
+					Name: "foo-suiteName",
+					Spec: &testapi.TestSuite_TestCaseIds{
+						TestCaseIds: &testapi.TestCaseIdList{
+							TestCaseIds: []*testapi.TestCase_Id{
+								{
+									Value: "tauto.foo-test",
+								},
+							},
+						},
+					},
+				},
+			},
+			DefaultTestExecutionBehavior: test_platform.Request_Params_NON_CRITICAL,
+			AutotestKeyvals: map[string]string{
+				"key1": "val1",
+				"key2": "val2",
+			},
+		}
+
+		args := request.Args{
+			CFTIsEnabled:         true,
+			CFTTestRunnerRequest: &want,
+		}
+		Convey("when a BB request is formed", func() {
+			req, err := args.NewBBRequest(nil)
+			So(err, ShouldBeNil)
+			So(req, ShouldNotBeNil)
+			Convey("it should contain the cft test runner request.", func() {
+				So(req.Properties, ShouldNotBeNil)
+
+				cftReqStruct, ok := req.Properties.Fields["cft_test_request"]
+				So(ok, ShouldBeTrue)
+
+				m := jsonpb.Marshaler{}
+				s, err := m.MarshalToString(cftReqStruct)
+				So(err, ShouldBeNil)
+
+				var got skylab_test_runner.CFTTestRequest
 				err = jsonpb.UnmarshalString(s, &got)
 				So(err, ShouldBeNil)
 
