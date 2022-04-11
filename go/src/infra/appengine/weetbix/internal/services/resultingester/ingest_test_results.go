@@ -219,7 +219,14 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 		}
 		return nil
 	}
-	err = rc.QueryTestVariants(ctx, invName, f, maxResultDBPages)
+	req := &rdbpb.QueryTestVariantsRequest{
+		Invocations: []string{invName},
+		Predicate: &rdbpb.TestVariantPredicate{
+			Status: rdbpb.TestVariantStatus_UNEXPECTED_MASK,
+		},
+		PageSize: 1000,
+	}
+	err = rc.QueryTestVariants(ctx, req, f, maxResultDBPages)
 	if err != nil {
 		return err
 	}

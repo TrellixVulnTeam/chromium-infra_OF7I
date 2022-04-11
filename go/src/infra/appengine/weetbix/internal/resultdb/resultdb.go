@@ -9,6 +9,8 @@ import (
 	"context"
 	"net/http"
 
+	"google.golang.org/protobuf/proto"
+
 	"go.chromium.org/luci/grpc/prpc"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/auth"
@@ -52,21 +54,15 @@ func NewClient(ctx context.Context, host string) (*Client, error) {
 	}, nil
 }
 
-// QueryTestVariants queries test variants with any unexpected results.
+// QueryTestVariants queries test variants and advances the page automatically.
 //
 // f is called once per page of test variants.
-func (c *Client) QueryTestVariants(ctx context.Context, invName string, f func([]*rdbpb.TestVariant) error, maxPages int) error {
-	pageToken := ""
+func (c *Client) QueryTestVariants(ctx context.Context, req *rdbpb.QueryTestVariantsRequest, f func([]*rdbpb.TestVariant) error, maxPages int) error {
+	// Copy the request to avoid aliasing issues when we update the page token.
+	req = proto.Clone(req).(*rdbpb.QueryTestVariantsRequest)
 
 	for page := 0; page < maxPages; page++ {
-		rsp, err := c.client.QueryTestVariants(ctx, &rdbpb.QueryTestVariantsRequest{
-			Invocations: []string{invName},
-			Predicate: &rdbpb.TestVariantPredicate{
-				Status: rdbpb.TestVariantStatus_UNEXPECTED_MASK,
-			},
-			PageSize:  1000, // Maximum page size.
-			PageToken: pageToken,
-		})
+		rsp, err := c.client.QueryTestVariants(ctx, req)
 		if err != nil {
 			return err
 		}
@@ -75,9 +71,9 @@ func (c *Client) QueryTestVariants(ctx context.Context, invName string, f func([
 			return err
 		}
 
-		pageToken = rsp.GetNextPageToken()
-		if pageToken == "" {
-			// No more test variants with unexpected results.
+		req.PageToken = rsp.GetNextPageToken()
+		if req.PageToken == "" {
+			// No more test variants.
 			break
 		}
 	}

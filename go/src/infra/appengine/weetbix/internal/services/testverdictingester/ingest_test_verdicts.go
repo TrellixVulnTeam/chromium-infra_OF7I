@@ -18,7 +18,7 @@ import (
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
-	resultpb "go.chromium.org/luci/resultdb/proto/v1"
+	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/tq"
 
 	"infra/appengine/weetbix/internal/buildbucket"
@@ -108,7 +108,11 @@ func ingestTestVerdicts(ctx context.Context, payload *taskspb.IngestTestVerdicts
 		return fmt.Errorf("invocation has invalid realm: %q", inv.Realm)
 	}
 
-	return rc.QueryTestVariants(ctx, invName, func(tv []*resultpb.TestVariant) error {
+	req := &rdbpb.QueryTestVariantsRequest{
+		Invocations: []string{invName},
+		PageSize:    1000,
+	}
+	return rc.QueryTestVariants(ctx, req, func(tv []*rdbpb.TestVariant) error {
 		// TODO(crbug.com/1266759): collects the test results to the TestVerdicts table.
 
 		return nil
