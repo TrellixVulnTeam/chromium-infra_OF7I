@@ -1,0 +1,4 @@
+cron:
+- description: "Persist actions and observation from the last hour to BigQuery"
+  url: /v1/tasks/persist-to-bigquery
+  schedule: every 60 minutes
