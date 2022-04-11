@@ -176,6 +176,7 @@ func (c persistBqClient) getInserter(dataset string, table string) bqInserter {
 
 // PersistActionRange persists a range of actions.
 func (k *karteFrontend) PersistActionRange(ctx context.Context, req *kartepb.PersistActionRangeRequest) (*kartepb.PersistActionRangeResponse, error) {
+	logging.Infof(ctx, "Persisting action range %v to bigquery.", req)
 	client, err := cloudBQ.NewClient(ctx, cloudBQ.DetectProjectID)
 	if err != nil {
 		logging.Errorf(ctx, "Cannot create bigquery client: %s", err)
