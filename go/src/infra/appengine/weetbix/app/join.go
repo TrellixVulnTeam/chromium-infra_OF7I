@@ -225,7 +225,7 @@ func JoinPresubmitResult(ctx context.Context, presubmitResultByBuildID map[strin
 }
 
 // createTaskIfNeeded creates a test-result-ingestion task if all necessary
-// data for the ingestion is available. It also has a 1/256 chance to create a
+// data for the ingestion is available. It also has a 16/256 chance to create a
 // test-verdict-ingestion task.
 // Returns true if the test-result-ingestion task is created.
 func createTasksIfNeeded(ctx context.Context, e *control.Entry) (itrTaskCreated bool) {
@@ -253,9 +253,9 @@ func createTasksIfNeeded(ctx context.Context, e *control.Entry) (itrTaskCreated 
 	itrTask = proto.Clone(itrTask).(*taskspb.IngestTestResults)
 	resultingester.Schedule(ctx, itrTask)
 
-	// Only ingest 1/256 test verdicts to limit the amount the verdicts we ingest
+	// Only ingest 16/256 test verdicts to limit the amount the verdicts we ingest
 	// during development phase.
-	if sha256.Sum256([]byte(e.BuildID))[0] != 0 {
+	if sha256.Sum256([]byte(e.BuildID))[0] >= 16 {
 		return true
 	}
 
