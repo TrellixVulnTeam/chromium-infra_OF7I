@@ -23,6 +23,9 @@ message BuildResult {
 
   // The time the build was created.
   google.protobuf.Timestamp creation_time = 3;
+
+  // The LUCI Project to which the build belongs.
+  string project = 4;
 }
 
 // PresubmitResult represents the result from the presubmit pub/sub

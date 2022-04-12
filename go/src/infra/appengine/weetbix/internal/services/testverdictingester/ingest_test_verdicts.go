@@ -10,16 +10,15 @@ import (
 	"fmt"
 	"time"
 
-	"google.golang.org/genproto/protobuf/field_mask"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
-
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/tq"
+	"google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"infra/appengine/weetbix/internal/buildbucket"
 	"infra/appengine/weetbix/internal/resultdb"
@@ -79,7 +78,8 @@ func ingestTestVerdicts(ctx context.Context, payload *taskspb.IngestTestVerdicts
 	code := status.Code(err)
 	if code == codes.NotFound {
 		// Build not found, end the task gracefully.
-		logging.Warningf(ctx, "Buildbucket build %d not found (or Weetbix does not have access to read it).", payload.Build.Id)
+		logging.Warningf(ctx, "Buildbucket build %s/%d for project %s not found (or Weetbix does not have access to read it).",
+			payload.Build.Host, payload.Build.Id, payload.Build.Project)
 		return nil
 	}
 	if err != nil {

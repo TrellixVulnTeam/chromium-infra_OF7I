@@ -83,18 +83,6 @@ func bbPubSubHandlerImpl(ctx context.Context, request *http.Request) (project st
 	return msg.Build.Project, processed, nil
 }
 
-type build struct {
-	// project is the LUCI project containing the build.
-	project string
-	// id is the identity of the build. This is {hostname}/{build_id}.
-	id string
-	// isPresubmit is whether the build relates to a presubmit run.
-	isPresubmit bool
-	// result is information about the build to be passed
-	// to ingestion.
-	result *ctlpb.BuildResult
-}
-
 type buildBucketMessage struct {
 	Build    bbv1.LegacyApiCommonBuildMessage
 	Hostname string
@@ -134,18 +122,16 @@ func processBBMessage(ctx context.Context, message *buildBucketMessage) (process
 		}
 	}
 
-	build := &build{
-		project:     message.Build.Project,
-		id:          buildID(message.Hostname, message.Build.Id),
-		isPresubmit: isPresubmit,
-		result: &ctlpb.BuildResult{
-			CreationTime: timestamppb.New(bbv1.ParseTimestamp(message.Build.CreatedTs)),
-			Id:           message.Build.Id,
-			Host:         message.Hostname,
-		},
+	project := message.Build.Project
+	id := buildID(message.Hostname, message.Build.Id)
+	result := &ctlpb.BuildResult{
+		CreationTime: timestamppb.New(bbv1.ParseTimestamp(message.Build.CreatedTs)),
+		Id:           message.Build.Id,
+		Host:         message.Hostname,
+		Project:      project,
 	}
 
-	if err := JoinBuildResult(ctx, build.id, build.project, build.isPresubmit, build.result); err != nil {
+	if err := JoinBuildResult(ctx, id, project, isPresubmit, result); err != nil {
 		return false, errors.Annotate(err, "joining build result").Err()
 	}
 	return true, nil

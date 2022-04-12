@@ -98,7 +98,7 @@ func RegisterTaskHandler(srv *server.Server) error {
 // Schedule enqueues a task to ingest test results from a build.
 func Schedule(ctx context.Context, task *taskspb.IngestTestResults) {
 	tq.MustAddTask(ctx, &tq.Task{
-		Title:   fmt.Sprintf("%s-%d", task.Build.Host, task.Build.Id),
+		Title:   fmt.Sprintf("%s-%s-%d", task.Build.Project, task.Build.Host, task.Build.Id),
 		Payload: task,
 	})
 }
@@ -113,7 +113,8 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 	code := status.Code(err)
 	if code == codes.NotFound {
 		// Build not found, end the task gracefully.
-		logging.Warningf(ctx, "Buildbucket build %d not found (or Weetbix does not have access to read it).", payload.Build.Id)
+		logging.Warningf(ctx, "Buildbucket build %s/%d for project %s not found (or Weetbix does not have access to read it).",
+			payload.Build.Host, payload.Build.Id, payload.Build.Project)
 		return nil
 	}
 	if err != nil {
