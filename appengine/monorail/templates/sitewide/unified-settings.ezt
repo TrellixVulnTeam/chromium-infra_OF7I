@@ -11,7 +11,8 @@
    When [if-any self]I participate[else]this user participates[end]
    in projects, show non-members [if-any self]my[else]this user's[end] email address as
    "[settings_user.obscured_username]...@[settings_user.domain]", instead of
-   showing the full address.
+   showing the full address. <b>NOTE:</b> Site Administrators and some API clients
+   (eg. bots) will still have access to your full email address.
  </label>
 
  <br><br>
