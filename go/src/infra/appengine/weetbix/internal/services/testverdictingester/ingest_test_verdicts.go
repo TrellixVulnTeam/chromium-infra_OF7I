@@ -110,7 +110,7 @@ func ingestTestVerdicts(ctx context.Context, payload *taskspb.IngestTestVerdicts
 
 	req := &rdbpb.QueryTestVariantsRequest{
 		Invocations: []string{invName},
-		PageSize:    1000,
+		PageSize:    20000,
 	}
 	return rc.QueryTestVariants(ctx, req, func(tv []*rdbpb.TestVariant) error {
 		// TODO(crbug.com/1266759): collects the test results to the TestVerdicts table.
