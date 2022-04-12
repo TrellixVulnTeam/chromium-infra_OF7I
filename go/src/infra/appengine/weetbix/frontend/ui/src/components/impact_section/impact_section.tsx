@@ -38,7 +38,7 @@ const ImpactSection = () => {
     }
 
     return (
-        <Paper elevation={3} sx={{ pt: 2, mb:5 }}>
+        <Paper elevation={3} sx={{ pt: 1, pb: 4 }}>
             <Container maxWidth={false}>
                 <h2>Impact</h2>
                 <ImpactTable cluster={cluster!}></ImpactTable>

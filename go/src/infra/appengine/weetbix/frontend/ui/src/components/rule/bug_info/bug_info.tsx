@@ -110,7 +110,7 @@ const BugInfo = ({
 
     return (
         <Paper elevation={3} sx={{ pt: 2, pb: 2, mt: 1 }}>
-            <Container  maxWidth={false}>
+            <Container maxWidth={false}>
                 <Typography sx={{
                     fontWeight: 600,
                     fontSize: 20
@@ -141,7 +141,7 @@ const BugInfo = ({
                         />
                     </Grid>
                 </Grid>
-                <Box sx={{pt:2, pb:2}}>
+                <Box sx={{py:2}}>
                     <Divider />
                 </Box>
                 {

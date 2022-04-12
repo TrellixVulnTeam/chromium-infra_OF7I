@@ -35,7 +35,7 @@ const RuleTopPanel = ({ project, ruleId }: Props) => {
             />
         );
     }
- 
+
     return (
         <>
             {rule &&
@@ -56,10 +56,10 @@ const RuleTopPanel = ({ project, ruleId }: Props) => {
                         />
                     </Grid>
                     <Grid container item xs={12} columnSpacing={2}>
-                        <Grid item xs={12} lg={8}>
+                        <Grid item xs={12} lg={8} display="grid">
                             <RuleInfo project={project} rule={rule} />
                         </Grid>
-                        <Grid item xs={12} lg={4}>
+                        <Grid item xs={12} lg={4} display="grid">
                             <BugInfo rule={rule} />
                         </Grid>
                     </Grid>

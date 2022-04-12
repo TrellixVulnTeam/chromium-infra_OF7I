@@ -90,14 +90,14 @@ const RuleInfo = ({ project, rule }: Props) => {
                         <HelpTooltip text={sourceClusterTooltipText} />
                     </GridLabel>
                     <Grid item xs={10} alignItems="center">
-                        <Box sx={{ display: 'inline-block' }} paddingTop={1}> 
+                        <Box sx={{ display: 'inline-block' }} paddingTop={1}>
                         {
                             rule.sourceCluster.algorithm && rule.sourceCluster.id ? (
                                 <Link aria-label='source cluster link' component={RouterLink} to={linkToCluster(project, rule.sourceCluster)}>
                                     {rule.sourceCluster.algorithm}/{rule.sourceCluster.id}
                                 </Link>
                             ) : (
-                                "None"
+                                'None'
                             )
                         }
                         </Box>
@@ -106,7 +106,7 @@ const RuleInfo = ({ project, rule }: Props) => {
                         <HelpTooltip text={archivedTooltipText} />
                     </GridLabel>
                     <Grid item xs={10} alignItems="center" columnGap={1}>
-                        <Box sx={{ display: 'inline-block' }} paddingTop={1} paddingRight={1}> 
+                        <Box sx={{ display: 'inline-block' }} paddingTop={1} paddingRight={1}>
                             {rule.isActive ? 'No' : 'Yes'}
                         </Box>
                         <LoadingButton

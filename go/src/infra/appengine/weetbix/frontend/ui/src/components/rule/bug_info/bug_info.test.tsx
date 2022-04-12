@@ -61,6 +61,13 @@ describe('Test BugInfo component', () => {
     });
 
     it('given a rule with buganizer bug, should display bug only', async () => {
+        mockRule.bug = {
+            system: 'buganizer',
+            id: '541231',
+            linkText: 'b/541231',
+            url: 'https://issuetracker.google.com/issues/541231',
+        }
+
         renderWithRouterAndClient(
             <BugInfo
                 rule={mockRule}
@@ -70,7 +77,7 @@ describe('Test BugInfo component', () => {
         expect(screen.getByText(mockRule.bug.linkText)).toBeInTheDocument();
     })
 
-    it('when clicking edit, should open dialog', async () => {
+    it('when clicking edit, should open dialog, even if bug does not load', async () => {
         // Check we can still edit the bug, even if the bug fails to load.
         fetchMock.post('https://api-dot-crbug.com/prpc/monorail.v3.Issues/GetIssue', {
             status: 404,
@@ -93,6 +100,6 @@ describe('Test BugInfo component', () => {
 
         fireEvent.click(screen.getByLabelText('edit'));
 
-        expect(screen.getByText('Change Associated Bug')).toBeInTheDocument();
+        expect(screen.getByText('Change associated bug')).toBeInTheDocument();
     });
 });

@@ -106,7 +106,7 @@ const BugEditDialog = ({
     return (
         <>
             <Dialog open={open} fullWidth>
-                <DialogTitle>Change Associated Bug</DialogTitle>
+                <DialogTitle>Change associated bug</DialogTitle>
                 <DialogContent sx={{ mt: 1 }}>
                     <BugPicker
                         bugSystem={bugSystem}
