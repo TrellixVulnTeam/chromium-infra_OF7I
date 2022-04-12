@@ -73,7 +73,7 @@ useful if you want to run the script multiple times without recreating these
 files each time. To generate these files, you first must download the
 `translation_unit` clang tool:
 
-`$ build/download_translation_unit_tool.py`
+`$ ~/chromium/src/tools/clang/scripts/update.py --package=translation_unit`
 
 Then you run this tool over all the files of interest via:
 
