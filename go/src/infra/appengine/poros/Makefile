@@ -11,6 +11,9 @@ build:
 clean:
 	cd frontend && rm -f src/build/*
 
+release:
+	cd frontend && npm ci && npm run build
+
 test:
 	go test -race -count 10 -failfast ./...
 	cd frontend && npm run test
