@@ -141,7 +141,7 @@ const BugInfo = ({
                         />
                     </Grid>
                 </Grid>
-                <Box sx={{py:2}}>
+                <Box sx={{ py:2 }}>
                     <Divider />
                 </Box>
                 {

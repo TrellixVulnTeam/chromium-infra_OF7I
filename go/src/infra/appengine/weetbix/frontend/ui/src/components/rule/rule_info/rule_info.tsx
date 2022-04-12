@@ -79,10 +79,10 @@ const RuleInfo = ({ project, rule }: Props) => {
                         <HelpTooltip text={definitionTooltipText} />
                     </GridLabel>
                     <Grid item xs={10} alignItems="center">
-                        <IconButton onClick={() => setEditDialogOpen(true)} aria-label="edit" sx={{float: 'right'}}>
+                        <IconButton onClick={() => setEditDialogOpen(true)} aria-label="edit" sx={{ float: 'right' }}>
                             <Edit />
                         </IconButton>
-                        <Box sx={{display: 'grid'}}>
+                        <Box sx={{ display: 'grid' }}>
                             <CodeBlock code={rule.ruleDefinition} />
                         </Box>
                     </Grid>
@@ -91,15 +91,15 @@ const RuleInfo = ({ project, rule }: Props) => {
                     </GridLabel>
                     <Grid item xs={10} alignItems="center">
                         <Box sx={{ display: 'inline-block' }} paddingTop={1}>
-                        {
-                            rule.sourceCluster.algorithm && rule.sourceCluster.id ? (
-                                <Link aria-label='source cluster link' component={RouterLink} to={linkToCluster(project, rule.sourceCluster)}>
-                                    {rule.sourceCluster.algorithm}/{rule.sourceCluster.id}
-                                </Link>
-                            ) : (
-                                'None'
-                            )
-                        }
+                            {
+                                rule.sourceCluster.algorithm && rule.sourceCluster.id ? (
+                                    <Link aria-label='source cluster link' component={RouterLink} to={linkToCluster(project, rule.sourceCluster)}>
+                                        {rule.sourceCluster.algorithm}/{rule.sourceCluster.id}
+                                    </Link>
+                                ) : (
+                                    'None'
+                                )
+                            }
                         </Box>
                     </Grid>
                     <GridLabel text="Archived">

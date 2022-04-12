@@ -29,7 +29,7 @@ const ImpactSection = () => {
         return <LinearProgress />;
     }
 
-    if(isError) {
+    if(isError || !cluster) {
         return <ErrorAlert
             errorText={`Got an error while loading the cluster: ${error}`}
             errorTitle="Failed to load cluster"
@@ -41,7 +41,7 @@ const ImpactSection = () => {
         <Paper elevation={3} sx={{ pt: 1, pb: 4 }}>
             <Container maxWidth={false}>
                 <h2>Impact</h2>
-                <ImpactTable cluster={cluster!}></ImpactTable>
+                <ImpactTable cluster={cluster}></ImpactTable>
                 <h2>Recent Failures</h2>
                 <failure-table project={project} clusterAlgorithm={currentAlgorithm} clusterID={id}></failure-table>
             </Container>

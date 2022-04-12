@@ -48,5 +48,5 @@ describe('Test BugPicker component', () => {
         await screen.findByText('Bug tracker');
         expect(screen.getByTestId('bug-system')).toHaveValue('buganizer');
         expect(screen.getByTestId('bug-number')).toHaveValue('123456');
-    })
+    });
 });

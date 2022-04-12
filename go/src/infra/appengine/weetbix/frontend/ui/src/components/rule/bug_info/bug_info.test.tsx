@@ -66,7 +66,7 @@ describe('Test BugInfo component', () => {
             id: '541231',
             linkText: 'b/541231',
             url: 'https://issuetracker.google.com/issues/541231',
-        }
+        };
 
         renderWithRouterAndClient(
             <BugInfo
@@ -75,7 +75,7 @@ describe('Test BugInfo component', () => {
         );
 
         expect(screen.getByText(mockRule.bug.linkText)).toBeInTheDocument();
-    })
+    });
 
     it('when clicking edit, should open dialog, even if bug does not load', async () => {
         // Check we can still edit the bug, even if the bug fails to load.
