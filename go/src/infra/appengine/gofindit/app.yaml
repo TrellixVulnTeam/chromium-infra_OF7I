@@ -22,6 +22,11 @@ handlers:
   script: auto
   secure: always
 
+# Pubsub Handler.
+- url: /_ah/push-handlers/.*
+  script: auto
+  secure: always
+
 entrypoint: >
   main
   -auth-service-host ${AUTH_SERVICE_HOST}

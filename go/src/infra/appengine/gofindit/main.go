@@ -12,6 +12,7 @@ import (
 	"infra/appengine/gofindit/compilefailureanalysis"
 	"infra/appengine/gofindit/model"
 	gfipb "infra/appengine/gofindit/proto"
+	"infra/appengine/gofindit/pubsub"
 	gfis "infra/appengine/gofindit/server"
 	"net/http"
 
@@ -127,6 +128,10 @@ func main() {
 			text := fmt.Sprintf("You are logged in as %s", auth.CurrentUser(c.Context).Identity.Email())
 			c.Writer.Write([]byte(text))
 		})
+
+		// Pubsub handler
+		// TODO (nqmtuan): Add auth for pubsub calls
+		srv.Routes.POST("/_ah/push-handlers/buildbucket", nil, pubsub.BuildbucketPubSubHandler)
 
 		// Installs PRPC service.
 		gfipb.RegisterGoFinditServiceServer(srv.PRPC, &gfipb.DecoratedGoFinditService{
