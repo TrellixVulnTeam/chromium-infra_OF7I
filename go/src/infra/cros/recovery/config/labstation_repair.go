@@ -18,8 +18,8 @@ func LabstationRepairConfig() *Configuration {
 				CriticalActions: []string{
 					"dut_state_repair_failed",
 					"check_host_info",
-					"cros_ping",
-					"cros_ssh",
+					"Device is pingable",
+					"Device is SSHable",
 					"cros_is_on_stable_version",
 					"Update provisioned info",
 					"booted_from_right_kernel",
@@ -144,7 +144,7 @@ func LabstationRepairConfig() *Configuration {
 							"rpm_power_cycle",
 						},
 					},
-					"cros_ping": {
+					"Device is pingable": {
 						Docs: []string{
 							"This verifier checks whether a given host is reachable over ping. ",
 							"This should happen as soon as the network driver gets loaded and the network becomes operational.",
@@ -152,15 +152,17 @@ func LabstationRepairConfig() *Configuration {
 						RecoveryActions: []string{
 							"rpm_power_cycle",
 						},
+						ExecName:    "cros_ping",
 						ExecTimeout: &durationpb.Duration{Seconds: 300},
 					},
-					"cros_ssh": {
+					"Device is SSHable": {
 						Docs: []string{
 							"This verifier checks whether the host is accessible over ssh.",
 						},
 						RecoveryActions: []string{
 							"rpm_power_cycle",
 						},
+						ExecName:    "cros_ssh",
 						ExecTimeout: &durationpb.Duration{Seconds: 120},
 					},
 					"labstation_reboot": {
@@ -185,6 +187,24 @@ func LabstationRepairConfig() *Configuration {
 							"has_rpm_info",
 						},
 						RunControl: RunControl_ALWAYS_RUN,
+					},
+					"Simple reboot": {
+						Docs: []string{
+							"Simple un-blocker reboot.",
+						},
+						ExecName: "cros_run_shell_command",
+						ExecExtraArgs: []string{
+							"reboot && exit",
+						},
+						RunControl: RunControl_ALWAYS_RUN,
+					},
+					"Wait to be SSHable": {
+						Docs: []string{
+							"Try to wait device to be sshable during after the device being rebooted.",
+						},
+						ExecTimeout: &durationpb.Duration{Seconds: 300},
+						ExecName:    "cros_ssh",
+						RunControl:  RunControl_ALWAYS_RUN,
 					},
 				},
 			},
