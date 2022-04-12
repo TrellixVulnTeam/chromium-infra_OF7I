@@ -110,10 +110,7 @@ class ComputeIssueEntryURLTest(unittest.TestCase):
     self.config.custom_issue_entry_url = FORM_URL
 
     url = servlet_helpers.ComputeIssueEntryURL(mr, self.config)
-    self.assertTrue(url.startswith(FORM_URL))
-    self.assertIn('token=', url)
-    self.assertIn('role=', url)
-    self.assertIn('continue=', url)
+    self.assertIn('/issues/wizard', url)
 
 class IssueListURLTest(unittest.TestCase):
 
