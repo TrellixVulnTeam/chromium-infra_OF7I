@@ -23,6 +23,7 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/auth/openid"
 	"go.chromium.org/luci/server/encryptedcookies"
 	"go.chromium.org/luci/server/templates"
 
@@ -130,8 +131,21 @@ func main() {
 		})
 
 		// Pubsub handler
-		// TODO (nqmtuan): Add auth for pubsub calls
-		srv.Routes.POST("/_ah/push-handlers/buildbucket", nil, pubsub.BuildbucketPubSubHandler)
+		pubsubMwc := router.NewMiddlewareChain(
+			auth.Authenticate(&openid.GoogleIDTokenAuthMethod{
+				AudienceCheck: openid.AudienceMatchesHost,
+			}),
+		)
+		pusherID := identity.Identity(fmt.Sprintf("user:buildbucket-pubsub@%s.iam.gserviceaccount.com", srv.Options.CloudProject))
+
+		srv.Routes.POST("/_ah/push-handlers/buildbucket", pubsubMwc, func(ctx *router.Context) {
+			if got := auth.CurrentIdentity(ctx.Context); got != pusherID {
+				logging.Errorf(ctx.Context, "Expecting ID token of %q, got %q", pusherID, got)
+				ctx.Writer.WriteHeader(http.StatusForbidden)
+			} else {
+				pubsub.BuildbucketPubSubHandler(ctx)
+			}
+		})
 
 		// Installs PRPC service.
 		gfipb.RegisterGoFinditServiceServer(srv.PRPC, &gfipb.DecoratedGoFinditService{
