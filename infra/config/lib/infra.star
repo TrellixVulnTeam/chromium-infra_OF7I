@@ -146,6 +146,7 @@ def builder(
                 by_timestamp = True,
             ),
         ),
+        experiments = {"luci.buildbucket.agent.cipd_installation": 50},
     )
 
 def _tree_closing_notifiers():
