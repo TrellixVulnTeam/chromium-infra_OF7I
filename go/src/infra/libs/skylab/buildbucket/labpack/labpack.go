@@ -39,6 +39,8 @@ type Params struct {
 	ExpectedState string
 	// Configuration is a base64-encoded string of the job config.
 	Configuration string
+	// Extra tags setting to the swarming task.
+	ExtraTags []string
 }
 
 // AsMap takes the parameters and flattens it into a map with string keys.
@@ -76,6 +78,7 @@ func ScheduleTask(ctx context.Context, client buildbucket.Client, v CIPDVersion,
 		UnitName:         params.UnitName,
 		ExpectedDUTState: params.ExpectedState,
 		Props:            props,
+		ExtraTags:        params.ExtraTags,
 	}
 	switch v {
 	case CIPDProd:
