@@ -110,23 +110,29 @@ func LabstationRepairConfig() *Configuration {
 							"min_duration:6h",
 						},
 					},
-					"remove_reboot_requests": {
+					"Remove reboot requests": {
+						Docs: []string{
+							"Remove all requests for reboot on the host.",
+							"The action has to be called after reboot of the device.",
+						},
 						ExecName:               "cros_remove_all_reboot_request",
 						AllowFailAfterRecovery: true,
 					},
 					"reboot_by_request": {
 						Docs: []string{
 							"Some DUTs can request reboot labstation if they has issue with servo-nic or other issues with servo-host.",
+							"We allowed to remove requests for reboot if we rebooted per request.",
 						},
-						ExecName: "cros_remove_all_reboot_request",
 						Conditions: []string{
 							"cros_has_reboot_request",
 							"cros_has_no_servo_in_use",
 							"labstation_uptime_6_hours",
 						},
-						Dependencies: []string{
-							"labstation_reboot",
-							"rpm_power_cycle",
+						// If condition passed then action will fail and request recovery actions.
+						ExecName: "sample_fail",
+						RecoveryActions: []string{
+							"Labstation reboot",
+							"Power cycle by RPM",
 						},
 					},
 					"booted_from_right_kernel": {
@@ -134,14 +140,13 @@ func LabstationRepairConfig() *Configuration {
 							"Verified if kernel has update and waiting for update.",
 							"Kernel can wait for reboot as provisioning is not doing reboot by default for labstations.",
 						},
-						ExecName: "cros_kernel_priority_has_not_changed",
 						Conditions: []string{
-							"remove_reboot_requests",
 							"cros_has_no_servo_in_use",
 						},
+						ExecName: "cros_kernel_priority_has_not_changed",
 						RecoveryActions: []string{
-							"labstation_reboot",
-							"rpm_power_cycle",
+							"Labstation reboot",
+							"Power cycle by RPM",
 						},
 					},
 					"Device is pingable": {
@@ -150,42 +155,52 @@ func LabstationRepairConfig() *Configuration {
 							"This should happen as soon as the network driver gets loaded and the network becomes operational.",
 						},
 						RecoveryActions: []string{
-							"rpm_power_cycle",
+							"Power cycle by RPM",
 						},
 						ExecName:    "cros_ping",
-						ExecTimeout: &durationpb.Duration{Seconds: 300},
+						ExecTimeout: &durationpb.Duration{Seconds: 15},
 					},
 					"Device is SSHable": {
 						Docs: []string{
 							"This verifier checks whether the host is accessible over ssh.",
 						},
 						RecoveryActions: []string{
-							"rpm_power_cycle",
+							"Power cycle by RPM",
 						},
 						ExecName:    "cros_ssh",
-						ExecTimeout: &durationpb.Duration{Seconds: 120},
+						ExecTimeout: &durationpb.Duration{Seconds: 30},
 					},
-					"labstation_reboot": {
+					"Labstation reboot": {
 						Docs: []string{
-							"Before reboot we need stop powerd service. Assumption if trigger power the labstation will not boot in normal mode.",
+							"Perform reboot of the host and perform additional actions as necessary.",
+							"If reboot succeed then we can remove all request for reboot as we just did it.",
 						},
 						Dependencies: []string{
 							"cros_stop_powerd",
 							"cros_clean_tmp_owner_request",
 							"cros_allowed_reboot",
-							"remove_reboot_requests",
+							"Simple reboot",
+							// Waiting to tell if success.
+							"Wait to be SSHable",
+							"Remove reboot requests",
 						},
-						ExecName:    "cros_reboot",
-						ExecTimeout: &durationpb.Duration{Seconds: 120},
-						RunControl:  RunControl_ALWAYS_RUN,
+						ExecName:   "sample_pass",
+						RunControl: RunControl_ALWAYS_RUN,
 					},
-					"rpm_power_cycle": {
+					"Power cycle by RPM": {
 						Docs: []string{
 							"Action is always runnable.",
 						},
 						Conditions: []string{
 							"has_rpm_info",
 						},
+						Dependencies: []string{
+							"rpm_power_cycle",
+							// Waiting to tell if success.
+							"Wait to be SSHable",
+							"Remove reboot requests",
+						},
+						ExecName:   "sample_pass",
 						RunControl: RunControl_ALWAYS_RUN,
 					},
 					"Simple reboot": {
