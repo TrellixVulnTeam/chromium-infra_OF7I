@@ -14,7 +14,6 @@ from components.config import validation
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 import errors
 import experiments
-import flatten_swarmingcfg
 
 _DIMENSION_KEY_RGX = re.compile(r'^[a-zA-Z\_\-]+$')
 # Copied from
@@ -41,17 +40,43 @@ def _validate_service_account(service_account, ctx):
     )
 
 
+def _parse_dimension(string):  # pragma: no cover
+  """Parses a dimension string to a tuple (key, value, expiration_secs)."""
+  key, value = string.split(':', 1)
+  expiration_secs = 0
+  try:
+    expiration_secs = int(key)
+  except ValueError:
+    pass
+  else:
+    key, value = value.split(':', 1)
+  return key, value, expiration_secs
+
+
+def _parse_dimensions(strings):  # pragma: no cover
+  """Parses dimension strings to a dict {key: {(value, expiration_secs)}}."""
+  out = collections.defaultdict(set)
+  for s in strings:
+    key, value, expiration_secs = _parse_dimension(s)
+    out[key].add((value, expiration_secs))
+  return out
+
+
+def _format_dimension(key, value, expiration_secs):  # pragma: no cover
+  """Formats a dimension to a string. Opposite of parse_dimension."""
+  if expiration_secs:
+    return '%d:%s:%s' % (expiration_secs, key, value)
+  return '%s:%s' % (key, value)
+
+
 # The below is covered by swarming_test.py and swarmbucket_api_test.py
 def read_dimensions(builder_cfg):  # pragma: no cover
   """Read the dimensions for a builder config.
 
-  This different from flatten_swarmingcfg.parse_dimensions in that this:
-  * Factors in the auto_builder_dimensions field.
-
   Returns:
     dimensions is returned as dict {key: {(value, expiration_secs)}}.
   """
-  dimensions = flatten_swarmingcfg.parse_dimensions(builder_cfg.dimensions)
+  dimensions = _parse_dimensions(builder_cfg.dimensions)
   if (builder_cfg.auto_builder_dimension == project_config_pb2.YES and
       u'builder' not in dimensions):
     dimensions[u'builder'] = {(builder_cfg.name, 0)}
@@ -133,12 +158,12 @@ def _validate_dimensions(field_name, dimensions, ctx):
   # Ensure that tombstones are not mixed with non-tomstones for the same key.
   TOMBSTONE = ('', 0)
   for key, entries in parsed.iteritems():
-    if TOMBSTONE not in entries or len(entries) == 1:
+    if TOMBSTONE not in entries or len(entries) == 1:  # pragma: no cover
       continue
     for value, expiration_secs in entries:
       if (value, expiration_secs) == TOMBSTONE:
         continue
-      dim = flatten_swarmingcfg.format_dimension(key, value, expiration_secs)
+      dim = _format_dimension(key, value, expiration_secs)
       with ctx.prefix('%s "%s": ', field_name, dim):
         ctx.error('mutually exclusive with "%s:"', key)
 
@@ -234,17 +259,11 @@ def _validate_properties(properties, ctx):
     ctx.error('properties is not a dict')
 
 
-def validate_builder_cfg(
-    builder, well_known_experiments, mixin_names, final, ctx
-):
+def validate_builder_cfg(builder, well_known_experiments, final, ctx):
   """Validates a Builder message.
-
-  Does not apply mixins, only checks that a referenced mixin exists.
 
   If final is False, does not validate for completeness.
   """
-  del mixin_names  # no longer used argument.
-
   if final or builder.name:
     try:
       errors.validate_builder_name(builder.name)
@@ -326,9 +345,6 @@ def validate_builder_cfg(
         if percent < 0 or percent > 100:
           ctx.error('value must be in [0, 100]')
 
-  if builder.mixins:  # pragma: no cover
-    ctx.error('mixin is not allowed any more, use go/lucicfg')
-
 
 def _validate_cache_entry(entry, ctx):
   if not entry.name:
@@ -342,26 +358,12 @@ def _validate_cache_entry(entry, ctx):
     _validate_relative_path(entry.path, ctx)
 
 
-def validate_builder_mixins(mixins, ctx):
-  """Validates mixins.
-
-  Mixins are no longer supported (see crbug/1256475).
-  """
-  if mixins:
-    ctx.error('builder_mixins is not allowed any more, use go/lucicfg')
-
-
-def validate_project_cfg(
-    swarming, well_known_experiments, mixins, mixins_are_valid, ctx
-):
+def validate_project_cfg(swarming, well_known_experiments, ctx):
   """Validates a project_config_pb2.Swarming message.
 
   Args:
     swarming (project_config_pb2.Swarming): the config to validate.
     well_known_experiments (Set[string]) - The set of well-known experiments.
-    mixins (dict): {mixin_name: mixin}, builder mixins that may be used by
-      builders.
-    mixins_are_valid (bool): if True, mixins are valid.
   """
 
   def make_subctx():
@@ -372,40 +374,21 @@ def validate_project_cfg(
   if swarming.task_template_canary_percentage.value > 100:
     ctx.error('task_template_canary_percentage.value must must be in [0, 100]')
 
-  builder_defaults = copy.copy(swarming.builder_defaults)
-  builder_defaults.swarming_host = (
-      builder_defaults.swarming_host or swarming.hostname
-  )
-
-  should_try_merge = mixins_are_valid
-  if swarming.HasField('builder_defaults'):
-    with ctx.prefix('builder_defaults: '):
-      if builder_defaults.name:
-        ctx.error('name: not allowed')
-      subctx = make_subctx()
-      validate_builder_cfg(
-          builder_defaults, well_known_experiments, mixins, False, subctx
-      )
-      if subctx.result().has_errors:
-        should_try_merge = False
-
   seen = set()
   for i, b in enumerate(swarming.builders):
     with ctx.prefix('builder %s: ' % (b.name or '#%s' % (i + 1))):
       # Validate b before merging, otherwise merging will fail.
       subctx = make_subctx()
-      validate_builder_cfg(b, well_known_experiments, mixins, False, subctx)
-      if subctx.result().has_errors or not should_try_merge:
-        # Do no try to merge invalid configs.
+      validate_builder_cfg(b, well_known_experiments, False, subctx)
+      if subctx.result().has_errors:
+        # Do not validate invalid configs.
         continue
 
-      merged = copy.deepcopy(b)
-      flatten_swarmingcfg.flatten_builder(merged, builder_defaults, mixins)
-      if merged.name in seen:
+      if b.name in seen:
         ctx.error('name: duplicate')
       else:
-        seen.add(merged.name)
-      validate_builder_cfg(merged, well_known_experiments, mixins, True, ctx)
+        seen.add(b.name)
+      validate_builder_cfg(b, well_known_experiments, True, ctx)
 
 
 def _validate_package(package, ctx, allow_predicate=True):

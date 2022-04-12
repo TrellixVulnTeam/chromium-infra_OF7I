@@ -31,7 +31,6 @@ import buildtags
 import config
 import creation
 import errors
-import flatten_swarmingcfg
 import model
 import search
 import service
@@ -165,36 +164,7 @@ def validate_known_build_parameters(params):
     assert_object('swarming', swarming)
     swarming = copy.deepcopy(swarming)
 
-    override_builder_cfg_data = swarming.pop('override_builder_cfg', None)
-    if override_builder_cfg_data is not None:
-      assert_object('swarming.override_builder_cfg', override_builder_cfg_data)
-      if 'build_numbers' in override_builder_cfg_data:
-        bad(
-            'swarming.override_builder_cfg parameter '
-            'cannot override build_numbers'
-        )
-
-      override_builder_cfg = project_config_pb2.Builder()
-      try:
-        protoutil.merge_dict(override_builder_cfg_data, override_builder_cfg)
-      except TypeError as ex:
-        bad('swarming.override_builder_cfg parameter: %s', ex)
-      if override_builder_cfg.name:
-        bad('swarming.override_builder_cfg cannot override builder name')
-      if override_builder_cfg.mixins:
-        bad('swarming.override_builder_cfg cannot use mixins')
-      if any(d.startswith('pool:') for d in override_builder_cfg.dimensions):
-        logging.warning(
-            'pool is being overridden: %s', override_builder_cfg.dimensions
-        )
-      if 'pool:' in override_builder_cfg.dimensions:
-        bad('swarming.override_builder_cfg cannot remove pool dimension')
-      with ctx.prefix('swarming.override_builder_cfg parameter: '):
-        swarmingcfg.validate_builder_cfg(
-            override_builder_cfg, set(), [], False, ctx
-        )
-
-    if swarming:
+    if swarming:  # pragma: no cover
       bad('unrecognized keys in swarming param: %r', swarming.keys())
 
   properties = params.get('properties')
@@ -317,49 +287,7 @@ def put_request_message_to_build_request(put_request, well_known_experiments):
       parameters=parameters,
       lease_expiration_date=lease_expiration_date,
       pubsub_callback_auth_token=pubsub_callback_auth_token,
-      override_builder_cfg=_override_builder_cfg_func(parameters),
   )
-
-
-def _override_builder_cfg_func(parameters):
-  """Returns a function that overrides a Builder config.
-
-  May return None.
-
-  See creation.BuildRequest.override_builder_cfg.
-  """
-  swarming_param = parameters.get(_PARAM_SWARMING) or {}
-  overrides_dict = swarming_param.get('override_builder_cfg')
-  if not overrides_dict:
-    return None
-
-  base_overrides = project_config_pb2.Builder()
-  protoutil.merge_dict(overrides_dict, base_overrides)
-
-  def _merge(cfg):
-    over = project_config_pb2.Builder()
-    over.CopyFrom(base_overrides)
-
-    # handle the case where the caller is updating the old recipe message but
-    # the `cfg` uses the new `exe` field.
-    if cfg.HasField('exe') and over.HasField('recipe'):
-      exe, recipe = over.exe, over.recipe
-
-      new_props = json.loads(over.properties or '{}')
-      new_props.update(flatten_swarmingcfg.read_properties(recipe))
-
-      if recipe.name:
-        new_props['recipe'] = recipe.name
-
-      exe.cipd_package = recipe.cipd_package
-      exe.cipd_version = recipe.cipd_version
-
-      over.ClearField('recipe')
-      over.properties = json.dumps(new_props)
-
-    return flatten_swarmingcfg.merge_builder(cfg, over)
-
-  return _merge
 
 
 def builds_to_messages(builds, include_lease_key=False):

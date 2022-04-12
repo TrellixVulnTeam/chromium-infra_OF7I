@@ -5,8 +5,8 @@
 # Generates Python proto bindings using *.proto files located in luci-go repo.
 # Assumes you are running this in infra gclient checkout.
 
-GCLIENT_ROOT=$(shell gclient root)
-INFRA=$(GCLIENT_ROOT)/infra
+THIS_DIR=$(shell pwd)
+INFRA=$(THIS_DIR)/..
 LUCI_GO=$(INFRA)/go/src/go.chromium.org/luci
 TOOLS=$(INFRA)/luci/appengine/components/tools
 PROTOC=$(INFRA)/cipd/bin/protoc
@@ -24,7 +24,7 @@ regenerate: $(PROTOC) $(TOOLS)/protoc-gen-prpc-python
 	rm -rf ./go
 	$(INFRA)/cipd/bin/protoc \
 		--proto_path $(INFRA)/go/src \
-		--proto_path $(LUCI_GO)/grpc/proto \
+		--proto_path $(LUCI_GO)/common/proto/googleapis \
 		$(LUCI_GO)/buildbucket/proto/*.proto \
 		$(LUCI_GO)/common/proto/options.proto \
 		$(LUCI_GO)/common/proto/structmask/structmask.proto \

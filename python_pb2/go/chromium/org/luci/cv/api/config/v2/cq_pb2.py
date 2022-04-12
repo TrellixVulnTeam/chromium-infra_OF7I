@@ -22,7 +22,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z,go.chromium.org/luci/cv/api/config/v2;config\242\376#C\nAhttps://luci-config.appspot.com/schemas/projects:commit-queue.cfg',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n.go.chromium.org/luci/cv/api/config/v2/cq.proto\x12\tcv.config\x1a\x1egoogle/protobuf/duration.proto\x1a/go.chromium.org/luci/common/proto/options.proto\"\xdd\x01\n\x06\x43onfig\x12\x1f\n\x13\x64raining_start_time\x18\x01 \x01(\tB\x02\x18\x01\x12\x1a\n\x0e\x63q_status_host\x18\x02 \x01(\tB\x02\x18\x01\x12\x30\n\x0esubmit_options\x18\x03 \x01(\x0b\x32\x18.cv.config.SubmitOptions\x12-\n\rconfig_groups\x18\x04 \x03(\x0b\x32\x16.cv.config.ConfigGroup\x12\x35\n\x16project_scoped_account\x18\x05 \x01(\x0e\x32\x11.cv.config.ToggleB\x02\x18\x01\"\x8f\x03\n\x0b\x43onfigGroup\x12\x0c\n\x04name\x18\x06 \x01(\t\x12-\n\x06gerrit\x18\x01 \x03(\x0b\x32\x1d.cv.config.ConfigGroup.Gerrit\x12*\n\x0b\x63ombine_cls\x18\x04 \x01(\x0b\x32\x15.cv.config.CombineCLs\x12\'\n\tverifiers\x18\x02 \x01(\x0b\x32\x14.cv.config.Verifiers\x12#\n\x08\x66\x61llback\x18\x05 \x01(\x0e\x32\x11.cv.config.Toggle\x12)\n\x10\x61\x64\x64itional_modes\x18\x07 \x03(\x0b\x32\x0f.cv.config.Mode\x1a\x97\x01\n\x06Gerrit\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x37\n\x08projects\x18\x02 \x03(\x0b\x32%.cv.config.ConfigGroup.Gerrit.Project\x1aG\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\nref_regexp\x18\x02 \x03(\t\x12\x1a\n\x12ref_regexp_exclude\x18\x03 \x03(\tJ\x04\x08\x03\x10\x04\"R\n\rSubmitOptions\x12\x11\n\tmax_burst\x18\x01 \x01(\x05\x12.\n\x0b\x62urst_delay\x18\x02 \x01(\x0b\x32\x19.google.protobuf.Duration\"`\n\x04Mode\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0e\x63q_label_value\x18\x02 \x01(\x05\x12\x18\n\x10triggering_label\x18\x03 \x01(\t\x12\x18\n\x10triggering_value\x18\x04 \x01(\x05\"D\n\nCombineCLs\x12\x36\n\x13stabilization_delay\x18\x01 \x01(\x0b\x32\x19.google.protobuf.Duration\"\xba\x0b\n\tVerifiers\x12?\n\x11gerrit_cq_ability\x18\x01 \x01(\x0b\x32$.cv.config.Verifiers.GerritCQAbility\x12\x34\n\x0btree_status\x18\x02 \x01(\x0b\x32\x1f.cv.config.Verifiers.TreeStatus\x12+\n\x06tryjob\x18\x03 \x01(\x0b\x32\x1b.cv.config.Verifiers.Tryjob\x12/\n\x08\x63qlinter\x18\x04 \x01(\x0b\x32\x1d.cv.config.Verifiers.CQLinter\x12\'\n\x04\x66\x61ke\x18\x05 \x01(\x0b\x32\x19.cv.config.Verifiers.Fake\x1a\xee\x01\n\x0fGerritCQAbility\x12\x16\n\x0e\x63ommitter_list\x18\x01 \x03(\t\x12\x1b\n\x13\x64ry_run_access_list\x18\x02 \x03(\t\x12#\n\x1b\x61llow_submit_with_open_deps\x18\x03 \x01(\x08\x12Q\n\x1a\x61llow_owner_if_submittable\x18\x04 \x01(\x0e\x32-.cv.config.Verifiers.GerritCQAbility.CQAction\".\n\x08\x43QAction\x12\t\n\x05UNSET\x10\x00\x12\x0b\n\x07\x44RY_RUN\x10\x01\x12\n\n\x06\x43OMMIT\x10\x02\x1a\x19\n\nTreeStatus\x12\x0b\n\x03url\x18\x01 \x01(\t\x1a\xd9\x06\n\x06Tryjob\x12\x35\n\x08\x62uilders\x18\x01 \x03(\x0b\x32#.cv.config.Verifiers.Tryjob.Builder\x12=\n\x0cretry_config\x18\x02 \x01(\x0b\x32\'.cv.config.Verifiers.Tryjob.RetryConfig\x12\x33\n\x14\x63\x61ncel_stale_tryjobs\x18\x03 \x01(\x0e\x32\x11.cv.config.ToggleB\x02\x18\x01\x1a\x9c\x03\n\x07\x42uilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x17\n\x0fincludable_only\x18\t \x01(\x08\x12\x32\n\x11result_visibility\x18\n \x01(\x0e\x32\x17.cv.config.CommentLevel\x12\x15\n\rdisable_reuse\x18\x02 \x01(\x08\x12\'\n\x0c\x63\x61ncel_stale\x18\x0b \x01(\x0e\x32\x11.cv.config.Toggle\x12\x14\n\x0ctriggered_by\x18\x03 \x01(\t\x12\x1d\n\x15\x65xperiment_percentage\x18\x04 \x01(\x02\x12\x44\n\requivalent_to\x18\x05 \x01(\x0b\x32-.cv.config.Verifiers.Tryjob.EquivalentBuilder\x12\x17\n\x0flocation_regexp\x18\x06 \x03(\t\x12\x1f\n\x17location_regexp_exclude\x18\x07 \x03(\t\x12\x1d\n\x15owner_whitelist_group\x18\x08 \x03(\t\x12\x16\n\x0emode_allowlist\x18\x0e \x03(\tJ\x04\x08\x0c\x10\rJ\x04\x08\r\x10\x0e\x1aT\n\x11\x45quivalentBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\npercentage\x18\x02 \x01(\x02\x12\x1d\n\x15owner_whitelist_group\x18\x03 \x01(\t\x1a!\n\x11IncludableBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x1a\x8b\x01\n\x0bRetryConfig\x12\x14\n\x0csingle_quota\x18\x01 \x01(\x05\x12\x14\n\x0cglobal_quota\x18\x02 \x01(\x05\x12\x16\n\x0e\x66\x61ilure_weight\x18\x03 \x01(\x05\x12 \n\x18transient_failure_weight\x18\x04 \x01(\x05\x12\x16\n\x0etimeout_weight\x18\x05 \x01(\x05\x1a\n\n\x08\x43QLinter\x1a;\n\x04\x46\x61ke\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0e\x65ventual_state\x18\x02 \x01(\t\x12\r\n\x05\x64\x65lay\x18\x03 \x01(\x05*]\n\x0c\x43ommentLevel\x12\x17\n\x13\x43OMMENT_LEVEL_UNSET\x10\x00\x12\x16\n\x12\x43OMMENT_LEVEL_FULL\x10\x01\x12\x1c\n\x18\x43OMMENT_LEVEL_RESTRICTED\x10\x02*$\n\x06Toggle\x12\t\n\x05UNSET\x10\x00\x12\x07\n\x03YES\x10\x01\x12\x06\n\x02NO\x10\x02\x42uZ,go.chromium.org/luci/cv/api/config/v2;config\xa2\xfe#C\nAhttps://luci-config.appspot.com/schemas/projects:commit-queue.cfgb\x06proto3'
+  serialized_pb=b'\n.go.chromium.org/luci/cv/api/config/v2/cq.proto\x12\tcv.config\x1a\x1egoogle/protobuf/duration.proto\x1a/go.chromium.org/luci/common/proto/options.proto\"\xdd\x01\n\x06\x43onfig\x12\x1f\n\x13\x64raining_start_time\x18\x01 \x01(\tB\x02\x18\x01\x12\x1a\n\x0e\x63q_status_host\x18\x02 \x01(\tB\x02\x18\x01\x12\x30\n\x0esubmit_options\x18\x03 \x01(\x0b\x32\x18.cv.config.SubmitOptions\x12-\n\rconfig_groups\x18\x04 \x03(\x0b\x32\x16.cv.config.ConfigGroup\x12\x35\n\x16project_scoped_account\x18\x05 \x01(\x0e\x32\x11.cv.config.ToggleB\x02\x18\x01\"\x8f\x03\n\x0b\x43onfigGroup\x12\x0c\n\x04name\x18\x06 \x01(\t\x12-\n\x06gerrit\x18\x01 \x03(\x0b\x32\x1d.cv.config.ConfigGroup.Gerrit\x12*\n\x0b\x63ombine_cls\x18\x04 \x01(\x0b\x32\x15.cv.config.CombineCLs\x12\'\n\tverifiers\x18\x02 \x01(\x0b\x32\x14.cv.config.Verifiers\x12#\n\x08\x66\x61llback\x18\x05 \x01(\x0e\x32\x11.cv.config.Toggle\x12)\n\x10\x61\x64\x64itional_modes\x18\x07 \x03(\x0b\x32\x0f.cv.config.Mode\x1a\x97\x01\n\x06Gerrit\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x37\n\x08projects\x18\x02 \x03(\x0b\x32%.cv.config.ConfigGroup.Gerrit.Project\x1aG\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\nref_regexp\x18\x02 \x03(\t\x12\x1a\n\x12ref_regexp_exclude\x18\x03 \x03(\tJ\x04\x08\x03\x10\x04\"R\n\rSubmitOptions\x12\x11\n\tmax_burst\x18\x01 \x01(\x05\x12.\n\x0b\x62urst_delay\x18\x02 \x01(\x0b\x32\x19.google.protobuf.Duration\"`\n\x04Mode\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0e\x63q_label_value\x18\x02 \x01(\x05\x12\x18\n\x10triggering_label\x18\x03 \x01(\t\x12\x18\n\x10triggering_value\x18\x04 \x01(\x05\"D\n\nCombineCLs\x12\x36\n\x13stabilization_delay\x18\x01 \x01(\x0b\x32\x19.google.protobuf.Duration\"\x83\r\n\tVerifiers\x12?\n\x11gerrit_cq_ability\x18\x01 \x01(\x0b\x32$.cv.config.Verifiers.GerritCQAbility\x12\x34\n\x0btree_status\x18\x02 \x01(\x0b\x32\x1f.cv.config.Verifiers.TreeStatus\x12+\n\x06tryjob\x18\x03 \x01(\x0b\x32\x1b.cv.config.Verifiers.Tryjob\x12/\n\x08\x63qlinter\x18\x04 \x01(\x0b\x32\x1d.cv.config.Verifiers.CQLinter\x12\'\n\x04\x66\x61ke\x18\x05 \x01(\x0b\x32\x19.cv.config.Verifiers.Fake\x1a\xee\x01\n\x0fGerritCQAbility\x12\x16\n\x0e\x63ommitter_list\x18\x01 \x03(\t\x12\x1b\n\x13\x64ry_run_access_list\x18\x02 \x03(\t\x12#\n\x1b\x61llow_submit_with_open_deps\x18\x03 \x01(\x08\x12Q\n\x1a\x61llow_owner_if_submittable\x18\x04 \x01(\x0e\x32-.cv.config.Verifiers.GerritCQAbility.CQAction\".\n\x08\x43QAction\x12\t\n\x05UNSET\x10\x00\x12\x0b\n\x07\x44RY_RUN\x10\x01\x12\n\n\x06\x43OMMIT\x10\x02\x1a\x19\n\nTreeStatus\x12\x0b\n\x03url\x18\x01 \x01(\t\x1a\xa2\x08\n\x06Tryjob\x12\x35\n\x08\x62uilders\x18\x01 \x03(\x0b\x32#.cv.config.Verifiers.Tryjob.Builder\x12=\n\x0cretry_config\x18\x02 \x01(\x0b\x32\'.cv.config.Verifiers.Tryjob.RetryConfig\x12\x33\n\x14\x63\x61ncel_stale_tryjobs\x18\x03 \x01(\x0e\x32\x11.cv.config.ToggleB\x02\x18\x01\x1a\xe5\x04\n\x07\x42uilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x17\n\x0fincludable_only\x18\t \x01(\x08\x12\x32\n\x11result_visibility\x18\n \x01(\x0e\x32\x17.cv.config.CommentLevel\x12\x15\n\rdisable_reuse\x18\x02 \x01(\x08\x12\'\n\x0c\x63\x61ncel_stale\x18\x0b \x01(\x0e\x32\x11.cv.config.Toggle\x12\x14\n\x0ctriggered_by\x18\x03 \x01(\t\x12\x1d\n\x15\x65xperiment_percentage\x18\x04 \x01(\x02\x12\x44\n\requivalent_to\x18\x05 \x01(\x0b\x32-.cv.config.Verifiers.Tryjob.EquivalentBuilder\x12\x1b\n\x0flocation_regexp\x18\x06 \x03(\tB\x02\x18\x01\x12#\n\x17location_regexp_exclude\x18\x07 \x03(\tB\x02\x18\x01\x12L\n\x10location_filters\x18\x0f \x03(\x0b\x32\x32.cv.config.Verifiers.Tryjob.Builder.LocationFilter\x12\x1d\n\x15owner_whitelist_group\x18\x08 \x03(\t\x12\x16\n\x0emode_allowlist\x18\x0e \x03(\t\x1aq\n\x0eLocationFilter\x12\x1a\n\x12gerrit_host_regexp\x18\x01 \x01(\t\x12\x1d\n\x15gerrit_project_regexp\x18\x02 \x01(\t\x12\x13\n\x0bpath_regexp\x18\x03 \x01(\t\x12\x0f\n\x07\x65xclude\x18\x04 \x01(\x08J\x04\x08\x0c\x10\rJ\x04\x08\r\x10\x0e\x1aT\n\x11\x45quivalentBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\npercentage\x18\x02 \x01(\x02\x12\x1d\n\x15owner_whitelist_group\x18\x03 \x01(\t\x1a!\n\x11IncludableBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x1a\x8b\x01\n\x0bRetryConfig\x12\x14\n\x0csingle_quota\x18\x01 \x01(\x05\x12\x14\n\x0cglobal_quota\x18\x02 \x01(\x05\x12\x16\n\x0e\x66\x61ilure_weight\x18\x03 \x01(\x05\x12 \n\x18transient_failure_weight\x18\x04 \x01(\x05\x12\x16\n\x0etimeout_weight\x18\x05 \x01(\x05\x1a\n\n\x08\x43QLinter\x1a;\n\x04\x46\x61ke\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0e\x65ventual_state\x18\x02 \x01(\t\x12\r\n\x05\x64\x65lay\x18\x03 \x01(\x05*]\n\x0c\x43ommentLevel\x12\x17\n\x13\x43OMMENT_LEVEL_UNSET\x10\x00\x12\x16\n\x12\x43OMMENT_LEVEL_FULL\x10\x01\x12\x1c\n\x18\x43OMMENT_LEVEL_RESTRICTED\x10\x02*$\n\x06Toggle\x12\t\n\x05UNSET\x10\x00\x12\x07\n\x03YES\x10\x01\x12\x06\n\x02NO\x10\x02\x42uZ,go.chromium.org/luci/cv/api/config/v2;config\xa2\xfe#C\nAhttps://luci-config.appspot.com/schemas/projects:commit-queue.cfgb\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_duration__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_common_dot_proto_dot_options__pb2.DESCRIPTOR,])
 
@@ -51,8 +51,8 @@ _COMMENTLEVEL = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2489,
-  serialized_end=2582,
+  serialized_start=2690,
+  serialized_end=2783,
 )
 _sym_db.RegisterEnumDescriptor(_COMMENTLEVEL)
 
@@ -82,8 +82,8 @@ _TOGGLE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2584,
-  serialized_end=2620,
+  serialized_start=2785,
+  serialized_end=2821,
 )
 _sym_db.RegisterEnumDescriptor(_TOGGLE)
 
@@ -545,6 +545,58 @@ _VERIFIERS_TREESTATUS = _descriptor.Descriptor(
   serialized_end=1554,
 )
 
+_VERIFIERS_TRYJOB_BUILDER_LOCATIONFILTER = _descriptor.Descriptor(
+  name='LocationFilter',
+  full_name='cv.config.Verifiers.Tryjob.Builder.LocationFilter',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='gerrit_host_regexp', full_name='cv.config.Verifiers.Tryjob.Builder.LocationFilter.gerrit_host_regexp', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='gerrit_project_regexp', full_name='cv.config.Verifiers.Tryjob.Builder.LocationFilter.gerrit_project_regexp', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='path_regexp', full_name='cv.config.Verifiers.Tryjob.Builder.LocationFilter.path_regexp', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='exclude', full_name='cv.config.Verifiers.Tryjob.Builder.LocationFilter.exclude', index=3,
+      number=4, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=2227,
+  serialized_end=2340,
+)
+
 _VERIFIERS_TRYJOB_BUILDER = _descriptor.Descriptor(
   name='Builder',
   full_name='cv.config.Verifiers.Tryjob.Builder',
@@ -615,23 +667,30 @@ _VERIFIERS_TRYJOB_BUILDER = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=b'\030\001', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
       name='location_regexp_exclude', full_name='cv.config.Verifiers.Tryjob.Builder.location_regexp_exclude', index=9,
       number=7, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
+      serialized_options=b'\030\001', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='location_filters', full_name='cv.config.Verifiers.Tryjob.Builder.location_filters', index=10,
+      number=15, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='owner_whitelist_group', full_name='cv.config.Verifiers.Tryjob.Builder.owner_whitelist_group', index=10,
+      name='owner_whitelist_group', full_name='cv.config.Verifiers.Tryjob.Builder.owner_whitelist_group', index=11,
       number=8, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='mode_allowlist', full_name='cv.config.Verifiers.Tryjob.Builder.mode_allowlist', index=11,
+      name='mode_allowlist', full_name='cv.config.Verifiers.Tryjob.Builder.mode_allowlist', index=12,
       number=14, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -640,7 +699,7 @@ _VERIFIERS_TRYJOB_BUILDER = _descriptor.Descriptor(
   ],
   extensions=[
   ],
-  nested_types=[],
+  nested_types=[_VERIFIERS_TRYJOB_BUILDER_LOCATIONFILTER, ],
   enum_types=[
   ],
   serialized_options=None,
@@ -650,7 +709,7 @@ _VERIFIERS_TRYJOB_BUILDER = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=1739,
-  serialized_end=2151,
+  serialized_end=2352,
 )
 
 _VERIFIERS_TRYJOB_EQUIVALENTBUILDER = _descriptor.Descriptor(
@@ -694,8 +753,8 @@ _VERIFIERS_TRYJOB_EQUIVALENTBUILDER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2153,
-  serialized_end=2237,
+  serialized_start=2354,
+  serialized_end=2438,
 )
 
 _VERIFIERS_TRYJOB_INCLUDABLEBUILDER = _descriptor.Descriptor(
@@ -725,8 +784,8 @@ _VERIFIERS_TRYJOB_INCLUDABLEBUILDER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2239,
-  serialized_end=2272,
+  serialized_start=2440,
+  serialized_end=2473,
 )
 
 _VERIFIERS_TRYJOB_RETRYCONFIG = _descriptor.Descriptor(
@@ -784,8 +843,8 @@ _VERIFIERS_TRYJOB_RETRYCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2275,
-  serialized_end=2414,
+  serialized_start=2476,
+  serialized_end=2615,
 )
 
 _VERIFIERS_TRYJOB = _descriptor.Descriptor(
@@ -830,7 +889,7 @@ _VERIFIERS_TRYJOB = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=1557,
-  serialized_end=2414,
+  serialized_end=2615,
 )
 
 _VERIFIERS_CQLINTER = _descriptor.Descriptor(
@@ -853,8 +912,8 @@ _VERIFIERS_CQLINTER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2416,
-  serialized_end=2426,
+  serialized_start=2617,
+  serialized_end=2627,
 )
 
 _VERIFIERS_FAKE = _descriptor.Descriptor(
@@ -898,8 +957,8 @@ _VERIFIERS_FAKE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2428,
-  serialized_end=2487,
+  serialized_start=2629,
+  serialized_end=2688,
 )
 
 _VERIFIERS = _descriptor.Descriptor(
@@ -958,7 +1017,7 @@ _VERIFIERS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=1021,
-  serialized_end=2487,
+  serialized_end=2688,
 )
 
 _CONFIG.fields_by_name['submit_options'].message_type = _SUBMITOPTIONS
@@ -978,9 +1037,11 @@ _VERIFIERS_GERRITCQABILITY.fields_by_name['allow_owner_if_submittable'].enum_typ
 _VERIFIERS_GERRITCQABILITY.containing_type = _VERIFIERS
 _VERIFIERS_GERRITCQABILITY_CQACTION.containing_type = _VERIFIERS_GERRITCQABILITY
 _VERIFIERS_TREESTATUS.containing_type = _VERIFIERS
+_VERIFIERS_TRYJOB_BUILDER_LOCATIONFILTER.containing_type = _VERIFIERS_TRYJOB_BUILDER
 _VERIFIERS_TRYJOB_BUILDER.fields_by_name['result_visibility'].enum_type = _COMMENTLEVEL
 _VERIFIERS_TRYJOB_BUILDER.fields_by_name['cancel_stale'].enum_type = _TOGGLE
 _VERIFIERS_TRYJOB_BUILDER.fields_by_name['equivalent_to'].message_type = _VERIFIERS_TRYJOB_EQUIVALENTBUILDER
+_VERIFIERS_TRYJOB_BUILDER.fields_by_name['location_filters'].message_type = _VERIFIERS_TRYJOB_BUILDER_LOCATIONFILTER
 _VERIFIERS_TRYJOB_BUILDER.containing_type = _VERIFIERS_TRYJOB
 _VERIFIERS_TRYJOB_EQUIVALENTBUILDER.containing_type = _VERIFIERS_TRYJOB
 _VERIFIERS_TRYJOB_INCLUDABLEBUILDER.containing_type = _VERIFIERS_TRYJOB
@@ -1076,6 +1137,13 @@ Verifiers = _reflection.GeneratedProtocolMessageType('Verifiers', (_message.Mess
   'Tryjob' : _reflection.GeneratedProtocolMessageType('Tryjob', (_message.Message,), {
 
     'Builder' : _reflection.GeneratedProtocolMessageType('Builder', (_message.Message,), {
+
+      'LocationFilter' : _reflection.GeneratedProtocolMessageType('LocationFilter', (_message.Message,), {
+        'DESCRIPTOR' : _VERIFIERS_TRYJOB_BUILDER_LOCATIONFILTER,
+        '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
+        # @@protoc_insertion_point(class_scope:cv.config.Verifiers.Tryjob.Builder.LocationFilter)
+        })
+      ,
       'DESCRIPTOR' : _VERIFIERS_TRYJOB_BUILDER,
       '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
       # @@protoc_insertion_point(class_scope:cv.config.Verifiers.Tryjob.Builder)
@@ -1130,6 +1198,7 @@ _sym_db.RegisterMessage(Verifiers.GerritCQAbility)
 _sym_db.RegisterMessage(Verifiers.TreeStatus)
 _sym_db.RegisterMessage(Verifiers.Tryjob)
 _sym_db.RegisterMessage(Verifiers.Tryjob.Builder)
+_sym_db.RegisterMessage(Verifiers.Tryjob.Builder.LocationFilter)
 _sym_db.RegisterMessage(Verifiers.Tryjob.EquivalentBuilder)
 _sym_db.RegisterMessage(Verifiers.Tryjob.IncludableBuilder)
 _sym_db.RegisterMessage(Verifiers.Tryjob.RetryConfig)
@@ -1141,5 +1210,7 @@ DESCRIPTOR._options = None
 _CONFIG.fields_by_name['draining_start_time']._options = None
 _CONFIG.fields_by_name['cq_status_host']._options = None
 _CONFIG.fields_by_name['project_scoped_account']._options = None
+_VERIFIERS_TRYJOB_BUILDER.fields_by_name['location_regexp']._options = None
+_VERIFIERS_TRYJOB_BUILDER.fields_by_name['location_regexp_exclude']._options = None
 _VERIFIERS_TRYJOB.fields_by_name['cancel_stale_tryjobs']._options = None
 # @@protoc_insertion_point(module_scope)

@@ -28,7 +28,6 @@ import bbutil
 import buildtags
 import config
 import experiments
-import flatten_swarmingcfg
 import errors
 import events
 import model
@@ -664,6 +663,19 @@ def _apply_global_settings(settings, build_proto):
     _add_configured_cache(build_proto, c)
 
 
+def _read_properties(recipe):
+  """Parses build properties from the recipe message.
+
+  Expects the message to be valid.
+  """
+  result = dict(p.split(':', 1) for p in recipe.properties)
+  for p in recipe.properties_j:  # pragma: no cover
+    k, v = p.split(':', 1)
+    parsed = json.loads(v)
+    result[k] = parsed
+  return result
+
+
 @ndb.tasklet
 def _apply_builder_config_async(builder_cfg, build_proto, exps):
   """Applies project_config_pb2.Builder to a builds_pb2.Build."""
@@ -695,9 +707,7 @@ def _apply_builder_config_async(builder_cfg, build_proto, exps):
     build_proto.exe.cipd_version = (
         builder_cfg.recipe.cipd_version or 'refs/heads/master'
     )
-    build_proto.input.properties.update(
-        flatten_swarmingcfg.read_properties(builder_cfg.recipe)
-    )
+    build_proto.input.properties.update(_read_properties(builder_cfg.recipe))
     build_proto.input.properties['recipe'] = builder_cfg.recipe.name
     build_proto.infra.recipe.cipd_package = builder_cfg.recipe.cipd_package
     build_proto.infra.recipe.name = builder_cfg.recipe.name

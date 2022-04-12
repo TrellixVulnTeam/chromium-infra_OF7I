@@ -22,7 +22,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z/go.chromium.org/luci/common/proto/gerrit;gerrit',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n5go.chromium.org/luci/common/proto/gerrit/gerrit.proto\x12\x06gerrit\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc9\x02\n\rNotifyDetails\x12\x33\n\nrecipients\x18\x01 \x03(\x0b\x32\x1f.gerrit.NotifyDetails.Recipient\x1a\x18\n\x04Info\x12\x10\n\x08\x61\x63\x63ounts\x18\x01 \x03(\x03\x1ar\n\tRecipient\x12;\n\x0erecipient_type\x18\x01 \x01(\x0e\x32#.gerrit.NotifyDetails.RecipientType\x12(\n\x04info\x18\x02 \x01(\x0b\x32\x1a.gerrit.NotifyDetails.Info\"u\n\rRecipientType\x12\x1e\n\x1aRECIPIENT_TYPE_UNSPECIFIED\x10\x00\x12\x15\n\x11RECIPIENT_TYPE_TO\x10\x01\x12\x15\n\x11RECIPIENT_TYPE_CC\x10\x02\x12\x16\n\x12RECIPIENT_TYPE_BCC\x10\x03\"h\n\x12ListChangesRequest\x12\r\n\x05query\x18\x01 \x01(\t\x12$\n\x07options\x18\x02 \x03(\x0e\x32\x13.gerrit.QueryOption\x12\r\n\x05limit\x18\x03 \x01(\x03\x12\x0e\n\x06offset\x18\x04 \x01(\x03\"P\n\x13ListChangesResponse\x12#\n\x07\x63hanges\x18\x01 \x03(\x0b\x32\x12.gerrit.ChangeInfo\x12\x14\n\x0cmore_changes\x18\x02 \x01(\x08\"Y\n\x10GetChangeRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x03 \x01(\t\x12$\n\x07options\x18\x02 \x03(\x0e\x32\x13.gerrit.QueryOption\"j\n\x0b\x41\x63\x63ountInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05\x65mail\x18\x02 \x01(\t\x12\x18\n\x10secondary_emails\x18\x03 \x03(\t\x12\x10\n\x08username\x18\x04 \x01(\t\x12\x12\n\naccount_id\x18\x05 \x01(\x03\"\xdc\x05\n\nChangeInfo\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\"\n\x05owner\x18\x02 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12\x0f\n\x07project\x18\x03 \x01(\t\x12\x0b\n\x03ref\x18\x04 \x01(\t\x12$\n\x06status\x18\x05 \x01(\x0e\x32\x14.gerrit.ChangeStatus\x12\x18\n\x10\x63urrent_revision\x18\x06 \x01(\t\x12\x34\n\trevisions\x18\x07 \x03(\x0b\x32!.gerrit.ChangeInfo.RevisionsEntry\x12.\n\x06labels\x18\x08 \x03(\x0b\x32\x1e.gerrit.ChangeInfo.LabelsEntry\x12+\n\x08messages\x18\t \x03(\x0b\x32\x19.gerrit.ChangeMessageInfo\x12)\n\x0crequirements\x18\x0e \x03(\x0b\x32\x13.gerrit.Requirement\x12\x13\n\x0bsubmittable\x18\n \x01(\x08\x12\x12\n\nis_private\x18\r \x01(\x08\x12+\n\x07\x63reated\x18\x0b \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12+\n\x07updated\x18\x0c \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x11\n\trevert_of\x18\x0f \x01(\x03\x12\x1d\n\x15\x63herry_pick_of_change\x18\x10 \x01(\x03\x12,\n\treviewers\x18\x11 \x01(\x0b\x32\x19.gerrit.ReviewerStatusMap\x12\x11\n\tmetaRevID\x18\x12 \x01(\t\x1a\x46\n\x0eRevisionsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12#\n\x05value\x18\x02 \x01(\x0b\x32\x14.gerrit.RevisionInfo:\x02\x38\x01\x1a@\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12 \n\x05value\x18\x02 \x01(\x0b\x32\x11.gerrit.LabelInfo:\x02\x38\x01\"\x83\x01\n\x11ReviewerStatusMap\x12&\n\treviewers\x18\x01 \x03(\x0b\x32\x13.gerrit.AccountInfo\x12 \n\x03\x63\x63s\x18\x02 \x03(\x0b\x32\x13.gerrit.AccountInfo\x12$\n\x07removed\x18\x03 \x03(\x0b\x32\x13.gerrit.AccountInfo\"\xcd\x03\n\x0cRevisionInfo\x12\'\n\x04kind\x18\x01 \x01(\x0e\x32\x19.gerrit.RevisionInfo.Kind\x12\x0e\n\x06number\x18\x02 \x01(\x05\x12%\n\x08uploader\x18\x03 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12\x0b\n\x03ref\x18\x04 \x01(\t\x12+\n\x07\x63reated\x18\x07 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x13\n\x0b\x64\x65scription\x18\x08 \x01(\t\x12\"\n\x06\x63ommit\x18\x05 \x01(\x0b\x32\x12.gerrit.CommitInfo\x12.\n\x05\x66iles\x18\x06 \x03(\x0b\x32\x1f.gerrit.RevisionInfo.FilesEntry\x1a>\n\nFilesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x1f\n\x05value\x18\x02 \x01(\x0b\x32\x10.gerrit.FileInfo:\x02\x38\x01\"z\n\x04Kind\x12\x10\n\x0cKIND_INVALID\x10\x00\x12\n\n\x06REWORK\x10\x01\x12\x12\n\x0eTRIVIAL_REBASE\x10\x02\x12\x1d\n\x19MERGE_FIRST_PARENT_UPDATE\x10\x03\x12\x12\n\x0eNO_CODE_CHANGE\x10\x04\x12\r\n\tNO_CHANGE\x10\x05\"k\n\nCommitInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12*\n\x07parents\x18\x02 \x03(\x0b\x32\x19.gerrit.CommitInfo.Parent\x12\x0f\n\x07message\x18\x03 \x01(\t\x1a\x14\n\x06Parent\x12\n\n\x02id\x18\x01 \x01(\t\"\xf5\x02\n\tLabelInfo\x12\x10\n\x08optional\x18\x01 \x01(\x08\x12%\n\x08\x61pproved\x18\x02 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12%\n\x08rejected\x18\x03 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12(\n\x0brecommended\x18\x04 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12%\n\x08\x64isliked\x18\x05 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12\x10\n\x08\x62locking\x18\x06 \x01(\x08\x12\r\n\x05value\x18\x07 \x01(\x05\x12\x15\n\rdefault_value\x18\x08 \x01(\x05\x12!\n\x03\x61ll\x18\t \x03(\x0b\x32\x14.gerrit.ApprovalInfo\x12-\n\x06values\x18\n \x03(\x0b\x32\x1d.gerrit.LabelInfo.ValuesEntry\x1a-\n\x0bValuesEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xc5\x01\n\x0c\x41pprovalInfo\x12!\n\x04user\x18\x01 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12\r\n\x05value\x18\x02 \x01(\x05\x12\x37\n\x16permitted_voting_range\x18\x03 \x01(\x0b\x32\x17.gerrit.VotingRangeInfo\x12(\n\x04\x64\x61te\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0b\n\x03tag\x18\x05 \x01(\t\x12\x13\n\x0bpost_submit\x18\x06 \x01(\x08\"+\n\x0fVotingRangeInfo\x12\x0b\n\x03min\x18\x01 \x01(\x05\x12\x0b\n\x03max\x18\x02 \x01(\x05\"\xa9\x01\n\x11\x43hangeMessageInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12#\n\x06\x61uthor\x18\x02 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12(\n\x0breal_author\x18\x03 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12(\n\x04\x64\x61te\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0f\n\x07message\x18\x05 \x01(\t\"\xed\x01\n\x0bRequirement\x12*\n\x06status\x18\x01 \x01(\x0e\x32\x1a.gerrit.Requirement.Status\x12\x15\n\rfallback_text\x18\x02 \x01(\t\x12\x0c\n\x04type\x18\x03 \x01(\t\"\x8c\x01\n\x06Status\x12\"\n\x1eREQUIREMENT_STATUS_UNSPECIFIED\x10\x00\x12\x19\n\x15REQUIREMENT_STATUS_OK\x10\x01\x12 \n\x1cREQUIREMENT_STATUS_NOT_READY\x10\x02\x12!\n\x1dREQUIREMENT_STATUS_RULE_ERROR\x10\x03\"\xda\x01\n\x08\x46ileInfo\x12\'\n\x06status\x18\x01 \x01(\x0e\x32\x17.gerrit.FileInfo.Status\x12\x0e\n\x06\x62inary\x18\x02 \x01(\x08\x12\x10\n\x08old_path\x18\x03 \x01(\t\x12\x16\n\x0elines_inserted\x18\x04 \x01(\x05\x12\x15\n\rlines_deleted\x18\x05 \x01(\x05\x12\x12\n\nsize_delta\x18\x06 \x01(\x03\x12\x0c\n\x04size\x18\x07 \x01(\x03\"2\n\x06Status\x12\x05\n\x01M\x10\x00\x12\x05\n\x01\x41\x10\x01\x12\x05\n\x01\x44\x10\x02\x12\x05\n\x01R\x10\x03\x12\x05\n\x01\x43\x10\x04\x12\x05\n\x01W\x10\x05\"Y\n\x13\x43reateChangeRequest\x12\x0f\n\x07project\x18\x01 \x01(\t\x12\x0b\n\x03ref\x18\x02 \x01(\t\x12\x0f\n\x07subject\x18\x03 \x01(\t\x12\x13\n\x0b\x62\x61se_commit\x18\x04 \x01(\t\"6\n\x13SubmitChangeRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\"M\n\x15SubmitRevisionRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x13\n\x0brevision_id\x18\x02 \x01(\t\x12\x0f\n\x07project\x18\x05 \x01(\t\"2\n\nSubmitInfo\x12$\n\x06status\x18\x01 \x01(\x0e\x32\x14.gerrit.ChangeStatus\"c\n\x1c\x43hangeEditFileContentRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x11\n\tfile_path\x18\x03 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x04 \x01(\x0c\"R\n\x1c\x44\x65leteEditFileContentRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x11\n\tfile_path\x18\x03 \x01(\t\";\n\x18\x43hangeEditPublishRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\"H\n\x14\x41\x62\x61ndonChangeRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\"\x94\x02\n\x12\x41\x64\x64ReviewerRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x10\n\x08reviewer\x18\x03 \x01(\t\x12/\n\x05state\x18\x04 \x01(\x0e\x32 .gerrit.AddReviewerRequest.State\x12\x11\n\tconfirmed\x18\x05 \x01(\x08\x12\x1e\n\x06notify\x18\x06 \x01(\x0e\x32\x0e.gerrit.Notify\"g\n\x05State\x12\"\n\x1e\x41\x44\x44_REVIEWER_STATE_UNSPECIFIED\x10\x00\x12\x1f\n\x1b\x41\x44\x44_REVIEWER_STATE_REVIEWER\x10\x01\x12\x19\n\x15\x41\x44\x44_REVIEWER_STATE_CC\x10\x02\"\x9e\x01\n\x0cReviewerInfo\x12$\n\x07\x61\x63\x63ount\x18\x01 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12\x36\n\tapprovals\x18\x02 \x03(\x0b\x32#.gerrit.ReviewerInfo.ApprovalsEntry\x1a\x30\n\x0e\x41pprovalsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"\x8e\x01\n\x11\x41\x64\x64ReviewerResult\x12\r\n\x05input\x18\x01 \x01(\t\x12\'\n\treviewers\x18\x02 \x03(\x0b\x32\x14.gerrit.ReviewerInfo\x12!\n\x03\x63\x63s\x18\x03 \x03(\x0b\x32\x14.gerrit.ReviewerInfo\x12\r\n\x05\x65rror\x18\x04 \x01(\t\x12\x0f\n\x07\x63onfirm\x18\x05 \x01(\x08\"L\n\x15\x44\x65leteReviewerRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x12\n\naccount_id\x18\x03 \x01(\t\"\xfe\x03\n\x10SetReviewRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x13\n\x0brevision_id\x18\x03 \x01(\t\x12\x0f\n\x07message\x18\x04 \x01(\t\x12\x34\n\x06labels\x18\x05 \x03(\x0b\x32$.gerrit.SetReviewRequest.LabelsEntry\x12\x0b\n\x03tag\x18\x06 \x01(\t\x12\x1e\n\x06notify\x18\x07 \x01(\x0e\x32\x0e.gerrit.Notify\x12-\n\x0enotify_details\x18\x08 \x01(\x0b\x32\x15.gerrit.NotifyDetails\x12\x14\n\x0con_behalf_of\x18\t \x01(\x03\x12\r\n\x05ready\x18\n \x01(\x08\x12\x18\n\x10work_in_progress\x18\x0b \x01(\x08\x12\x37\n\x14\x61\x64\x64_to_attention_set\x18\x0c \x03(\x0b\x32\x19.gerrit.AttentionSetInput\x12<\n\x19remove_from_attention_set\x18\r \x03(\x0b\x32\x19.gerrit.AttentionSetInput\x12,\n$ignore_automatic_attention_set_rules\x18\x0e \x01(\x08\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"o\n\x0cReviewResult\x12\x30\n\x06labels\x18\x01 \x03(\x0b\x32 .gerrit.ReviewResult.LabelsEntry\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"`\n\x13\x41ttentionSetRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12(\n\x05input\x18\x06 \x01(\x0b\x32\x19.gerrit.AttentionSetInput\"\x80\x01\n\x11\x41ttentionSetInput\x12\x0c\n\x04user\x18\x01 \x01(\t\x12\x0e\n\x06reason\x18\x02 \x01(\t\x12\x1e\n\x06notify\x18\x03 \x01(\x0e\x32\x0e.gerrit.Notify\x12-\n\x0enotify_details\x18\x04 \x01(\x0b\x32\x15.gerrit.NotifyDetails\"\x88\x01\n\x13GetMergeableRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x13\n\x0brevision_id\x18\x03 \x01(\t\x12\x0e\n\x06source\x18\x04 \x01(\t\x12+\n\x08strategy\x18\x05 \x01(\x0e\x32\x19.gerrit.MergeableStrategy\"\x8a\x03\n\rMergeableInfo\x12\x35\n\x0bsubmit_type\x18\x01 \x01(\x0e\x32 .gerrit.MergeableInfo.SubmitType\x12+\n\x08strategy\x18\x02 \x01(\x0e\x32\x19.gerrit.MergeableStrategy\x12\x11\n\tmergeable\x18\x03 \x01(\x08\x12\x15\n\rcommit_merged\x18\x04 \x01(\x08\x12\x16\n\x0e\x63ontent_merged\x18\x05 \x01(\x08\x12\x11\n\tconflicts\x18\x06 \x03(\t\x12\x16\n\x0emergeable_into\x18\x07 \x03(\t\"\xa7\x01\n\nSubmitType\x12\x1b\n\x17SUBMIT_TYPE_UNSPECIFIED\x10\x00\x12\x16\n\x12MERGE_IF_NECESSARY\x10\x01\x12\x15\n\x11\x46\x41ST_FORWARD_ONLY\x10\x02\x12\x17\n\x13REBASE_IF_NECESSARY\x10\x03\x12\x11\n\rREBASE_ALWAYS\x10\x04\x12\x10\n\x0cMERGE_ALWAYS\x10\x05\x12\x0f\n\x0b\x43HERRY_PICK\x10\x06\"\x7f\n\x10ListFilesRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x13\n\x0brevision_id\x18\x03 \x01(\t\x12\x17\n\x0fsubstring_query\x18\x04 \x01(\t\x12\x0e\n\x06parent\x18\x05 \x01(\x03\x12\x0c\n\x04\x62\x61se\x18\x06 \x01(\t\"\x88\x01\n\x11ListFilesResponse\x12\x33\n\x05\x66iles\x18\x01 \x03(\x0b\x32$.gerrit.ListFilesResponse.FilesEntry\x1a>\n\nFilesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x1f\n\x05value\x18\x02 \x01(\x0b\x32\x10.gerrit.FileInfo:\x02\x38\x01\"P\n\x18GetRelatedChangesRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x13\n\x0brevision_id\x18\x03 \x01(\t\"\xe4\x01\n\x19GetRelatedChangesResponse\x12\x42\n\x07\x63hanges\x18\x01 \x03(\x0b\x32\x31.gerrit.GetRelatedChangesResponse.ChangeAndCommit\x1a\x82\x01\n\x0f\x43hangeAndCommit\x12\x0f\n\x07project\x18\x01 \x01(\t\x12\"\n\x06\x63ommit\x18\x02 \x01(\x0b\x32\x12.gerrit.CommitInfo\x12\x0e\n\x06number\x18\x03 \x01(\x03\x12\x10\n\x08patchset\x18\x04 \x01(\x03\x12\x18\n\x10\x63urrent_patchset\x18\x05 \x01(\x03\"#\n\x13ListProjectsRequest\x12\x0c\n\x04refs\x18\x01 \x03(\t\";\n\x0bWebLinkInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0b\n\x03url\x18\x02 \x01(\t\x12\x11\n\timage_url\x18\x03 \x01(\t\"\xe5\x02\n\x0bProjectInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06parent\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12(\n\x05state\x18\x04 \x01(\x0e\x32\x19.gerrit.ProjectInfo.State\x12+\n\x04refs\x18\x05 \x03(\x0b\x32\x1d.gerrit.ProjectInfo.RefsEntry\x12&\n\tweb_links\x18\x06 \x03(\x0b\x32\x13.gerrit.WebLinkInfo\x1a+\n\tRefsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"w\n\x05State\x12\x1d\n\x19PROJECT_STATE_UNSPECIFIED\x10\x00\x12\x18\n\x14PROJECT_STATE_ACTIVE\x10\x01\x12\x1b\n\x17PROJECT_STATE_READ_ONLY\x10\x02\x12\x18\n\x14PROJECT_STATE_HIDDEN\x10\x03\"\x9a\x01\n\x14ListProjectsResponse\x12<\n\x08Projects\x18\x01 \x03(\x0b\x32*.gerrit.ListProjectsResponse.ProjectsEntry\x1a\x44\n\rProjectsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\"\n\x05value\x18\x02 \x01(\x0b\x32\x13.gerrit.ProjectInfo:\x02\x38\x01\".\n\x0eRefInfoRequest\x12\x0f\n\x07project\x18\x01 \x01(\t\x12\x0b\n\x03ref\x18\x02 \x01(\t\"(\n\x07RefInfo\x12\x0b\n\x03ref\x18\x01 \x01(\t\x12\x10\n\x08revision\x18\x02 \x01(\t\"5\n\x0e\x41\x63\x63ountOptions\x12\x0f\n\x07\x64\x65tails\x18\x01 \x01(\x08\x12\x12\n\nall_emails\x18\x02 \x01(\x08\"l\n\x15ListFileOwnersRequest\x12\x0f\n\x07project\x18\x01 \x01(\t\x12\x0b\n\x03ref\x18\x02 \x01(\t\x12\x0c\n\x04path\x18\x03 \x01(\t\x12\'\n\x07options\x18\x04 \x01(\x0b\x32\x16.gerrit.AccountOptions\"1\n\tOwnerInfo\x12$\n\x07\x61\x63\x63ount\x18\x01 \x01(\x0b\x32\x13.gerrit.AccountInfo\"7\n\x12ListOwnersResponse\x12!\n\x06owners\x18\x01 \x03(\x0b\x32\x11.gerrit.OwnerInfo\"7\n\x14GetPureRevertRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\"(\n\x0ePureRevertInfo\x12\x16\n\x0eis_pure_revert\x18\x01 \x01(\x08*\xd3\x03\n\x0bQueryOption\x12\x16\n\x12OPTION_UNSPECIFIED\x10\x00\x12\n\n\x06LABELS\x10\x01\x12\x13\n\x0f\x44\x45TAILED_LABELS\x10\x02\x12\x14\n\x10\x43URRENT_REVISION\x10\x04\x12\x11\n\rALL_REVISIONS\x10\x08\x12\x12\n\x0e\x43URRENT_COMMIT\x10\x10\x12\x0f\n\x0b\x41LL_COMMITS\x10 \x12\x11\n\rCURRENT_FILES\x10@\x12\x0e\n\tALL_FILES\x10\x80\x01\x12\x16\n\x11\x44\x45TAILED_ACCOUNTS\x10\x80\x02\x12\x15\n\x10REVIEWER_UPDATES\x10\x80\x04\x12\r\n\x08MESSAGES\x10\x80\x08\x12\x14\n\x0f\x43URRENT_ACTIONS\x10\x80\x10\x12\x13\n\x0e\x43HANGE_ACTIONS\x10\x80 \x12\r\n\x08REVIEWED\x10\x80@\x12\x14\n\x0eSKIP_MERGEABLE\x10\x80\x80\x01\x12\x11\n\x0bSUBMITTABLE\x10\x80\x80\x02\x12\x0f\n\tWEB_LINKS\x10\x80\x80\x04\x12\x0b\n\x05\x43HECK\x10\x80\x80\x08\x12\x14\n\x0e\x43OMMIT_FOOTERS\x10\x80\x80\x10\x12\x17\n\x11PUSH_CERTIFICATES\x10\x80\x80 \x12\x12\n\x0cTRACKING_IDS\x10\x80\x80@\x12\x18\n\x11\x44OWNLOAD_COMMANDS\x10\x80\x80\x80\x01*o\n\x06Notify\x12\x16\n\x12NOTIFY_UNSPECIFIED\x10\x00\x12\x0f\n\x0bNOTIFY_NONE\x10\x01\x12\x10\n\x0cNOTIFY_OWNER\x10\x02\x12\x1a\n\x16NOTIFY_OWNER_REVIEWERS\x10\x03\x12\x0e\n\nNOTIFY_ALL\x10\x04*M\n\x0c\x43hangeStatus\x12\x19\n\x15\x43HANGE_STATUS_INVALID\x10\x00\x12\x07\n\x03NEW\x10\x01\x12\n\n\x06MERGED\x10\x02\x12\r\n\tABANDONED\x10\x03*\x85\x01\n\x11MergeableStrategy\x12\"\n\x1eMERGEABLE_STRATEGY_UNSPECIFIED\x10\x00\x12\r\n\tRECURSIVE\x10\x01\x12\x0b\n\x07RESOLVE\x10\x02\x12\x1a\n\x16SIMPLE_TWO_WAY_IN_CORE\x10\x03\x12\x08\n\x04OURS\x10\x04\x12\n\n\x06THEIRS\x10\x05\x32\x9b\x0b\n\x06Gerrit\x12I\n\x0cListProjects\x12\x1b.gerrit.ListProjectsRequest\x1a\x1c.gerrit.ListProjectsResponse\x12\x35\n\nGetRefInfo\x12\x16.gerrit.RefInfoRequest\x1a\x0f.gerrit.RefInfo\x12K\n\x0eListFileOwners\x12\x1d.gerrit.ListFileOwnersRequest\x1a\x1a.gerrit.ListOwnersResponse\x12\x46\n\x0bListChanges\x12\x1a.gerrit.ListChangesRequest\x1a\x1b.gerrit.ListChangesResponse\x12\x39\n\tGetChange\x12\x18.gerrit.GetChangeRequest\x1a\x12.gerrit.ChangeInfo\x12\x42\n\x0cGetMergeable\x12\x1b.gerrit.GetMergeableRequest\x1a\x15.gerrit.MergeableInfo\x12@\n\tListFiles\x12\x18.gerrit.ListFilesRequest\x1a\x19.gerrit.ListFilesResponse\x12X\n\x11GetRelatedChanges\x12 .gerrit.GetRelatedChangesRequest\x1a!.gerrit.GetRelatedChangesResponse\x12\x45\n\rGetPureRevert\x12\x1c.gerrit.GetPureRevertRequest\x1a\x16.gerrit.PureRevertInfo\x12?\n\x0c\x43reateChange\x12\x1b.gerrit.CreateChangeRequest\x1a\x12.gerrit.ChangeInfo\x12U\n\x15\x43hangeEditFileContent\x12$.gerrit.ChangeEditFileContentRequest\x1a\x16.google.protobuf.Empty\x12U\n\x15\x44\x65leteEditFileContent\x12$.gerrit.DeleteEditFileContentRequest\x1a\x16.google.protobuf.Empty\x12M\n\x11\x43hangeEditPublish\x12 .gerrit.ChangeEditPublishRequest\x1a\x16.google.protobuf.Empty\x12\x44\n\x0b\x41\x64\x64Reviewer\x12\x1a.gerrit.AddReviewerRequest\x1a\x19.gerrit.AddReviewerResult\x12G\n\x0e\x44\x65leteReviewer\x12\x1d.gerrit.DeleteReviewerRequest\x1a\x16.google.protobuf.Empty\x12;\n\tSetReview\x12\x18.gerrit.SetReviewRequest\x1a\x14.gerrit.ReviewResult\x12\x45\n\x11\x41\x64\x64ToAttentionSet\x12\x1b.gerrit.AttentionSetRequest\x1a\x13.gerrit.AccountInfo\x12?\n\x0cSubmitChange\x12\x1b.gerrit.SubmitChangeRequest\x1a\x12.gerrit.ChangeInfo\x12\x41\n\rAbandonChange\x12\x1c.gerrit.AbandonChangeRequest\x1a\x12.gerrit.ChangeInfo\x12\x43\n\x0eSubmitRevision\x12\x1d.gerrit.SubmitRevisionRequest\x1a\x12.gerrit.SubmitInfoB1Z/go.chromium.org/luci/common/proto/gerrit;gerritb\x06proto3'
+  serialized_pb=b'\n5go.chromium.org/luci/common/proto/gerrit/gerrit.proto\x12\x06gerrit\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc9\x02\n\rNotifyDetails\x12\x33\n\nrecipients\x18\x01 \x03(\x0b\x32\x1f.gerrit.NotifyDetails.Recipient\x1a\x18\n\x04Info\x12\x10\n\x08\x61\x63\x63ounts\x18\x01 \x03(\x03\x1ar\n\tRecipient\x12;\n\x0erecipient_type\x18\x01 \x01(\x0e\x32#.gerrit.NotifyDetails.RecipientType\x12(\n\x04info\x18\x02 \x01(\x0b\x32\x1a.gerrit.NotifyDetails.Info\"u\n\rRecipientType\x12\x1e\n\x1aRECIPIENT_TYPE_UNSPECIFIED\x10\x00\x12\x15\n\x11RECIPIENT_TYPE_TO\x10\x01\x12\x15\n\x11RECIPIENT_TYPE_CC\x10\x02\x12\x16\n\x12RECIPIENT_TYPE_BCC\x10\x03\"h\n\x12ListChangesRequest\x12\r\n\x05query\x18\x01 \x01(\t\x12$\n\x07options\x18\x02 \x03(\x0e\x32\x13.gerrit.QueryOption\x12\r\n\x05limit\x18\x03 \x01(\x03\x12\x0e\n\x06offset\x18\x04 \x01(\x03\"P\n\x13ListChangesResponse\x12#\n\x07\x63hanges\x18\x01 \x03(\x0b\x32\x12.gerrit.ChangeInfo\x12\x14\n\x0cmore_changes\x18\x02 \x01(\x08\"Y\n\x10GetChangeRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x03 \x01(\t\x12$\n\x07options\x18\x02 \x03(\x0e\x32\x13.gerrit.QueryOption\"j\n\x0b\x41\x63\x63ountInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05\x65mail\x18\x02 \x01(\t\x12\x18\n\x10secondary_emails\x18\x03 \x03(\t\x12\x10\n\x08username\x18\x04 \x01(\t\x12\x12\n\naccount_id\x18\x05 \x01(\x03\"\xee\x05\n\nChangeInfo\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\"\n\x05owner\x18\x02 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12\x0f\n\x07project\x18\x03 \x01(\t\x12\x0b\n\x03ref\x18\x04 \x01(\t\x12$\n\x06status\x18\x05 \x01(\x0e\x32\x14.gerrit.ChangeStatus\x12\x18\n\x10\x63urrent_revision\x18\x06 \x01(\t\x12\x34\n\trevisions\x18\x07 \x03(\x0b\x32!.gerrit.ChangeInfo.RevisionsEntry\x12.\n\x06labels\x18\x08 \x03(\x0b\x32\x1e.gerrit.ChangeInfo.LabelsEntry\x12+\n\x08messages\x18\t \x03(\x0b\x32\x19.gerrit.ChangeMessageInfo\x12)\n\x0crequirements\x18\x0e \x03(\x0b\x32\x13.gerrit.Requirement\x12\x13\n\x0bsubmittable\x18\n \x01(\x08\x12\x12\n\nis_private\x18\r \x01(\x08\x12\x10\n\x08hashtags\x18\x13 \x03(\t\x12+\n\x07\x63reated\x18\x0b \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12+\n\x07updated\x18\x0c \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x11\n\trevert_of\x18\x0f \x01(\x03\x12\x1d\n\x15\x63herry_pick_of_change\x18\x10 \x01(\x03\x12,\n\treviewers\x18\x11 \x01(\x0b\x32\x19.gerrit.ReviewerStatusMap\x12\x11\n\tmetaRevID\x18\x12 \x01(\t\x1a\x46\n\x0eRevisionsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12#\n\x05value\x18\x02 \x01(\x0b\x32\x14.gerrit.RevisionInfo:\x02\x38\x01\x1a@\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12 \n\x05value\x18\x02 \x01(\x0b\x32\x11.gerrit.LabelInfo:\x02\x38\x01\"\x83\x01\n\x11ReviewerStatusMap\x12&\n\treviewers\x18\x01 \x03(\x0b\x32\x13.gerrit.AccountInfo\x12 \n\x03\x63\x63s\x18\x02 \x03(\x0b\x32\x13.gerrit.AccountInfo\x12$\n\x07removed\x18\x03 \x03(\x0b\x32\x13.gerrit.AccountInfo\"\xcd\x03\n\x0cRevisionInfo\x12\'\n\x04kind\x18\x01 \x01(\x0e\x32\x19.gerrit.RevisionInfo.Kind\x12\x0e\n\x06number\x18\x02 \x01(\x05\x12%\n\x08uploader\x18\x03 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12\x0b\n\x03ref\x18\x04 \x01(\t\x12+\n\x07\x63reated\x18\x07 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x13\n\x0b\x64\x65scription\x18\x08 \x01(\t\x12\"\n\x06\x63ommit\x18\x05 \x01(\x0b\x32\x12.gerrit.CommitInfo\x12.\n\x05\x66iles\x18\x06 \x03(\x0b\x32\x1f.gerrit.RevisionInfo.FilesEntry\x1a>\n\nFilesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x1f\n\x05value\x18\x02 \x01(\x0b\x32\x10.gerrit.FileInfo:\x02\x38\x01\"z\n\x04Kind\x12\x10\n\x0cKIND_INVALID\x10\x00\x12\n\n\x06REWORK\x10\x01\x12\x12\n\x0eTRIVIAL_REBASE\x10\x02\x12\x1d\n\x19MERGE_FIRST_PARENT_UPDATE\x10\x03\x12\x12\n\x0eNO_CODE_CHANGE\x10\x04\x12\r\n\tNO_CHANGE\x10\x05\"k\n\nCommitInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12*\n\x07parents\x18\x02 \x03(\x0b\x32\x19.gerrit.CommitInfo.Parent\x12\x0f\n\x07message\x18\x03 \x01(\t\x1a\x14\n\x06Parent\x12\n\n\x02id\x18\x01 \x01(\t\"\xf5\x02\n\tLabelInfo\x12\x10\n\x08optional\x18\x01 \x01(\x08\x12%\n\x08\x61pproved\x18\x02 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12%\n\x08rejected\x18\x03 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12(\n\x0brecommended\x18\x04 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12%\n\x08\x64isliked\x18\x05 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12\x10\n\x08\x62locking\x18\x06 \x01(\x08\x12\r\n\x05value\x18\x07 \x01(\x05\x12\x15\n\rdefault_value\x18\x08 \x01(\x05\x12!\n\x03\x61ll\x18\t \x03(\x0b\x32\x14.gerrit.ApprovalInfo\x12-\n\x06values\x18\n \x03(\x0b\x32\x1d.gerrit.LabelInfo.ValuesEntry\x1a-\n\x0bValuesEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xc5\x01\n\x0c\x41pprovalInfo\x12!\n\x04user\x18\x01 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12\r\n\x05value\x18\x02 \x01(\x05\x12\x37\n\x16permitted_voting_range\x18\x03 \x01(\x0b\x32\x17.gerrit.VotingRangeInfo\x12(\n\x04\x64\x61te\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0b\n\x03tag\x18\x05 \x01(\t\x12\x13\n\x0bpost_submit\x18\x06 \x01(\x08\"+\n\x0fVotingRangeInfo\x12\x0b\n\x03min\x18\x01 \x01(\x05\x12\x0b\n\x03max\x18\x02 \x01(\x05\"\xa9\x01\n\x11\x43hangeMessageInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12#\n\x06\x61uthor\x18\x02 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12(\n\x0breal_author\x18\x03 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12(\n\x04\x64\x61te\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0f\n\x07message\x18\x05 \x01(\t\"\xed\x01\n\x0bRequirement\x12*\n\x06status\x18\x01 \x01(\x0e\x32\x1a.gerrit.Requirement.Status\x12\x15\n\rfallback_text\x18\x02 \x01(\t\x12\x0c\n\x04type\x18\x03 \x01(\t\"\x8c\x01\n\x06Status\x12\"\n\x1eREQUIREMENT_STATUS_UNSPECIFIED\x10\x00\x12\x19\n\x15REQUIREMENT_STATUS_OK\x10\x01\x12 \n\x1cREQUIREMENT_STATUS_NOT_READY\x10\x02\x12!\n\x1dREQUIREMENT_STATUS_RULE_ERROR\x10\x03\"\xda\x01\n\x08\x46ileInfo\x12\'\n\x06status\x18\x01 \x01(\x0e\x32\x17.gerrit.FileInfo.Status\x12\x0e\n\x06\x62inary\x18\x02 \x01(\x08\x12\x10\n\x08old_path\x18\x03 \x01(\t\x12\x16\n\x0elines_inserted\x18\x04 \x01(\x05\x12\x15\n\rlines_deleted\x18\x05 \x01(\x05\x12\x12\n\nsize_delta\x18\x06 \x01(\x03\x12\x0c\n\x04size\x18\x07 \x01(\x03\"2\n\x06Status\x12\x05\n\x01M\x10\x00\x12\x05\n\x01\x41\x10\x01\x12\x05\n\x01\x44\x10\x02\x12\x05\n\x01R\x10\x03\x12\x05\n\x01\x43\x10\x04\x12\x05\n\x01W\x10\x05\"Y\n\x13\x43reateChangeRequest\x12\x0f\n\x07project\x18\x01 \x01(\t\x12\x0b\n\x03ref\x18\x02 \x01(\t\x12\x0f\n\x07subject\x18\x03 \x01(\t\x12\x13\n\x0b\x62\x61se_commit\x18\x04 \x01(\t\"6\n\x13SubmitChangeRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\"M\n\x15SubmitRevisionRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x13\n\x0brevision_id\x18\x02 \x01(\t\x12\x0f\n\x07project\x18\x05 \x01(\t\"2\n\nSubmitInfo\x12$\n\x06status\x18\x01 \x01(\x0e\x32\x14.gerrit.ChangeStatus\"c\n\x1c\x43hangeEditFileContentRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x11\n\tfile_path\x18\x03 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x04 \x01(\x0c\"R\n\x1c\x44\x65leteEditFileContentRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x11\n\tfile_path\x18\x03 \x01(\t\";\n\x18\x43hangeEditPublishRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\"H\n\x14\x41\x62\x61ndonChangeRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\"\x94\x02\n\x12\x41\x64\x64ReviewerRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x10\n\x08reviewer\x18\x03 \x01(\t\x12/\n\x05state\x18\x04 \x01(\x0e\x32 .gerrit.AddReviewerRequest.State\x12\x11\n\tconfirmed\x18\x05 \x01(\x08\x12\x1e\n\x06notify\x18\x06 \x01(\x0e\x32\x0e.gerrit.Notify\"g\n\x05State\x12\"\n\x1e\x41\x44\x44_REVIEWER_STATE_UNSPECIFIED\x10\x00\x12\x1f\n\x1b\x41\x44\x44_REVIEWER_STATE_REVIEWER\x10\x01\x12\x19\n\x15\x41\x44\x44_REVIEWER_STATE_CC\x10\x02\"\x9e\x01\n\x0cReviewerInfo\x12$\n\x07\x61\x63\x63ount\x18\x01 \x01(\x0b\x32\x13.gerrit.AccountInfo\x12\x36\n\tapprovals\x18\x02 \x03(\x0b\x32#.gerrit.ReviewerInfo.ApprovalsEntry\x1a\x30\n\x0e\x41pprovalsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"\x8e\x01\n\x11\x41\x64\x64ReviewerResult\x12\r\n\x05input\x18\x01 \x01(\t\x12\'\n\treviewers\x18\x02 \x03(\x0b\x32\x14.gerrit.ReviewerInfo\x12!\n\x03\x63\x63s\x18\x03 \x03(\x0b\x32\x14.gerrit.ReviewerInfo\x12\r\n\x05\x65rror\x18\x04 \x01(\t\x12\x0f\n\x07\x63onfirm\x18\x05 \x01(\x08\"L\n\x15\x44\x65leteReviewerRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x12\n\naccount_id\x18\x03 \x01(\t\"\xfe\x03\n\x10SetReviewRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x13\n\x0brevision_id\x18\x03 \x01(\t\x12\x0f\n\x07message\x18\x04 \x01(\t\x12\x34\n\x06labels\x18\x05 \x03(\x0b\x32$.gerrit.SetReviewRequest.LabelsEntry\x12\x0b\n\x03tag\x18\x06 \x01(\t\x12\x1e\n\x06notify\x18\x07 \x01(\x0e\x32\x0e.gerrit.Notify\x12-\n\x0enotify_details\x18\x08 \x01(\x0b\x32\x15.gerrit.NotifyDetails\x12\x14\n\x0con_behalf_of\x18\t \x01(\x03\x12\r\n\x05ready\x18\n \x01(\x08\x12\x18\n\x10work_in_progress\x18\x0b \x01(\x08\x12\x37\n\x14\x61\x64\x64_to_attention_set\x18\x0c \x03(\x0b\x32\x19.gerrit.AttentionSetInput\x12<\n\x19remove_from_attention_set\x18\r \x03(\x0b\x32\x19.gerrit.AttentionSetInput\x12,\n$ignore_automatic_attention_set_rules\x18\x0e \x01(\x08\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"o\n\x0cReviewResult\x12\x30\n\x06labels\x18\x01 \x03(\x0b\x32 .gerrit.ReviewResult.LabelsEntry\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"`\n\x13\x41ttentionSetRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12(\n\x05input\x18\x06 \x01(\x0b\x32\x19.gerrit.AttentionSetInput\"\x80\x01\n\x11\x41ttentionSetInput\x12\x0c\n\x04user\x18\x01 \x01(\t\x12\x0e\n\x06reason\x18\x02 \x01(\t\x12\x1e\n\x06notify\x18\x03 \x01(\x0e\x32\x0e.gerrit.Notify\x12-\n\x0enotify_details\x18\x04 \x01(\x0b\x32\x15.gerrit.NotifyDetails\"\x88\x01\n\x13GetMergeableRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x13\n\x0brevision_id\x18\x03 \x01(\t\x12\x0e\n\x06source\x18\x04 \x01(\t\x12+\n\x08strategy\x18\x05 \x01(\x0e\x32\x19.gerrit.MergeableStrategy\"\x8a\x03\n\rMergeableInfo\x12\x35\n\x0bsubmit_type\x18\x01 \x01(\x0e\x32 .gerrit.MergeableInfo.SubmitType\x12+\n\x08strategy\x18\x02 \x01(\x0e\x32\x19.gerrit.MergeableStrategy\x12\x11\n\tmergeable\x18\x03 \x01(\x08\x12\x15\n\rcommit_merged\x18\x04 \x01(\x08\x12\x16\n\x0e\x63ontent_merged\x18\x05 \x01(\x08\x12\x11\n\tconflicts\x18\x06 \x03(\t\x12\x16\n\x0emergeable_into\x18\x07 \x03(\t\"\xa7\x01\n\nSubmitType\x12\x1b\n\x17SUBMIT_TYPE_UNSPECIFIED\x10\x00\x12\x16\n\x12MERGE_IF_NECESSARY\x10\x01\x12\x15\n\x11\x46\x41ST_FORWARD_ONLY\x10\x02\x12\x17\n\x13REBASE_IF_NECESSARY\x10\x03\x12\x11\n\rREBASE_ALWAYS\x10\x04\x12\x10\n\x0cMERGE_ALWAYS\x10\x05\x12\x0f\n\x0b\x43HERRY_PICK\x10\x06\"\x7f\n\x10ListFilesRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x13\n\x0brevision_id\x18\x03 \x01(\t\x12\x17\n\x0fsubstring_query\x18\x04 \x01(\t\x12\x0e\n\x06parent\x18\x05 \x01(\x03\x12\x0c\n\x04\x62\x61se\x18\x06 \x01(\t\"\x88\x01\n\x11ListFilesResponse\x12\x33\n\x05\x66iles\x18\x01 \x03(\x0b\x32$.gerrit.ListFilesResponse.FilesEntry\x1a>\n\nFilesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x1f\n\x05value\x18\x02 \x01(\x0b\x32\x10.gerrit.FileInfo:\x02\x38\x01\"P\n\x18GetRelatedChangesRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x13\n\x0brevision_id\x18\x03 \x01(\t\"\xe4\x01\n\x19GetRelatedChangesResponse\x12\x42\n\x07\x63hanges\x18\x01 \x03(\x0b\x32\x31.gerrit.GetRelatedChangesResponse.ChangeAndCommit\x1a\x82\x01\n\x0f\x43hangeAndCommit\x12\x0f\n\x07project\x18\x01 \x01(\t\x12\"\n\x06\x63ommit\x18\x02 \x01(\x0b\x32\x12.gerrit.CommitInfo\x12\x0e\n\x06number\x18\x03 \x01(\x03\x12\x10\n\x08patchset\x18\x04 \x01(\x03\x12\x18\n\x10\x63urrent_patchset\x18\x05 \x01(\x03\"#\n\x13ListProjectsRequest\x12\x0c\n\x04refs\x18\x01 \x03(\t\";\n\x0bWebLinkInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0b\n\x03url\x18\x02 \x01(\t\x12\x11\n\timage_url\x18\x03 \x01(\t\"\xe5\x02\n\x0bProjectInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06parent\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12(\n\x05state\x18\x04 \x01(\x0e\x32\x19.gerrit.ProjectInfo.State\x12+\n\x04refs\x18\x05 \x03(\x0b\x32\x1d.gerrit.ProjectInfo.RefsEntry\x12&\n\tweb_links\x18\x06 \x03(\x0b\x32\x13.gerrit.WebLinkInfo\x1a+\n\tRefsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"w\n\x05State\x12\x1d\n\x19PROJECT_STATE_UNSPECIFIED\x10\x00\x12\x18\n\x14PROJECT_STATE_ACTIVE\x10\x01\x12\x1b\n\x17PROJECT_STATE_READ_ONLY\x10\x02\x12\x18\n\x14PROJECT_STATE_HIDDEN\x10\x03\"\x9a\x01\n\x14ListProjectsResponse\x12<\n\x08Projects\x18\x01 \x03(\x0b\x32*.gerrit.ListProjectsResponse.ProjectsEntry\x1a\x44\n\rProjectsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\"\n\x05value\x18\x02 \x01(\x0b\x32\x13.gerrit.ProjectInfo:\x02\x38\x01\".\n\x0eRefInfoRequest\x12\x0f\n\x07project\x18\x01 \x01(\t\x12\x0b\n\x03ref\x18\x02 \x01(\t\"(\n\x07RefInfo\x12\x0b\n\x03ref\x18\x01 \x01(\t\x12\x10\n\x08revision\x18\x02 \x01(\t\"5\n\x0e\x41\x63\x63ountOptions\x12\x0f\n\x07\x64\x65tails\x18\x01 \x01(\x08\x12\x12\n\nall_emails\x18\x02 \x01(\x08\"l\n\x15ListFileOwnersRequest\x12\x0f\n\x07project\x18\x01 \x01(\t\x12\x0b\n\x03ref\x18\x02 \x01(\t\x12\x0c\n\x04path\x18\x03 \x01(\t\x12\'\n\x07options\x18\x04 \x01(\x0b\x32\x16.gerrit.AccountOptions\"1\n\tOwnerInfo\x12$\n\x07\x61\x63\x63ount\x18\x01 \x01(\x0b\x32\x13.gerrit.AccountInfo\"7\n\x12ListOwnersResponse\x12!\n\x06owners\x18\x01 \x03(\x0b\x32\x11.gerrit.OwnerInfo\"7\n\x14GetPureRevertRequest\x12\x0e\n\x06number\x18\x01 \x01(\x03\x12\x0f\n\x07project\x18\x02 \x01(\t\"(\n\x0ePureRevertInfo\x12\x16\n\x0eis_pure_revert\x18\x01 \x01(\x08*\xd3\x03\n\x0bQueryOption\x12\x16\n\x12OPTION_UNSPECIFIED\x10\x00\x12\n\n\x06LABELS\x10\x01\x12\x13\n\x0f\x44\x45TAILED_LABELS\x10\x02\x12\x14\n\x10\x43URRENT_REVISION\x10\x04\x12\x11\n\rALL_REVISIONS\x10\x08\x12\x12\n\x0e\x43URRENT_COMMIT\x10\x10\x12\x0f\n\x0b\x41LL_COMMITS\x10 \x12\x11\n\rCURRENT_FILES\x10@\x12\x0e\n\tALL_FILES\x10\x80\x01\x12\x16\n\x11\x44\x45TAILED_ACCOUNTS\x10\x80\x02\x12\x15\n\x10REVIEWER_UPDATES\x10\x80\x04\x12\r\n\x08MESSAGES\x10\x80\x08\x12\x14\n\x0f\x43URRENT_ACTIONS\x10\x80\x10\x12\x13\n\x0e\x43HANGE_ACTIONS\x10\x80 \x12\r\n\x08REVIEWED\x10\x80@\x12\x14\n\x0eSKIP_MERGEABLE\x10\x80\x80\x01\x12\x11\n\x0bSUBMITTABLE\x10\x80\x80\x02\x12\x0f\n\tWEB_LINKS\x10\x80\x80\x04\x12\x0b\n\x05\x43HECK\x10\x80\x80\x08\x12\x14\n\x0e\x43OMMIT_FOOTERS\x10\x80\x80\x10\x12\x17\n\x11PUSH_CERTIFICATES\x10\x80\x80 \x12\x12\n\x0cTRACKING_IDS\x10\x80\x80@\x12\x18\n\x11\x44OWNLOAD_COMMANDS\x10\x80\x80\x80\x01*o\n\x06Notify\x12\x16\n\x12NOTIFY_UNSPECIFIED\x10\x00\x12\x0f\n\x0bNOTIFY_NONE\x10\x01\x12\x10\n\x0cNOTIFY_OWNER\x10\x02\x12\x1a\n\x16NOTIFY_OWNER_REVIEWERS\x10\x03\x12\x0e\n\nNOTIFY_ALL\x10\x04*M\n\x0c\x43hangeStatus\x12\x19\n\x15\x43HANGE_STATUS_INVALID\x10\x00\x12\x07\n\x03NEW\x10\x01\x12\n\n\x06MERGED\x10\x02\x12\r\n\tABANDONED\x10\x03*\x85\x01\n\x11MergeableStrategy\x12\"\n\x1eMERGEABLE_STRATEGY_UNSPECIFIED\x10\x00\x12\r\n\tRECURSIVE\x10\x01\x12\x0b\n\x07RESOLVE\x10\x02\x12\x1a\n\x16SIMPLE_TWO_WAY_IN_CORE\x10\x03\x12\x08\n\x04OURS\x10\x04\x12\n\n\x06THEIRS\x10\x05\x32\x9b\x0b\n\x06Gerrit\x12I\n\x0cListProjects\x12\x1b.gerrit.ListProjectsRequest\x1a\x1c.gerrit.ListProjectsResponse\x12\x35\n\nGetRefInfo\x12\x16.gerrit.RefInfoRequest\x1a\x0f.gerrit.RefInfo\x12K\n\x0eListFileOwners\x12\x1d.gerrit.ListFileOwnersRequest\x1a\x1a.gerrit.ListOwnersResponse\x12\x46\n\x0bListChanges\x12\x1a.gerrit.ListChangesRequest\x1a\x1b.gerrit.ListChangesResponse\x12\x39\n\tGetChange\x12\x18.gerrit.GetChangeRequest\x1a\x12.gerrit.ChangeInfo\x12\x42\n\x0cGetMergeable\x12\x1b.gerrit.GetMergeableRequest\x1a\x15.gerrit.MergeableInfo\x12@\n\tListFiles\x12\x18.gerrit.ListFilesRequest\x1a\x19.gerrit.ListFilesResponse\x12X\n\x11GetRelatedChanges\x12 .gerrit.GetRelatedChangesRequest\x1a!.gerrit.GetRelatedChangesResponse\x12\x45\n\rGetPureRevert\x12\x1c.gerrit.GetPureRevertRequest\x1a\x16.gerrit.PureRevertInfo\x12?\n\x0c\x43reateChange\x12\x1b.gerrit.CreateChangeRequest\x1a\x12.gerrit.ChangeInfo\x12U\n\x15\x43hangeEditFileContent\x12$.gerrit.ChangeEditFileContentRequest\x1a\x16.google.protobuf.Empty\x12U\n\x15\x44\x65leteEditFileContent\x12$.gerrit.DeleteEditFileContentRequest\x1a\x16.google.protobuf.Empty\x12M\n\x11\x43hangeEditPublish\x12 .gerrit.ChangeEditPublishRequest\x1a\x16.google.protobuf.Empty\x12\x44\n\x0b\x41\x64\x64Reviewer\x12\x1a.gerrit.AddReviewerRequest\x1a\x19.gerrit.AddReviewerResult\x12G\n\x0e\x44\x65leteReviewer\x12\x1d.gerrit.DeleteReviewerRequest\x1a\x16.google.protobuf.Empty\x12;\n\tSetReview\x12\x18.gerrit.SetReviewRequest\x1a\x14.gerrit.ReviewResult\x12\x45\n\x11\x41\x64\x64ToAttentionSet\x12\x1b.gerrit.AttentionSetRequest\x1a\x13.gerrit.AccountInfo\x12?\n\x0cSubmitChange\x12\x1b.gerrit.SubmitChangeRequest\x1a\x12.gerrit.ChangeInfo\x12\x41\n\rAbandonChange\x12\x1c.gerrit.AbandonChangeRequest\x1a\x12.gerrit.ChangeInfo\x12\x43\n\x0eSubmitRevision\x12\x1d.gerrit.SubmitRevisionRequest\x1a\x12.gerrit.SubmitInfoB1Z/go.chromium.org/luci/common/proto/gerrit;gerritb\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,])
 
@@ -151,8 +151,8 @@ _QUERYOPTION = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=7853,
-  serialized_end=8320,
+  serialized_start=7871,
+  serialized_end=8338,
 )
 _sym_db.RegisterEnumDescriptor(_QUERYOPTION)
 
@@ -192,8 +192,8 @@ _NOTIFY = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=8322,
-  serialized_end=8433,
+  serialized_start=8340,
+  serialized_end=8451,
 )
 _sym_db.RegisterEnumDescriptor(_NOTIFY)
 
@@ -228,8 +228,8 @@ _CHANGESTATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=8435,
-  serialized_end=8512,
+  serialized_start=8453,
+  serialized_end=8530,
 )
 _sym_db.RegisterEnumDescriptor(_CHANGESTATUS)
 
@@ -274,8 +274,8 @@ _MERGEABLESTRATEGY = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=8515,
-  serialized_end=8648,
+  serialized_start=8533,
+  serialized_end=8666,
 )
 _sym_db.RegisterEnumDescriptor(_MERGEABLESTRATEGY)
 
@@ -395,8 +395,8 @@ _REVISIONINFO_KIND = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2055,
-  serialized_end=2177,
+  serialized_start=2073,
+  serialized_end=2195,
 )
 _sym_db.RegisterEnumDescriptor(_REVISIONINFO_KIND)
 
@@ -430,8 +430,8 @@ _REQUIREMENT_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=3179,
-  serialized_end=3319,
+  serialized_start=3197,
+  serialized_end=3337,
 )
 _sym_db.RegisterEnumDescriptor(_REQUIREMENT_STATUS)
 
@@ -475,8 +475,8 @@ _FILEINFO_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=3490,
-  serialized_end=3540,
+  serialized_start=3508,
+  serialized_end=3558,
 )
 _sym_db.RegisterEnumDescriptor(_FILEINFO_STATUS)
 
@@ -505,8 +505,8 @@ _ADDREVIEWERREQUEST_STATE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=4314,
-  serialized_end=4417,
+  serialized_start=4332,
+  serialized_end=4435,
 )
 _sym_db.RegisterEnumDescriptor(_ADDREVIEWERREQUEST_STATE)
 
@@ -555,8 +555,8 @@ _MERGEABLEINFO_SUBMITTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=6025,
-  serialized_end=6192,
+  serialized_start=6043,
+  serialized_end=6210,
 )
 _sym_db.RegisterEnumDescriptor(_MERGEABLEINFO_SUBMITTYPE)
 
@@ -590,8 +590,8 @@ _PROJECTINFO_STATE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=7112,
-  serialized_end=7231,
+  serialized_start=7130,
+  serialized_end=7249,
 )
 _sym_db.RegisterEnumDescriptor(_PROJECTINFO_STATE)
 
@@ -930,8 +930,8 @@ _CHANGEINFO_REVISIONSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1443,
-  serialized_end=1513,
+  serialized_start=1461,
+  serialized_end=1531,
 )
 
 _CHANGEINFO_LABELSENTRY = _descriptor.Descriptor(
@@ -968,8 +968,8 @@ _CHANGEINFO_LABELSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1515,
-  serialized_end=1579,
+  serialized_start=1533,
+  serialized_end=1597,
 )
 
 _CHANGEINFO = _descriptor.Descriptor(
@@ -1065,42 +1065,49 @@ _CHANGEINFO = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='created', full_name='gerrit.ChangeInfo.created', index=12,
+      name='hashtags', full_name='gerrit.ChangeInfo.hashtags', index=12,
+      number=19, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='created', full_name='gerrit.ChangeInfo.created', index=13,
       number=11, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='updated', full_name='gerrit.ChangeInfo.updated', index=13,
+      name='updated', full_name='gerrit.ChangeInfo.updated', index=14,
       number=12, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='revert_of', full_name='gerrit.ChangeInfo.revert_of', index=14,
+      name='revert_of', full_name='gerrit.ChangeInfo.revert_of', index=15,
       number=15, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='cherry_pick_of_change', full_name='gerrit.ChangeInfo.cherry_pick_of_change', index=15,
+      name='cherry_pick_of_change', full_name='gerrit.ChangeInfo.cherry_pick_of_change', index=16,
       number=16, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='reviewers', full_name='gerrit.ChangeInfo.reviewers', index=16,
+      name='reviewers', full_name='gerrit.ChangeInfo.reviewers', index=17,
       number=17, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='metaRevID', full_name='gerrit.ChangeInfo.metaRevID', index=17,
+      name='metaRevID', full_name='gerrit.ChangeInfo.metaRevID', index=18,
       number=18, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -1119,7 +1126,7 @@ _CHANGEINFO = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=847,
-  serialized_end=1579,
+  serialized_end=1597,
 )
 
 
@@ -1164,8 +1171,8 @@ _REVIEWERSTATUSMAP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1582,
-  serialized_end=1713,
+  serialized_start=1600,
+  serialized_end=1731,
 )
 
 
@@ -1203,8 +1210,8 @@ _REVISIONINFO_FILESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1991,
-  serialized_end=2053,
+  serialized_start=2009,
+  serialized_end=2071,
 )
 
 _REVISIONINFO = _descriptor.Descriptor(
@@ -1284,8 +1291,8 @@ _REVISIONINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1716,
-  serialized_end=2177,
+  serialized_start=1734,
+  serialized_end=2195,
 )
 
 
@@ -1316,8 +1323,8 @@ _COMMITINFO_PARENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2266,
-  serialized_end=2286,
+  serialized_start=2284,
+  serialized_end=2304,
 )
 
 _COMMITINFO = _descriptor.Descriptor(
@@ -1361,8 +1368,8 @@ _COMMITINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2179,
-  serialized_end=2286,
+  serialized_start=2197,
+  serialized_end=2304,
 )
 
 
@@ -1400,8 +1407,8 @@ _LABELINFO_VALUESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2617,
-  serialized_end=2662,
+  serialized_start=2635,
+  serialized_end=2680,
 )
 
 _LABELINFO = _descriptor.Descriptor(
@@ -1494,8 +1501,8 @@ _LABELINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2289,
-  serialized_end=2662,
+  serialized_start=2307,
+  serialized_end=2680,
 )
 
 
@@ -1561,8 +1568,8 @@ _APPROVALINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2665,
-  serialized_end=2862,
+  serialized_start=2683,
+  serialized_end=2880,
 )
 
 
@@ -1600,8 +1607,8 @@ _VOTINGRANGEINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2864,
-  serialized_end=2907,
+  serialized_start=2882,
+  serialized_end=2925,
 )
 
 
@@ -1660,8 +1667,8 @@ _CHANGEMESSAGEINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2910,
-  serialized_end=3079,
+  serialized_start=2928,
+  serialized_end=3097,
 )
 
 
@@ -1707,8 +1714,8 @@ _REQUIREMENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3082,
-  serialized_end=3319,
+  serialized_start=3100,
+  serialized_end=3337,
 )
 
 
@@ -1782,8 +1789,8 @@ _FILEINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3322,
-  serialized_end=3540,
+  serialized_start=3340,
+  serialized_end=3558,
 )
 
 
@@ -1835,8 +1842,8 @@ _CREATECHANGEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3542,
-  serialized_end=3631,
+  serialized_start=3560,
+  serialized_end=3649,
 )
 
 
@@ -1874,8 +1881,8 @@ _SUBMITCHANGEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3633,
-  serialized_end=3687,
+  serialized_start=3651,
+  serialized_end=3705,
 )
 
 
@@ -1920,8 +1927,8 @@ _SUBMITREVISIONREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3689,
-  serialized_end=3766,
+  serialized_start=3707,
+  serialized_end=3784,
 )
 
 
@@ -1952,8 +1959,8 @@ _SUBMITINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3768,
-  serialized_end=3818,
+  serialized_start=3786,
+  serialized_end=3836,
 )
 
 
@@ -2005,8 +2012,8 @@ _CHANGEEDITFILECONTENTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3820,
-  serialized_end=3919,
+  serialized_start=3838,
+  serialized_end=3937,
 )
 
 
@@ -2051,8 +2058,8 @@ _DELETEEDITFILECONTENTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3921,
-  serialized_end=4003,
+  serialized_start=3939,
+  serialized_end=4021,
 )
 
 
@@ -2090,8 +2097,8 @@ _CHANGEEDITPUBLISHREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4005,
-  serialized_end=4064,
+  serialized_start=4023,
+  serialized_end=4082,
 )
 
 
@@ -2136,8 +2143,8 @@ _ABANDONCHANGEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4066,
-  serialized_end=4138,
+  serialized_start=4084,
+  serialized_end=4156,
 )
 
 
@@ -2204,8 +2211,8 @@ _ADDREVIEWERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4141,
-  serialized_end=4417,
+  serialized_start=4159,
+  serialized_end=4435,
 )
 
 
@@ -2243,8 +2250,8 @@ _REVIEWERINFO_APPROVALSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4530,
-  serialized_end=4578,
+  serialized_start=4548,
+  serialized_end=4596,
 )
 
 _REVIEWERINFO = _descriptor.Descriptor(
@@ -2281,8 +2288,8 @@ _REVIEWERINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4420,
-  serialized_end=4578,
+  serialized_start=4438,
+  serialized_end=4596,
 )
 
 
@@ -2341,8 +2348,8 @@ _ADDREVIEWERRESULT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4581,
-  serialized_end=4723,
+  serialized_start=4599,
+  serialized_end=4741,
 )
 
 
@@ -2387,8 +2394,8 @@ _DELETEREVIEWERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4725,
-  serialized_end=4801,
+  serialized_start=4743,
+  serialized_end=4819,
 )
 
 
@@ -2426,8 +2433,8 @@ _SETREVIEWREQUEST_LABELSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5269,
-  serialized_end=5314,
+  serialized_start=5287,
+  serialized_end=5332,
 )
 
 _SETREVIEWREQUEST = _descriptor.Descriptor(
@@ -2548,8 +2555,8 @@ _SETREVIEWREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4804,
-  serialized_end=5314,
+  serialized_start=4822,
+  serialized_end=5332,
 )
 
 
@@ -2587,8 +2594,8 @@ _REVIEWRESULT_LABELSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5269,
-  serialized_end=5314,
+  serialized_start=5287,
+  serialized_end=5332,
 )
 
 _REVIEWRESULT = _descriptor.Descriptor(
@@ -2618,8 +2625,8 @@ _REVIEWRESULT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5316,
-  serialized_end=5427,
+  serialized_start=5334,
+  serialized_end=5445,
 )
 
 
@@ -2664,8 +2671,8 @@ _ATTENTIONSETREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5429,
-  serialized_end=5525,
+  serialized_start=5447,
+  serialized_end=5543,
 )
 
 
@@ -2717,8 +2724,8 @@ _ATTENTIONSETINPUT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5528,
-  serialized_end=5656,
+  serialized_start=5546,
+  serialized_end=5674,
 )
 
 
@@ -2777,8 +2784,8 @@ _GETMERGEABLEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5659,
-  serialized_end=5795,
+  serialized_start=5677,
+  serialized_end=5813,
 )
 
 
@@ -2852,8 +2859,8 @@ _MERGEABLEINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5798,
-  serialized_end=6192,
+  serialized_start=5816,
+  serialized_end=6210,
 )
 
 
@@ -2919,8 +2926,8 @@ _LISTFILESREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6194,
-  serialized_end=6321,
+  serialized_start=6212,
+  serialized_end=6339,
 )
 
 
@@ -2958,8 +2965,8 @@ _LISTFILESRESPONSE_FILESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1991,
-  serialized_end=2053,
+  serialized_start=2009,
+  serialized_end=2071,
 )
 
 _LISTFILESRESPONSE = _descriptor.Descriptor(
@@ -2989,8 +2996,8 @@ _LISTFILESRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6324,
-  serialized_end=6460,
+  serialized_start=6342,
+  serialized_end=6478,
 )
 
 
@@ -3035,8 +3042,8 @@ _GETRELATEDCHANGESREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6462,
-  serialized_end=6542,
+  serialized_start=6480,
+  serialized_end=6560,
 )
 
 
@@ -3095,8 +3102,8 @@ _GETRELATEDCHANGESRESPONSE_CHANGEANDCOMMIT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6643,
-  serialized_end=6773,
+  serialized_start=6661,
+  serialized_end=6791,
 )
 
 _GETRELATEDCHANGESRESPONSE = _descriptor.Descriptor(
@@ -3126,8 +3133,8 @@ _GETRELATEDCHANGESRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6545,
-  serialized_end=6773,
+  serialized_start=6563,
+  serialized_end=6791,
 )
 
 
@@ -3158,8 +3165,8 @@ _LISTPROJECTSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6775,
-  serialized_end=6810,
+  serialized_start=6793,
+  serialized_end=6828,
 )
 
 
@@ -3204,8 +3211,8 @@ _WEBLINKINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6812,
-  serialized_end=6871,
+  serialized_start=6830,
+  serialized_end=6889,
 )
 
 
@@ -3243,8 +3250,8 @@ _PROJECTINFO_REFSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7067,
-  serialized_end=7110,
+  serialized_start=7085,
+  serialized_end=7128,
 )
 
 _PROJECTINFO = _descriptor.Descriptor(
@@ -3310,8 +3317,8 @@ _PROJECTINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6874,
-  serialized_end=7231,
+  serialized_start=6892,
+  serialized_end=7249,
 )
 
 
@@ -3349,8 +3356,8 @@ _LISTPROJECTSRESPONSE_PROJECTSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7320,
-  serialized_end=7388,
+  serialized_start=7338,
+  serialized_end=7406,
 )
 
 _LISTPROJECTSRESPONSE = _descriptor.Descriptor(
@@ -3380,8 +3387,8 @@ _LISTPROJECTSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7234,
-  serialized_end=7388,
+  serialized_start=7252,
+  serialized_end=7406,
 )
 
 
@@ -3419,8 +3426,8 @@ _REFINFOREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7390,
-  serialized_end=7436,
+  serialized_start=7408,
+  serialized_end=7454,
 )
 
 
@@ -3458,8 +3465,8 @@ _REFINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7438,
-  serialized_end=7478,
+  serialized_start=7456,
+  serialized_end=7496,
 )
 
 
@@ -3497,8 +3504,8 @@ _ACCOUNTOPTIONS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7480,
-  serialized_end=7533,
+  serialized_start=7498,
+  serialized_end=7551,
 )
 
 
@@ -3550,8 +3557,8 @@ _LISTFILEOWNERSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7535,
-  serialized_end=7643,
+  serialized_start=7553,
+  serialized_end=7661,
 )
 
 
@@ -3582,8 +3589,8 @@ _OWNERINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7645,
-  serialized_end=7694,
+  serialized_start=7663,
+  serialized_end=7712,
 )
 
 
@@ -3614,8 +3621,8 @@ _LISTOWNERSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7696,
-  serialized_end=7751,
+  serialized_start=7714,
+  serialized_end=7769,
 )
 
 
@@ -3653,8 +3660,8 @@ _GETPUREREVERTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7753,
-  serialized_end=7808,
+  serialized_start=7771,
+  serialized_end=7826,
 )
 
 
@@ -3685,8 +3692,8 @@ _PUREREVERTINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7810,
-  serialized_end=7850,
+  serialized_start=7828,
+  serialized_end=7868,
 )
 
 _NOTIFYDETAILS_INFO.containing_type = _NOTIFYDETAILS
@@ -4312,8 +4319,8 @@ _GERRIT = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=8651,
-  serialized_end=10086,
+  serialized_start=8669,
+  serialized_end=10104,
   methods=[
   _descriptor.MethodDescriptor(
     name='ListProjects',

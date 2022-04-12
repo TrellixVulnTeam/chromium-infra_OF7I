@@ -22,16 +22,12 @@ import swarmingcfg
 
 class ProjectCfgTest(testing.AppengineTestCase):
 
-  def cfg_test(self, swarming_text, mixins_text, expected_errors):
+  def cfg_test(self, swarming_text, expected_errors):
     swarming_cfg = project_config_pb2.Swarming()
     protobuf.text_format.Merge(swarming_text, swarming_cfg)
 
-    buildbucket_cfg = project_config_pb2.BuildbucketCfg()
-    protobuf.text_format.Merge(mixins_text, buildbucket_cfg)
-    mixins = {m.name: m for m in buildbucket_cfg.builder_mixins}
-
     ctx = config_component.validation.Context()
-    swarmingcfg.validate_project_cfg(swarming_cfg, set(), mixins, True, ctx)
+    swarmingcfg.validate_project_cfg(swarming_cfg, set(), ctx)
     self.assert_errors(ctx, expected_errors)
 
   def assert_errors(self, ctx, expected_errors):
@@ -43,20 +39,15 @@ class ProjectCfgTest(testing.AppengineTestCase):
   def test_valid(self):
     self.cfg_test(
         '''
-          builder_defaults {
+          builders {
+            name: "release"
             swarming_host: "example.com"
             swarming_tags: "master:master.a"
+            swarming_tags: "a:b'"
+            dimensions: "os:Linux"
             dimensions: "cores:8"
             dimensions: "60:cores:64"
             dimensions: "pool:default"
-            dimensions: "cpu:x86-64"
-            service_account: "bot"
-          }
-          builders {
-            name: "release"
-            swarming_tags: "a:b'"
-            dimensions: "os:Linux"
-            dimensions: "cpu:"
             service_account: "robot@example.com"
             caches {
               name: "git_chromium"
@@ -69,12 +60,17 @@ class ProjectCfgTest(testing.AppengineTestCase):
               properties: "a:b'"
               properties_j: "x:true"
             }
+            service_account: "bot"
           }
           builders {
             name: "custom exe"
+            swarming_host: "example.com"
+            swarming_tags: "master:master.a"
             swarming_tags: "a:b'"
             dimensions: "os:Linux"
-            dimensions: "cpu:"
+            dimensions: "cores:8"
+            dimensions: "60:cores:64"
+            dimensions: "pool:default"
             service_account: "robot@example.com"
             caches {
               name: "git_chromium"
@@ -89,8 +85,12 @@ class ProjectCfgTest(testing.AppengineTestCase):
           builders {
             name: "another custom exe"
             swarming_tags: "a:b'"
+            swarming_host: "example.com"
+            swarming_tags: "master:master.a"
             dimensions: "os:Linux"
-            dimensions: "cpu:"
+            dimensions: "cores:8"
+            dimensions: "60:cores:64"
+            dimensions: "pool:default"
             service_account: "robot@example.com"
             caches {
               name: "git_chromium"
@@ -104,27 +104,18 @@ class ProjectCfgTest(testing.AppengineTestCase):
           }
           builders {
             name: "release cipd"
+            swarming_host: "example.com"
+            swarming_tags: "master:master.a"
+            dimensions: "cores:8"
+            dimensions: "60:cores:64"
+            dimensions: "pool:default"
+            dimensions: "cpu:x86-64"
             recipe {
               cipd_package: "some/package"
               name: "foo"
             }
           }
-        ''', '', []
-    )
-
-  def test_valid_global_swarming_hostname(self):
-    self.cfg_test(
-        '''
-          hostname: "example.com"
-          builders {
-            name: "release"
-            recipe {
-              name: "foo"
-              cipd_package: "infra/recipe_bundle"
-              cipd_version: "refs/heads/master"
-            }
-          }
-        ''', '', []
+        ''', []
     )
 
   def test_validate_recipe_properties(self):
@@ -180,7 +171,6 @@ class ProjectCfgTest(testing.AppengineTestCase):
         '''
           builders {}
         ''',
-        '',
         [
             'builder #1: name: unspecified',
             'builder #1: swarming_host: unspecified',
@@ -190,14 +180,13 @@ class ProjectCfgTest(testing.AppengineTestCase):
 
     self.cfg_test(
         '''
-          builder_defaults {
+          builders {
+            name: "neither"
             swarming_host: "example.com"
           }
           builders {
-            name: "neither"
-          }
-          builders {
             name: "both"
+            swarming_host: "example.com"
             exe {
               cipd_package: "infra/executable"
             }
@@ -208,12 +197,14 @@ class ProjectCfgTest(testing.AppengineTestCase):
           }
           builders {
             name: "bad exe"
+            swarming_host: "example.com"
             exe {
               cipd_version: "refs/heads/master"
             }
           }
           builders {
             name: "non json properties"
+            swarming_host: "example.com"
             exe {
               cipd_package: "infra/executable"
             }
@@ -221,6 +212,7 @@ class ProjectCfgTest(testing.AppengineTestCase):
           }
           builders {
             name: "non dict properties"
+            swarming_host: "example.com"
             exe {
               cipd_package: "infra/executable"
             }
@@ -228,12 +220,14 @@ class ProjectCfgTest(testing.AppengineTestCase):
           }
           builders {
             name: "bad recipe"
+            swarming_host: "example.com"
             recipe {
               cipd_version: "refs/heads/master"
             }
           }
           builders {
             name: "recipe and properties"
+            swarming_host: "example.com"
             recipe {
               name: "foo"
               cipd_package: "infra/recipe_bundle"
@@ -241,7 +235,6 @@ class ProjectCfgTest(testing.AppengineTestCase):
             properties: "{}"
           }
         ''',
-        '',
         [
             'builder neither: exactly one of exe or recipe must be specified',
             'builder both: exactly one of exe or recipe must be specified',
@@ -262,7 +255,8 @@ class ProjectCfgTest(testing.AppengineTestCase):
 
     self.cfg_test(
         '''
-          builder_defaults {
+          builders {
+            name: "meep"
             swarming_host: "swarming.example.com"
             recipe {
               name: "meeper"
@@ -272,12 +266,14 @@ class ProjectCfgTest(testing.AppengineTestCase):
           }
           builders {
             name: "meep"
-          }
-          builders {
-            name: "meep"
+            swarming_host: "swarming.example.com"
+            recipe {
+              name: "meeper"
+              cipd_package: "infra/recipe_bundle"
+              cipd_version: "refs/heads/master"
+            }
           }
         ''',
-        '',
         [
             'builder meep: name: duplicate',
         ],
@@ -290,7 +286,6 @@ class ProjectCfgTest(testing.AppengineTestCase):
             swarming_host: "swarming.example.com"
           }
         ''',
-        '',
         [
             ('builder :/:: name: invalid char(s) u\'/:\'. '
              'Alphabet: "%s"') % errors.BUILDER_NAME_VALID_CHARS,
@@ -306,7 +301,6 @@ class ProjectCfgTest(testing.AppengineTestCase):
             swarming_host: "swarming.example.com"
           }
         ''',
-        '',
         [(
             'builder '
             'veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeery'
@@ -318,37 +312,17 @@ class ProjectCfgTest(testing.AppengineTestCase):
 
     self.cfg_test(
         '''
-          builder_defaults {name: "x"}
-          builders {
-            name: "release"
-            swarming_host: "swarming.example.com"
-            dimensions: "pool:a"
-            recipe {
-              name: "foo"
-              cipd_package: "infra/recipe_bundle"
-              cipd_version: "refs/heads/master"
-            }
-          }
-        ''',
-        '',
-        [
-            'builder_defaults: name: not allowed',
-        ],
-    )
-
-    self.cfg_test(
-        '''
           task_template_canary_percentage { value: 102 }
-          builder_defaults {
+          builders {
             swarming_host: "https://swarming.example.com"
+            swarming_tags: "wrong2"
             swarming_tags: "wrong"
           }
           builders {
-            swarming_tags: "wrong2"
-          }
-          builders {
             name: "b2"
+            swarming_host: "https://swarming.example.com"
             swarming_tags: "builder:b2"
+            swarming_tags: "wrong"
             caches {}
             caches { name: "a/b" path: "a" }
             caches { name: "b" path: "a\\c" }
@@ -369,16 +343,17 @@ class ProjectCfgTest(testing.AppengineTestCase):
             }
           }
         ''',
-        '',
         [
             'task_template_canary_percentage.value must must be in [0, 100]',
-            'builder_defaults: swarming_host: must not contain "://"',
-            'builder_defaults: tag #1: does not have ":": wrong',
+            'builder #1: swarming_host: must not contain "://"',
             'builder #1: tag #1: does not have ":": wrong2',
+            'builder #1: tag #2: does not have ":": wrong',
+            'builder b2: swarming_host: must not contain "://"',
             (
                 'builder b2: tag #1: do not specify builder tag; '
                 'it is added by swarmbucket automatically'
             ),
+            'builder b2: tag #2: does not have ":": wrong',
             'builder b2: cache #1: name: required',
             'builder b2: cache #1: path: required',
             (
@@ -410,7 +385,6 @@ class ProjectCfgTest(testing.AppengineTestCase):
             caches { path: "a" name: "a" }
           }
         ''',
-        '',
         [
             'builder rel: cache #2: duplicate name',
             'builder rel: cache #2: duplicate path',
@@ -425,7 +399,6 @@ class ProjectCfgTest(testing.AppengineTestCase):
             caches { path: "a" name: "a" wait_for_warm_cache_secs: 61 }
           }
         ''',
-        '',
         [
             'builder rel: cache #1: wait_for_warm_cache_secs: must be rounded '
             'on 60 seconds',
@@ -440,7 +413,6 @@ class ProjectCfgTest(testing.AppengineTestCase):
             caches { path: "a" name: "a" wait_for_warm_cache_secs: 59 }
           }
         ''',
-        '',
         [
             'builder rel: cache #1: wait_for_warm_cache_secs: must be at least '
             '60 seconds'
@@ -462,7 +434,6 @@ class ProjectCfgTest(testing.AppengineTestCase):
             caches { path: "h" name: "h" wait_for_warm_cache_secs: 480 }
           }
         ''',
-        '',
         [
             'builder rel: too many different (8) wait_for_warm_cache_secs '
             'values; max 7',
@@ -477,7 +448,6 @@ class ProjectCfgTest(testing.AppengineTestCase):
             service_account: "not an email"
           }
         ''',
-        '',
         [
             'builder b: service_account: value "not an email" does not match '
             '^[0-9a-zA-Z_\\-\\.\\+\\%]+@[0-9a-zA-Z_\\-\\.]+$',
@@ -571,68 +541,6 @@ class ProjectCfgTest(testing.AppengineTestCase):
       }
     ''', 'history_options: commit must be unset'
     )
-
-  def test_default_recipe(self):
-    self.cfg_test(
-        '''
-          builder_defaults {
-            dimensions: "pool:default"
-            swarming_host: "swarming.example.com"
-            recipe {
-              name: "foo"
-              cipd_package: "infra/recipe_bundle"
-              cipd_version: "refs/heads/master"
-              properties: "a:b"
-              properties: "x:y"
-           }
-          }
-          builders { name: "debug" }
-          builders {
-            name: "release"
-            recipe {
-              properties: "a:c"
-              properties_j: "x:null"
-            }
-          }
-        ''', '', []
-    )
-
-  def test_default_recipe_bad(self):
-    self.cfg_test(
-        '''
-          builder_defaults {
-            dimensions: "pool:default"
-            swarming_host: "swarming.example.com"
-            recipe {
-              name: "foo"
-              properties: "a"
-            }
-          }
-          builders { name: "debug" }
-        ''',
-        '',
-        ['builder_defaults: recipe: properties u\'a\': does not have a colon'],
-    )
-
-  def test_validate_builder_mixins(self):
-
-    def test(cfg_text, expected_errors):
-      ctx = config_component.validation.Context()
-      cfg = project_config_pb2.BuildbucketCfg()
-      protobuf.text_format.Merge(cfg_text, cfg)
-      swarmingcfg.validate_builder_mixins(cfg.builder_mixins, ctx)
-      self.assertEqual(
-          map(config_test.errmsg, expected_errors),
-          ctx.result().messages
-      )
-
-    test(
-        '''
-          builder_mixins {}
-        ''',
-        ['builder_mixins is not allowed any more, use go/lucicfg'],
-    )
-    test('', [])
 
 
 class ServiceCfgTest(testing.AppengineTestCase):

@@ -46,7 +46,6 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
         '''
           name: "luci.chromium.try"
           swarming {
-            hostname: "swarming.example.com"
             builders {
               name: "linux"
               swarming_host: "swarming.example.com"
