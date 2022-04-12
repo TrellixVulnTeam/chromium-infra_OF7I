@@ -43,7 +43,7 @@ func Run(ctx context.Context, planName string, plan *config.Plan, args *execs.Ru
 	}
 	r.initCache()
 	defer func() { r.close() }()
-	log.Debugf(ctx, "Received plan %s for %s \n%s", r.planName, r.args.ResourceName, r.describe())
+	log.Debugf(ctx, "Received plan %s for %s", r.planName, r.args.ResourceName)
 	return r.runPlan(ctx)
 }
 
@@ -365,58 +365,6 @@ func (r *recoveryEngine) getAction(name string) *config.Action {
 	}
 	// If we reach this place then we have issues with plan validation logic.
 	panic(fmt.Sprintf("action %q not found in the plan", name))
-}
-
-// describe describes the plan details with critical actions.
-func (r *recoveryEngine) describe() string {
-	d := fmt.Sprintf("Plan %q, AllowFail: %v ", r.planName, r.plan.AllowFail)
-	if len(r.plan.GetCriticalActions()) > 0 {
-		prefix := "\n "
-		d += fmt.Sprintf("%sCritical-actions:", prefix)
-		for i, a := range r.plan.GetCriticalActions() {
-			d += fmt.Sprintf("%s %d: %s", prefix, i, r.describeAction(a, prefix+"  "))
-		}
-	} else {
-		d += "\n No critical-actions"
-	}
-	return d
-}
-
-// describeAction describes the action structure recursively.
-func (r *recoveryEngine) describeAction(actionName string, prefix string) string {
-	a := r.getAction(actionName)
-	ap := fmt.Sprintf("Action %q, AllowFailAfterRecovery: %v, RunControl: %v",
-		actionName, a.GetAllowFailAfterRecovery(), a.GetRunControl())
-	if len(a.GetConditions()) > 0 {
-		ap += fmt.Sprintf("%sConditions:", prefix)
-		for i, d := range a.GetConditions() {
-			ap += fmt.Sprintf("%s%d: %s", prefix, i, r.describeAction(d, prefix+"  "))
-		}
-	}
-	ap += fmt.Sprintf("%sExec: %s", prefix, r.describeActionExec(actionName))
-	if len(a.GetDependencies()) > 0 {
-		ap += fmt.Sprintf("%sDependencies:", prefix)
-		for i, d := range a.GetDependencies() {
-			ap += fmt.Sprintf("%s%d: %s", prefix, i, r.describeAction(d, prefix+"  "))
-		}
-	}
-	if len(a.GetRecoveryActions()) > 0 {
-		ap += fmt.Sprintf("%sRecoveryActions:", prefix)
-		for i, d := range a.GetRecoveryActions() {
-			ap += fmt.Sprintf("%s%d: %s", prefix, i, r.describeAction(d, prefix+"  "))
-		}
-	}
-	return ap
-}
-
-// describeActionExec describes the action's exec function with details.
-func (r *recoveryEngine) describeActionExec(actionName string) string {
-	a := r.getAction(actionName)
-	er := a.GetExecName()
-	if len(a.GetExecExtraArgs()) > 0 {
-		er += fmt.Sprintf(", Args: %s", a.GetExecExtraArgs())
-	}
-	return er
 }
 
 // initCache initializes cache on engine.

@@ -7,6 +7,7 @@ package config
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -165,7 +166,7 @@ var cycleTestCases = []struct {
 	errorActions []string
 }{
 	{
-		"A_dependency -> A",
+		"Bad1: A_dependency -> A",
 		&Plan{
 			Actions: map[string]*Action{
 				"A": {Dependencies: []string{"A"}},
@@ -174,17 +175,17 @@ var cycleTestCases = []struct {
 		[]string{"A"},
 	},
 	{
-		"A_dependency -> B_condition -> A",
+		"Bad2: A_dependency -> B_condition -> A",
 		&Plan{
 			Actions: map[string]*Action{
 				"A": {Dependencies: []string{"B"}},
 				"B": {Conditions: []string{"A"}},
 			},
 		},
-		[]string{"A", "B"},
+		[]string{"B", "A"},
 	},
 	{
-		"A_dependency -> B_condition -> C_recovery -> A",
+		"Bad3: A_dependency -> B_condition -> C_recovery -> A",
 		&Plan{
 			Actions: map[string]*Action{
 				"A": {Dependencies: []string{"B"}},
@@ -192,10 +193,10 @@ var cycleTestCases = []struct {
 				"C": {RecoveryActions: []string{"A"}},
 			},
 		},
-		[]string{"A", "B", "C"},
+		[]string{"B", "C", "A"},
 	},
 	{
-		"A_dependency -> B_dependency -> C_dependency -> A",
+		"Bad4: A_dependency -> B_dependency -> C_dependency -> A",
 		&Plan{
 			Actions: map[string]*Action{
 				"A": {Dependencies: []string{"B"}},
@@ -203,10 +204,10 @@ var cycleTestCases = []struct {
 				"C": {Dependencies: []string{"A"}},
 			},
 		},
-		[]string{"A", "B", "C"},
+		[]string{"B", "C", "A"},
 	},
 	{
-		"C_dependency -> B_condition -> A_recovery -> C",
+		"Bad5: C_dependency -> B_condition -> A_recovery -> C",
 		&Plan{
 			Actions: map[string]*Action{
 				"A": {RecoveryActions: []string{"C"}},
@@ -214,10 +215,10 @@ var cycleTestCases = []struct {
 				"C": {Dependencies: []string{"B"}},
 			},
 		},
-		[]string{"A", "B", "C"},
+		[]string{"C", "B", "A"},
 	},
 	{
-		"A_dependency -> B_condition -> C_recovery -> D_recovery -> E_dependency -> F_condition -> B",
+		"Bad6: A_dependency -> B_condition -> C_recovery -> D_recovery -> E_dependency -> F_condition -> B",
 		&Plan{
 			Actions: map[string]*Action{
 				"A": {Dependencies: []string{"B"}},
@@ -228,10 +229,10 @@ var cycleTestCases = []struct {
 				"F": {Conditions: []string{"B"}},
 			},
 		},
-		[]string{"B", "C", "D", "E", "F"},
+		[]string{"B", "C", "D", "E", "F", "B"},
 	},
 	{
-		"A_dependency -> B_condition -> C_recovery -> D_recovery -> E_dependency -> F_condition -> B",
+		"Bad7: A_dependency -> B_condition -> C_recovery -> D_recovery -> E_dependency -> F_condition -> B",
 		&Plan{
 			Actions: map[string]*Action{
 				"A": {Dependencies: []string{"B"}},
@@ -242,10 +243,10 @@ var cycleTestCases = []struct {
 				"F": {Conditions: []string{"B"}},
 			},
 		},
-		[]string{},
+		[]string{"B", "C", "D", "E", "F", "B"},
 	},
 	{
-		"A_dependency -> B_condition -> C_recovery -> D_recovery -> E_dependency -> F; A_dependency -> E_dependency -> F; C_condition -> F",
+		"Bad8: A_dependency -> B_condition -> C_recovery -> D_recovery -> E_dependency -> F; A_dependency -> E_dependency -> F; C_condition -> F",
 		&Plan{
 			Actions: map[string]*Action{
 				"A": {Dependencies: []string{"B", "E"}},
@@ -260,7 +261,7 @@ var cycleTestCases = []struct {
 	},
 	// Test Case: Cycle in actions, but not reachable by critical actions.
 	{
-		"A_dependency -> B_condition -> C_recovery; D_recovery -> E_dependency -> F_recovery -> D",
+		"Good: A_dependency -> B_condition -> C_recovery; D_recovery -> E_dependency -> F_recovery -> D",
 		&Plan{
 			Actions: map[string]*Action{
 				"A": {Dependencies: []string{"B"}},
@@ -273,6 +274,16 @@ var cycleTestCases = []struct {
 		},
 		[]string{},
 	},
+	{
+		"Bad9: Cycle in recovery actions",
+		&Plan{
+			Actions: map[string]*Action{
+				"A":           {RecoveryActions: []string{"sample_pass"}},
+				"sample_pass": {Dependencies: []string{"sample_pass"}, ExecName: "sample_fail"},
+			},
+		},
+		[]string{"sample_pass", "sample_pass"},
+	},
 }
 
 func TestVerifyPlanAcyclic(t *testing.T) {
@@ -284,15 +295,21 @@ func TestVerifyPlanAcyclic(t *testing.T) {
 			// Assume "A" as the critical action.
 			tt.in.CriticalActions = []string{"A"}
 			if err := verifyPlanAcyclic(tt.in); err != nil {
-				errMessage := err.Error()
+				m := strings.Trim(err.Error(), ": found loop")
+				errMessages := strings.Split(m, ":")
 				raiseError := false
-				for _, eachAction := range tt.errorActions {
-					if !strings.Contains(errMessage, eachAction) {
-						raiseError = true
+				if len(tt.errorActions) != len(errMessages) {
+					t.Errorf("got %d, want %d errors", len(errMessages), len(tt.errorActions))
+					t.Errorf("got %q, want %q", err.Error(), tt.errorActions)
+				} else {
+					for i, eachAction := range tt.errorActions {
+						if !strings.Contains(errMessages[i], fmt.Sprintf("%q", eachAction)) {
+							raiseError = true
+						}
 					}
-				}
-				if raiseError {
-					t.Errorf("got %q, want %q", errMessage, tt.errorActions)
+					if raiseError {
+						t.Errorf("got %q, want %q", err.Error(), tt.errorActions)
+					}
 				}
 			} else if len(tt.errorActions) != 0 {
 				t.Errorf("got nil, want %q", tt.errorActions)
