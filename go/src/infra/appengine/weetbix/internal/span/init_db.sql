@@ -460,10 +460,10 @@ CREATE TABLE IngestedInvocations (
   -- (for presubmit results).
   PartitionTime TIMESTAMP NOT NULL,
 
-  -- Whether the invocation was part of a build that has unmerged changes
+  -- Whether the invocation was part of a build that has unsubmitted changes
   -- applied (such as Gerrit changes). (This includes unsubmitted changes
   -- that were later submitted, e.g. because of a successful presubmit run.)
-  HasUnmergedChanges BOOL NOT NULL,
+  HasUnsubmittedChanges BOOL NOT NULL,
 
   -- Whether the invocation was part of a build that has unsubmitted changes
   -- applied (such as Gerrit changes) AND the changes were later submitted
