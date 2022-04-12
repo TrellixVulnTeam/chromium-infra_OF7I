@@ -7420,6 +7420,20 @@ wheel: <
 * *manylinux-x64-py3*
 * *windows-x64-py3*
 
+## **tensorflow-decision-forests**
+
+### 0.2.4
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorflow-decision-forests/${vpython_platform}"
+  version: "version:0.2.4"
+>
+```
+
+
+* *manylinux-x64-py3*
+
 ## **tensorflow-estimator**
 
 ### 2.4.0

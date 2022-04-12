@@ -1225,6 +1225,12 @@ SPECS.update({
             pyversions=['py3'],
         ),
         Prebuilt(
+            'tensorflow-decision-forests',
+            '0.2.4',
+            ['manylinux-x64-py3'],
+            pyversions=['py3'],
+        ),
+        Prebuilt(
             'tensorflow-io-gcs-filesystem',
             '0.23.1',
             ['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
