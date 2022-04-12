@@ -30,8 +30,10 @@ export interface Cluster {
 
 export interface Counts {
     nominal: number;
+    preWeetbix: number;
     preExoneration: number;
     residual: number;
+    residualPreWeetbix: number;
     residualPreExoneration: number;
 }
 

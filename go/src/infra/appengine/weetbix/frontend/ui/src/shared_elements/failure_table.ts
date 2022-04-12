@@ -38,7 +38,7 @@ export class FailureTable extends LitElement {
     failureFilter: FailureFilter = failureFilters[0];
 
     @state()
-    impactFilter: ImpactFilter = impactFilters[0];
+    impactFilter: ImpactFilter = impactFilters[1];
 
     @property()
     sortMetric: MetricName = 'latestFailureTime';
@@ -126,7 +126,7 @@ export class FailureTable extends LitElement {
         const item = this.shadowRoot!.querySelector('#impact-filter [selected]');
         if (item) {
             const selected = item.getAttribute('value');
-            this.impactFilter = impactFilters.filter(f => f.name == selected)?.[0] || impactFilters[0];
+            this.impactFilter = impactFilters.filter(f => f.name == selected)?.[0] || impactFilters[1];
         }
         this.countAndSortFailures();
     }
@@ -241,7 +241,7 @@ export class FailureTable extends LitElement {
                             ${this.sortMetric === 'presubmitRejects' ? html`<mwc-icon>${this.ascending ? 'expand_less' : 'expand_more'}</mwc-icon>` : null}
                         </th>
                         <th class="sortable" @click=${() => this.toggleSort('invocationFailures')}>
-                            Invocations Failed
+                            Builds Failed
                             ${this.sortMetric === 'invocationFailures' ? html`<mwc-icon>${this.ascending ? 'expand_less' : 'expand_more'}</mwc-icon>` : null}
                         </th>
                         <th class="sortable" @click=${() => this.toggleSort('testRunFailures')}>
@@ -277,7 +277,7 @@ export class FailureTable extends LitElement {
             padding-top: 7px
         }
         #impact-filter {
-            width: 230px;
+            width: 280px;
         }
         table {
             border-collapse: collapse;
@@ -325,29 +325,40 @@ export class FailureTable extends LitElement {
 // calculating impact for failures.
 export interface ImpactFilter {
     name: string;
-    ignoreExoneration: boolean;
+    ignoreWeetbixExoneration: boolean;
+    ignoreAllExoneration: boolean;
     ignoreIngestedInvocationBlocked: boolean;
     ignoreTestRunBlocked: boolean;
 }
 export const impactFilters: ImpactFilter[] = [
     {
         name: 'Actual Impact',
-        ignoreExoneration: false,
+        ignoreWeetbixExoneration: false,
+        ignoreAllExoneration: false,
         ignoreIngestedInvocationBlocked: false,
         ignoreTestRunBlocked: false,
     }, {
-        name: 'Without Exoneration',
-        ignoreExoneration: true,
+        name: 'Without Weetbix Exoneration',
+        ignoreWeetbixExoneration: true,
+        ignoreAllExoneration: false,
+        ignoreIngestedInvocationBlocked: false,
+        ignoreTestRunBlocked: false,
+    }, {
+        name: 'Without All Exoneration',
+        ignoreWeetbixExoneration: true,
+        ignoreAllExoneration: true,
         ignoreIngestedInvocationBlocked: false,
         ignoreTestRunBlocked: false,
     }, {
         name: 'Without Retrying Test Runs',
-        ignoreExoneration: true,
+        ignoreWeetbixExoneration: true,
+        ignoreAllExoneration: true,
         ignoreIngestedInvocationBlocked: true,
         ignoreTestRunBlocked: false,
     }, {
         name: 'Without Any Retries',
-        ignoreExoneration: true,
+        ignoreWeetbixExoneration: true,
+        ignoreAllExoneration: true,
         ignoreIngestedInvocationBlocked: true,
         ignoreTestRunBlocked: true,
     }
@@ -453,9 +464,6 @@ const failureIdsExtractor = (): FeatureExtractor => {
 const rejectedTestRunIdsExtractor = (impactFilter: ImpactFilter): FeatureExtractor => {
     return f => {
         const values: Set<string> = new Set();
-        if (f.isExonerated && !impactFilter.ignoreExoneration) {
-            return values;
-        }
         if (!impactFilter.ignoreTestRunBlocked && !f.isTestRunBlocked) {
             return values;
         }
@@ -473,7 +481,12 @@ const rejectedTestRunIdsExtractor = (impactFilter: ImpactFilter): FeatureExtract
 const rejectedIngestedInvocationIdsExtractor = (impactFilter: ImpactFilter): FeatureExtractor => {
     return f => {
         const values: Set<string> = new Set();
-        if (f.isExonerated && !impactFilter.ignoreExoneration) {
+        if (f.exonerationStatus == 'WEETBIX' && 
+                !(impactFilter.ignoreWeetbixExoneration || impactFilter.ignoreAllExoneration)) {
+            return values;
+        }
+        if ((f.exonerationStatus == 'EXPLICIT' || f.exonerationStatus == 'IMPLICIT') && 
+                !impactFilter.ignoreAllExoneration) {
             return values;
         }
         if (!f.isIngestedInvocationBlocked && !impactFilter.ignoreIngestedInvocationBlocked) {
@@ -494,7 +507,12 @@ const rejectedIngestedInvocationIdsExtractor = (impactFilter: ImpactFilter): Fea
 const rejectedPresubmitRunIdsExtractor = (impactFilter: ImpactFilter): FeatureExtractor => {
     return f => {
         const values: Set<string> = new Set();
-        if (f.isExonerated && !impactFilter.ignoreExoneration) {
+        if (f.exonerationStatus == 'WEETBIX' && 
+                !(impactFilter.ignoreWeetbixExoneration || impactFilter.ignoreAllExoneration)) {
+            return values;
+        }
+        if ((f.exonerationStatus == 'EXPLICIT' || f.exonerationStatus == 'IMPLICIT') && 
+                !impactFilter.ignoreAllExoneration) {
             return values;
         }
         if (!f.isIngestedInvocationBlocked && !impactFilter.ignoreIngestedInvocationBlocked) {
@@ -547,6 +565,20 @@ export const exportedForTesting = {
     treeDistinctCounts: treeDistinctValues,
 }
 
+// Test result was no exonerated.
+type ExonerationStatus = 'NOT_EXONERATED' 
+    // Test result was not recorded as exonerated, but the build
+    // result was not FAILURE (e.g. SUCCESS, CANCELED, INFRA_FAILURE
+    // instead), so the test result was not responsible for making
+    // the build fail.
+    | 'IMPLICIT' 
+    // Test result was recorded as exonerated
+    // for a reason other than Weetbix (or FindIt).
+    | 'EXPLICIT' 
+    // Test result was recorded as exonerated
+    // based on Weetbix (or FindIt) data.
+    | 'WEETBIX';
+
 // ClusterFailure is the data returned by the server for each failure.
 export interface ClusterFailure {
     realm: string | null;
@@ -556,7 +588,7 @@ export interface ClusterFailure {
     presubmitRunId: PresubmitRunId | null;
     presubmitRunOwner: string | null;
     partitionTime: string | null;
-    isExonerated: boolean | null;
+    exonerationStatus: ExonerationStatus | null;
     ingestedInvocationId: string | null;
     isIngestedInvocationBlocked: boolean | null;
     testRunIds: Array<string | null>;

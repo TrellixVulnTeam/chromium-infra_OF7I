@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
 
@@ -12,6 +12,7 @@ import Paper from '@mui/material/Paper';
 import Container from '@mui/material/Container';
 import { getCluster } from '../../services/cluster';
 import ErrorAlert from '../error_alert/error_alert';
+import ImpactTable from '../impact_table/impact_table';
 
 const ImpactSection = () => {
     const { project, algorithm, id } = useParams();
@@ -23,12 +24,6 @@ const ImpactSection = () => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return getCluster(project!, currentAlgorithm!, id!);
     });
-
-    const impactTableRef = useCallback(node => {
-        if (node !== null) {
-            node.currentCluster = cluster;
-        }
-    }, [cluster]);
 
     if(isLoading) {
         return <LinearProgress />;
@@ -46,7 +41,7 @@ const ImpactSection = () => {
         <Paper elevation={3} sx={{ pt: 2, mb:5 }}>
             <Container maxWidth={false}>
                 <h2>Impact</h2>
-                <impact-table ref={impactTableRef}></impact-table>
+                <ImpactTable cluster={cluster!}></ImpactTable>
                 <h2>Recent Failures</h2>
                 <failure-table project={project} clusterAlgorithm={currentAlgorithm} clusterID={id}></failure-table>
             </Container>

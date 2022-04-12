@@ -22,7 +22,7 @@ class ClusterFailureBuilder {
             presubmitRunId: { system: 'cv', id: 'presubmitRunId' },
             presubmitRunOwner: 'user',
             partitionTime: '2021-05-12T19:05:34',
-            isExonerated: false,
+            exonerationStatus: 'NOT_EXONERATED',
             ingestedInvocationId: 'ingestedInvocationId',
             isIngestedInvocationBlocked: false,
             testRunIds: ['testRunId'],
@@ -42,8 +42,13 @@ class ClusterFailureBuilder {
         this.failure.isTestRunBlocked = true;
         return this;
     }
-    exonerate() {
-        this.failure.isExonerated = true;
+    exonerateWeetbix() {
+        this.failure.exonerationStatus = "WEETBIX";
+        return this;
+    }
+    exonerateExplicitly() {
+        // Explicitly exonerated by something other than Weetbix.
+        this.failure.exonerationStatus = "EXPLICIT";
         return this;
     }
     withVariant(key: string, value: string) {
@@ -138,57 +143,102 @@ describe.each<ExtractorTestCase>([{
     shouldExtractTestRunId: true,
     shouldExtractIngestedInvocationId: true,
 }, {
-    failure: newFailure().exonerate().build(),
+    failure: newFailure().exonerateWeetbix().build(),
     filter: 'Actual Impact',
     shouldExtractTestRunId: false,
     shouldExtractIngestedInvocationId: false,
 }, {
-    failure: newFailure().testRunBlocked().exonerate().build(),
+    failure: newFailure().testRunBlocked().exonerateWeetbix().build(),
+    filter: 'Actual Impact',
+    shouldExtractTestRunId: true,
+    shouldExtractIngestedInvocationId: false,
+}, {
+    failure: newFailure().ingestedInvocationBlocked().exonerateWeetbix().build(),
+    filter: 'Actual Impact',
+    shouldExtractTestRunId: true,
+    shouldExtractIngestedInvocationId: false,
+}, {
+    failure: newFailure().exonerateExplicitly().build(),
     filter: 'Actual Impact',
     shouldExtractTestRunId: false,
     shouldExtractIngestedInvocationId: false,
 }, {
-    failure: newFailure().ingestedInvocationBlocked().exonerate().build(),
+    failure: newFailure().testRunBlocked().exonerateExplicitly().build(),
     filter: 'Actual Impact',
+    shouldExtractTestRunId: true,
+    shouldExtractIngestedInvocationId: false,
+}, {
+    failure: newFailure().ingestedInvocationBlocked().exonerateExplicitly().build(),
+    filter: 'Actual Impact',
+    shouldExtractTestRunId: true,
+    shouldExtractIngestedInvocationId: false,
+},{
+    failure: newFailure().build(),
+    filter: 'Without Weetbix Exoneration',
     shouldExtractTestRunId: false,
     shouldExtractIngestedInvocationId: false,
 }, {
+    failure: newFailure().ingestedInvocationBlocked().build(),
+    filter: 'Without Weetbix Exoneration',
+    shouldExtractTestRunId: true,
+    shouldExtractIngestedInvocationId: true,
+}, {
+    failure: newFailure().exonerateWeetbix().build(),
+    filter: 'Without Weetbix Exoneration',
+    shouldExtractTestRunId: false,
+    shouldExtractIngestedInvocationId: false,
+}, {
+    failure: newFailure().ingestedInvocationBlocked().exonerateWeetbix().build(),
+    filter: 'Without Weetbix Exoneration',
+    shouldExtractTestRunId: true,
+    shouldExtractIngestedInvocationId: true,
+}, {
+    failure: newFailure().exonerateExplicitly().build(),
+    filter: 'Without Weetbix Exoneration',
+    shouldExtractTestRunId: false,
+    shouldExtractIngestedInvocationId: false,
+}, {
+    failure: newFailure().ingestedInvocationBlocked().exonerateExplicitly().build(),
+    filter: 'Without Weetbix Exoneration',
+    shouldExtractTestRunId: true,
+    shouldExtractIngestedInvocationId: false,
+}, {
     failure: newFailure().build(),
-    filter: 'Without Exoneration',
+    filter: 'Without All Exoneration',
+    shouldExtractTestRunId: false,
+    shouldExtractIngestedInvocationId: false,
+},  {
+    failure: newFailure().ingestedInvocationBlocked().build(),
+    filter: 'Without All Exoneration',
+    shouldExtractTestRunId: true,
+    shouldExtractIngestedInvocationId: true,
+}, {
+    failure: newFailure().exonerateWeetbix().build(),
+    filter: 'Without All Exoneration',
+    shouldExtractTestRunId: false,
+    shouldExtractIngestedInvocationId: false,
+},  {
+    failure: newFailure().ingestedInvocationBlocked().exonerateWeetbix().build(),
+    filter: 'Without All Exoneration',
+    shouldExtractTestRunId: true,
+    shouldExtractIngestedInvocationId: true,
+}, {
+    failure: newFailure().exonerateExplicitly().build(),
+    filter: 'Without All Exoneration',
+    shouldExtractTestRunId: false,
+    shouldExtractIngestedInvocationId: false,
+}, {
+    failure: newFailure().ingestedInvocationBlocked().exonerateExplicitly().build(),
+    filter: 'Without All Exoneration',
+    shouldExtractTestRunId: true,
+    shouldExtractIngestedInvocationId: true,
+}, {
+    failure: newFailure().build(),
+    filter: 'Without Retrying Test Runs',
     shouldExtractTestRunId: false,
     shouldExtractIngestedInvocationId: false,
 }, {
     failure: newFailure().testRunBlocked().build(),
-    filter: 'Without Exoneration',
-    shouldExtractTestRunId: true,
-    shouldExtractIngestedInvocationId: false,
-}, {
-    failure: newFailure().ingestedInvocationBlocked().build(),
-    filter: 'Without Exoneration',
-    shouldExtractTestRunId: true,
-    shouldExtractIngestedInvocationId: true,
-}, {
-    failure: newFailure().exonerate().build(),
-    filter: 'Without Exoneration',
-    shouldExtractTestRunId: false,
-    shouldExtractIngestedInvocationId: false,
-}, {
-    failure: newFailure().testRunBlocked().exonerate().build(),
-    filter: 'Without Exoneration',
-    shouldExtractTestRunId: true,
-    shouldExtractIngestedInvocationId: false,
-}, {
-    failure: newFailure().ingestedInvocationBlocked().exonerate().build(),
-    filter: 'Without Exoneration',
-    shouldExtractTestRunId: true,
-    shouldExtractIngestedInvocationId: true,
-}, {
-    failure: newFailure().build(),
-    filter: 'Without Retrying Test Runs',
-    shouldExtractTestRunId: false,
-    shouldExtractIngestedInvocationId: false,
-}, {
-    failure: newFailure().testRunBlocked().build(),
     filter: 'Without Retrying Test Runs',
     shouldExtractTestRunId: true,
     shouldExtractIngestedInvocationId: true,
@@ -198,17 +248,17 @@ describe.each<ExtractorTestCase>([{
     shouldExtractTestRunId: true,
     shouldExtractIngestedInvocationId: true,
 }, {
-    failure: newFailure().exonerate().build(),
+    failure: newFailure().exonerateWeetbix().build(),
     filter: 'Without Retrying Test Runs',
     shouldExtractTestRunId: false,
     shouldExtractIngestedInvocationId: false,
 }, {
-    failure: newFailure().testRunBlocked().exonerate().build(),
+    failure: newFailure().testRunBlocked().exonerateWeetbix().build(),
     filter: 'Without Retrying Test Runs',
     shouldExtractTestRunId: true,
     shouldExtractIngestedInvocationId: true,
 }, {
-    failure: newFailure().ingestedInvocationBlocked().exonerate().build(),
+    failure: newFailure().ingestedInvocationBlocked().exonerateWeetbix().build(),
     filter: 'Without Retrying Test Runs',
     shouldExtractTestRunId: true,
     shouldExtractIngestedInvocationId: true,
@@ -228,17 +278,17 @@ describe.each<ExtractorTestCase>([{
     shouldExtractTestRunId: true,
     shouldExtractIngestedInvocationId: true,
 }, {
-    failure: newFailure().exonerate().build(),
+    failure: newFailure().exonerateWeetbix().build(),
     filter: 'Without Any Retries',
     shouldExtractTestRunId: true,
     shouldExtractIngestedInvocationId: true,
 }, {
-    failure: newFailure().testRunBlocked().exonerate().build(),
+    failure: newFailure().testRunBlocked().exonerateWeetbix().build(),
     filter: 'Without Any Retries',
     shouldExtractTestRunId: true,
     shouldExtractIngestedInvocationId: true,
 }, {
-    failure: newFailure().ingestedInvocationBlocked().exonerate().build(),
+    failure: newFailure().ingestedInvocationBlocked().exonerateWeetbix().build(),
     filter: 'Without Any Retries',
     shouldExtractTestRunId: true,
     shouldExtractIngestedInvocationId: true,

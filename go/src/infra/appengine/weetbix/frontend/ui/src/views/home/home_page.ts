@@ -38,7 +38,7 @@ export class HomePage extends LitElement {
         const request: ListProjectsRequest = {};
         const response = await service.list(request);
         // Chromium milestone projects are explicitly ignored by the backend, match this in the frontend.
-        this.projects = response.projects?.filter(p => !/^chromium-m[0-9]+$/.test(p.project)) || null;
+        this.projects = response.projects?.filter(p => !/^(chromium|chrome)-m[0-9]+$/.test(p.project)) || null;
         this.requestUpdate();
     }
 

@@ -69,15 +69,15 @@ export const getMockCluster = (id: string) => {
             'preWeetbix': 15221,
             'preExoneration': 16052,
             'residual': 15221,
-            'residualPreWeetbix': 15221,
+            'residualPreWeetbix': 15231,
             'residualPreExoneration': 16052
         },
         'failures7d': {
-            'nominal': 15780,
-            'preWeetbix': 15780,
+            'nominal': 15800,
+            'preWeetbix': 15810,
             'preExoneration': 16792,
             'residual': 15780,
-            'residualPreWeetbix': 15780,
+            'residualPreWeetbix': 15790,
             'residualPreExoneration': 16792
         },
         'title': '',

@@ -24,8 +24,8 @@ export class ClusterTable extends LitElement {
     @property({ type: Number })
     days: number = 1;
 
-    @property({ type: Boolean })
-    preexoneration: boolean = false;
+    @property()
+    impactFilter: ImpactType = 'preWeetbix';
 
     @property({ type: Boolean })
     residual: boolean = true;
@@ -53,6 +53,15 @@ export class ClusterTable extends LitElement {
         const item = this.shadowRoot!.querySelector('#days [selected]');
         if (item) {
             this.days = parseInt(item.getAttribute('value') || '1');
+            this.requestUpdate();
+        }
+    }
+
+    onImpactFilterChanged() {
+        const item = this.shadowRoot!.querySelector('#impact-filter [selected]');
+        if (item) {
+            this.impactFilter = (item.getAttribute('value') || 'preWeetbix') as ImpactType;
+            this.requestUpdate();
         }
     }
 
@@ -95,10 +104,15 @@ export class ClusterTable extends LitElement {
                 default:
                     throw new Error('no such metric: ' + metric);
             }
-            if (this.residual) {
-                return this.preexoneration ? counts.residualPreExoneration : counts.residual;
-            } else {
-                return this.preexoneration ? counts.preExoneration : counts.nominal;
+            switch (this.impactFilter) {
+                case 'nominal':
+                    return this.residual ? counts.residual : counts.nominal;
+                case 'preWeetbix':
+                    return this.residual ? counts.residualPreWeetbix : counts.preWeetbix;
+                case 'preExoneration':
+                    return this.residual ? counts.residualPreExoneration : counts.preExoneration;
+                default:
+                    throw new Error('no such impact filter: ' + this.impactFilter);
             }
         };
         const sortedClusters = [...this.clusters];
@@ -115,11 +129,13 @@ export class ClusterTable extends LitElement {
                 <mwc-list-item value="3">3 Days</mwc-list-item>
                 <mwc-list-item value="7">7 Days</mwc-list-item>
             </mwc-select>
-            <mwc-formfield label="Pre-Exoneration">
-                <mwc-checkbox class="child" @change=${() => this.preexoneration = !this.preexoneration} ?checked=${this.preexoneration}></mwc-checkbox>
-            </mwc-formfield>
-            <mwc-formfield label="Residual">
-                <mwc-checkbox checked class="child" @change=${() => this.residual = !this.residual} ?checked=${this.residual}></mwc-checkbox>
+            <mwc-select id="impact-filter" outlined label="Impact" @change=${() => this.onImpactFilterChanged()}>
+                <mwc-list-item value="nominal">Actual Impact</mwc-list-item>
+                <mwc-list-item selected value="preWeetbix">Without Weetbix Exoneration</mwc-list-item>
+                <mwc-list-item value="preExoneration">Without All Exoneration</mwc-list-item>
+            </mwc-select>
+            <mwc-formfield label="Exclude impact already counted against Bug Clusters from Suggested Clusters">
+                <mwc-checkbox checked class="child" @change=${() => {this.residual = !this.residual; this.requestUpdate();}} ?checked=${this.residual}></mwc-checkbox>
             </mwc-formfield>
             <table>
                 <thead>
@@ -175,6 +191,9 @@ export class ClusterTable extends LitElement {
         #container {
             margin: 20px 14px;
         }
+        #impact-filter {
+            width: 280px;
+        }
         h1 {
             font-size: 18px;
             font-weight: normal;
@@ -228,6 +247,8 @@ export class ClusterTable extends LitElement {
         `];
 }
 
+type ImpactType = 'nominal' | 'preWeetbix' | 'preExoneration';
+
 type MetricName = 'presubmitRejects' | 'testRunFailures' | 'failures';
 
 // Cluster is the cluster information sent by the server.
@@ -258,7 +279,9 @@ interface ClusterId {
 
 interface Counts {
     nominal: number;
+    preWeetbix: number;
     preExoneration: number;
     residual: number;
+    residualPreWeetbix: number;
     residualPreExoneration: number;
 }

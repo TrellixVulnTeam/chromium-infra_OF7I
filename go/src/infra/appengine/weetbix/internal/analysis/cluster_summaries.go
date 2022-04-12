@@ -360,19 +360,22 @@ func (c *Client) ReadCluster(ctx context.Context, luciProject string, clusterID 
 }
 
 type ClusterFailure struct {
-	Realm                       bigquery.NullString    `json:"realm"`
-	TestID                      bigquery.NullString    `json:"testId"`
-	Variant                     []*Variant             `json:"variant"`
-	PresubmitRunID              *PresubmitRunID        `json:"presubmitRunId"`
-	PresubmitRunOwner           bigquery.NullString    `json:"presubmitRunOwner"`
-	PresubmitRunCl              *Changelist            `json:"presubmitRunCl"`
-	PartitionTime               bigquery.NullTimestamp `json:"partitionTime"`
-	IsExonerated                bigquery.NullBool      `json:"isExonerated"`
-	IngestedInvocationID        bigquery.NullString    `json:"ingestedInvocationId"`
-	IsIngestedInvocationBlocked bigquery.NullBool      `json:"isIngestedInvocationBlocked"`
-	TestRunIds                  []bigquery.NullString  `json:"testRunIds"`
-	IsTestRunBlocked            bigquery.NullBool      `json:"isTestRunBlocked"`
-	Count                       int32                  `json:"count"`
+	Realm             bigquery.NullString    `json:"realm"`
+	TestID            bigquery.NullString    `json:"testId"`
+	Variant           []*Variant             `json:"variant"`
+	PresubmitRunID    *PresubmitRunID        `json:"presubmitRunId"`
+	PresubmitRunOwner bigquery.NullString    `json:"presubmitRunOwner"`
+	PresubmitRunCl    *Changelist            `json:"presubmitRunCl"`
+	PartitionTime     bigquery.NullTimestamp `json:"partitionTime"`
+	// ExonerationStatus defines the type of exoneration applied to the
+	// test result.
+	// One of NOT_EXONERATED, IMPLICIT, EXPLICIT or WEETBIX.
+	ExonerationStatus           bigquery.NullString   `json:"exonerationStatus"`
+	IngestedInvocationID        bigquery.NullString   `json:"ingestedInvocationId"`
+	IsIngestedInvocationBlocked bigquery.NullBool     `json:"isIngestedInvocationBlocked"`
+	TestRunIds                  []bigquery.NullString `json:"testRunIds"`
+	IsTestRunBlocked            bigquery.NullBool     `json:"isTestRunBlocked"`
+	Count                       int32                 `json:"count"`
 }
 
 type Variant struct {
@@ -421,7 +424,7 @@ func (c *Client) ReadClusterFailures(ctx context.Context, luciProject string, cl
 			ANY_VALUE(IF(ARRAY_LENGTH(r.presubmit_run_cls)>0,
 				r.presubmit_run_cls[OFFSET(0)], NULL)) as PresubmitRunCL,
 			r.partition_time as PartitionTime,
-			ANY_VALUE(r.exoneration_status) <> 'NOT_EXONERATED' as IsExonerated,
+			ANY_VALUE(r.exoneration_status) as ExonerationStatus,
 			r.ingested_invocation_id as IngestedInvocationID,
 			ANY_VALUE(r.is_ingested_invocation_blocked) as IsIngestedInvocationBlocked,
 			ARRAY_AGG(DISTINCT r.test_run_id) as TestRunIds,
