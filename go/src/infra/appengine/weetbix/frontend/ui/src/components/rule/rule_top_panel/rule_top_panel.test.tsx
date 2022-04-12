@@ -43,9 +43,9 @@ describe('Test RuleTopPanel component', () => {
             '/p/chromium/rules/12345',
             '/p/:project/rules/:id'
         );
-        await screen.findByText('Bug details');
+        await screen.findByText('Rule Details');
 
-        expect(screen.getByText('Details')).toBeInTheDocument();
-        expect(screen.getByText('Bug details')).toBeInTheDocument();
+        expect(screen.getByText('Rule Details')).toBeInTheDocument();
+        expect(screen.getByText('Associated Bug')).toBeInTheDocument();
     });
 });

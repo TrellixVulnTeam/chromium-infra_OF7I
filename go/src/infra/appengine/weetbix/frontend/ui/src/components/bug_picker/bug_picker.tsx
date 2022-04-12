@@ -51,6 +51,7 @@ const getBugNumber = (bugId: string): string => {
  */
 enum BugSystems {
     MONORAIL = 'monorail',
+    BUGANIZER = 'buganizer',
 }
 
 
@@ -66,6 +67,9 @@ const getStaticBugSystem = (bugSystem: string): string => {
     switch (bugSystem) {
         case 'monorail': {
             return BugSystems.MONORAIL;
+        }
+        case 'buganizer': {
+            return BugSystems.BUGANIZER;
         }
         default: {
             throw new Error('Unnkown bug system.');
@@ -122,6 +126,13 @@ const BugPicker = ({
 
     const onBugSystemChange = (e: SelectChangeEvent<typeof bugSystem>) => {
         handleBugSystemChanged(e.target.value);
+
+        // When the bug system changes, we also need to update the Bug ID.
+        if (e.target.value == 'monorail') {
+            handleBugIdChanged(`${projectConfig.monorail.project}/${getBugNumber(bugId)}`);
+        } else if (e.target.value == 'buganizer') {
+            handleBugIdChanged(getBugNumber(bugId));
+        }
     };
 
     const onBugNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -149,6 +160,9 @@ const BugPicker = ({
                     >
                         <MenuItem value={getStaticBugSystem('monorail')}>
                             {projectConfig.monorail.displayPrefix}
+                        </MenuItem>
+                        <MenuItem value={getStaticBugSystem('buganizer')}>
+                            Buganizer
                         </MenuItem>
                     </Select>
                 </FormControl>

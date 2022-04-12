@@ -5,21 +5,26 @@
 import React from 'react';
 
 import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
 
 interface Props {
     text?: string;
     children?: React.ReactNode,
     xs?: number;
+    lg?: number;
 }
 
 const GridLabel = ({
     text,
     children,
     xs = 2,
+    lg = xs,
 }: Props) => {
     return (
-        <Grid container item xs={xs} alignItems="center">
-            {text}
+        <Grid item xs={xs} lg={lg}>
+            <Box sx={{ display: 'inline-block' }} paddingTop={1}>
+                {text}
+            </Box>
             {children}
         </Grid>
     );

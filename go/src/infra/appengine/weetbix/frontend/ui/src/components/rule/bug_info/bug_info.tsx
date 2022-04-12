@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { useQuery } from 'react-query';
 
 import Edit from '@mui/icons-material/Edit';
+import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
@@ -25,6 +26,7 @@ import {
 } from '../../../services/monorail';
 import {
     Rule,
+    AssociatedBug,
     UpdateRuleRequest
 } from '../../../services/rules';
 import { MuiDefaultColor } from '../../../types/mui_types';
@@ -33,8 +35,8 @@ import GridLabel from '../../grid_label/grid_label';
 import HelpTooltip from '../../help_tooltip/help_tooltip';
 import BugEditDialog from '../bug_edit_dialog/bug_edit_dialog';
 
-const createIssueServiceRequest = (rule: Rule): GetIssueRequest => {
-    const parts = rule.bug.id.split('/');
+const createIssueServiceRequest = (bug: AssociatedBug): GetIssueRequest => {
+    const parts = bug.id.split('/');
     const monorailProject = parts[0];
     const bugId = parts[1];
     const issueId = `projects/${monorailProject}/issues/${bugId}`;
@@ -80,30 +82,19 @@ const BugInfo = ({
 
     const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-    const fetchBugRequest = createIssueServiceRequest(rule);
-    const { isLoading, isError, data: issue, error } = useQuery(['bug', fetchBugRequest.name],
-        async () => await issueService.getIssue(fetchBugRequest)
+    const isMonorail = (rule.bug.system == 'monorail');
+    const requestName = rule.bug.system + '/' + rule.bug.id;
+    const { isLoading, isError, data: issue, error } = useQuery(['bug', requestName],
+        async () => {
+            if (isMonorail) {
+                const fetchBugRequest = createIssueServiceRequest(rule.bug);
+                return await issueService.getIssue(fetchBugRequest);
+            }
+            return null;
+        }
     );
 
     const mutateRule = useMutateRule();
-
-    if (isLoading) {
-        return <LinearProgress />;
-    }
-
-    if (isError) {
-        return (
-            <Paper elevation={3} sx={{ py: 2, mt: 1 }}>
-                <Container>
-                    <ErrorAlert
-                        showError={true}
-                        errorTitle='Failed to load bug details.'
-                        errorText={`Failed to load bug details due to: ${error}`}
-                    />
-                </Container>
-            </Paper>
-        );
-    }
 
     const handleToggleUpdateBug = () => {
         const request: UpdateRuleRequest = {
@@ -118,61 +109,75 @@ const BugInfo = ({
     };
 
     return (
-        <>
-            {
-                issue && (
-                    <Paper elevation={3} sx={{ pt: 2, mt: 1, flexGrow: 1 }}>
-                        <Container maxWidth={false}>
-                            <Typography sx={{
-                                fontWeight: 600,
-                                fontSize: 20
-                            }}>
-                                Bug details
-                            </Typography>
-                            <Grid container rowGap={2}>
-                                <GridLabel text="Bug">
-                                </GridLabel>
-                                <Grid container item xs={10} alignItems="center" columnGap={1}>
-                                    <Link target="_blank" href={rule.bug.url}>
-                                        {rule.bug.linkText}
-                                    </Link>
-                                    <Chip label={issue.status.status} color={bugStatusColor(issue.status.status)} />
-                                    <IconButton aria-label="edit" onClick={() => setEditDialogOpen(true)}>
-                                        <Edit />
-                                    </IconButton>
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <Divider />
-                                </Grid>
-                                <GridLabel text="Summary" xs={12} />
-                                <Grid container item xs={12}>
-                                    {issue.summary}
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <Divider />
-                                </Grid>
-                                <GridLabel text="Update bug">
-                                    <HelpTooltip text={bugUpdatesHelpText} />
-                                </GridLabel>
-                                <Grid container item xs={10} alignItems="center">
-                                    {mutateRule.isLoading && (<CircularProgress size="1rem" />)}
-                                    <Switch
-                                        aria-label="receive bug status"
-                                        checked={rule.isManagingBug}
-                                        onChange={handleToggleUpdateBug}
-                                        disabled={mutateRule.isLoading}
-                                    />
-                                </Grid>
-                            </Grid>
-                        </Container>
-                        <BugEditDialog
-                            open={editDialogOpen}
-                            setOpen={setEditDialogOpen}
+        <Paper elevation={3} sx={{ pt: 2, pb: 2, mt: 1 }}>
+            <Container  maxWidth={false}>
+                <Typography sx={{
+                    fontWeight: 600,
+                    fontSize: 20
+                }}>
+                    Associated Bug
+                </Typography>
+                <Grid container rowGap={0}>
+                    <GridLabel xs={4} lg={2} text="Bug">
+                    </GridLabel>
+                    <Grid container item xs={8} lg={5} alignItems="center" columnGap={1}>
+                        <Link target="_blank" href={rule.bug.url}>
+                            {rule.bug.linkText}
+                        </Link>
+                        <IconButton aria-label="edit" onClick={() => setEditDialogOpen(true)}>
+                            <Edit />
+                        </IconButton>
+                    </Grid>
+                    <GridLabel xs={4} lg={3} text="Update bug">
+                        <HelpTooltip text={bugUpdatesHelpText} />
+                    </GridLabel>
+                    <Grid container item xs={8} lg={2} alignItems="center">
+                        {mutateRule.isLoading && (<CircularProgress size="1rem" />)}
+                        <Switch
+                            aria-label="receive bug status"
+                            checked={rule.isManagingBug}
+                            onChange={handleToggleUpdateBug}
+                            disabled={mutateRule.isLoading}
                         />
-                    </Paper>
-                )
-            }
-        </>
+                    </Grid>
+                </Grid>
+                <Box sx={{pt:2, pb:2}}>
+                    <Divider />
+                </Box>
+                {
+                    isLoading && (
+                        <LinearProgress />
+                    )
+                }
+                {
+                    isError && (
+                        <Container>
+                            <ErrorAlert
+                                showError={true}
+                                errorTitle='Failed to load bug details.'
+                                errorText={`Failed to load bug details due to: ${error}`}
+                            />
+                        </Container>
+                    )
+                }
+                {
+                    issue && (
+                        <Grid container rowGap={1}>
+                            <GridLabel xs={4} lg={2} text="Status" />
+                            <Grid container item xs={8} lg={10}>
+                                <Chip label={issue.status.status} color={bugStatusColor(issue.status.status)} />
+                            </Grid>
+                            <GridLabel xs={4} lg={2} text="Summary" />
+                            <GridLabel xs={8} lg={10} text={issue.summary} />
+                        </Grid>
+                    )
+                }
+            </Container>
+            <BugEditDialog
+                open={editDialogOpen}
+                setOpen={setEditDialogOpen}
+            />
+        </Paper>
     );
 };
 

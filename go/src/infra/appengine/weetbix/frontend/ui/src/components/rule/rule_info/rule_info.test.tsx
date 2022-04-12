@@ -30,7 +30,7 @@ describe('Test RuleInfo component', () => {
             />
         );
 
-        await screen.findByText('Details');
+        await screen.findByText('Rule Details');
 
         expect(screen.getByText(mockRule.ruleDefinition)).toBeInTheDocument();
         expect(screen.getByText(`${mockRule.sourceCluster.algorithm}/${mockRule.sourceCluster.id}`)).toBeInTheDocument();
@@ -47,7 +47,7 @@ describe('Test RuleInfo component', () => {
                 rule={mockRule}
             />
         );
-        await screen.findByText('Details');
+        await screen.findByText('Rule Details');
 
         fireEvent.click(screen.getByText('Archive'));
         await screen.findByText('Are you sure?');
@@ -64,7 +64,7 @@ describe('Test RuleInfo component', () => {
                 rule={mockRule}
             />
         );
-        await screen.findByText('Details');
+        await screen.findByText('Rule Details');
 
         fireEvent.click(screen.getByText('Archive'));
         await screen.findByText('Are you sure?');
@@ -82,7 +82,7 @@ describe('Test RuleInfo component', () => {
             body: ')]}\''+JSON.stringify(updatedRule)
         });
 
-        fireEvent.click(screen.getByText('Save'));
+        fireEvent.click(screen.getByText('Confirm'));
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await waitFor(() => fetchMock.lastCall() !== undefined && fetchMock.lastCall()![0] === 'http://localhost/prpc/weetbix.v1.Rules/Update');
 

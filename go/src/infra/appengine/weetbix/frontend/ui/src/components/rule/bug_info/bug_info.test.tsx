@@ -31,12 +31,6 @@ describe('Test BugInfo component', () => {
         mockFetchAuthState();
         mockRule = createDefaultMockRule();
         mockIssue = createMockBug();
-        fetchMock.post('https://api-dot-crbug.com/prpc/monorail.v3.Issues/GetIssue', {
-            headers: {
-                'X-Prpc-Grpc-Code': '0'
-            },
-            body: ')]}\'' + JSON.stringify(mockIssue)
-        });
         mockFetchRule();
     });
 
@@ -45,21 +39,47 @@ describe('Test BugInfo component', () => {
         fetchMock.reset();
     });
 
-    it('given a rule, should fetch and display bug info', async () => {
+    it('given a rule with monorail bug, should fetch and display bug info', async () => {
+        fetchMock.post('https://api-dot-crbug.com/prpc/monorail.v3.Issues/GetIssue', {
+            headers: {
+                'X-Prpc-Grpc-Code': '0'
+            },
+            body: ')]}\'' + JSON.stringify(mockIssue)
+        });
+
         renderWithRouterAndClient(
             <BugInfo
                 rule={mockRule}
             />
         );
 
-        await screen.findByText('Bug details');
-
         expect(screen.getByText(mockRule.bug.linkText)).toBeInTheDocument();
+
+        await screen.findByText('Status');
         expect(screen.getByText(mockIssue.summary)).toBeInTheDocument();
         expect(screen.getByText(mockIssue.status.status)).toBeInTheDocument();
     });
 
+    it('given a rule with buganizer bug, should display bug only', async () => {
+        renderWithRouterAndClient(
+            <BugInfo
+                rule={mockRule}
+            />
+        );
+
+        expect(screen.getByText(mockRule.bug.linkText)).toBeInTheDocument();
+    })
+
     it('when clicking edit, should open dialog', async () => {
+        // Check we can still edit the bug, even if the bug fails to load.
+        fetchMock.post('https://api-dot-crbug.com/prpc/monorail.v3.Issues/GetIssue', {
+            status: 404,
+            headers: {
+                'X-Prpc-Grpc-Code': '5'
+            },
+            body: 'Issue(s) not found'
+        });
+
         mockFetchProjectConfig();
         renderWithRouterAndClient(
             <BugInfo
@@ -69,10 +89,10 @@ describe('Test BugInfo component', () => {
             '/p/:project/rules/:id'
         );
 
-        await screen.findByText('Bug details');
+        await screen.findByText('Associated Bug');
 
         fireEvent.click(screen.getByLabelText('edit'));
 
-        expect(screen.getByText('Edit bug')).toBeInTheDocument();
+        expect(screen.getByText('Change Associated Bug')).toBeInTheDocument();
     });
 });

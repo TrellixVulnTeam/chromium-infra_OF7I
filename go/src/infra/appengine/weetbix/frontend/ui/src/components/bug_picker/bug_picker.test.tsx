@@ -14,14 +14,20 @@ import { renderWithRouterAndClient } from '../../testing_tools/libs/mock_router'
 import { createMockProjectConfig } from '../../testing_tools/mocks/project_config_mock';
 import BugPicker from './bug_picker';
 
-afterEach(() => fetchMock.mockClear());
-
 describe('Test BugPicker component', () => {
-    it('given a rule and a project, should display select and a text box for writing the bug id', async () => {
+    beforeEach(() => {
         fetchMock.get('/api/projects/chromium/config',createMockProjectConfig());
+    });
+
+    afterEach(() => {
+        fetchMock.mockClear();
+        fetchMock.reset();
+    });
+
+    it('given a bug and a project, should display select and a text box for writing the bug id', async () => {
         renderWithRouterAndClient(
             <BugPicker
-                bugId='123456'
+                bugId='chromium/123456'
                 bugSystem='monorail'
                 handleBugSystemChanged={identityFunction}
                 handleBugIdChanged={identityFunction}
@@ -30,4 +36,17 @@ describe('Test BugPicker component', () => {
         expect(screen.getByTestId('bug-system')).toHaveValue('monorail');
         expect(screen.getByTestId('bug-number')).toHaveValue('123456');
     });
+
+    it('given a buganizer bug, should select the bug system correctly', async() => {
+        renderWithRouterAndClient(
+            <BugPicker
+                bugId='123456'
+                bugSystem='buganizer'
+                handleBugSystemChanged={identityFunction}
+                handleBugIdChanged={identityFunction}
+            />, '/p/chromium', '/p/:project');
+        await screen.findByText('Bug tracker');
+        expect(screen.getByTestId('bug-system')).toHaveValue('buganizer');
+        expect(screen.getByTestId('bug-number')).toHaveValue('123456');
+    })
 });

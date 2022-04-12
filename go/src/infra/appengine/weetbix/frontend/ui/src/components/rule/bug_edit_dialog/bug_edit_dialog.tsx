@@ -106,7 +106,7 @@ const BugEditDialog = ({
     return (
         <>
             <Dialog open={open} fullWidth>
-                <DialogTitle>Edit bug</DialogTitle>
+                <DialogTitle>Change Associated Bug</DialogTitle>
                 <DialogContent sx={{ mt: 1 }}>
                     <BugPicker
                         bugSystem={bugSystem}
@@ -117,14 +117,12 @@ const BugEditDialog = ({
                 </DialogContent>
                 <DialogActions>
                     <Button
-                        color="error"
                         variant="outlined"
                         onClick={handleClose}>
                         Cancel
                     </Button>
                     <LoadingButton
-                        variant="outlined"
-                        color="success"
+                        variant="contained"
                         onClick={handleSave}
                         loading={mutateRule.isLoading}
                     >

@@ -65,6 +65,7 @@ const RuleEditDialog = ({
     return (
         <Dialog
             open={open}
+            maxWidth="lg"
             fullWidth
         >
             <DialogTitle>Edit rule definition</DialogTitle>
@@ -89,14 +90,12 @@ const RuleEditDialog = ({
             </DialogContent>
             <DialogActions>
                 <Button
-                    color="error"
                     variant="outlined"
                     onClick={handleClose}>
                     Cancel
                 </Button>
                 <LoadingButton
-                    variant="outlined"
-                    color="success"
+                    variant="contained"
                     onClick={handleSave}
                     loading={mutateRule.isLoading}
                 >
