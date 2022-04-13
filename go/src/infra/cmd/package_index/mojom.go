@@ -202,7 +202,7 @@ func (m *mojomTarget) getFiles() ([]string, error) {
 }
 
 // mojomTargetProcessor takes in a target and either returns an error if the target
-// isn't a proto target or returns a processedTarget struct.
+// isn't a mojom target or returns a processedTarget struct.
 //
 // If files is true, process the target files. Otherwise, process the target unit.
 func mojomTargetProcessor(ctx context.Context, rootPath, outDir, corpus, buildConfig string,
