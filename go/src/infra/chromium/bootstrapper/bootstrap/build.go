@@ -144,32 +144,20 @@ func (b *BuildBootstrapper) getTopLevelConfig(ctx context.Context, input *Input,
 func (b *BuildBootstrapper) getPropertiesFromFile(ctx context.Context, propsFile string, config *BootstrapConfig) error {
 	var diff string
 	if change := config.change; change != nil {
-		// check if it affects the builder properties file and apply change
-		logging.Infof(ctx, "determining if properties file %s was affected by %s", propsFile, change)
-		info, err := b.gerrit.GetAffectedFileInfo(ctx, change.Host, change.Project, change.Change, change.Patchset, propsFile)
+		logging.Infof(ctx, "getting revision for %s", change)
+		revision, err := b.gerrit.GetRevision(ctx, change.Host, change.Project, change.Change, int32(change.Patchset))
 		if err != nil {
-			return errors.Annotate(err, "failed to determine if properties file %s was affected by %s", propsFile, change).Err()
+			return errors.Annotate(err, "failed to get revision for %s", change).Err()
 		}
-		if info == nil {
+		logging.Infof(ctx, "getting diff for properties file %s from %s", propsFile, change)
+		diff, err = b.gitiles.DownloadDiff(ctx, convertGerritHostToGitilesHost(change.Host), change.Project, revision, propsFile)
+		if err != nil {
+			return errors.Annotate(err, "failed to get diff for %s from %s", propsFile, change).Err()
+		}
+		if diff == "" {
 			logging.Infof(ctx, "properties file %s was not affected by %s", propsFile, change)
 		} else {
-			// TODO(gbeaty) Investigate which statuses actually make sense to handle
-			switch info.Status {
-			case gerrit.MODIFIED:
-				logging.Infof(ctx, "properties file %s was modified by %s", propsFile, change)
-			default:
-				return errors.Reason("Unhandled status for properties file %s: %s", propsFile, gerrit.FileStatusName[info.Status]).Err()
-			}
-			logging.Infof(ctx, "getting revision for %s", change)
-			revision, err := b.gerrit.GetRevision(ctx, change.Host, change.Project, change.Change, int32(change.Patchset))
-			if err != nil {
-				return errors.Annotate(err, "failed to get revision for %s", change).Err()
-			}
-			logging.Infof(ctx, "getting diff %s", change)
-			diff, err = b.gitiles.DownloadDiff(ctx, convertGerritHostToGitilesHost(change.Host), change.Project, revision)
-			if err != nil {
-				return errors.Annotate(err, "failed to get diff for %s from %s", propsFile, change).Err()
-			}
+			logging.Infof(ctx, "properties file %s was affected by %s", propsFile, change)
 		}
 	}
 

@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"infra/chromium/bootstrapper/gob"
-	"strconv"
 
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/api/gerrit"
@@ -36,7 +35,6 @@ type Client struct {
 // GerritClient provides a subset of the generated gerrit RPC client.
 type GerritClient interface {
 	GetChange(ctx context.Context, in *gerritpb.GetChangeRequest, opts ...grpc.CallOption) (*gerritpb.ChangeInfo, error)
-	ListFiles(ctx context.Context, in *gerritpb.ListFilesRequest, opts ...grpc.CallOption) (*gerritpb.ListFilesResponse, error)
 }
 
 // Enforce that the GerritClient interface is a subset of the generated client
@@ -137,59 +135,4 @@ func (c *Client) GetRevision(ctx context.Context, host, project string, change i
 		}
 	}
 	return "", errors.Reason("%s/c/%s/+/%d does not have patchset %d", host, project, change, patchset).Err()
-}
-
-type FileStatus = gerritpb.FileInfo_Status
-
-const (
-	MODIFIED  = gerritpb.FileInfo_M
-	ADDED     = gerritpb.FileInfo_A
-	DELETED   = gerritpb.FileInfo_D
-	RENAMED   = gerritpb.FileInfo_R
-	COPIED    = gerritpb.FileInfo_C
-	REWRITTEN = gerritpb.FileInfo_W
-)
-
-var (
-	FileStatusName = map[FileStatus]string{
-		MODIFIED:  "MODIFIED",
-		ADDED:     "ADDED",
-		DELETED:   "DELETED",
-		RENAMED:   "RENAMED",
-		COPIED:    "COPIED",
-		REWRITTEN: "REWRITTEN",
-	}
-)
-
-type FileInfo struct {
-	Status FileStatus
-}
-
-func (c *Client) GetAffectedFileInfo(ctx context.Context, host, project string, change, patchset int64, file string) (*FileInfo, error) {
-	gerritClient, err := c.gerritClientForHost(ctx, host)
-	if err != nil {
-		return nil, err
-	}
-
-	var response *gerritpb.ListFilesResponse
-	err = gob.Retry(ctx, "ListFiles", func() error {
-		var err error
-		response, err = gerritClient.ListFiles(ctx, &gerritpb.ListFilesRequest{
-			Project:    project,
-			Number:     change,
-			RevisionId: strconv.FormatInt(patchset, 10),
-		})
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	info, ok := response.Files[file]
-	if !ok {
-		return nil, nil
-	}
-	return &FileInfo{
-		Status: info.Status,
-	}, nil
 }

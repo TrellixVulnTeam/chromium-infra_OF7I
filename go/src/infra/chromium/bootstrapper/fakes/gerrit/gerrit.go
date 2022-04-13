@@ -7,7 +7,6 @@ package gerrit
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"infra/chromium/bootstrapper/gerrit"
 	"infra/chromium/util"
@@ -17,21 +16,11 @@ import (
 	"google.golang.org/grpc"
 )
 
-// AffectedFile is the fake data for a file that is affected by a patchset.
-type AffectedFile struct {
-	// Status is the file's status (e.g. modified, added, copied, etc.)
-	Status gerrit.FileStatus
-}
-
 // Patchset is the fake data for a patchset of a change.
 type Patchset struct {
 	// Revision is the git revision of the change in the corresponding
 	// gitiles host.
 	Revision string
-	// AffectedFiles maps file path to details of the affected file.
-	//
-	// A nil value will be treated as a modified file.
-	AffectedFiles map[string]*AffectedFile
 }
 
 // Change is the fake data for a gerrit change.
@@ -140,34 +129,4 @@ func (c *Client) GetChange(ctx context.Context, request *gerritpb.GetChangeReque
 		Ref:       change.Ref,
 		Revisions: revisions,
 	}, nil
-}
-
-func (c *Client) ListFiles(ctx context.Context, request *gerritpb.ListFilesRequest, opts ...grpc.CallOption) (*gerritpb.ListFilesResponse, error) {
-	util.PanicIf(request.SubstringQuery != "", "substring_query is not supported")
-
-	change, err := c.getChange(request.Project, request.Number)
-	if err != nil {
-		return nil, err
-	}
-
-	patchsetNum, err := strconv.ParseInt(request.RevisionId, 10, 32)
-	util.PanicOnError(err)
-
-	if int32(patchsetNum) > maxPatchsetNum(change) {
-		return nil, errors.Reason("patchset %d does not exist for change %d of project %#v on host %#v", patchsetNum, request.Number, request.Project, c.hostname).Err()
-	}
-	patchset := change.Patchsets[int32(patchsetNum)]
-	if patchset == nil {
-		patchset = &Patchset{}
-	}
-	files := map[string]*gerritpb.FileInfo{}
-	for f, details := range patchset.AffectedFiles {
-		if details == nil {
-			details = &AffectedFile{}
-		}
-		files[f] = &gerritpb.FileInfo{
-			Status: details.Status,
-		}
-	}
-	return &gerritpb.ListFilesResponse{Files: files}, nil
 }

@@ -215,6 +215,10 @@ func (c *Client) DownloadDiff(ctx context.Context, request *gitilespb.DownloadDi
 	}
 	commit("target commit")
 
-	diff := git("diff", "HEAD^", "HEAD")
+	args := []string{"diff", "HEAD^", "HEAD"}
+	if request.Path != "" {
+		args = append(args, "--", request.Path)
+	}
+	diff := git(args...)
 	return &gitilespb.DownloadDiffResponse{Contents: string(diff)}, nil
 }

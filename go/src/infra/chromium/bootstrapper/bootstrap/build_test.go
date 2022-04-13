@@ -112,21 +112,6 @@ func TestGetBootstrapConfig(t *testing.T) {
 				So(properties, ShouldBeNil)
 			})
 
-			Convey("if unable to get files affected by patchset", func() {
-				build.Input.GerritChanges = append(build.Input.GerritChanges, &buildbucketpb.GerritChange{
-					Host:     "chromium-review.googlesource.com",
-					Project:  "top/level",
-					Change:   2345,
-					Patchset: 2, // non-existent patchset
-				})
-				input := getInput(build)
-
-				properties, err := bootstrapper.GetBootstrapConfig(ctx, input)
-
-				So(err, ShouldErrLike, "failed to determine if properties file infra/config/fake-bucket/fake-builder/properties.textpb was affected")
-				So(properties, ShouldBeNil)
-			})
-
 			Convey("if the properties file is invalid", func() {
 				input := getInput(build)
 				topLevelGitiles.Refs["refs/heads/top-level"] = "top-level-top-level-head"
@@ -154,9 +139,6 @@ func TestGetBootstrapConfig(t *testing.T) {
 					Patchsets: map[int32]*fakegerrit.Patchset{
 						1: {
 							Revision: "cl-revision",
-							AffectedFiles: map[string]*fakegerrit.AffectedFile{
-								"infra/config/fake-bucket/fake-builder/properties.textpb": nil,
-							},
 						},
 					},
 				}
@@ -190,9 +172,6 @@ func TestGetBootstrapConfig(t *testing.T) {
 					Patchsets: map[int32]*fakegerrit.Patchset{
 						1: {
 							Revision: "cl-revision",
-							AffectedFiles: map[string]*fakegerrit.AffectedFile{
-								"infra/config/fake-bucket/fake-builder/properties.textpb": nil,
-							},
 						},
 					},
 				}
@@ -371,9 +350,6 @@ func TestGetBootstrapConfig(t *testing.T) {
 						Patchsets: map[int32]*fakegerrit.Patchset{
 							1: {
 								Revision: "cl-revision",
-								AffectedFiles: map[string]*fakegerrit.AffectedFile{
-									"infra/config/fake-bucket/fake-builder/properties.textpb": nil,
-								},
 							},
 						},
 					}
