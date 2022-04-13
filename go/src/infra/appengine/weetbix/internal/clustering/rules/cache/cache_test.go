@@ -9,10 +9,9 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/server/caching"
-
-	. "github.com/smartystreets/goconvey/convey"
 
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering/rules"
@@ -43,7 +42,7 @@ func TestRulesCache(t *testing.T) {
 				}
 			}
 			So(len(ruleset.ActiveRulesSorted), ShouldEqual, activeRules)
-			So(len(ruleset.ActiveRuleIDs), ShouldEqual, activeRules)
+			So(len(ruleset.ActiveRulesByID), ShouldEqual, activeRules)
 
 			sortedExpectedRules := sortRulesByPredicateLastUpdated(expectedRules)
 
@@ -60,8 +59,9 @@ func TestRulesCache(t *testing.T) {
 					So(a.Expr.String(), ShouldEqual, e.RuleDefinition)
 					actualRuleIndex++
 
-					_, ok := ruleset.ActiveRuleIDs[a.Rule.RuleID]
+					a2, ok := ruleset.ActiveRulesByID[a.Rule.RuleID]
 					So(ok, ShouldBeTrue)
+					So(a2.Rule, ShouldResemble, *e)
 				}
 			}
 			So(len(ruleset.ActiveRulesWithPredicateUpdatedSince(rules.StartingEpoch)), ShouldEqual, activeRules)

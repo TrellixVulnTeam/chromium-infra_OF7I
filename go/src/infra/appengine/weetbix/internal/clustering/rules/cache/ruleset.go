@@ -5,13 +5,13 @@ import (
 	"sort"
 	"time"
 
-	"infra/appengine/weetbix/internal/clustering/rules"
-	"infra/appengine/weetbix/internal/clustering/rules/lang"
-
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/trace"
 	"go.chromium.org/luci/server/span"
+
+	"infra/appengine/weetbix/internal/clustering/rules"
+	"infra/appengine/weetbix/internal/clustering/rules/lang"
 )
 
 // CachedRule represents a "compiled" version of a failure
@@ -49,9 +49,9 @@ type Ruleset struct {
 	// (should be used by Weetbix for matching), sorted in descending
 	// PredicateLastUpdated time order.
 	ActiveRulesSorted []*CachedRule
-	// ActiveRuleIDs stores the IDs of active failure association
-	// rules.
-	ActiveRuleIDs map[string]struct{}
+	// ActiveRulesByID stores active failure association
+	// rules by their Rule ID.
+	ActiveRulesByID map[string]*CachedRule
 	// Version versions the contents of the Ruleset. These timestamps only
 	// change if a rule is modified.
 	Version rules.Version
@@ -82,7 +82,7 @@ func (r *Ruleset) ActiveRulesWithPredicateUpdatedSince(t time.Time) []*CachedRul
 
 // Returns whether the given ruleID is an active rule.
 func (r *Ruleset) IsRuleActive(ruleID string) bool {
-	_, ok := r.ActiveRuleIDs[ruleID]
+	_, ok := r.ActiveRulesByID[ruleID]
 	return ok
 }
 
@@ -92,7 +92,7 @@ func newEmptyRuleset(project string) *Ruleset {
 	return &Ruleset{
 		Project:           project,
 		ActiveRulesSorted: nil,
-		ActiveRuleIDs:     make(map[string]struct{}),
+		ActiveRulesByID:   make(map[string]*CachedRule),
 		// The zero predicate last updated time is not valid and will be
 		// rejected by clustering state validation if we ever try to save
 		// it to Spanner as a chunk's RulesVersion.
@@ -107,7 +107,7 @@ func NewRuleset(project string, activeRules []*CachedRule, version rules.Version
 	return &Ruleset{
 		Project:           project,
 		ActiveRulesSorted: sortByDescendingPredicateLastUpdated(activeRules),
-		ActiveRuleIDs:     ruleIDs(activeRules),
+		ActiveRulesByID:   rulesByID(activeRules),
 		Version:           version,
 		LastRefresh:       lastRefresh,
 	}
@@ -216,11 +216,12 @@ func sortByDescendingPredicateLastUpdated(rules []*CachedRule) []*CachedRule {
 	return result
 }
 
-// ruleIDs returns the IDs of the given list of failure association rules.
-func ruleIDs(rules []*CachedRule) map[string]struct{} {
-	result := make(map[string]struct{})
+// rulesByID creates a mapping from rule ID to rules for the given list
+// of failure association rules.
+func rulesByID(rules []*CachedRule) map[string]*CachedRule {
+	result := make(map[string]*CachedRule)
 	for _, r := range rules {
-		result[r.Rule.RuleID] = struct{}{}
+		result[r.Rule.RuleID] = r
 	}
 	return result
 }

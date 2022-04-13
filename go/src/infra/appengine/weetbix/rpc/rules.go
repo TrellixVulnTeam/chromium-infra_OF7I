@@ -361,42 +361,6 @@ func ruleETag(rule *rules.FailureAssociationRule) string {
 	return fmt.Sprintf(`W/"%s"`, rule.LastUpdated.UTC().Format(time.RFC3339Nano))
 }
 
-func createAssociatedBugPB(b bugs.BugID, cfg *configpb.ProjectConfig) *pb.AssociatedBug {
-	// Fallback bug name and URL.
-	linkText := fmt.Sprintf("%s/%s", b.System, b.ID)
-	url := ""
-
-	switch b.System {
-	case bugs.MonorailSystem:
-		project, id, err := b.MonorailProjectAndID()
-		if err != nil {
-			// Fallback to basic name and blank URL.
-			break
-		}
-		if project == cfg.Monorail.Project {
-			if cfg.Monorail.DisplayPrefix != "" {
-				linkText = fmt.Sprintf("%s/%s", cfg.Monorail.DisplayPrefix, id)
-			} else {
-				linkText = id
-			}
-		}
-		if cfg.Monorail.MonorailHostname != "" {
-			url = fmt.Sprintf("https://%s/p/%s/issues/detail?id=%s", cfg.Monorail.MonorailHostname, project, id)
-		}
-	case bugs.BuganizerSystem:
-		linkText = fmt.Sprintf("b/%s", b.ID)
-		url = fmt.Sprintf("https://issuetracker.google.com/issues/%s", b.ID)
-	default:
-		// Fallback.
-	}
-	return &pb.AssociatedBug{
-		System:   b.System,
-		Id:       b.ID,
-		LinkText: linkText,
-		Url:      url,
-	}
-}
-
 // readProjectConfig reads project config. This is intended for use in
 // top-level RPC handlers. The caller should directly return an eny errors
 // returned as the error of the RPC, the returned errors have been

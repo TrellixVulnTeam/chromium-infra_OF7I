@@ -1,0 +1,134 @@
+// Copyright 2022 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package weetbix.v1;
+
+option go_package = "infra/appengine/weetbix/proto/v1;weetbixpb";
+
+import "google/protobuf/timestamp.proto";
+import "infra/appengine/weetbix/proto/v1/common.proto";
+import "infra/appengine/weetbix/proto/v1/failure_reason.proto";
+
+// Provides methods to cluster test results, and obtain the impact of those
+// clusters.
+//
+// A cluster is a group of test failures with a common characteristic.
+// For example, test results may form a cluster with other failures that share
+// a common test name, or failure reason. Test results may also be in a cluster
+// defined by a user-modifiable failure association rule (which associates
+// failures with a bug). In this case, the failures have the property defined
+// by the failure association rule in common.
+//
+// A test result may be in many clusters, and each cluster may contain many
+// test results.
+//
+// Each cluster has an identity, consisting of three components:
+// - The LUCI Project name, e.g. "chromium" or "fuchsia".
+// - The Clustering Algorithm that identified the cluster. As at writing
+//   (April 2022), the algorithms are 'testname-v3' for version 3 of the
+//   test-name clustering algorithm, 'reason-v2' for version 2 of the failure
+//   reason clustering algorithm, and 'rules-v1' for the rules-based clustering
+//   algorithm.
+//   (Although internally versioned, the rules algorithm version is hidden
+//   for clients, so that {luci_project}/rules/{rule_id} always represents
+//   the cluster defined by the given rule_id.)
+//   We make no guarantees about the structure of algorithm names, they should
+//   be treated as opaque strings by clients.
+// - An algorithm-defined cluster identifier. This is algorithm-dependent and
+//   although (as at April 2022) a lowercase hexadecimal string, should be
+//   treated as an opaque value by clients.
+//   For the 'rules' algorithm, the cluster identifier will always correspond
+//   to the Rule ID of the rule that defines the cluster.
+service Clusters {
+    // Identifies the cluster(s) for one or more test failure(s).
+    //
+    // This RPC returns the clusters of each test result, using
+    // to current suggested cluster algorithms, configured failure
+    // association rules, and ingested project configuration with
+    // a bounded staleness of up to 1 minute.
+    // (Returned clusters may be based on configured failure association rules
+    // and project configuration data that is up to one minute out-of-date).
+    //
+    // This RPC is a pure query API and does not lead to the ingestion of the
+    // test failures by Weetbix (e.g. for cluster impact calculations).
+    rpc Cluster(ClusterRequest) returns (ClusterResponse) {};
+}
+
+message ClusterRequest {
+    // TestResult captures information about a test result, sufficient to
+    // cluster it. The fields requested here may be expanded over time.
+    // For example, variant information may be requested in future.
+    message TestResult {
+        // Opaque tag supplied by the caller, to be returned in the
+        // response. Provided to assist correlating responses with requests.
+        // Does not need to be unique. Optional.
+        string request_tag = 1;
+
+        // Identifier of the test (as reported to ResultDB).
+        // For chromium projects, this starts with ninja://.
+        string test_id = 2;
+
+        // The failure reason of the test (if any).
+        weetbix.v1.FailureReason failure_reason = 3;
+    }
+    // The LUCI Project for which the test result should be clustered.
+    string project = 1;
+
+    // The test results to cluster. At most 1000 test results may be
+    // clustered in one request.
+    repeated TestResult test_results = 2;
+}
+
+message ClusterResponse {
+    // The cluster(s) a test result is contained in.
+    message ClusteredTestResult {
+       // An individual cluster a test result is contained in.
+       message ClusterEntry {
+          // The unique identifier of the cluster.
+          // If the algorithm is "rules", the cluster ID is also a rule ID.
+          weetbix.v1.ClusterId cluster_id = 1;
+
+          // The bug associated with the cluster, if any. This is only
+          // populated for clusters defined by a failure association rule,
+          // which associates specified failures to a bug.
+          weetbix.v1.AssociatedBug bug = 2;
+       }
+       // Opaque tag supplied by the caller in the request. Provided to assist
+       // the caller correlate responses with requests.
+       string request_tag = 1;
+
+       // The clusters the test result is contained within.
+       repeated ClusterEntry clusters = 2;
+    }
+
+   // The clusters each test result is in.
+   // Contains one result for each test result specified in the request.
+   // Results are provided in the same order as the request, so
+   // the i-th ClusteredTestResult corresponds to the i-th
+   // TestResult in the request.
+   repeated ClusteredTestResult clustered_test_results = 1;
+
+   // The versions of clustering algorithms, rules and project configuration
+   // used to service this request. For debugging purposes only.
+   ClusteringVersion clustering_version = 2;
+}
+
+// The versions of algorithms, rules and configuration used by Weetbix
+// to cluster test results. For a given test result and ClusteringVersion,
+// the set of returned clusters should always be the same.
+message ClusteringVersion {
+    // The version of clustering algorithms used.
+    int64 algorithms_version = 1;
+
+    // The version of failure association rules used. This is the Spanner
+    // commit timestamp of the last rule modification incorporated in the
+    // set of rules used to cluster the results.
+    google.protobuf.Timestamp rules_version = 2;
+
+    // The version of project configuration used. This is the timestamp
+    // the project configuration was ingested by Weetbix.
+    google.protobuf.Timestamp config_version = 3;
+}

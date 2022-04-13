@@ -30,7 +30,7 @@ type Project struct {
 	unknownFields protoimpl.UnknownFields
 
 	// The resource name of the project which can be used to access the project.
-	// Format: projects/{project_id}.
+	// Format: projects/{project}.
 	// See also https://google.aip.dev/122.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The display name to be used in the project selection page of Weetbix.
