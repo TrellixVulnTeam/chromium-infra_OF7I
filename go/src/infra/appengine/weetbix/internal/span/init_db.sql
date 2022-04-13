@@ -523,7 +523,7 @@ CREATE TABLE TestVariantRealms (
   -- Last (ingestion) time this test variant was observed in the realm.
   -- This value may be out of date by up to 24 hours to allow for contention-
   -- reducing strategies.
-  LastIngestionTime TIMESTAMP NOT NULL,
+  LastIngestionTime TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
 ) PRIMARY KEY(Project, TestId, VariantHash, SubRealm)
 -- The following DDL query needs to be uncommented when applied to real Spanner
 -- instances. But it is commented out for Cloud Spanner Emulator:

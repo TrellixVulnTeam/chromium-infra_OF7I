@@ -155,7 +155,7 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 	if err != nil {
 		return err
 	}
-	project := utils.ProjectFromRealm(inv.Realm)
+	project, _ := utils.SplitRealm(inv.Realm)
 	if project == "" {
 		return fmt.Errorf("invocation has invalid realm: %q", inv.Realm)
 	}

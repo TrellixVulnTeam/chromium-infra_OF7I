@@ -5,19 +5,14 @@
 // Package utils contains various helper functions.
 package utils
 
-import (
-	"regexp"
-)
+import "strings"
 
-// realmProjectRe extracts the LUCI project name from a LUCI Realm.
-var realmProjectRe = regexp.MustCompile(`^([a-z0-9\-_]{1,40}):.+$`)
-
-// ProjectFromRealm extracts the LUCI project name from a LUCI Realm.
-// Returns an empty string if the provided Realm doesn't have a valid format.
-func ProjectFromRealm(realm string) string {
-	match := realmProjectRe.FindStringSubmatch(realm)
-	if match != nil {
-		return match[1]
+// SplitRealm splits the Realm into the LUCI project name and the (sub)Realm.
+// Returns empty strings if the provided Realm doesn't have a valid format.
+func SplitRealm(realm string) (proj string, subRealm string) {
+	parts := strings.SplitN(realm, ":", 2)
+	if len(parts) != 2 {
+		return "", ""
 	}
-	return ""
+	return parts[0], parts[1]
 }

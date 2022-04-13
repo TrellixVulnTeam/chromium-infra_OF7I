@@ -10,15 +10,17 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/tq"
-	"google.golang.org/genproto/protobuf/field_mask"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 
 	"infra/appengine/weetbix/internal/buildbucket"
 	"infra/appengine/weetbix/internal/resultdb"
@@ -74,7 +76,7 @@ func ingestTestVerdicts(ctx context.Context, payload *taskspb.IngestTestVerdicts
 	}
 
 	// Buildbucket build only has input.gerrit_changes, infra.resultdb, status populated.
-	b, err := retrieveBuild(ctx, payload)
+	build, err := retrieveBuild(ctx, payload)
 	code := status.Code(err)
 	if code == codes.NotFound {
 		// Build not found, end the task gracefully.
@@ -86,15 +88,15 @@ func ingestTestVerdicts(ctx context.Context, payload *taskspb.IngestTestVerdicts
 		return err
 	}
 
-	if b.Infra.GetResultdb().GetInvocation() == "" {
+	if build.Infra.GetResultdb().GetInvocation() == "" {
 		// Build does not have a ResultDB invocation to ingest.
 		logging.Debugf(ctx, "Skipping ingestion of build %s-%d because it has no ResultDB invocation.",
 			payload.Build.Host, payload.Build.Id)
 		return nil
 	}
 
-	rdbHost := b.Infra.Resultdb.Hostname
-	invName := b.Infra.Resultdb.Invocation
+	rdbHost := build.Infra.Resultdb.Hostname
+	invName := build.Infra.Resultdb.Invocation
 	rc, err := resultdb.NewClient(ctx, rdbHost)
 	if err != nil {
 		return err
@@ -103,20 +105,41 @@ func ingestTestVerdicts(ctx context.Context, payload *taskspb.IngestTestVerdicts
 	if err != nil {
 		return err
 	}
-	project := utils.ProjectFromRealm(inv.Realm)
+	project, _ := utils.SplitRealm(inv.Realm)
 	if project == "" {
 		return fmt.Errorf("invocation has invalid realm: %q", inv.Realm)
 	}
 
-	req := &rdbpb.QueryTestVariantsRequest{
-		Invocations: []string{invName},
-		PageSize:    20000,
+	err = recordIngestedInvocation(ctx, payload, build, inv)
+	if err != nil {
+		return err
 	}
-	return rc.QueryTestVariants(ctx, req, func(tv []*rdbpb.TestVariant) error {
-		// TODO(crbug.com/1266759): collects the test results to the TestVerdicts table.
 
-		return nil
-	}, maxResultDBPages)
+	eg, ctx := errgroup.WithContext(ctx)
+
+	// Query test variants from ResultDB.
+	tvsC := make(chan []*rdbpb.TestVariant)
+	eg.Go(func() error {
+		defer close(tvsC)
+
+		req := &rdbpb.QueryTestVariantsRequest{
+			Invocations: []string{invName},
+			PageSize:    20000,
+		}
+		return rc.QueryTestVariants(ctx, req, func(tvs []*rdbpb.TestVariant) error {
+			tvsC <- tvs
+			return nil
+		}, maxResultDBPages)
+	})
+
+	// Record the test verdicts.
+	eg.Go(func() error {
+		return recordTestVerdicts(ctx, payload, build, inv, tvsC)
+	})
+
+	// If any transaction failed, the task will be retried and the tables will be
+	// eventual-consistent.
+	return eg.Wait()
 }
 
 func validateRequest(ctx context.Context, payload *taskspb.IngestTestVerdicts) error {
