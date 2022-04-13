@@ -4,8 +4,18 @@
 
 """Monitoring ts_mon custom to monorail."""
 
+import os
+import sys
+lib_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lib')
+sys.path.insert(0, lib_path)
+
+import google.auth
+import google.auth.transport.requests
+
+from google.cloud import logging
 from infra_libs import ts_mon
 from framework import framework_helpers
+import settings
 
 
 def GetCommonFields(status, name, is_robot=False):
@@ -24,8 +34,10 @@ API_REQUESTS_COUNT = ts_mon.CounterMetric(
      ts_mon.StringField('client_email'),
      ts_mon.StringField('version')])
 
-def IncrementAPIRequestsCount(version, client_id, client_email=None):
-  # type: (str, str, Optional[str]) -> None
+
+def IncrementAPIRequestsCount(
+    version, client_id, client_email=None, handler='none'):
+  # type: (str, str, Optional[str], Optional[str]) -> None
   """Increment the request count in ts_mon."""
   if not client_email:
     client_email = 'anonymous'
@@ -39,6 +51,18 @@ def IncrementAPIRequestsCount(version, client_id, client_email=None):
       'version': version
   }
   API_REQUESTS_COUNT.increment_by(1, fields)
+
+  if not settings.unit_test_mode:
+    logging_client = logging.Client()
+    logger = logging_client.logger("request_log")
+    logger.log_struct(
+        {
+            'log_type': "IncrementAPIRequestsCount",
+            'client_id': client_id,
+            'client_email': client_email,
+            'requests_count': str(API_REQUESTS_COUNT.get(fields)),
+            'endpoint': handler
+        })
 
 
 # 90% of durations are in the range 11-1873ms.  Growth factor 10^0.06 puts that

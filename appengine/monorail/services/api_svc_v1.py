@@ -108,7 +108,7 @@ def monorail_api_method(
         mar = self.mar_factory(request, cnxn)
         self.ratelimiter.CheckStart(c_id, c_email, start_time)
         monitoring.IncrementAPIRequestsCount(
-            'endpoints', c_id, client_email=c_email)
+            'endpoints', c_id, client_email=c_email, handler=method_name)
         ret = func(self, mar, *args, **kwargs)
       except exceptions.NoSuchUserException as e:
         approximate_http_status = 404

@@ -122,7 +122,10 @@ class MonorailServicer(object):
       logging.info('request proto is:\n%r\n', request)
       logging.info('requester is %r', requester_auth.email)
       monitoring.IncrementAPIRequestsCount(
-          'v3', client_id, client_email=requester_auth.email)
+          'v3',
+          client_id,
+          client_email=requester_auth.email,
+          handler=handler.func_name)
 
       # TODO(crbug.com/monorail/8161)We pass in a None client_id for rate
       # limiting because CheckStart and CheckEnd will track and limit requests

@@ -39,3 +39,8 @@ if settings.local_mode:
 
 from components import utils
 utils.fix_protobuf_package()
+
+sys.path.insert(0, lib_path)
+
+import google.auth
+import google.auth.transport.requests

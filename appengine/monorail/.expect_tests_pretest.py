@@ -6,6 +6,13 @@
 
 import os
 import sys
+lib_path = os.path.join(
+    os.path.dirname(os.path.realpath(pretest_filename)), 'lib')
+sys.path.insert(0, lib_path)
+import google
+google.__path__.insert(0, os.path.join(lib_path, 'google'))
+import google.auth
+import google.auth.transport.requests
 
 
 def _fix_sys_path_for_appengine(pretest_filename):
