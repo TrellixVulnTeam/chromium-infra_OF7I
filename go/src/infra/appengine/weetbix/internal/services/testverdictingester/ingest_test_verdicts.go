@@ -124,7 +124,7 @@ func ingestTestVerdicts(ctx context.Context, payload *taskspb.IngestTestVerdicts
 
 		req := &rdbpb.QueryTestVariantsRequest{
 			Invocations: []string{invName},
-			PageSize:    20000,
+			PageSize:    10000,
 		}
 		return rc.QueryTestVariants(ctx, req, func(tvs []*rdbpb.TestVariant) error {
 			tvsC <- tvs
