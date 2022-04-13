@@ -32,10 +32,10 @@ import (
 )
 
 const (
-	boardPriorityConfigPathDefault    = "testingconfig/generated/board_priority.binaryproto"
-	sourceTreeTestConfigPathDefault   = "testingconfig/generated/source_tree_test_config.binaryproto"
-	targetTestRequirementsPathDefault = "testingconfig/generated/target_test_requirements.binaryproto"
-	sourceGitilesRepoDefault          = "chromeos/infra/config"
+	boardPriorityConfigPathDefault    = "board_config/generated/board_priority.binaryproto"
+	sourceTreeTestConfigPathDefault   = "board_config/generated/source_tree_test_config.binaryproto"
+	targetTestRequirementsPathDefault = "board_config/generated/target_test_requirements.binaryproto"
+	sourceGitilesRepoDefault          = "chromeos/config-internal"
 	sourceGitilesBranchDefault        = "main"
 )
 
