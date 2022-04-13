@@ -141,21 +141,15 @@ func (c *manageWifiCmd) runSingleDut(ctx context.Context, client rpc.FleetClient
 		peripherals = lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals()
 		currentWifi = peripherals.GetWifi()
 	)
-	if c.isJsonUpdate {
-		// json can only run in replace mode. Therefore replace the whole Wifi with provided Wifi object
-		peripherals.Wifi = c.wifiJsonFileWifiObj
-
-	} else {
-		nw, err := c.runWifiAction(currentWifi, dutName)
-		if err != nil {
-			return err
-		}
-		if c.commonFlags.Verbose() {
-			fmt.Println("New Wifi", nw)
-		}
-
-		peripherals.Wifi = nw
+	nw, err := c.runWifiAction(currentWifi, dutName)
+	if err != nil {
+		return err
 	}
+	if c.commonFlags.Verbose() {
+		fmt.Println("New Wifi", nw)
+	}
+
+	peripherals.Wifi = nw
 	// TODO(b/226024082): Currently field masks are implemented in a limited way. Subsequent update
 	// on UFS could add field masks for wifi and then they could be included here.
 	_, err = client.UpdateMachineLSE(ctx, &rpc.UpdateMachineLSERequest{MachineLSE: lse})
@@ -302,9 +296,6 @@ func (c *manageWifiCmd) cleanAndValidateFlags() error {
 			return nil
 
 		} else {
-			if c.mode != actionReplace {
-				return errors.Reason("-f json file format is only applicable in replace mode").Err()
-			}
 			c.isJsonUpdate = true
 			if len(c.dutName) == 0 {
 				errStrs = append(errStrs, errDUTMissing)
@@ -312,8 +303,22 @@ func (c *manageWifiCmd) cleanAndValidateFlags() error {
 			if c.wifiJsonFileWifiObj == nil {
 				c.wifiJsonFileWifiObj = &lab.Wifi{}
 			}
-			return utils.ParseJSONFile(c.wifiFile, c.wifiJsonFileWifiObj)
-			// do return here. if err return err
+			c.routersMap[c.dutName] = map[string]*lab.WifiRouter{}
+			c.wifiFeaturesMap[c.dutName] = map[lab.Wifi_Feature]bool{}
+			if err := utils.ParseJSONFile(c.wifiFile, c.wifiJsonFileWifiObj); err != nil {
+				return errors.Annotate(err, "json parse error").Err()
+			}
+			for _, wifiFeature := range c.wifiJsonFileWifiObj.Features {
+				c.wifiFeaturesMap[c.dutName][wifiFeature] = true
+			}
+			for _, router := range c.wifiJsonFileWifiObj.WifiRouters {
+				if hostname := strings.TrimSpace(router.Hostname); hostname == "" {
+					return errors.Reason("invalid router hostname. %s", router).Err()
+				} else {
+					c.routersMap[c.dutName][hostname] = router
+				}
+			}
+			return nil
 		}
 	} else {
 		err := c.validateSingleDut(c.dutName, c.routers, c.wifiFeatures)

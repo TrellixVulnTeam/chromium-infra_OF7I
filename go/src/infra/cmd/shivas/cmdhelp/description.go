@@ -2125,7 +2125,7 @@ Add adds specified routers or wifi features to the DUT and leaves what is alread
 Delete deletes specified routers or wifi features in the DUT and leaves remainining untouched.
 Replace replaces the entire set of routers or wifi features with the specified list.
 
-A json file with wifi struct defined can be used in replace mode to update wifi struct
+A json file with wifi struct defined can be used to update wifi struct
 
 A csv file with header dut, wifi_features, router can be used to update multiple duts.
 Example of CSV format:
@@ -2142,7 +2142,9 @@ shivas replace peripheral-wifi -dut {d} -wifi-feature {f3} -wifi-feature {f4}
 shivas replace peripheral-wifi -dut {d} -router {hostname:h3,build_target:b1}
 shivas replace peripheral-wifi -dut {d} -wifi-feature {f5} -wifi-feature {f6} -router {hostname:h6,build_target:b2}
 
+shivas add peripheral-wifi -dut {d} -f {fpath.json}
 shivas replace peripheral-wifi -dut {d} -f {fpath.json}
+shivas delete peripheral-wifi -dut {d} -f {fpath.json}
 
 shivas add peripheral-wifi -f {fpath.csv}
 shivas replace peripheral-wifi -f {fpath.csv}
