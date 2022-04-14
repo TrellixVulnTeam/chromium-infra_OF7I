@@ -7,10 +7,6 @@
 import os
 import sys
 lib_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lib')
-sys.path.insert(0, lib_path)
-
-import google.auth
-import google.auth.transport.requests
 
 from google.cloud import logging
 from infra_libs import ts_mon

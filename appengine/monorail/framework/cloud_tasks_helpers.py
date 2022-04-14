@@ -21,8 +21,6 @@ import settings
 
 if not settings.unit_test_mode:
   import grpc
-  import sys
-  import logging
   from google.cloud import tasks
 
 _client = None
