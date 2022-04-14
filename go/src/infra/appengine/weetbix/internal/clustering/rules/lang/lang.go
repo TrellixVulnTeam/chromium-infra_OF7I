@@ -45,7 +45,6 @@ package lang
 import (
 	"bytes"
 	"fmt"
-	"infra/appengine/weetbix/internal/clustering"
 	"io"
 	"regexp"
 	"strings"
@@ -53,6 +52,8 @@ import (
 	participle "github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
 	"go.chromium.org/luci/common/errors"
+
+	"infra/appengine/weetbix/internal/clustering"
 )
 
 type validator struct {

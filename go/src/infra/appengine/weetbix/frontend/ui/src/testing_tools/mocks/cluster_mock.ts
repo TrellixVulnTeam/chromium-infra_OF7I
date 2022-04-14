@@ -5,7 +5,7 @@
 export const getMockCluster = (id: string) => {
     return {
         'clusterId': {
-            'algorithm': 'rules-v1',
+            'algorithm': 'rules-v2',
             'id': id
         },
         'presubmitRejects1d': {

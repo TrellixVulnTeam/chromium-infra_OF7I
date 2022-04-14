@@ -142,7 +142,7 @@ CREATE NULL_FILTERED INDEX VerdictsByTestVariantAndIngestionTime
 -- (Project, RuleBasedClusteringAlgorithm, RuleID), where
 -- RuleBasedClusteringAlgorithm is the algorithm name of the algorithm
 -- that clusters failures based on failure association rules (e.g.
--- 'rules-v1'), and (Project, RuleId) is the ID of the rule.
+-- 'rules-v2'), and (Project, RuleId) is the ID of the rule.
 CREATE TABLE FailureAssociationRules (
   -- The LUCI Project this bug belongs to.
   Project STRING(40) NOT NULL,
@@ -237,8 +237,8 @@ CREATE TABLE ClusteringState (
   -- The version of clustering algorithms used to cluster test results in this
   -- chunk. (This is a version over the set of algorithms, distinct from the
   -- version of a single algorithm, e.g.:
-  -- v1 -> {failurereason-v1}, v2 -> {failurereason-v1, testname-v1},
-  -- v3 -> {failurereason-v2, testname-v1}.)
+  -- v1 -> {reason-v1}, v2 -> {reason-v1, testname-v1},
+  -- v3 -> {reason-v2, testname-v1}.)
   AlgorithmsVersion INT64 NOT NULL,
   -- The version of project configuration used by algorithms to match test
   -- results in this chunk.

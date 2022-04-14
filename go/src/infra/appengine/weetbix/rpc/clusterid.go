@@ -12,7 +12,7 @@ import (
 func createClusterIdPB(b clustering.ClusterID) *pb.ClusterId {
 	if b.IsBugCluster() {
 		// Drop the version number from the rules algorithm,
-		// e.g. "rules-v1" -> "rules".
+		// e.g. "rules-v2" -> "rules".
 		// Clients may want to detect the rules algorithm
 		// to identify clusters for which they can lookup the
 		// corresponding rule.

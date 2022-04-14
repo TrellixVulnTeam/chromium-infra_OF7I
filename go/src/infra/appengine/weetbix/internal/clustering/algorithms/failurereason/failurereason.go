@@ -27,7 +27,7 @@ import (
 // version should be incremented whenever existing test results may be
 // clustered differently (i.e. Cluster(f) returns a different value for some
 // f that may have been already ingested).
-const AlgorithmVersion = 2
+const AlgorithmVersion = 3
 
 // AlgorithmName is the identifier for the clustering algorithm.
 // Weetbix requires all clustering algorithms to have a unique identifier.
@@ -50,7 +50,7 @@ The following test(s) were observed to have matching failures at this time (at m
 
 // To match any 1 or more digit numbers, or hex values (often appear in temp
 // file names or prints of pointers), which will be replaced.
-var clusterExp = regexp.MustCompile(`[/+0-9a-zA-Z]{10,}=+|[\-0-9a-fA-F\s]{16,}|[0-9a-fA-Fx]{8,}|[0-9]+`)
+var clusterExp = regexp.MustCompile(`[/+0-9a-zA-Z]{10,}=+|[\-0-9a-fA-F \t]{16,}|[0-9a-fA-Fx]{8,}|[0-9]+`)
 
 // Algorithm represents an instance of the reason-based clustering
 // algorithm.
@@ -128,7 +128,7 @@ func (a *Algorithm) FailureAssociationRule(config *compiledcfg.ProjectConfig, ex
 	rewriter := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
 	likePattern := rewriter.Replace(example.Reason.PrimaryErrorMessage)
 
-	// Replace hexadecimal seqeunces with wildcard matches. This is technically
+	// Replace hexadecimal sequences with wildcard matches. This is technically
 	// broader than our original cluster definition, but is more readable, and
 	// usually ends up matching the exact same set of failures.
 	likePattern = clusterExp.ReplaceAllString(likePattern, "%")

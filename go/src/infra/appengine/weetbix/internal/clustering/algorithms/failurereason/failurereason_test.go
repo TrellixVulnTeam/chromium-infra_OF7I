@@ -93,6 +93,16 @@ func TestAlgorithm(t *testing.T) {
 			}
 			test(failure, `reason LIKE "\\_\\%\"'+[]|\x00\r\n\v\u202e\u2066 %"`)
 		})
+		Convey(`Multiline`, func() {
+			failure := &clustering.Failure{
+				Reason: &pb.FailureReason{
+					// Previously "ce\n ... Ac" matched the hexadecimal format
+					// for hexadecimal strings of 16 characters or more.
+					PrimaryErrorMessage: "Expected: to be called once\n          Actual: never called",
+				},
+			}
+			test(failure, `reason LIKE "Expected: to be called once\n          Actual: never called"`)
+		})
 	})
 	Convey(`Cluster Title`, t, func() {
 		a := &Algorithm{}

@@ -14,7 +14,7 @@ type Algorithm struct{}
 // version should be incremented whenever existing test results may be
 // clustered differently (i.e. Cluster(f) returns a different value for some
 // f that may have been already ingested).
-const AlgorithmVersion = 1
+const AlgorithmVersion = 2
 
 // AlgorithmName is the identifier for the clustering algorithm.
 // Weetbix requires all clustering algorithms to have a unique identifier.

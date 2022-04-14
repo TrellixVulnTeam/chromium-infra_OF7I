@@ -18,7 +18,7 @@ const ImpactSection = () => {
     const { project, algorithm, id } = useParams();
     let currentAlgorithm = algorithm;
     if(!currentAlgorithm) {
-        currentAlgorithm = 'rules-v1';
+        currentAlgorithm = 'rules-v2';
     }
     const { isLoading, isError, data: cluster, error } = useQuery(['cluster'], () => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

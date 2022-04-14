@@ -30,6 +30,8 @@ func init() {
 // are escaped to ensure they are not interpreted.
 func likePatternToRegexp(likePattern string) (string, error) {
 	var b strings.Builder
+	// Set flags to let . match any character, including "\n".
+	b.WriteString("(?s)")
 	// Match start of string.
 	b.WriteString("^")
 	isEscaping := false

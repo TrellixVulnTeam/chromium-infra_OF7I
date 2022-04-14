@@ -23,7 +23,7 @@ const ClusterPageWrapper = () => {
         <cluster-page
             ref={elementRef}
             project={project}
-            clusterAlgorithm={algorithm || 'rules-v1'}
+            clusterAlgorithm={algorithm || 'rules-v2'}
             clusterId={id}
         />
     );

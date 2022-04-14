@@ -14,8 +14,8 @@ type ClusterResults struct {
 	// AlgorithmsVersion is the version of clustering algorithms used to
 	// cluster test results in this chunk. (This is a version over the
 	// set of algorithms, distinct from the version of a single algorithm,
-	// e.g.: v1 -> {failurereason-v1}, v2 -> {failurereason-v1, testname-v1},
-	// v3 -> {failurereason-v2, testname-v1}.)
+	// e.g.: v1 -> {reason-v1}, v2 -> {reason-v1, testname-v1},
+	// v3 -> {reason-v2, testname-v1}.)
 	AlgorithmsVersion int64
 	// ConfigVersion is the version of Weetbix project configuration
 	// used to cluster the test results. Clustering algorithms can rely

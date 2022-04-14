@@ -29,8 +29,8 @@ import "infra/appengine/weetbix/proto/v1/failure_reason.proto";
 // - The LUCI Project name, e.g. "chromium" or "fuchsia".
 // - The Clustering Algorithm that identified the cluster. As at writing
 //   (April 2022), the algorithms are 'testname-v3' for version 3 of the
-//   test-name clustering algorithm, 'reason-v2' for version 2 of the failure
-//   reason clustering algorithm, and 'rules-v1' for the rules-based clustering
+//   test-name clustering algorithm, 'reason-v3' for version 3 of the failure
+//   reason clustering algorithm, and 'rules-v2' for the rules-based clustering
 //   algorithm.
 //   (Although internally versioned, the rules algorithm version is hidden
 //   for clients, so that {luci_project}/rules/{rule_id} always represents

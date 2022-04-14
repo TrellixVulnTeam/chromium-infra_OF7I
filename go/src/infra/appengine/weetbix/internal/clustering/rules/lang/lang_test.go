@@ -9,10 +9,10 @@ import (
 	"strings"
 	"testing"
 
+	. "github.com/smartystreets/goconvey/convey"
+
 	"infra/appengine/weetbix/internal/clustering"
 	weetbixpb "infra/appengine/weetbix/proto/v1"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestRules(t *testing.T) {
@@ -151,8 +151,19 @@ func TestRules(t *testing.T) {
 				escapeTest3 := &clustering.Failure{
 					TestID: "a\\.+*?()|[]{}^$%",
 				}
+
 				So(eval(`test LIKE "a\\\\.+*?()|[]{}^$\\%"`, escapeTest), ShouldBeFalse)
 				So(eval(`test LIKE "a\\\\.+*?()|[]{}^$\\%"`, escapeTest3), ShouldBeTrue)
+
+				escapeTest4 := &clustering.Failure{
+					Reason: &weetbixpb.FailureReason{
+						PrimaryErrorMessage: "a\nb",
+					},
+				}
+				So(eval(`reason LIKE "a"`, escapeTest4), ShouldBeFalse)
+				So(eval(`reason LIKE "%"`, escapeTest4), ShouldBeTrue)
+				So(eval(`reason LIKE "a%b"`, escapeTest4), ShouldBeTrue)
+				So(eval(`reason LIKE "a_b"`, escapeTest4), ShouldBeTrue)
 			})
 			Convey(`In`, func() {
 				So(eval(`test IN ("tast.arc.Boot")`, boot), ShouldBeTrue)
