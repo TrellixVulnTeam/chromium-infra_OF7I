@@ -1,15 +1,15 @@
-// Copyright 202 The Chromium Authors. All rights reserved.
+// Copyright 2022 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 import React, { useState } from 'react';
 
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import { fetchLabAsync, selectLab } from './labSlice'
-import styles from './Lab.module.css';
+import { fetchAssetAsync, selectAsset } from './assetSlice'
+import styles from './Asset.module.css';
 
-export function Lab() {
-  const lab = useAppSelector(selectLab);
+export function Asset() {
+  const asset = useAppSelector(selectAsset);
   const dispatch = useAppDispatch();
 
   return (
@@ -17,11 +17,11 @@ export function Lab() {
       <div className={styles.row}>
         <button
           className={styles.asyncButton}
-          onClick={() => dispatch(fetchLabAsync('test'))}
+          onClick={() => dispatch(fetchAssetAsync('test'))}
         >
           Update
         </button>
-        <span className={styles.value}>{lab.name}</span>
+        <span className={styles.value}>{asset.name}</span>
       </div>
     </div>
   )
