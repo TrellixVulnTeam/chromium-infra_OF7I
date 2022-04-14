@@ -153,7 +153,8 @@ func main() {
 		// TODO(crbug/1082369): Remove this workaround once field masks can be decoded.
 		srv.PRPC.HackFixFieldMasksForJSON = true
 
-		weetbixpb.RegisterRulesServer(srv.PRPC, rpc.NewRules())
+		weetbixpb.RegisterClustersServer(srv.PRPC, rpc.NewClustersServer())
+		weetbixpb.RegisterRulesServer(srv.PRPC, rpc.NewRulesSever())
 		weetbixpb.RegisterProjectsServer(srv.PRPC, rpc.NewProjectsServer())
 		weetbixpb.RegisterInitDataGeneratorServer(srv.PRPC, rpc.NewInitDataGeneratorServer())
 		adminpb.RegisterAdminServer(srv.PRPC, admin.CreateServer())

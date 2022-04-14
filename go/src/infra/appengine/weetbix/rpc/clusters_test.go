@@ -18,6 +18,8 @@ import (
 	"go.chromium.org/luci/server/caching"
 	"go.chromium.org/luci/server/secrets"
 	"go.chromium.org/luci/server/secrets/testsecrets"
+	"google.golang.org/grpc/codes"
+	grpcStatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"infra/appengine/weetbix/internal/bugs"
@@ -41,13 +43,14 @@ func TestClusters(t *testing.T) {
 		// For user identification.
 		ctx = authtest.MockAuthConfig(ctx)
 		ctx = auth.WithState(ctx, &authtest.FakeState{
-			Identity: "user:someone@example.com",
+			Identity:       "user:someone@example.com",
+			IdentityGroups: []string{"weetbix-access"},
 		})
 		ctx = secrets.Use(ctx, &testsecrets.Store{})
 
 		// Provides datastore implementation needed for project config.
 		ctx = memory.Use(ctx)
-		server := &clustersServer{}
+		server := NewClustersServer()
 
 		configVersion := time.Date(2025, time.August, 12, 0, 1, 2, 3, time.UTC)
 		projectChromium := config.CreatePlaceholderProjectConfig()
@@ -95,7 +98,27 @@ func TestClusters(t *testing.T) {
 		err = rules.SetRulesForTesting(ctx, rs)
 		So(err, ShouldBeNil)
 
-		Convey("Call Cluster", func() {
+		Convey("Unauthorised requests are rejected", func() {
+			// Ensure no access to weetbix-access.
+			ctx = auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:someone@example.com",
+				// Not a member of weetbix-access.
+				IdentityGroups: []string{"other-group"},
+			})
+
+			// Make some request (the request should not matter, as
+			// a common decorator is used for all requests.)
+			request := &pb.ClusterRequest{
+				Project: "chromium",
+			}
+
+			rule, err := server.Cluster(ctx, request)
+			st, _ := grpcStatus.FromError(err)
+			So(st.Code(), ShouldEqual, codes.PermissionDenied)
+			So(st.Message(), ShouldEqual, "not a member of weetbix-access")
+			So(rule, ShouldBeNil)
+		})
+		Convey("Cluster", func() {
 			request := &pb.ClusterRequest{
 				Project: "chromium",
 				TestResults: []*pb.ClusterRequest_TestResult{
@@ -184,7 +207,9 @@ func TestClusters(t *testing.T) {
 				response, err := server.Cluster(ctx, request)
 
 				// Verify
-				So(err, ShouldErrLike, "test result 1: test ID must not be empty")
+				st, _ := grpcStatus.FromError(err)
+				So(st.Code(), ShouldEqual, codes.InvalidArgument)
+				So(st.Message(), ShouldEqual, "test result 1: test ID must not be empty")
 				So(response, ShouldBeNil)
 			})
 			Convey("With too many test results", func() {
@@ -200,7 +225,21 @@ func TestClusters(t *testing.T) {
 				response, err := server.Cluster(ctx, request)
 
 				// Verify
-				So(err, ShouldErrLike, "too many test results: at most 1000 test results can be clustered in one request")
+				st, _ := grpcStatus.FromError(err)
+				So(st.Code(), ShouldEqual, codes.InvalidArgument)
+				So(st.Message(), ShouldEqual, "too many test results: at most 1000 test results can be clustered in one request")
+				So(response, ShouldBeNil)
+			})
+			Convey("With project not configured", func() {
+				request.Project = "not-exists"
+
+				// Run
+				response, err := server.Cluster(ctx, request)
+
+				// Verify
+				st, _ := grpcStatus.FromError(err)
+				So(st.Code(), ShouldEqual, codes.FailedPrecondition)
+				So(st.Message(), ShouldEqual, "project does not exist in Weetbix")
 				So(response, ShouldBeNil)
 			})
 		})

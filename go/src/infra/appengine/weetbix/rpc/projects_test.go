@@ -15,6 +15,8 @@ import (
 	"go.chromium.org/luci/server/auth/authtest"
 	"go.chromium.org/luci/server/secrets"
 	"go.chromium.org/luci/server/secrets/testsecrets"
+	"google.golang.org/grpc/codes"
+	grpcStatus "google.golang.org/grpc/status"
 
 	"infra/appengine/weetbix/internal/config"
 	configpb "infra/appengine/weetbix/internal/config/proto"
@@ -30,14 +32,32 @@ func TestProjects(t *testing.T) {
 		// For user identification.
 		ctx = authtest.MockAuthConfig(ctx)
 		ctx = auth.WithState(ctx, &authtest.FakeState{
-			Identity: "user:someone@example.com",
+			Identity:       "user:someone@example.com",
+			IdentityGroups: []string{"weetbix-access"},
 		})
 		ctx = secrets.Use(ctx, &testsecrets.Store{})
 
 		// Provides datastore implementation needed for project config.
 		ctx = memory.Use(ctx)
-		server := &projectServer{}
+		server := NewProjectsServer()
 
+		Convey("Unauthorised requests are rejected", func() {
+			ctx = auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:someone@example.com",
+				// Not a member of weetbix-access.
+				IdentityGroups: []string{"other-group"},
+			})
+
+			// Make some request (the request should not matter, as
+			// a common decorator is used for all requests.)
+			request := &pb.ListProjectsRequest{}
+
+			rule, err := server.List(ctx, request)
+			st, _ := grpcStatus.FromError(err)
+			So(st.Code(), ShouldEqual, codes.PermissionDenied)
+			So(st.Message(), ShouldEqual, "not a member of weetbix-access")
+			So(rule, ShouldBeNil)
+		})
 		Convey("When a list of projects is provided", func() {
 			// Setup
 			projectChromium := config.CreatePlaceholderProjectConfig()

@@ -13,13 +13,13 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/gae/impl/memory"
-	"go.chromium.org/luci/grpc/appstatus"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"
 	"go.chromium.org/luci/server/secrets"
 	"go.chromium.org/luci/server/secrets/testsecrets"
 	"go.chromium.org/luci/server/span"
 	"google.golang.org/grpc/codes"
+	grpcStatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -40,14 +40,15 @@ func TestRules(t *testing.T) {
 		// For user identification.
 		ctx = authtest.MockAuthConfig(ctx)
 		ctx = auth.WithState(ctx, &authtest.FakeState{
-			Identity: "user:someone@example.com",
+			Identity:       "user:someone@example.com",
+			IdentityGroups: []string{"weetbix-access"},
 		})
 		ctx = secrets.Use(ctx, &testsecrets.Store{})
 
 		// Provides datastore implementation needed for project config.
 		ctx = memory.Use(ctx)
 
-		srv := &Rules{}
+		srv := NewRulesSever()
 
 		ruleManagedBuilder := rules.NewRule(0).
 			WithProject(testProject).
@@ -99,9 +100,29 @@ func TestRules(t *testing.T) {
 		})
 		So(err, ShouldBeNil)
 
+		Convey("Unauthorised requests are rejected", func() {
+			// Ensure no access to weetbix-access.
+			ctx = auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:someone@example.com",
+				// Not a member of weetbix-access.
+				IdentityGroups: []string{"other-group"},
+			})
+
+			// Make some request (the request should not matter, as
+			// a common decorator is used for all requests.)
+			request := &pb.GetRuleRequest{
+				Name: fmt.Sprintf("projects/%s/rules/%s", ruleManaged.Project, ruleManaged.RuleID),
+			}
+
+			rule, err := srv.Get(ctx, request)
+			st, _ := grpcStatus.FromError(err)
+			So(st.Code(), ShouldEqual, codes.PermissionDenied)
+			So(st.Message(), ShouldEqual, "not a member of weetbix-access")
+			So(rule, ShouldBeNil)
+		})
 		Convey("Get", func() {
-			Convey("Exists", func() {
-				Convey("Monorail", func() {
+			Convey("Rule exists", func() {
+				Convey("Read rule with Monorail bug", func() {
 					request := &pb.GetRuleRequest{
 						Name: fmt.Sprintf("projects/%s/rules/%s", ruleManaged.Project, ruleManaged.RuleID),
 					}
@@ -137,7 +158,7 @@ func TestRules(t *testing.T) {
 						Etag:                    ruleETag(ruleManaged),
 					})
 				})
-				Convey("Buganizer", func() {
+				Convey("Read rule with Buganizer bug", func() {
 					request := &pb.GetRuleRequest{
 						Name: fmt.Sprintf("projects/%s/rules/%s", ruleBuganizer.Project, ruleBuganizer.RuleID),
 					}
@@ -174,15 +195,14 @@ func TestRules(t *testing.T) {
 					})
 				})
 			})
-			Convey("Not Exists", func() {
+			Convey("Rule does not exist", func() {
 				ruleID := strings.Repeat("00", 16)
 				request := &pb.GetRuleRequest{
 					Name: fmt.Sprintf("projects/%s/rules/%s", ruleManaged.Project, ruleID),
 				}
 
 				rule, err := srv.Get(ctx, request)
-				st, ok := appstatus.Get(err)
-				So(ok, ShouldBeTrue)
+				st, _ := grpcStatus.FromError(err)
 				So(st.Code(), ShouldEqual, codes.NotFound)
 				So(rule, ShouldBeNil)
 			})
@@ -233,6 +253,20 @@ func TestRules(t *testing.T) {
 
 				expected := &pb.ListRulesResponse{}
 				So(response, ShouldResembleProto, expected)
+			})
+			Convey("With project not configured", func() {
+				request := &pb.ListRulesRequest{
+					Parent: "projects/not-exists",
+				}
+
+				// Run
+				response, err := srv.List(ctx, request)
+
+				// Verify
+				st, _ := grpcStatus.FromError(err)
+				So(st.Code(), ShouldEqual, codes.FailedPrecondition)
+				So(st.Message(), ShouldEqual, "project does not exist in Weetbix")
+				So(response, ShouldBeNil)
 			})
 		})
 		Convey("Update", func() {
@@ -356,7 +390,7 @@ func TestRules(t *testing.T) {
 				// requerying.
 				rule, err := srv.Update(ctx, request)
 				So(rule, ShouldBeNil)
-				st, _ := appstatus.Get(err)
+				st, _ := grpcStatus.FromError(err)
 				So(st.Code(), ShouldEqual, codes.Aborted)
 			})
 			Convey("Rule does not exist", func() {
@@ -365,7 +399,7 @@ func TestRules(t *testing.T) {
 
 				rule, err := srv.Update(ctx, request)
 				So(rule, ShouldBeNil)
-				st, _ := appstatus.Get(err)
+				st, _ := grpcStatus.FromError(err)
 				So(st.Code(), ShouldEqual, codes.NotFound)
 			})
 			Convey("Validation error", func() {
@@ -374,7 +408,7 @@ func TestRules(t *testing.T) {
 
 					rule, err := srv.Update(ctx, request)
 					So(rule, ShouldBeNil)
-					st, _ := appstatus.Get(err)
+					st, _ := grpcStatus.FromError(err)
 					So(st.Code(), ShouldEqual, codes.InvalidArgument)
 					So(st.Message(), ShouldEqual, "bug not in expected monorail project (monorailproject)")
 				})
@@ -387,7 +421,7 @@ func TestRules(t *testing.T) {
 
 					rule, err := srv.Update(ctx, request)
 					So(rule, ShouldBeNil)
-					st, _ := appstatus.Get(err)
+					st, _ := grpcStatus.FromError(err)
 					So(st.Code(), ShouldEqual, codes.InvalidArgument)
 					So(st.Message(), ShouldEqual,
 						fmt.Sprintf("bug already used by a rule in the same project (%s/%s)",
@@ -405,7 +439,7 @@ func TestRules(t *testing.T) {
 
 					rule, err := srv.Update(ctx, request)
 					So(rule, ShouldBeNil)
-					st, _ := appstatus.Get(err)
+					st, _ := grpcStatus.FromError(err)
 					So(st.Code(), ShouldEqual, codes.InvalidArgument)
 					So(st.Message(), ShouldEqual,
 						fmt.Sprintf("bug already managed by a rule in another project (%s/%s)",
@@ -417,7 +451,7 @@ func TestRules(t *testing.T) {
 
 					rule, err := srv.Update(ctx, request)
 					So(rule, ShouldBeNil)
-					st, _ := appstatus.Get(err)
+					st, _ := grpcStatus.FromError(err)
 					So(st.Code(), ShouldEqual, codes.InvalidArgument)
 					So(st.Message(), ShouldStartWith, "rule definition is not valid")
 				})
@@ -558,7 +592,7 @@ func TestRules(t *testing.T) {
 
 					rule, err := srv.Create(ctx, request)
 					So(rule, ShouldBeNil)
-					st, _ := appstatus.Get(err)
+					st, _ := grpcStatus.FromError(err)
 					So(st.Code(), ShouldEqual, codes.InvalidArgument)
 					So(st.Message(), ShouldEqual,
 						"bug not in expected monorail project (monorailproject)")
@@ -572,7 +606,7 @@ func TestRules(t *testing.T) {
 
 					rule, err := srv.Create(ctx, request)
 					So(rule, ShouldBeNil)
-					st, _ := appstatus.Get(err)
+					st, _ := grpcStatus.FromError(err)
 					So(st.Code(), ShouldEqual, codes.InvalidArgument)
 					So(st.Message(), ShouldEqual,
 						fmt.Sprintf("bug already used by a rule in the same project (%s/%s)",
@@ -584,7 +618,7 @@ func TestRules(t *testing.T) {
 
 					rule, err := srv.Create(ctx, request)
 					So(rule, ShouldBeNil)
-					st, _ := appstatus.Get(err)
+					st, _ := grpcStatus.FromError(err)
 					So(st.Code(), ShouldEqual, codes.InvalidArgument)
 					So(st.Message(), ShouldStartWith, "rule definition is not valid")
 				})

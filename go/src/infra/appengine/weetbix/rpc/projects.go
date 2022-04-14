@@ -18,6 +18,14 @@ import (
 
 type projectServer struct{}
 
+func NewProjectsServer() *pb.DecoratedProjects {
+	return &pb.DecoratedProjects{
+		Prelude:  checkAllowedPrelude,
+		Service:  &projectServer{},
+		Postlude: gRPCifyAndLogPostlude,
+	}
+}
+
 func (*projectServer) List(ctx context.Context, request *pb.ListProjectsRequest) (*pb.ListProjectsResponse, error) {
 	projects, err := config.Projects(ctx)
 
@@ -47,12 +55,4 @@ func createProjectPbs(projectConfigs map[string]*configpb.ProjectConfig) []*pb.P
 		})
 	}
 	return projectsPbs
-}
-
-func NewProjectsServer() *pb.DecoratedProjects {
-	return &pb.DecoratedProjects{
-		Prelude:  checkAllowedPrelude,
-		Service:  &projectServer{},
-		Postlude: gRPCifyAndLogPostlude,
-	}
 }

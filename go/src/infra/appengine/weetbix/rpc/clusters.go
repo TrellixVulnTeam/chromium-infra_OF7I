@@ -7,7 +7,6 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -15,7 +14,6 @@ import (
 	"infra/appengine/weetbix/internal/clustering/algorithms"
 	"infra/appengine/weetbix/internal/clustering/reclustering"
 	"infra/appengine/weetbix/internal/clustering/rules"
-	"infra/appengine/weetbix/internal/config/compiledcfg"
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
@@ -36,7 +34,7 @@ func NewClustersServer() *pb.DecoratedClusters {
 // Cluster clusters a list of test failures. See proto definition for more.
 func (*clustersServer) Cluster(ctx context.Context, req *pb.ClusterRequest) (*pb.ClusterResponse, error) {
 	if len(req.TestResults) > MaxTestResults {
-		return nil, validationError(fmt.Errorf(
+		return nil, invalidArgumentError(fmt.Errorf(
 			"too many test results: at most %v test results can be clustered in one request", MaxTestResults))
 	}
 
@@ -53,7 +51,7 @@ func (*clustersServer) Cluster(ctx context.Context, req *pb.ClusterRequest) (*pb
 
 	// Fetch a recent project configuration.
 	// (May be a recent value that was cached.)
-	cfg, err := compiledcfg.Project(ctx, req.Project, time.Time{})
+	cfg, err := readProjectConfig(ctx, req.Project)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +109,7 @@ func (*clustersServer) Cluster(ctx context.Context, req *pb.ClusterRequest) (*pb
 
 func validateTestResult(i int, tr *pb.ClusterRequest_TestResult) error {
 	if tr.TestId == "" {
-		return validationError(fmt.Errorf("test result %v: test ID must not be empty", i))
+		return invalidArgumentError(fmt.Errorf("test result %v: test ID must not be empty", i))
 	}
 	return nil
 }

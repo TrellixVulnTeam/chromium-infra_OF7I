@@ -16,6 +16,15 @@ import (
 // A server that provides the data to initialize the client.
 type initDataGeneratorServer struct{}
 
+// Creates a new initialization data server.
+func NewInitDataGeneratorServer() *pb.DecoratedInitDataGenerator {
+	return &pb.DecoratedInitDataGenerator{
+		Prelude:  checkAllowedPrelude,
+		Service:  &initDataGeneratorServer{},
+		Postlude: gRPCifyAndLogPostlude,
+	}
+}
+
 // Gets the initialization data.
 func (*initDataGeneratorServer) GenerateInitData(ctx context.Context, request *pb.GenerateInitDataRequest) (*pb.GenerateInitDataResponse, error) {
 	logoutURL, err := auth.LogoutURL(ctx, request.ReferrerUrl)
@@ -41,13 +50,4 @@ func (*initDataGeneratorServer) GenerateInitData(ctx context.Context, request *p
 			},
 		},
 	}, nil
-}
-
-// Creates a new initialization data server.
-func NewInitDataGeneratorServer() *pb.DecoratedInitDataGenerator {
-	return &pb.DecoratedInitDataGenerator{
-		Prelude:  checkAllowedPrelude,
-		Service:  &initDataGeneratorServer{},
-		Postlude: gRPCifyAndLogPostlude,
-	}
 }

@@ -58,6 +58,7 @@ func TestHandleBuild(t *testing.T) {
 						Host:         "bb-hostname",
 						Id:           87654321,
 						CreationTime: timestamppb.New(t),
+						Project:      "buildproject",
 					},
 				})
 
@@ -131,6 +132,7 @@ func TestHandleBuild(t *testing.T) {
 							Host:         bbHost,
 							Id:           14141414,
 							CreationTime: timestamppb.New(t),
+							Project:      "buildproject",
 						},
 						PresubmitRun: &controlpb.PresubmitResult{
 							PresubmitRunId: &pb.PresubmitRunId{

@@ -294,6 +294,7 @@ func expectedTasks(taskTemplate *taskspb.IngestTestResults, buildIDs []int64) []
 			Host:         bbHost,
 			Id:           buildID,
 			CreationTime: timestamppb.New(bbCreateTime),
+			Project:      "buildproject",
 		}
 		res = append(res, t)
 	}

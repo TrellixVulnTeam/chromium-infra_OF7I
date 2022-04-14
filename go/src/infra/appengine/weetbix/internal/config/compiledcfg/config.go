@@ -10,13 +10,13 @@ import (
 	"context"
 	"time"
 
-	"infra/appengine/weetbix/internal/clustering/algorithms/testname/rules"
-	"infra/appengine/weetbix/internal/config"
-	configpb "infra/appengine/weetbix/internal/config/proto"
-
 	"go.chromium.org/luci/common/data/caching/lru"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/server/caching"
+
+	"infra/appengine/weetbix/internal/clustering/algorithms/testname/rules"
+	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 )
 
 // TODO(crbug.com/1243174). Instrument the size of this cache so that we
@@ -70,6 +70,9 @@ func Project(ctx context.Context, project string, minimumVersion time.Time) (*Pr
 		// by the framework code that initializes the root context.
 		projectCfg, err := config.ProjectWithMinimumVersion(ctx, project, minimumVersion)
 		if err != nil {
+			if err == config.NotExistsErr {
+				return nil, NotExistsErr
+			}
 			return nil, err
 		}
 		config, err := NewConfig(projectCfg)
