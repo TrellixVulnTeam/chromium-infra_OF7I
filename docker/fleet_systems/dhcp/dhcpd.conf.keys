@@ -9,3 +9,15 @@ key dhcpd_key {
   # This is randomly generated and doesn't have access to anything.
   secret DB78MP1+GwlmeJU+5l+LpR7gnk7rXm0AXvAKruZ9bIg=;
 }
+
+key ns1-e-ddns.br.sfo36.cr.dev {
+  algorithm HMAC-MD5;
+  # This is randomly generated and doesn't have access to anything.
+  secret DB78MP1+GwlmeJU+5l+LpR7gnk7rXm0AXvAKruZ9bIg=;
+}
+
+key ns2-e-ddns.br.sfo36.cr.dev {
+  algorithm HMAC-MD5;
+  # This is randomly generated and doesn't have access to anything.
+  secret DB78MP1+GwlmeJU+5l+LpR7gnk7rXm0AXvAKruZ9bIg=;
+}
