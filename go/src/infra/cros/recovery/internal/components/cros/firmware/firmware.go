@@ -121,7 +121,7 @@ type SetApInfoByServoRequest struct {
 	// Force extract AP from the DUT.
 	ForceExtractAPFile bool
 	UpdateGBBFlags     bool
-	// GBB flags value need to be set to system.
+	// GBB flags value need to be set to AP.
 	// Example: 0x18
 	GBBFlags string
 }
@@ -172,6 +172,9 @@ type InstallFwFromFwImageRequest struct {
 	UpdateEC bool
 	// Specify that Update AP is is requested.
 	UpdateAP bool
+	// GBB flags value need to be set to AP.
+	// Example: 0x18
+	GBBFlags string
 }
 
 // InstallFwFromFwImage updates EC/AP on the DUT by servo from fw-image.
@@ -226,7 +229,7 @@ func InstallFwFromFwImage(ctx context.Context, req *InstallFwFromFwImageRequest,
 			return errors.Annotate(err, "install fw from fw-image").Err()
 		}
 		log.Debugf("Start program AP image %q", apImage)
-		if err := p.ProgramAP(ctx, apImage, ""); err != nil {
+		if err := p.ProgramAP(ctx, apImage, req.GBBFlags); err != nil {
 			return errors.Annotate(err, "install fw from fw-image").Err()
 		}
 		log.Infof("Finished program AP image %q", apImage)

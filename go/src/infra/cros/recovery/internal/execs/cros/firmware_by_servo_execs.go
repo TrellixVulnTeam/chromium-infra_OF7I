@@ -146,6 +146,7 @@ func updateFwWithFwImageByServo(ctx context.Context, info *execs.ExecInfo) error
 		Model:                am.AsString(ctx, "dut_model", info.RunArgs.DUT.Model),
 		UpdateEC:             am.AsBool(ctx, "update_ec", false),
 		UpdateAP:             am.AsBool(ctx, "update_ap", false),
+		GBBFlags:             am.AsString(ctx, "gbb_flags", ""),
 	}
 	servod := info.NewServod()
 	run := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
