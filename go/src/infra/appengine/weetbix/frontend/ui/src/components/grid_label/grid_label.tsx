@@ -22,7 +22,13 @@ const GridLabel = ({
 }: Props) => {
     return (
         <Grid item xs={xs} lg={lg}>
-            <Box sx={{ display: 'inline-block' }} paddingTop={1}>
+            <Box
+                sx={{
+                    display: 'inline-block',
+                    wordBreak:'break-all',
+                    overflowWrap: 'break-word'
+                }}
+                paddingTop={1}>
                 {text}
             </Box>
             {children}
