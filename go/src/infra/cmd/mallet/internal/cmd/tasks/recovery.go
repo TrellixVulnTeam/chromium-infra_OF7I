@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
@@ -19,6 +20,7 @@ import (
 	"infra/cros/recovery/tasknames"
 	"infra/libs/skylab/buildbucket"
 	"infra/libs/skylab/buildbucket/labpack"
+	"infra/libs/skylab/swarming"
 )
 
 // Recovery subcommand: Recovering the devices.
@@ -36,6 +38,7 @@ var Recovery = &subcommands.Command{
 		c.Flags.BoolVar(&c.deployTask, "deploy", false, "Run deploy task. By default run recovery task.")
 		c.Flags.BoolVar(&c.updateUFS, "update-ufs", false, "Update result to UFS. By default no.")
 		c.Flags.BoolVar(&c.latest, "latest", false, "Use latest version of CIPD when scheduling. By default no.")
+		c.Flags.StringVar(&c.adminSession, "admin-session", "", "Admin session used to group created tasks. By default generated.")
 		return c
 	},
 }
@@ -45,12 +48,13 @@ type recoveryRun struct {
 	authFlags authcli.Flags
 	envFlags  site.EnvFlags
 
-	onlyVerify bool
-	noStepper  bool
-	configFile string
-	deployTask bool
-	updateUFS  bool
-	latest     bool
+	onlyVerify   bool
+	noStepper    bool
+	configFile   string
+	deployTask   bool
+	updateUFS    bool
+	latest       bool
+	adminSession string
 }
 
 func (c *recoveryRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -74,8 +78,13 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 	if len(args) == 0 {
 		return errors.Reason("create recovery task: unit is not specified").Err()
 	}
+	// Admin session used to created common tag across created tasks.
+	if c.adminSession == "" {
+		c.adminSession = uuid.New().String()
+	}
+	sessionTag := fmt.Sprintf("admin-session:%s", c.adminSession)
+	e := c.envFlags.Env()
 	for _, unit := range args {
-		e := c.envFlags.Env()
 		var configuration string
 		if c.configFile != "" {
 			b, err := os.ReadFile(c.configFile)
@@ -107,6 +116,9 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 				NoStepper:        c.noStepper,
 				NoMetrics:        true,
 				Configuration:    configuration,
+				ExtraTags: []string{
+					sessionTag,
+				},
 			},
 		)
 		if err != nil {
@@ -114,5 +126,6 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 		}
 		fmt.Fprintf(a.GetOut(), "Created recovery task for %s: %s\n", unit, bc.BuildURL(taskID))
 	}
+	fmt.Fprintf(a.GetOut(), "Created tasks: %s\n", swarming.TaskListURLForTags(e.SwarmingService, []string{sessionTag}))
 	return nil
 }
