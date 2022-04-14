@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
-import { setupListeners } from '@reduxjs/toolkit/query'
+import { setupListeners } from '@reduxjs/toolkit/query';
 import assetReducer from '../features/asset/assetSlice';
 
 export const store = configureStore({
@@ -13,8 +13,7 @@ export const store = configureStore({
   devTools: process.env.NODE_ENV !== 'production',
 });
 
-
-setupListeners(store.dispatch)
+setupListeners(store.dispatch);
 
 export type AppDispatch = typeof store.dispatch;
 export type RootState = ReturnType<typeof store.getState>;

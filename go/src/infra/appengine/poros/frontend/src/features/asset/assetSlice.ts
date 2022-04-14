@@ -2,20 +2,39 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import {
+  CreateAssetRequest,
+  DeleteAssetRequest,
+  GetAssetRequest,
+  IAssetService,
+  AssetService,
+  ListAssetsRequest,
+  AssetEntity,
+} from '../../api/asset_service';
 import { RootState } from '../../app/store';
 
 export interface AssetState {
-  status : string,
-  assetId : string,
-  name : string
+  assets: AssetEntity[];
+  pageToken: string | undefined;
+  record: AssetEntity;
+  fetchStatus: string;
+  savingStatus: string;
+  deletingStatus: string;
+  pageNumber: number;
+  pageSize: number;
 }
 
-const initialState : AssetState = {
-  status: 'idle',
-  assetId: '',
-  name: ''
-}
+const initialState: AssetState = {
+  assets: [],
+  pageToken: undefined,
+  pageNumber: 1,
+  pageSize: 25,
+  fetchStatus: 'idle',
+  record: AssetEntity.defaultEntity(),
+  savingStatus: 'idle',
+  deletingStatus: 'idle',
+};
 
 // The function below is called a thunk and allows us to perform async logic. It
 // can be dispatched like a regular action: `dispatch(fetchAssetAsync(10))`. This
@@ -25,9 +44,52 @@ const initialState : AssetState = {
 export const fetchAssetAsync = createAsyncThunk(
   'asset/fetchAsset',
   async (assetId: string) => {
-    const response = await fetchAsset(assetId);
+    const request: GetAssetRequest = {
+      id: assetId,
+    };
+    const service: IAssetService = new AssetService();
+    const response = await service.get(request);
     // The value we return becomes the `fulfilled` action payload
-    return response.data;
+    return response;
+  }
+);
+
+export const createAssetAsync = createAsyncThunk(
+  'asset/createAsset',
+  async ({ name, description }: { name: string; description: string }) => {
+    const request: CreateAssetRequest = {
+      name: name,
+      description: description,
+    };
+    const service: IAssetService = new AssetService();
+    const response = await service.create(request);
+    return response;
+  }
+);
+
+export const queryAssetAsync = createAsyncThunk(
+  'asset/queryAsset',
+  async ({ pageSize, pageToken }: { pageSize: number; pageToken: string }) => {
+    const request: ListAssetsRequest = {
+      pageSize: pageSize,
+      pageToken: pageToken,
+      readMask: undefined,
+    };
+    const service: IAssetService = new AssetService();
+    const response = await service.list(request);
+    return response;
+  }
+);
+
+export const deleteAssetAsync = createAsyncThunk(
+  'asset/deleteAsset',
+  async (assetId: string) => {
+    const request: DeleteAssetRequest = {
+      id: assetId,
+    };
+    const service: IAssetService = new AssetService();
+    const response = await service.get(request);
+    return response;
   }
 );
 
@@ -35,8 +97,22 @@ export const assetSlice = createSlice({
   name: 'asset',
   initialState,
   reducers: {
-    queryAsset: (state, action: PayloadAction<string>) => {
-
+    setPageSize: (state, action) => {
+      state.pageSize = action.payload.pageSize;
+    },
+    setName: (state, action) => {
+      state.record.name = action.payload;
+    },
+    setDescription: (state, action) => {
+      state.record.description = action.payload;
+    },
+    onSelectRecord: (state, action) => {
+      state.record = state.assets.filter(
+        (s) => s.assetId == action.payload.assetId
+      )[0];
+    },
+    clearSelectedRecord: (state) => {
+      state.record = AssetEntity.defaultEntity();
     },
   },
 
@@ -45,28 +121,49 @@ export const assetSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchAssetAsync.pending, (state) => {
-        state.status = 'loading';
+        state.fetchStatus = 'loading';
       })
       .addCase(fetchAssetAsync.fulfilled, (state, action) => {
-        state.status = 'idle';
-        state.name += action.payload;
+        state.fetchStatus = 'idle';
+        state.record = action.payload;
+      })
+      .addCase(createAssetAsync.pending, (state) => {
+        state.savingStatus = 'loading';
+      })
+      .addCase(createAssetAsync.fulfilled, (state, action) => {
+        state.savingStatus = 'idle';
+        state.record = action.payload;
+      })
+      .addCase(queryAssetAsync.pending, (state) => {
+        state.fetchStatus = 'loading';
+      })
+      .addCase(queryAssetAsync.fulfilled, (state, action) => {
+        state.fetchStatus = 'idle';
+        console.log(action.payload.assets);
+        state.assets = action.payload.assets;
+        state.pageToken = action.payload.nextPageToken;
+      })
+      .addCase(deleteAssetAsync.pending, (state) => {
+        state.deletingStatus = 'loading';
+      })
+      .addCase(deleteAssetAsync.fulfilled, (state) => {
+        state.deletingStatus = 'idle';
+        state.record = AssetEntity.defaultEntity();
       });
   },
-})
+});
 
 // The function below is called a selector and allows us to select a value from
 // the state. Selectors can also be defined inline where they're used instead of
 // in the slice file. For example: `useSelector((state: RootState) => state.asset)`
-export const selectAsset = (state: RootState) => state.asset;
+export const selectAssetState = (state: RootState) => state.asset;
 
-// A mock function to mimic making an async request for data, will be replaced
-// with actual server call
-function fetchAsset(assetId = '') {
-  return new Promise<{ data: string }>((resolve) =>
-    setTimeout(() => resolve({ data: assetId}), 500)
-  );
-}
+export const {
+  setPageSize,
+  onSelectRecord,
+  clearSelectedRecord,
+  setName,
+  setDescription,
+} = assetSlice.actions;
 
-export const { queryAsset } = assetSlice.actions
-
-export default assetSlice.reducer
+export default assetSlice.reducer;

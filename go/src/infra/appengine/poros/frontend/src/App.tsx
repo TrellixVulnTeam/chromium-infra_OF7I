@@ -3,15 +3,14 @@
 // found in the LICENSE file.
 
 import React from 'react';
-import logo from './logo.svg';
-import { Asset } from './features/asset/Asset';
+import { AssetList } from './features/asset/AssetList';
 import './App.css';
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <Asset />
+        <AssetList />
       </header>
     </div>
   );
