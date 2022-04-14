@@ -52,7 +52,7 @@ func recordIngestedInvocation(ctx context.Context, task *taskspb.IngestTestVerdi
 func recordTestVerdicts(ctx context.Context, task *taskspb.IngestTestVerdicts, build *bbpb.Build, inv *rdbpb.Invocation, tvsC chan []*rdbpb.TestVariant) error {
 	const (
 		workerCount = 8
-		batchSize   = 500
+		batchSize   = 256
 	)
 
 	invId, err := rdbpbutil.ParseInvocationName(inv.Name)
