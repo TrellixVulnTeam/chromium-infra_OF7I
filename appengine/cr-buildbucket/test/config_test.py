@@ -43,6 +43,10 @@ def without_builders(cfg):
   return cfg
 
 
+# NOTE: This has the pool dimension, but other uses of LUCI_CHROMIUM_TRY
+# do NOT list pool dimension explicitly; This is because config.py has api
+# little-used feature where pool is 'automatically' filled in from the project
+# and bucket name as 'luci.$project.$bucket' if it's omitted.
 LUCI_CHROMIUM_TRY = test_util.parse_bucket_cfg(
     '''
     name: "luci.chromium.try"
@@ -296,7 +300,6 @@ class ConfigTest(testing.AppengineTestCase):
             builders {
               name: "linux"
               dimensions: "os:Linux"
-              dimensions: "pool:luci.chromium.try"
               recipe {
                 name: "x"
                 cipd_version: "refs/heads/master"
@@ -482,7 +485,6 @@ class ConfigTest(testing.AppengineTestCase):
               swarming_host: "swarming.example.com"
               task_template_canary_percentage { value: 10 }
               dimensions: "os:Linux"
-              dimensions: "pool:luci.chromium.try"
               recipe {
                 cipd_package: "infra/recipe_bundle"
                 cipd_version: "refs/heads/master"

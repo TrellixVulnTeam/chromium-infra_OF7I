@@ -528,6 +528,11 @@ def cron_update_buckets():
           builder_key = Builder.make_key(project_id, bucket_key.id(), b.name)
           builders_to_delete.discard(builder_key)
           builder = builders.get(builder_key)
+          if not any(d.startswith('pool:') for d in b.dimensions):
+            b.dimensions.append(
+                'pool:luci.%s.%s' %
+                (project_id, short_bucket_name(bucket_cfg.name))
+            )
           if builder and builder.config_hash == Builder.compute_hash(b):
             continue
           builders_to_put.append(b)
