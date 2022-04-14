@@ -13,7 +13,7 @@ import { Ref } from 'react';
 import { Cluster, Counts } from '../../../../services/cluster';
 
 const metric = (counts: Counts): number => {
-    return counts.nominal;
+    return counts.preWeetbix;
 };
 
 @customElement('impact-table')
