@@ -150,7 +150,7 @@ func (b *BuildBootstrapper) getPropertiesFromFile(ctx context.Context, propsFile
 			return errors.Annotate(err, "failed to get revision for %s", change).Err()
 		}
 		logging.Infof(ctx, "getting diff for properties file %s from %s", propsFile, change)
-		diff, err = b.gitiles.DownloadDiff(ctx, convertGerritHostToGitilesHost(change.Host), change.Project, revision, propsFile)
+		diff, err = b.gitiles.DownloadDiff(ctx, convertGerritHostToGitilesHost(change.Host), change.Project, revision, gitiles.PARENT, propsFile)
 		if err != nil {
 			return errors.Annotate(err, "failed to get diff for %s from %s", propsFile, change).Err()
 		}

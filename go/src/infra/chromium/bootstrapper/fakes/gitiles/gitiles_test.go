@@ -458,6 +458,57 @@ index A..B 100644
 			})
 
 		})
+
+		Convey("returns difference between revisions if base is specified", func() {
+			client, _ := Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": {
+							Revisions: map[string]*Revision{
+								"fake-revision-1": {
+									Files: map[string]*string{
+										"to-modify": strPtr("fake-contents-A\n"),
+									},
+								},
+								"fake-revision-2": {
+									Files: map[string]*string{
+										"to-modify": strPtr("fake-contents-A\n"),
+									},
+									Parent: "fake-revision-1",
+								},
+								"fake-revision-3": {
+									Files: map[string]*string{
+										"to-modify": strPtr("fake-contents-B\n"),
+									},
+									Parent: "fake-revision-1",
+								},
+							},
+						},
+					},
+				},
+			})(ctx, "fake-host")
+
+			response, err := client.DownloadDiff(ctx, &gitilespb.DownloadDiffRequest{
+				Project:    "fake/project",
+				Committish: "fake-revision-2",
+				Base:       "fake-revision-3",
+			})
+
+			So(err, ShouldBeNil)
+			So(response, ShouldNotBeNil)
+			// (?m) - multiline regex mode: ^ matches line start
+			contents := regexp.MustCompile(`(?m)^index [0-9a-f]+\.\.[0-9a-f]+`).ReplaceAllLiteralString(response.Contents, "index A..B")
+			So(contents, ShouldEqual,
+				`diff --git a/to-modify b/to-modify
+index A..B 100644
+--- a/to-modify
++++ b/to-modify
+@@ -1 +1 @@
+-fake-contents-B
++fake-contents-A
+`)
+		})
+
 	})
 
 }
@@ -505,7 +556,7 @@ func TestIntegration(t *testing.T) {
 
 		Convey("succeeds when calling DownloadDiff", func() {
 
-			Convey("with diff when called for modified path", func() {
+			Convey("with diff against parent when called for modified path", func() {
 				ctx := gitiles.UseGitilesClientFactory(ctx, Factory(map[string]*Host{
 					"fake-host": {
 						Projects: map[string]*Project{
@@ -529,13 +580,13 @@ func TestIntegration(t *testing.T) {
 				}))
 				client := gitiles.NewClient(ctx)
 
-				contents, err := client.DownloadDiff(ctx, "fake-host", "fake/project", "fake-revision-2", "fake/file")
+				contents, err := client.DownloadDiff(ctx, "fake-host", "fake/project", "fake-revision-2", gitiles.PARENT, "fake/file")
 
 				So(err, ShouldBeNil)
 				So(contents, ShouldNotBeEmpty)
 			})
 
-			Convey("with no diff when called for unmodified path", func() {
+			Convey("with no diff against parent when called for unmodified path", func() {
 				ctx := gitiles.UseGitilesClientFactory(ctx, Factory(map[string]*Host{
 					"fake-host": {
 						Projects: map[string]*Project{
@@ -559,7 +610,77 @@ func TestIntegration(t *testing.T) {
 				}))
 				client := gitiles.NewClient(ctx)
 
-				contents, err := client.DownloadDiff(ctx, "fake-host", "fake/project", "fake-revision-2", "other/fake/file")
+				contents, err := client.DownloadDiff(ctx, "fake-host", "fake/project", "fake-revision-2", gitiles.PARENT, "other/fake/file")
+
+				So(err, ShouldBeNil)
+				So(contents, ShouldBeEmpty)
+			})
+
+			Convey("with diff against revision when called for modified path", func() {
+				ctx := gitiles.UseGitilesClientFactory(ctx, Factory(map[string]*Host{
+					"fake-host": {
+						Projects: map[string]*Project{
+							"fake/project": {
+								Revisions: map[string]*Revision{
+									"fake-revision-1": {
+										Files: map[string]*string{
+											"fake/file": strPtr("fake-contents-A"),
+										},
+									},
+									"fake-revision-2": {
+										Files: map[string]*string{
+											"fake/file": strPtr("fake-contents-A"),
+										},
+										Parent: "fake-revision-1",
+									},
+									"fake-revision-3": {
+										Files: map[string]*string{
+											"fake/file": strPtr("fake-contents-B"),
+										},
+									},
+								},
+							},
+						},
+					},
+				}))
+				client := gitiles.NewClient(ctx)
+
+				contents, err := client.DownloadDiff(ctx, "fake-host", "fake/project", "fake-revision-2", "fake-revision-3", "fake/file")
+
+				So(err, ShouldBeNil)
+				So(contents, ShouldNotBeEmpty)
+			})
+
+			Convey("with no diff against revision when called for unmodified path", func() {
+				ctx := gitiles.UseGitilesClientFactory(ctx, Factory(map[string]*Host{
+					"fake-host": {
+						Projects: map[string]*Project{
+							"fake/project": {
+								Revisions: map[string]*Revision{
+									"fake-revision-1": {
+										Files: map[string]*string{
+											"fake/file": strPtr("fake-contents-A"),
+										},
+									},
+									"fake-revision-2": {
+										Files: map[string]*string{
+											"fake/file": strPtr("fake-contents-B"),
+										},
+										Parent: "fake-revision-1",
+									},
+									"fake-revision-3": {
+										Files: map[string]*string{
+											"fake/file": strPtr("fake-contents-B"),
+										},
+									},
+								},
+							},
+						},
+					},
+				}))
+				client := gitiles.NewClient(ctx)
+
+				contents, err := client.DownloadDiff(ctx, "fake-host", "fake/project", "fake-revision-2", "fake-revision-3", "fake/file")
 
 				So(err, ShouldBeNil)
 				So(contents, ShouldBeEmpty)

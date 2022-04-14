@@ -132,8 +132,12 @@ func (c *Client) DownloadFile(ctx context.Context, host, project, revision, path
 	return response.Contents, nil
 }
 
+// PARENT can be passed as the base argument to DownloadDiff to take the diff between a revision and
+// its parent.
+const PARENT = ""
+
 // DownloadDiff returns the diff between a given revision and its parent.
-func (c *Client) DownloadDiff(ctx context.Context, host, project, revision, path string) (string, error) {
+func (c *Client) DownloadDiff(ctx context.Context, host, project, revision, base, path string) (string, error) {
 	gitilesClient, err := c.gitilesClientForHost(ctx, host)
 	if err != nil {
 		return "", err
@@ -141,6 +145,7 @@ func (c *Client) DownloadDiff(ctx context.Context, host, project, revision, path
 	request := &gitilespb.DownloadDiffRequest{
 		Project:    project,
 		Committish: revision,
+		Base:       base,
 		Path:       path,
 	}
 	response, err := gitilesClient.DownloadDiff(ctx, request)
