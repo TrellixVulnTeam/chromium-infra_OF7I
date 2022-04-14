@@ -129,16 +129,20 @@ func getBrowserBotInfo(ctx context.Context, client ufsAPI.FleetClient, id string
 		return nil, err
 	}
 	var state string
+	var zone string
 	if resp.GetBrowserDeviceData().GetHost() != nil {
 		state = dutstate.ConvertFromUFSState(resp.GetBrowserDeviceData().GetHost().GetResourceState()).String()
+		zone = resp.GetBrowserDeviceData().GetHost().GetZone()
 	} else {
 		state = dutstate.ConvertFromUFSState(resp.GetBrowserDeviceData().GetVm().GetResourceState()).String()
+		zone = resp.GetBrowserDeviceData().GetVm().GetZone()
 	}
 	return &botInfo{
 		Dimensions: map[string][]string{
 			"ufs_state": {state},
 			// Duplicate state to dut_state to reuse analytics logic built for ChromeOS lab
 			"dut_state": {state},
+			"ufs_zone":  {zone},
 		},
 	}, nil
 }
@@ -255,6 +259,7 @@ func getDUTBotDimensions(deviceData *ufspb.ChromeOSDeviceData, ds dutstate.Info,
 		dims["location"] = []string{location}
 	}
 	dims["dut_state"] = []string{string(ds.State)}
+	dims["ufs_zone"] = []string{deviceData.GetLabConfig().GetZone()}
 	swarming.Sanitize(dims, r)
 	return dims
 }
@@ -267,6 +272,7 @@ func getAttachedDeviceBotDimensions(deviceData *ufsAPI.AttachedDeviceData, ds du
 		dims["location"] = []string{location}
 	}
 	dims["dut_state"] = []string{string(ds.State)}
+	dims["ufs_zone"] = []string{deviceData.GetLabConfig().GetZone()}
 	swarming.Sanitize(dims, r)
 	return dims
 }
