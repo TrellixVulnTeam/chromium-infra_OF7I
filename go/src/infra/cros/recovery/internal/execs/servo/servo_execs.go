@@ -57,9 +57,13 @@ const (
 	// servod process is responsive.
 	servodHostCheckupCmd = "dut-control -p %d serialname"
 
-	// This is the threshold voltage value, and actual values lower
-	// than this indicate that DUT is not connected.
+	// This is the threshold voltage values between DUT and servo
+	// Bus voltage on ppdut5. Value can be:
+	//  - less than 500 - DUT is likely not connected
+	//  - between 500 and 4000 - unexpected value
+	//  - more than 4000 - DUT is likely connected
 	maxPPDut5MVWhenNotConnected = 500
+	minPPDut5MVWhenConnected    = 4000
 
 	// This token represents the command string that can be present in
 	// the extra arguments defined in config.

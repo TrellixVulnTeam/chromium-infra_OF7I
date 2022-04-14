@@ -447,6 +447,45 @@ func servoRepairPlan() *Plan {
 				},
 				ExecName: "servo_low_ppdut5",
 			},
+			"Servo type-a hub connected": {
+				Docs: []string{
+					"Verifier to check connection Servo type-a to DUT.",
+					"Working only for labstation with servo_micro.",
+				},
+				Conditions: []string{
+					"servo_host_is_labstation",
+					"is_servo_micro",
+					"dut_has_cros_ec",
+					// Followed is condition to check if voltage is low means servo_micro is not connected.
+					"DUT is UP by EC response",
+				},
+				ExecName: "servo_low_ppdut5",
+				RecoveryActions: []string{
+					"servo_host_servod_stop",
+					"servo_power_delivery_repair",
+					"servo_servod_cc_toggle_repair",
+					"servo_reboot_ec_on_dut",
+					"reboot_dut_by_power_state:reset",
+					"reset_ec_on_dut",
+				},
+			},
+			"DUT is UP by EC response": {
+				Docs: []string{
+					"Check if DUT is up.",
+					"Verification based on EC response.",
+				},
+				Conditions: []string{
+					"dut_has_cros_ec",
+				},
+				Dependencies: []string{
+					"servo_servod_echo_host",
+				},
+				ExecName: "servo_check_servod_control",
+				ExecExtraArgs: []string{
+					"command:ec_system_powerstate",
+					"expected_string_value:S0",
+				},
+			},
 			"servo_ec_check": {
 				Conditions: []string{
 					"is_not_servo_v3",
@@ -464,6 +503,12 @@ func servoRepairPlan() *Plan {
 				ExecName: "sample_pass",
 			},
 			"dut_has_cros_ec": {
+				Docs: []string{
+					"Verify if DUT has ChromeOS firmware for EC",
+				},
+				Dependencies: []string{
+					"servo_servod_echo_host",
+				},
 				ExecExtraArgs: []string{
 					"command:supports_cros_ec_communication",
 					"expected_string_value:yes",
@@ -488,8 +533,10 @@ func servoRepairPlan() *Plan {
 				ExecName: "servod_can_read_all",
 			},
 			"battery_last_charge_readable": {
-				ExecExtraArgs: []string{"command:battery_full_charge_mah"},
-				ExecName:      "servo_check_servod_control",
+				ExecExtraArgs: []string{
+					"command:battery_full_charge_mah",
+				},
+				ExecName: "servo_check_servod_control",
 			},
 			"servo_battery_charging": {
 				Conditions: []string{
