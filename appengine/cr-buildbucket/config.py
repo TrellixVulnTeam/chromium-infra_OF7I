@@ -29,7 +29,7 @@ from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import errors
 
-CURRENT_BUCKET_SCHEMA_VERSION = 12
+CURRENT_BUCKET_SCHEMA_VERSION = 13
 ACL_SET_NAME_RE = re.compile('^[a-z0-9_]+$')
 
 # The memcache key for get_all_bucket_ids_async cache.
