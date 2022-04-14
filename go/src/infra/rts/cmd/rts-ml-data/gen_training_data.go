@@ -41,7 +41,6 @@ func cmdGenTrainingData(authOpt *auth.Options) *subcommands.Command {
 		`),
 		CommandRun: func() subcommands.CommandRun {
 			r := &genTraingData{}
-			r.queryLimit = 1000000
 			r.authOpt = authOpt
 			r.Flags.StringVar(&r.modelDir, "model-dir", "", text.Doc(`
 				Path to the directory with the model files.
@@ -62,6 +61,21 @@ func cmdGenTrainingData(authOpt *auth.Options) *subcommands.Command {
 				Fetch results for this date. Stability information will be
 				gathered based on this day.
 				format: yyyy-mm-dd
+			`))
+			r.Flags.IntVar(&r.queryLimit, "query-limit", 1000000, text.Doc(`
+				Max rows to get per query. This allows us to get around resource
+				limits
+			`))
+			r.Flags.IntVar(&r.downSample, "down-sample", 1000, text.Doc(`
+				The factor to down sample passes by to increase the number of
+				failures. A value less than or equal to 0 will result in no
+				down sampling
+			`))
+			r.Flags.BoolVar(&r.ignorePassedBuilds, "ignore-passed-jobs", false,
+				"Whether or not to ignore results from builds that passed")
+			r.Flags.BoolVar(&r.onlyTestFailures, "only-test-failures", false, text.Doc(`
+				"Only return failure entries (intended for creating test sets to
+				compare to RTS framework)
 			`))
 			return r
 		},
@@ -122,7 +136,7 @@ func (r *genTraingData) calcDistancesForRows(rows []bqRow) {
 			changeIdTestIdsToDistance = make(map[string]bqRow)
 			r.currentClCount += 1
 			if r.currentClCount%100 == 0 {
-				fmt.Printf("Processed %d patchsets", r.currentClCount)
+				fmt.Printf("Processed %d patchsets\n", r.currentClCount)
 			}
 		}
 		changeIdTestIdsToDistance[row.FileName] = row
@@ -202,37 +216,17 @@ func (r *genTraingData) ValidateFlags() error {
 	}
 }
 
-// Checks for and reads an existing file, returning the first column containing
-// result id as a set to be used to avoid duplicating entries
-func (r *genTraingData) ReadEntryHashes() (map[string]interface{}, error) {
-	hashset := make(map[string]interface{})
-	if _, err := os.Stat(r.out); os.IsNotExist(err) {
-		return hashset, nil
-	}
-
-	fmt.Printf("Reading existing entries\n")
-	f, err := os.Open(r.out)
-	if err != nil {
-		return nil, err
-	}
-	reader := bufio.NewReader(f)
-	line, err := reader.ReadSlice('\n')
-	for err == nil {
-		hash := string(line[:strings.Index(string(line), ",")])
-		hashset[hash] = nil
-		line, err = reader.ReadSlice('\n')
-	}
-	return hashset, err
-}
-
 func (r *genTraingData) queryResults(ctx context.Context, bqClient *bigquery.Client) ([]bqRow, error) {
 	q := bqClient.Query(filtersQuery)
 	q.Parameters = []bigquery.QueryParameter{
 		{Name: "runDate", Value: r.runDate},
 		{Name: "testSuite", Value: r.testSuite},
 		{Name: "builder", Value: r.builder},
-		{Name: "limit", Value: r.queryLimit},
-		{Name: "limit_offset", Value: r.queryIndex},
+		{Name: "queryLimit", Value: r.queryLimit},
+		{Name: "limitOffset", Value: r.queryIndex},
+		{Name: "downSample", Value: r.downSample},
+		{Name: "ignorePassedBuilds", Value: r.ignorePassedBuilds},
+		{Name: "onlyTestFailures", Value: r.onlyTestFailures},
 	}
 
 	fmt.Printf("Querying for entries\n")
@@ -304,9 +298,12 @@ func (s *genTraingData) calcDistances(changedFiles []string, tests map[string]bq
 type genTraingData struct {
 	baseCommandRun
 
-	runDate   time.Time
-	testSuite string
-	builder   string
+	runDate            time.Time
+	testSuite          string
+	builder            string
+	downSample         int
+	ignorePassedBuilds bool
+	onlyTestFailures   bool
 
 	out            string
 	modelDir       string
@@ -387,7 +384,7 @@ bb_tryjobs AS (
 		# Exclude experimental builders because they may fail for reasons
 		# unrelated to the CL, and are not required for the CL to land.
 		AND STRUCT('cq_experimental', 'true') NOT IN UNNEST(b.tags)
-		AND b.status = "FAILURE"
+		AND (not @ignorePassedBuilds or b.status = "FAILURE")
 ),
 
 tryjobs_with_status AS (
@@ -487,8 +484,12 @@ WHERE
 	AND (@builder = "" OR rdb.builder = @builder)
 	AND fr.six_month_run_count IS NOT NULL
 	AND fr.six_month_run_count > 0
-	# Downsample the non-failures
-	AND (rdb.all_unexpected OR MOD(FARM_FINGERPRINT(rdb.result_id), 1000) = 0)
+	# Remove passes if the option is set
+	AND (NOT @onlyTestFailures OR rdb.all_unexpected)
+	# Downsample the non-failures if enabled
+	AND (@downSample <= 0
+		OR rdb.all_unexpected
+		OR MOD(FARM_FINGERPRINT(rdb.result_id), @downSample) = 0)
 ORDER BY change_id
-LIMIT @limit OFFSET @limit_offset
+LIMIT @queryLimit OFFSET @limitOffset
 `
