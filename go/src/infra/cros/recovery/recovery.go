@@ -267,6 +267,10 @@ func defaultConfiguration(tn tasknames.TaskName, ds tlw.DUTSetupType) (*config.C
 	}
 }
 
+// Specify if we want to print the DUt info to the logs.
+// In some cases DUT info is too big and to avoid noise in the log you can block it.
+const logDutInfo = true
+
 // readInventory reads single resource info from inventory.
 func readInventory(ctx context.Context, resource string, args *RunArgs) (dut *tlw.Dut, err error) {
 	if args.ShowSteps {
@@ -287,7 +291,9 @@ func readInventory(ctx context.Context, resource string, args *RunArgs) (dut *tl
 	if err != nil {
 		return nil, errors.Annotate(err, "read inventory %q", resource).Err()
 	}
-	logDUTInfo(ctx, resource, dut, "DUT info from inventory")
+	if logDutInfo {
+		logDUTInfo(ctx, resource, dut, "DUT info from inventory")
+	}
 	return dut, nil
 }
 
@@ -303,7 +309,9 @@ func updateInventory(ctx context.Context, dut *tlw.Dut, args *RunArgs) (rErr err
 		i.Indent()
 		defer func() { i.Dedent() }()
 	}
-	logDUTInfo(ctx, dut.Name, dut, "updated DUT info")
+	if logDutInfo {
+		logDUTInfo(ctx, dut.Name, dut, "updated DUT info")
+	}
 	if args.EnableUpdateInventory {
 		log.Infof(ctx, "Update inventory %q: starting...", dut.Name)
 		// Update DUT info in inventory in any case. When fail and when it passed
