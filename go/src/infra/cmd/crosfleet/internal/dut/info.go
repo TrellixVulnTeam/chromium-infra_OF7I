@@ -23,6 +23,7 @@ import (
 
 const (
 	infoCmdName = "info"
+	sshSuffix   = ".cros.corp.google.com"
 )
 
 var info = &subcommands.Command{
@@ -114,7 +115,7 @@ func dutInfoAsBashVariables(info *dutinfopb.DUTInfo) string {
 	hostname := info.GetHostname()
 	if hostname != "" {
 		bashVars = append(bashVars,
-			fmt.Sprintf("DUT_HOSTNAME=%s.cros", hostname))
+			fmt.Sprintf("DUT_HOSTNAME=%s%s", hostname, sshSuffix))
 	}
 
 	chromeOSMachine := info.GetMachine().GetChromeosMachine()
@@ -128,8 +129,9 @@ func dutInfoAsBashVariables(info *dutinfopb.DUTInfo) string {
 	servo := info.GetLabSetup().GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
 	if servo != nil {
 		bashVars = append(bashVars,
-			fmt.Sprintf("SERVO_HOSTNAME=%s\nSERVO_PORT=%d\nSERVO_SERIAL=%s",
+			fmt.Sprintf("SERVO_HOSTNAME=%s%s\nSERVO_PORT=%d\nSERVO_SERIAL=%s",
 				servo.GetServoHostname(),
+				sshSuffix,
 				servo.GetServoPort(),
 				servo.GetServoSerial()))
 	}

@@ -42,7 +42,7 @@ var testLeaseInfoAsBashVariablesData = []struct {
 		`LEASE_TASK=https://ci.chromium.org/ui/p/chromeos/builders/test_runner/dut_leaser/b12345
 STATUS=SCHEDULED
 MINS_REMAINING=10
-DUT_HOSTNAME=sample-hostname.cros`,
+DUT_HOSTNAME=sample-hostname.cros.corp.google.com`,
 	},
 	{ // Only lease build variables found
 		&dutinfopb.LeaseInfo{
@@ -68,7 +68,7 @@ MINS_REMAINING=10`,
 				Hostname: "sample-hostname",
 			},
 		},
-		"DUT_HOSTNAME=sample-hostname.cros",
+		"DUT_HOSTNAME=sample-hostname.cros.corp.google.com",
 	},
 	{ // No variables found
 		&dutinfopb.LeaseInfo{},

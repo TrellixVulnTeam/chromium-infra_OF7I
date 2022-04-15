@@ -41,10 +41,10 @@ var testDutInfoAsBashVariablesData = []struct {
 				}},
 			}},
 		},
-		`DUT_HOSTNAME=sample-dut-hostname.cros
+		`DUT_HOSTNAME=sample-dut-hostname.cros.corp.google.com
 MODEL=sample-model
 BOARD=sample-board
-SERVO_HOSTNAME=sample-servo-hostname
+SERVO_HOSTNAME=sample-servo-hostname.cros.corp.google.com
 SERVO_PORT=12345
 SERVO_SERIAL=sample-serial`,
 	},
@@ -52,7 +52,7 @@ SERVO_SERIAL=sample-serial`,
 		&dutinfopb.DUTInfo{
 			Hostname: "sample-dut-hostname",
 		},
-		"DUT_HOSTNAME=sample-dut-hostname.cros",
+		"DUT_HOSTNAME=sample-dut-hostname.cros.corp.google.com",
 	},
 	{ // No variables found
 		&dutinfopb.DUTInfo{},
