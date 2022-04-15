@@ -20,13 +20,6 @@ import (
 )
 
 const (
-	// PROVISION_FAILED - A flag file to indicate provision failures.  The
-	// file is created at the start of any AU procedure (see
-	// `ChromiumOSProvisioner._prepare_host()`).  The file's location in
-	// stateful means that on successful update it will be removed.  Thus, if
-	// this file exists, it indicates that we've tried and failed in a
-	// previous attempt to update.
-	provisionFailed = "/var/tmp/provision_failed"
 	// TODO (vkjoshi@): Migrate the constants (such as
 	// MinimumBatteryLevel) and helper functions from
 	// internal/execs/cros package to internal/components/cros. Bug
@@ -198,20 +191,6 @@ func hasCriticalKernelErrorExec(ctx context.Context, info *execs.ExecInfo) error
 		return errors.Reason("has critical kernel error: saw file system error: Data will be lost").Err()
 	}
 	log.Debugf(ctx, "Could not determine stateful mount.")
-	return nil
-}
-
-// isLastProvisionSuccessfulExec confirms that the DUT successfully finished its last provision job.
-//
-// At the start of any update (e.g. for a Provision job), the code creates a marker file named `PROVISION_FAILED`.
-// The file is located in a part of the stateful partition that will be removed if an update finishes successfully.
-// Thus, the presence of the file indicates that a prior update failed.
-// The verifier tests for the existence of the marker file and fails if it still exists.
-func isLastProvisionSuccessfulExec(ctx context.Context, info *execs.ExecInfo) error {
-	run := info.DefaultRunner()
-	if _, err := run(ctx, time.Minute, fmt.Sprintf("test -f %s", provisionFailed)); err == nil {
-		return errors.Annotate(err, "last provision successful: last provision on this DUT failed").Err()
-	}
 	return nil
 }
 
@@ -400,7 +379,6 @@ func init() {
 	execs.Register("cros_is_file_system_writable", isFileSystemWritableExec)
 	execs.Register("cros_has_python_interpreter_working", hasPythonInterpreterExec)
 	execs.Register("cros_has_critical_kernel_error", hasCriticalKernelErrorExec)
-	execs.Register("cros_is_last_provision_successful", isLastProvisionSuccessfulExec)
 	execs.Register("cros_is_not_virtual_machine", isNotVirtualMachineExec)
 	execs.Register("cros_wait_for_system", waitForSystemExec)
 	execs.Register("cros_is_gsc_tool_present", isGscToolPresentExec)

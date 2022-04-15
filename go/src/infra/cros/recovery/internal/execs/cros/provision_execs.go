@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -77,7 +78,38 @@ func downloadImageToUSBExec(ctx context.Context, info *execs.ExecInfo) error {
 	return errors.Annotate(err, "download image to usb-drive").Err()
 }
 
+const (
+	// provisionFailed - A flag file to indicate provision failures.
+	// The file's location in stateful means that on successful update
+	// it will be removed.  Thus, if this file exists, it indicates that
+	// we've tried and failed in a previous attempt to update.
+	// The file will be created every time a OS provision is kicked off.
+	// TODO(b/229309510): Remove old marker file when new marker file is in use.
+	provisionFailed       = "/var/tmp/provision_failed"
+	provisionFailedMarker = "/mnt/stateful_partition/unencrypted/provision_failed"
+)
+
+// isLastProvisionSuccessfulExec confirms that the DUT successfully finished
+// its last provision job.
+//
+// At the start of any update (e.g. for a Provision job), the code creates
+// a marker file. The file will be removed if an update finishes successfully.
+// Thus, the presence of the file indicates that a prior update failed.
+// The verifier tests for the existence of the marker file and fails if
+// it still exists.
+func isLastProvisionSuccessfulExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
+	if _, err := run(ctx, 20*time.Second, fmt.Sprintf("test -f %s", provisionFailed)); err == nil {
+		return errors.Reason("last provision successful: found fail provision marker on %q", provisionFailed).Err()
+	}
+	if _, err := run(ctx, 20*time.Second, fmt.Sprintf("test -f %s", provisionFailedMarker)); err == nil {
+		return errors.Reason("last provision successful: found fail provision marker on %q", provisionFailedMarker).Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_provision", provisionExec)
 	execs.Register("servo_download_image_to_usb", downloadImageToUSBExec)
+	execs.Register("cros_is_last_provision_successful", isLastProvisionSuccessfulExec)
 }
