@@ -101,7 +101,11 @@ func (c *Client) Log(ctx context.Context, request *gitilespb.LogRequest, options
 	}
 	commitId, ok := project.Refs[request.Committish]
 	if !ok {
-		commitId = fmt.Sprintf("fake-revision|%s|%s|%s", c.hostname, request.Project, request.Committish)
+		if _, ok := project.Revisions[request.Committish]; ok {
+			commitId = request.Committish
+		} else {
+			commitId = fmt.Sprintf("fake-revision|%s|%s|%s", c.hostname, request.Project, request.Committish)
+		}
 	} else if commitId == "" {
 		return nil, errors.Reason("unknown ref %#v for project %#v on host %#v", request.Committish, request.Project, c.hostname).Err()
 	}

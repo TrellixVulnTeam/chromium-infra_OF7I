@@ -144,6 +144,27 @@ func TestLog(t *testing.T) {
 			So(response.Log[0].Id, ShouldEqual, "fake-revision")
 		})
 
+		Convey("returns log for known revision", func() {
+			client, _ := Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": {
+							Revisions: map[string]*Revision{
+								"fake-revision": {},
+							},
+						},
+					},
+				},
+			})(ctx, "fake-host")
+
+			response, err := client.Log(ctx, logRequest("fake/project", "fake-revision"))
+
+			So(err, ShouldBeNil)
+			So(response, ShouldNotBeNil)
+			So(response.Log, ShouldHaveLength, 1)
+			So(response.Log[0].Id, ShouldEqual, "fake-revision")
+		})
+
 	})
 }
 
