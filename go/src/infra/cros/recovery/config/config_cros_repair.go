@@ -1145,14 +1145,14 @@ func crosRepairActions() map[string]*Action {
 			ExecExtraArgs: []string{"halt_timeout:120"},
 			ExecTimeout:   &durationpb.Duration{Seconds: 3600},
 		},
-		"Install OS in DEV mode by booting from servo USB-drive": {
+		"Install OS in DEV mode by USB-drive": {
 			Docs: []string{
-				"This action installs the test image on DUT after ",
-				"booking the DUT in dev mode.",
+				"This action installs the test image on DUT after booking the DUT in dev mode.",
+				"The action is only for deployment as not limited by pools.",
 			},
-			Conditions: []string{
-				"Pools allowed to stay in DEV mode",
-			},
+			// Conditions: []string{
+			// 	"Pools allowed to stay in DEV mode",
+			// },
 			Dependencies: []string{
 				"Boot DUT from USB in DEV mode",
 				"Device booted from USB-drive",

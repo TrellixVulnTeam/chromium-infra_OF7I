@@ -240,7 +240,7 @@ func deployActions() map[string]*Action {
 				"servo_state_is_working",
 			},
 			Dependencies: []string{
-				"Install OS in DEV mode by booting from servo USB-drive",
+				"Install OS in DEV mode by USB-drive",
 			},
 			ExecName: "sample_pass",
 		},
@@ -253,7 +253,7 @@ func deployActions() map[string]*Action {
 			},
 			Dependencies: []string{
 				"Download stable image to USB-key",
-				"Install OS in DEV mode by booting from servo USB-drive",
+				"Install OS in DEV mode by USB-drive",
 			},
 			ExecName: "sample_pass",
 		},
@@ -266,7 +266,7 @@ func deployActions() map[string]*Action {
 			},
 			Dependencies: []string{
 				"Set GBB flags to 0x18 by servo",
-				"Install OS in DEV mode by booting from servo USB-drive",
+				"Install OS in DEV mode by USB-drive",
 			},
 			ExecName: "sample_pass",
 		},
@@ -279,7 +279,7 @@ func deployActions() map[string]*Action {
 			},
 			Dependencies: []string{
 				"Set GBB flags to 0x18 by servo",
-				"Install OS in DEV mode by booting from servo USB-drive",
+				"Install OS in DEV mode by USB-drive",
 			},
 			ExecName: "sample_pass",
 		},
