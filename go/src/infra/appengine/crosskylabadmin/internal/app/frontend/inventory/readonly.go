@@ -290,7 +290,7 @@ func getSatlabStableVersion(ctx context.Context, ic inventoryClient, buildTarget
 			// Do nothing. If there is no override for the hostname, it is correct to
 			// move on to the next case, checking by board & model.
 		default:
-			return nil, false, errors.Annotate(err, "get satlab").Err()
+			return nil, false, status.Errorf(codes.NotFound, "get satlab: %s", err)
 		}
 	}
 
@@ -298,7 +298,7 @@ func getSatlabStableVersion(ctx context.Context, ic inventoryClient, buildTarget
 		logging.Infof(ctx, "looking up inventory info for DUT host:%q board:%q model:%q in order to get board and model info", hostname, buildTarget, model)
 		dut, err := getDUT(ctx, ic, hostname)
 		if err != nil {
-			return nil, false, errors.Annotate(err, "get satlab: processing dut %q", hostname).Err()
+			return nil, false, status.Errorf(codes.NotFound, "get satlab: processing dut %q: %s", hostname, err)
 		}
 
 		buildTarget = dut.GetCommon().GetLabels().GetBoard()
@@ -322,11 +322,11 @@ func getSatlabStableVersion(ctx context.Context, ic inventoryClient, buildTarget
 		case datastore.IsErrNoSuchEntity(err):
 			// Do nothing.
 		default:
-			return nil, false, errors.Annotate(err, "get satlab").Err()
+			return nil, false, status.Errorf(codes.NotFound, "get satlab: lookup by board/model %q: %s", boardModelID, err)
 		}
 	}
 
-	return nil, true, errors.Reason("get satlab: falling back").Err()
+	return nil, true, status.Error(codes.Aborted, "get satlab: falling back %s")
 }
 
 // getStableVersionImpl returns all the stable versions associated with a given buildTarget and model
@@ -345,7 +345,7 @@ func getStableVersionImpl(ctx context.Context, ic inventoryClient, buildTarget s
 		case ok:
 			// Do nothing and fall back
 		default:
-			return nil, errors.Annotate(err, "get stable version impl").Err()
+			return nil, err
 		}
 	}
 
@@ -363,7 +363,7 @@ func getStableVersionImpl(ctx context.Context, ic inventoryClient, buildTarget s
 			maybeSetReason(out, fmt.Sprintf(msg, buildTarget, model))
 			return out, nil
 		}
-		return out, err
+		return out, status.Errorf(codes.NotFound, "get stable version impl: %s", err)
 	}
 
 	// Default case, not a satlab device.
@@ -377,7 +377,7 @@ func getStableVersionImpl(ctx context.Context, ic inventoryClient, buildTarget s
 		maybeSetReason(out, fmt.Sprintf(msg, hostname))
 		return out, nil
 	}
-	return out, err
+	return out, status.Errorf(codes.NotFound, "get stable version impl: %s", err)
 }
 
 // getStableVersionImplNoHostname returns stableversion information given a buildTarget and model
