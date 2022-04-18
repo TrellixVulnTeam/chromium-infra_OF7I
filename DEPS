@@ -47,7 +47,7 @@ deps = {
 
   "infra/go/src/go.chromium.org/chromiumos/infra/proto":
      "{chromium_git}/chromiumos/infra/proto@" +
-     "87a479a140520b572d396dbf7d231bb1c816b1d3",
+     "6e279e197f119b5429af0d134449e502dac1675f",
 
   # Appengine third_party DEPS
   "infra/appengine/third_party/bootstrap":
