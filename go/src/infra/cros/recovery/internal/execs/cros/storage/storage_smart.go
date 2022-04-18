@@ -194,8 +194,8 @@ func detectMMCState(ctx context.Context, storageInfoSlice []string) (StorageStat
 	if err != nil {
 		return StorageStateUndefined, errors.Annotate(err, "detect mmc state").Err()
 	}
-	var eolValue int = 0
-	var lifeValue int = -1
+	eolValue := 0
+	lifeValue := -1
 	for _, line := range storageInfoSlice {
 		mLife, err := regexpSubmatchToMap(mmcFailLevRegexp, line)
 		if err == nil {
