@@ -35,7 +35,7 @@ func servodLidopenActionExec(ctx context.Context, info *execs.ExecInfo) error {
 	} else if res == "not_applicable" {
 		log.Infof(ctx, "Device does not support this action. Skipping...")
 	} else if res != "yes" {
-		return errors.Reason("servod lid_open: expected to received 'yes'").Err()
+		return errors.Reason("servod lid_open: received %q, expected 'yes'", res).Err()
 	}
 	return nil
 }

@@ -51,6 +51,7 @@ const (
 	SERVO_V4_TYPE          = "servo_v4"
 	SERVO_V4P1_TYPE        = "servo_v4p1"
 	SERVO_CR50_TYPE        = "ccd_cr50"
+	SERVO_TI50_TYPE        = "ccd_ti50"
 	SERVO_C2D2_TYPE        = "c2d2"
 	SERVO_SERVO_MICRO_TYPE = "servo_micro"
 	SERVO_SWEETBERRY_TYPE  = "sweetberry"
@@ -71,6 +72,7 @@ var vidPidServoTypes = map[string]string{
 	"18d1:501b": SERVO_V4_TYPE,
 	"18d1:520d": SERVO_V4P1_TYPE,
 	"18d1:5014": SERVO_CR50_TYPE,
+	"18d1:504a": SERVO_TI50_TYPE,
 	"18d1:501a": SERVO_SERVO_MICRO_TYPE,
 	"18d1:5041": SERVO_C2D2_TYPE,
 	"18d1:5020": SERVO_SWEETBERRY_TYPE,
