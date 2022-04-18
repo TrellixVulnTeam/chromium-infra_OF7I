@@ -132,10 +132,11 @@ def ComputeIssueEntryURL(mr, config):
     case. Otherewise it will be a fully qualified URL that includes some
     query string parameters.
   """
+  # TODO: remove the custom_issue_entry_url since its no longer
   if not config.custom_issue_entry_url:
     return '/p/%s/issues/entry' % (mr.project_name)
 
-  return '/p/%s/issues/wizard'
+  return '/p/chromium/issues/wizard'
 
 
 def IssueListURL(mr, config, query_string=None):
