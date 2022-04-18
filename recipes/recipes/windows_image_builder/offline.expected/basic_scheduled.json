@@ -453,7 +453,7 @@
     ],
     "infra_step": true,
     "name": "Execute customizations.buildbucket.schedule",
-    "stdin": "{\"requests\": [{\"scheduleBuild\": {\"builder\": {\"builder\": \"WinPE Customization Builder\"}, \"experimental\": \"NO\", \"fields\": \"builder,createTime,createdBy,critical,endTime,id,infra,input,number,output,startTime,status,updateTime\", \"properties\": {\"arch\": \"ARCH_X86\", \"customizations\": [{\"offline_winpe_customization\": {\"name\": \"test_cust\", \"offline_customization\": [{\"name\": \"tests\"}]}}, {\"offline_winpe_customization\": {\"name\": \"test_cust\", \"offline_customization\": [{\"name\": \"tests\"}]}}], \"name\": \"test\"}, \"requestId\": \"0-00000000-0000-0000-0000-000000001337\", \"tags\": [{\"key\": \"parent_buildbucket_id\", \"value\": \"0\"}, {\"key\": \"user_agent\", \"value\": \"recipe\"}]}}]}",
+    "stdin": "{\"requests\": [{\"scheduleBuild\": {\"builder\": {\"builder\": \"WinPE Customization Builder\"}, \"experimental\": \"NO\", \"experiments\": {\"luci.buildbucket.parent_tracking\": false}, \"fields\": \"builder,createTime,createdBy,critical,endTime,id,infra,input,number,output,startTime,status,updateTime\", \"properties\": {\"arch\": \"ARCH_X86\", \"customizations\": [{\"offline_winpe_customization\": {\"name\": \"test_cust\", \"offline_customization\": [{\"name\": \"tests\"}]}}, {\"offline_winpe_customization\": {\"name\": \"test_cust\", \"offline_customization\": [{\"name\": \"tests\"}]}}], \"name\": \"test\"}, \"requestId\": \"0-00000000-0000-0000-0000-000000001337\", \"tags\": [{\"key\": \"parent_buildbucket_id\", \"value\": \"0\"}, {\"key\": \"user_agent\", \"value\": \"recipe\"}]}}]}",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -488,6 +488,9 @@
       "@@@STEP_LOG_LINE@request@          \"builder\": \"WinPE Customization Builder\"@@@",
       "@@@STEP_LOG_LINE@request@        }, @@@",
       "@@@STEP_LOG_LINE@request@        \"experimental\": \"NO\", @@@",
+      "@@@STEP_LOG_LINE@request@        \"experiments\": {@@@",
+      "@@@STEP_LOG_LINE@request@          \"luci.buildbucket.parent_tracking\": false@@@",
+      "@@@STEP_LOG_LINE@request@        }, @@@",
       "@@@STEP_LOG_LINE@request@        \"fields\": \"builder,createTime,createdBy,critical,endTime,id,infra,input,number,output,startTime,status,updateTime\", @@@",
       "@@@STEP_LOG_LINE@request@        \"properties\": {@@@",
       "@@@STEP_LOG_LINE@request@          \"arch\": \"ARCH_X86\", @@@",
