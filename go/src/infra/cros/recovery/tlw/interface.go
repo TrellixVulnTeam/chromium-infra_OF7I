@@ -345,7 +345,7 @@ const (
 	BluetoothPeerStateBroken BluetoothPeerState = "BROKEN"
 )
 
-// BluetoothPeer peer devices
+// BluetoothPeerHost models a Bluetooth peer device and its state as used by recovery.
 type BluetoothPeerHost struct {
 	// Name is the resource name.
 	Name string

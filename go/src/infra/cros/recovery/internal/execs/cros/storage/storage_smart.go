@@ -16,7 +16,7 @@ import (
 	"infra/cros/recovery/tlw"
 )
 
-// storageState is a description of the DUT's storage state given the type of the DUT storage.
+// StorageState is a description of the DUT's storage state given the type of the DUT storage.
 type StorageState string
 
 const (

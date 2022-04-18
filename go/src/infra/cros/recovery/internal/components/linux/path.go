@@ -28,7 +28,7 @@ func IsPathExist(ctx context.Context, run execs.Runner, path string) error {
 	return nil
 }
 
-// Different types of disk space used in the calculation for storage space.
+// SpaceType is different types of disk space used in the calculation for storage space.
 type SpaceType string
 
 const (

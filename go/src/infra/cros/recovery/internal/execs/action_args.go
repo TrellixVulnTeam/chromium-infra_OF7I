@@ -23,7 +23,7 @@ const (
 	MultiValueSplitter = ","
 )
 
-// The map representing key-value pairs parsed from extra args in the
+// ParsedArgs is the map representing key-value pairs parsed from extra args in the
 // configuration.
 type ParsedArgs map[string]string
 

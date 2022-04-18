@@ -34,7 +34,7 @@ type Servod interface {
 	Port() int
 }
 
-// CrosVersion holds information for ChromeOS devices.
+// CrosVersionInfo holds information for ChromeOS devices.
 type CrosVersionInfo struct {
 	OSImage   string
 	FwImage   string

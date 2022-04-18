@@ -17,7 +17,7 @@ import (
 	"infra/cros/recovery/tlw"
 )
 
-// exec represents an execution function of the action.
+// ExecFunction represents an execution function of the action.
 // The single exec can be associated with one or more actions.
 type ExecFunction func(ctx context.Context, i *ExecInfo) error
 

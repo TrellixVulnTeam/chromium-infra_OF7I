@@ -40,7 +40,7 @@ const (
 	ValueTypeNumber ValueType = "number"
 )
 
-// An action is an event performed on a DUT.
+// Action is an event performed on a DUT.
 // TODO(gregorynisbet): Rename an action to something else so we don't collide with the other notion of an action.
 type Action struct {
 	// Name is the identifier for an action. It is controlled by Karte.
@@ -67,7 +67,7 @@ type Action struct {
 	Observations []*Observation
 }
 
-// An observation is a measurement associated with an event performed on a DUT.
+// Observation is the type of a measurement associated with an event performed on a DUT.
 type Observation struct {
 	// MetricKind is the metric kind (e.g. battery percentage).
 	MetricKind string
