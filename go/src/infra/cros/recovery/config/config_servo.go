@@ -11,58 +11,58 @@ import (
 func servoRepairPlan() *Plan {
 	return &Plan{
 		CriticalActions: []string{
-			"set_state_missing_config",
+			"Set state:MISSING_CONFIG",
 			"servo_host_info",
 			"servod_info",
-			"set_state_wrong_config",
+			"Set state:WRONG_CONFIG",
 			"servo_has_serial",
 			"init_docker_host",
-			"set_state_no_ssh",
+			"Set state:NO_SSH",
 			"cros_ping",
 			"cros_ssh",
 			"servo_v3_uptime",
 			"servo_power_cycle_root_servo",
-			"set_state_servo_host_issue",
+			"Set state:SERVO_HOST_ISSUE",
 			"lock_labstation",
-			"set_state_broken",
+			"Set state:BROKEN",
 			"has_enough_disk_space",
 			"Cache latest servod start time",
-			"set_state_not_connected",
+			"Set state:NOT_CONNECTED",
 			"servo_v4_root_present",
-			"set_state_need_replacement",
+			"Set state:NEED_REPLACEMENT",
 			"servo_v3_root_present",
 			"servo_fw_need_update",
-			"set_state_servo_host_issue",
+			"Set state:SERVO_HOST_ISSUE",
 			"servo_host_servod_start",
-			"set_state_dut_not_connected",
+			"Set state:DUT_NOT_CONNECTED",
 			"servo_dut_detected",
-			"set_state_cold_reset_pin_issue",
+			"Set state:COLD_RESET_PIN_ISSUE",
 			"servo_cold_reset_pin",
-			"set_state_warm_reset_pin_issue",
+			"Set state:WARM_RESET_PIN_ISSUE",
 			"servo_warm_reset_pin",
-			"set_state_servod_issue",
+			"Set state:SERVOD_ISSUE",
 			"servod_servo_pd",
 			"servo_cr50_checks",
-			"set_state_servod_dut_controller_missing",
+			"Set state:DUT_NOT_CONNECTED",
 			"dut_controller_missing_fault_off",
-			"set_state_topology_issue",
+			"Set state:TOPOLOGY_ISSUE",
 			"servo_topology",
-			"set_state_servo_host_issue",
+			"Set state:SERVO_HOST_ISSUE",
 			"servod_get_serialname",
-			"set_state_servod_issue",
+			"Set state:SERVOD_ISSUE",
 			"servo_servod_echo_host",
-			"set_state_cr50_console_missing",
+			"Set state:CR50_CONSOLE_MISSING",
 			"servo_cr50_console",
-			"set_state_ccd_testlab_issue",
+			"Set state:CCD_TESTLAB_ISSUE",
 			"cr50_testlab",
-			"set_state_servod_proxy_issue",
+			"Set state:SERVOD_PROXY_ISSUE",
 			"servod_set_main_device",
 			"init_dut_for_servo",
 			"servo_ec_check",
-			"set_state_broken",
+			"Set state:BROKEN",
 			"servo_detect_usbkey",
 			"update_servo_type_label",
-			"set_state_working",
+			"Set state:WORKING",
 		},
 		Actions: map[string]*Action{
 			"Cache latest servod start time": {
@@ -287,9 +287,9 @@ func servoRepairPlan() *Plan {
 			"servo_cr50_checks": {
 				Conditions: []string{"is_not_servo_v3"},
 				Dependencies: []string{
-					"set_state_sbu_low_voltage",
+					"Set state:SBU_LOW_VOLTAGE",
 					"servo_cr50_low_sbu",
-					"set_state_cr50_not_enumerated",
+					"Set state:DUT_NOT_CONNECTED",
 					"servo_cr50_enumerated",
 				},
 				ExecName: "sample_pass",
@@ -492,11 +492,11 @@ func servoRepairPlan() *Plan {
 					"dut_has_cros_ec",
 				},
 				Dependencies: []string{
-					"set_state_ec_broken",
+					"Set state:EC_BROKEN",
 					"servo_ec_console",
-					"set_state_bad_ribbon_cable",
+					"Set state:BAD_RIBBON_CABLE",
 					"servo_pwr_button_pin",
-					"set_state_lid_open_failed",
+					"Set state:LID_OPEN_FAILED",
 					"servo_lid_open",
 					"servo_battery_charging",
 				},
@@ -613,7 +613,7 @@ func servoRepairPlan() *Plan {
 				},
 				Conditions: []string{"is_not_servo_v3"},
 				Dependencies: []string{
-					"set_state_servo_updater_issue",
+					"Set state:SERVO_UPDATER_ISSUE",
 					"servo_host_servod_stop",
 				},
 				ExecExtraArgs: []string{
@@ -831,99 +831,94 @@ func servoRepairPlan() *Plan {
 				RunControl: RunControl_ALWAYS_RUN,
 				ExecName:   "servo_servod_toggle_pd_role",
 			},
-			"set_state_missing_config": {
+			"Set state:MISSING_CONFIG": {
 				ExecExtraArgs: []string{"state:MISSING_CONFIG"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_wrong_config": {
+			"Set state:WRONG_CONFIG": {
 				ExecExtraArgs: []string{"state:WRONG_CONFIG"},
 				ExecName:      "servo_set_servo_state",
 			},
 			"servo_has_serial": {
+				Docs: []string{
+					"Check if root servo serial is present.",
+				},
 				Conditions: []string{"is_not_servo_v3"},
 				ExecName:   "dut_servo_has_serial",
 			},
-			"set_state_no_ssh": {
+			"Set state:NO_SSH": {
 				ExecExtraArgs: []string{"state:NO_SSH"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_broken": {
+			"Set state:BROKEN": {
 				ExecExtraArgs: []string{"state:BROKEN"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_not_connected": {
+			"Set state:NOT_CONNECTED": {
 				ExecExtraArgs: []string{"state:NOT_CONNECTED"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_need_replacement": {
+			"Set state:NEED_REPLACEMENT": {
 				ExecExtraArgs: []string{"state:NEED_REPLACEMENT"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_topology_issue": {
+			"Set state:TOPOLOGY_ISSUE": {
 				ExecExtraArgs: []string{"state:TOPOLOGY_ISSUE"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_servo_updater_issue": {
+			"Set state:SERVO_UPDATER_ISSUE": {
 				ExecExtraArgs: []string{"state:SERVO_UPDATER_ISSUE"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_servod_issue": {
+			"Set state:SERVOD_ISSUE": {
 				ExecExtraArgs: []string{"state:SERVOD_ISSUE"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_servo_host_issue": {
-				ExecExtraArgs: []string{"state:SERVOD_ISSUE"},
+			"Set state:SERVO_HOST_ISSUE": {
+				ExecExtraArgs: []string{"state:SERVO_HOST_ISSUE"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_servod_proxy_issue": {
+			"Set state:SERVOD_PROXY_ISSUE": {
 				ExecExtraArgs: []string{"state:SERVOD_PROXY_ISSUE"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_cold_reset_pin_issue": {
+			"Set state:COLD_RESET_PIN_ISSUE": {
 				ExecExtraArgs: []string{"state:COLD_RESET_PIN_ISSUE"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_warm_reset_pin_issue": {
+			"Set state:WARM_RESET_PIN_ISSUE": {
 				ExecExtraArgs: []string{"state:WARM_RESET_PIN_ISSUE"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_dut_not_connected": {
-				ExecExtraArgs: []string{"state:DUT_NOT_CONNECTED"},
-				ExecName:      "servo_set_servo_state",
-			},
-			"set_state_sbu_low_voltage": {
+			"Set state:SBU_LOW_VOLTAGE": {
 				ExecExtraArgs: []string{"state:SBU_LOW_VOLTAGE"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_cr50_not_enumerated": {
+			"Set state:DUT_NOT_CONNECTED": {
 				ExecExtraArgs: []string{"state:DUT_NOT_CONNECTED"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_servod_dut_controller_missing": {
-				ExecExtraArgs: []string{"state:DUT_NOT_CONNECTED"},
-				ExecName:      "servo_set_servo_state",
-			},
-			"set_state_cr50_console_missing": {
+			"Set state:CR50_CONSOLE_MISSING": {
 				ExecExtraArgs: []string{"state:CR50_CONSOLE_MISSING"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_ec_broken": {
+			"Set state:EC_BROKEN": {
 				ExecExtraArgs: []string{"state:EC_BROKEN"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_bad_ribbon_cable": {
+			"Set state:BAD_RIBBON_CABLE": {
 				ExecExtraArgs: []string{"state:BAD_RIBBON_CABLE"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_lid_open_failed": {
+			"Set state:LID_OPEN_FAILED": {
 				ExecExtraArgs: []string{"state:LID_OPEN_FAILED"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_ccd_testlab_issue": {
+			"Set state:CCD_TESTLAB_ISSUE": {
 				ExecExtraArgs: []string{"state:CCD_TESTLAB_ISSUE"},
 				ExecName:      "servo_set_servo_state",
 			},
-			"set_state_working": {
+			"Set state:WORKING": {
 				ExecExtraArgs: []string{"state:WORKING"},
 				ExecName:      "servo_set_servo_state",
 			},
