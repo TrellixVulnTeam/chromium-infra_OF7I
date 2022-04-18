@@ -18,11 +18,6 @@ import (
 	"infra/cros/recovery/logger"
 )
 
-const (
-	// Minimum time  to execute command on the hosts as 30 seconds.
-	minRunTimeout = 30 * time.Second
-)
-
 // USBDrivePath read usb-path from servod and check readability of the USB per request.
 func USBDrivePath(ctx context.Context, fileCheck bool, run components.Runner, servod components.Servod, log logger.Logger) (string, error) {
 	v, err := servod.Get(ctx, "image_usbkey_dev")

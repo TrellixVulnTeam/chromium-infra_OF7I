@@ -16,8 +16,6 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
-type configGiver = func() *Configuration
-
 var testValidateCases = []struct {
 	name string
 	got  *Configuration

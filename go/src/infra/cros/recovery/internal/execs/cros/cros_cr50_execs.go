@@ -83,12 +83,6 @@ func updateCr50KeyIdLabelExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
-const (
-	// Reboot and exit cmd will reboot the DUT and exit the ssh immediately so that the runner
-	// will not wait for it to finish rebooting
-	dutRebootAndExitCmd = "reboot && exit"
-)
-
 // reflashCr50FwExec reflashes CR50 firmware and reboot AP from DUT side to wake it up.
 //
 // @params: actionArgs should be in the format of:

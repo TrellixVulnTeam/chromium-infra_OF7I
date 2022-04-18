@@ -35,9 +35,6 @@ import (
 )
 
 const (
-	// gsCrosImageBucket is the base URL for the Google Storage bucket for
-	// ChromeOS image archives.
-	gsCrosImageBucket = "gs://chromeos-image-archive"
 	// tlwPort is default port used to run TLW on the drones.
 	tlwPort = 7151
 	// tlsPort is default port used to run TLS on the drones.
