@@ -67,7 +67,7 @@ func (c *getStableVersionRun) Run(a subcommands.Application, args []string, env 
 func (c *getStableVersionRun) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
 	newHostname, err := preprocessHostname(c.commonFlags, c.hostname, nil, nil)
 	if err != nil {
-		return errors.Annotate(err, "set stable version").Err()
+		return errors.Annotate(err, "get stable version").Err()
 	}
 	c.hostname = newHostname
 
