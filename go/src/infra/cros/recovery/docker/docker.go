@@ -33,7 +33,8 @@ const (
 	// Enable more debug logs to triage issue.
 	// Will be set to false after stabilize work with container.
 	// TODO(otabek): Set false after testing in the prod.
-	enableDebugLogging = true
+	enableDebugLogging       = false
+	enablePrintAllContainers = false
 )
 
 // Proxy wraps a Servo object and forwards connections to the servod instance
@@ -54,7 +55,7 @@ func NewClient(ctx context.Context) (Client, error) {
 		d := &dockerClient{
 			client: client,
 		}
-		if enableDebugLogging {
+		if enablePrintAllContainers {
 			d.PrintAll(ctx)
 		}
 		return d, nil
