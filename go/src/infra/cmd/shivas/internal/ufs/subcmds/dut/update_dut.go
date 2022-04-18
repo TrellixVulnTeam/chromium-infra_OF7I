@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/google/uuid"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
@@ -305,11 +306,13 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 
 	var bc buildbucket.Client
 	var tc *swarming.TaskCreator
+	var sessionTag string
 	if c.paris {
 		fmt.Fprintf(a.GetErr(), "Using PARIS flow for repair\n")
 		if bc, err = buildbucket.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, "chromeos", "labpack", "labpack"); err != nil {
 			return err
 		}
+		sessionTag = uuid.New().String()
 	} else {
 		fmt.Fprintf(a.GetErr(), "Using PARIS flow for repair\n")
 		if tc, err = swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService); err != nil {
@@ -333,7 +336,7 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 			}
 
 			if c.paris {
-				utils.ScheduleDeployTask(ctx, bc, e, req.GetMachineLSE().GetHostname())
+				utils.ScheduleDeployTask(ctx, bc, e, req.GetMachineLSE().GetHostname(), sessionTag)
 			} else {
 				// Include any enforced actions.
 				actions = c.updateDeployActions(actions)
@@ -350,9 +353,15 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 		}
 	}
 
-	if !c.paris && resTable.IsSuccessForAny(swarmOp) {
+	if resTable.IsSuccessForAny(swarmOp) {
 		// Display URL for all tasks if there are more than one.
-		fmt.Printf("\nTriggered deployment task(s). Follow at: %s\n", tc.SessionTasksURL())
+		var link string
+		if c.paris {
+			link = utils.TasksBatchLink(e.SwarmingService, sessionTag)
+		} else {
+			link = tc.SessionTasksURL()
+		}
+		fmt.Printf("\nTriggered deployment task(s). Follow at: %s\n", link)
 	}
 
 	fmt.Printf("\nSummary of results:\n\n")

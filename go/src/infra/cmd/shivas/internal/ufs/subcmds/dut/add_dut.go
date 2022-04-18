@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
@@ -252,6 +253,7 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		return err
 	}
 	var bc buildbucket.Client
+	var sessionTag string
 	if c.paris {
 		var err error
 		fmt.Fprintf(a.GetErr(), "Using PARIS flow for repair\n")
@@ -259,6 +261,7 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		if err != nil {
 			return err
 		}
+		sessionTag = uuid.New().String()
 	} else {
 		c.updateDeployActions()
 	}
@@ -282,7 +285,7 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 				continue
 			}
 			if c.paris {
-				utils.ScheduleDeployTask(ctx, bc, e, param.DUT.GetName())
+				utils.ScheduleDeployTask(ctx, bc, e, param.DUT.GetName(), sessionTag)
 			} else {
 				c.deployDutToSwarming(ctx, tc, param.DUT)
 			}
@@ -296,10 +299,13 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 	// Run the deployment task
 	for _, param := range dutParams {
 		if c.paris {
-			utils.ScheduleDeployTask(ctx, bc, e, param.DUT.GetName())
+			utils.ScheduleDeployTask(ctx, bc, e, param.DUT.GetName(), sessionTag)
 		} else {
 			c.deployDutToSwarming(ctx, tc, param.DUT)
 		}
+	}
+	if c.paris {
+		utils.PrintTasksBatchLink(a.GetOut(), e.SwarmingService, sessionTag)
 	}
 	return nil
 }

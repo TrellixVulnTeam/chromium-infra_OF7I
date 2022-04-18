@@ -8,13 +8,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/maruel/subcommands"
-
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/shivas/site"
+	"infra/cmd/shivas/utils"
 	"infra/cros/recovery/tasknames"
 	"infra/libs/skylab/buildbucket"
 	"infra/libs/skylab/buildbucket/labpack"
@@ -72,6 +73,7 @@ func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subc
 	successMap := make(map[string]*swarming.TaskInfo)
 	errorMap := make(map[string]error)
 	var bc buildbucket.Client
+	var sessionTag string
 	if c.paris {
 		var err error
 		fmt.Fprintf(a.GetErr(), "Using PARIS flow for repair\n")
@@ -79,6 +81,7 @@ func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subc
 		if err != nil {
 			return err
 		}
+		sessionTag = fmt.Sprintf("admin-session:%s", uuid.New().String())
 	}
 	for _, host := range args {
 		creator.GenerateLogdogTaskCode()
@@ -90,7 +93,7 @@ func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subc
 		if c.paris {
 			// Use PARIS.
 			fmt.Fprintf(a.GetErr(), "Using PARIS for %q\n", host)
-			taskInfo, err = scheduleRepairBuilder(ctx, bc, e, host, !c.onlyVerify)
+			taskInfo, err = scheduleRepairBuilder(ctx, bc, e, host, !c.onlyVerify, sessionTag)
 		} else {
 			// Legacy Flow, no PARIS.
 			if c.onlyVerify {
@@ -106,7 +109,11 @@ func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subc
 		}
 
 	}
-	creator.PrintResults(a.GetOut(), successMap, errorMap)
+	if c.paris {
+		utils.PrintTasksBatchLink(a.GetOut(), e.SwarmingService, sessionTag)
+	} else {
+		creator.PrintResults(a.GetOut(), successMap, errorMap)
+	}
 	return nil
 }
 
@@ -118,7 +125,7 @@ func (c *repairDuts) taskName() string {
 }
 
 // ScheduleRepairBuilder schedules a labpack Buildbucket builder/recipe with the necessary arguments to run repair.
-func scheduleRepairBuilder(ctx context.Context, bc buildbucket.Client, e site.Environment, host string, runRepair bool) (*swarming.TaskInfo, error) {
+func scheduleRepairBuilder(ctx context.Context, bc buildbucket.Client, e site.Environment, host string, runRepair bool, adminSession string) (*swarming.TaskInfo, error) {
 	p := &labpack.Params{
 		UnitName:       host,
 		TaskName:       string(tasknames.Recovery),
@@ -131,6 +138,9 @@ func scheduleRepairBuilder(ctx context.Context, bc buildbucket.Client, e site.En
 		UpdateInventory:  true,
 		// TODO(gregorynisbet): Pass config file to labpack task.
 		Configuration: "",
+		ExtraTags: []string{
+			adminSession,
+		},
 	}
 	taskID, err := labpack.ScheduleTask(ctx, bc, labpack.CIPDProd, p)
 	if err != nil {

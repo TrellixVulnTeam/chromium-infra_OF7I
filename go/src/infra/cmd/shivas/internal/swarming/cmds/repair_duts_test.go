@@ -24,7 +24,7 @@ func TestScheduleRepairBuilder(t *testing.T) {
 
 	client := &fakeClient{}
 
-	taskInfo, err := scheduleRepairBuilder(ctx, client, site.Environment{}, "fake-labstation1", true)
+	taskInfo, err := scheduleRepairBuilder(ctx, client, site.Environment{}, "fake-labstation1", true, "admin-session:bla bla")
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}

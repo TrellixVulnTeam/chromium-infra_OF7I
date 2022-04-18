@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
@@ -176,11 +177,13 @@ func (c *updateLabstation) innerRun(a subcommands.Application, args []string, en
 	if len(deployTasks) > 0 {
 		var bbClient buildbucket.Client
 		var tc *swarming.TaskCreator
+		var sessionTag string
 		if c.paris {
 			bbClient, err = createBBClient(ctx, c.authFlags)
 			if err != nil {
 				return err
 			}
+			sessionTag = uuid.New().String()
 		} else {
 			tc, err = swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService)
 			if err != nil {
@@ -193,7 +196,7 @@ func (c *updateLabstation) innerRun(a subcommands.Application, args []string, en
 			// Check if deploy task is required or force deploy is set.
 			if c.forceDeploy || c.isDeployTaskRequired(req) {
 				if c.paris {
-					err = utils.ScheduleDeployTask(ctx, bbClient, e, req.MachineLSE.GetHostname())
+					err = utils.ScheduleDeployTask(ctx, bbClient, e, req.MachineLSE.GetHostname(), sessionTag)
 				} else {
 					err = c.deployLabstationToSwarming(ctx, tc, req.MachineLSE)
 				}
@@ -206,8 +209,14 @@ func (c *updateLabstation) innerRun(a subcommands.Application, args []string, en
 			}
 		}
 		// Display URL for all tasks if at least one task is triggered.
-		if !c.paris && resTable.IsSuccessForAny(swarmingOp) {
-			fmt.Printf("\nTriggered deployment task(s). Follow at: %s\n\n", tc.SessionTasksURL())
+		if resTable.IsSuccessForAny(swarmingOp) {
+			var link string
+			if c.paris {
+				link = utils.TasksBatchLink(e.SwarmingService, sessionTag)
+			} else {
+				link = tc.SessionTasksURL()
+			}
+			fmt.Printf("\nTriggered deployment task(s). Follow at: %s\n\n", link)
 		}
 	}
 
