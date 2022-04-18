@@ -27,7 +27,6 @@ func crosRepairPlan() *Plan {
 			"rw_vpd",
 			"servo_keyboard",
 			"servo_mac_address",
-			"cros_match_job_repo_url_version_to_inventory",
 			"Match provision labels",
 			"dut_state_ready",
 			"device_labels",
