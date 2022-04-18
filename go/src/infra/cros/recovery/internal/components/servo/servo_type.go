@@ -6,6 +6,29 @@ package servo
 
 import "strings"
 
+const (
+	// Servo components/types used by system.
+	SERVO_V2    = "servo_v2"
+	SERVO_V3    = "servo_v3"
+	SERVO_V4    = "servo_v4"
+	SERVO_V4P1  = "servo_v4p1"
+	CCD_CR50    = "ccd_cr50"
+	CCD_GSC     = "ccd_gsc"
+	C2D2        = "c2d2"
+	SERVO_MICRO = "servo_micro"
+	SWEETBERRY  = "sweetberry"
+
+	// Prefix for CCD components.
+	CCD_PREFIX = "ccd_"
+)
+
+var (
+	// List of servos that connect to a debug header on the board.
+	FLEX_SERVOS = []string{C2D2, SERVO_MICRO, SERVO_V3}
+	// List of servos that rely on gsc commands for some part of dut control.
+	GSC_DRV_SERVOS = []string{C2D2, CCD_GSC, CCD_CR50}
+)
+
 // ServoType represent structure to allow distinguishe servo components described in servo-type string.
 type ServoType struct {
 	str string
@@ -18,32 +41,32 @@ func NewServoType(servoType string) *ServoType {
 
 // Servo used servo_v2 component.
 func (s *ServoType) IsV2() bool {
-	return strings.Contains(s.str, "servo_v2")
+	return strings.Contains(s.str, SERVO_V2)
 }
 
 // Servo used servo_v3 component.
 func (s *ServoType) IsV3() bool {
-	return strings.Contains(s.str, "servo_v3")
+	return strings.Contains(s.str, SERVO_V3)
 }
 
 // Servo used servo_v4 or servo_v4p1 component.
 func (s *ServoType) IsV4() bool {
-	return strings.Contains(s.str, "servo_v4")
+	return strings.Contains(s.str, SERVO_V4)
 }
 
 // Servo used c2d2 component.
 func (s *ServoType) IsC2D2() bool {
-	return strings.Contains(s.str, "c2d2")
+	return strings.Contains(s.str, C2D2)
 }
 
 // Servo used cr50 component.
 func (s *ServoType) IsCCD() bool {
-	return strings.Contains(s.str, "ccd")
+	return strings.Contains(s.str, CCD_PREFIX)
 }
 
 // Servo used servo_micro component.
 func (s *ServoType) IsMicro() bool {
-	return strings.Contains(s.str, "servo_micro")
+	return strings.Contains(s.str, SERVO_MICRO)
 }
 
 // Servo has dual setup.

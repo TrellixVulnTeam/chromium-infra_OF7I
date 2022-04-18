@@ -13,6 +13,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/components/servo"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
@@ -47,15 +48,6 @@ const (
 	// File containing Configuration
 	configurationFileName = "configuration"
 
-	// Various servo-types
-	SERVO_V4_TYPE          = "servo_v4"
-	SERVO_V4P1_TYPE        = "servo_v4p1"
-	SERVO_CR50_TYPE        = "ccd_cr50"
-	SERVO_TI50_TYPE        = "ccd_ti50"
-	SERVO_C2D2_TYPE        = "c2d2"
-	SERVO_SERVO_MICRO_TYPE = "servo_micro"
-	SERVO_SWEETBERRY_TYPE  = "sweetberry"
-
 	// This character delimits the prefix that represents base-name of
 	// servo hub path. For example, given the root servo base name
 	// '1-3.2.1', the prefix '1-3.2' represents the servo hub. The
@@ -69,13 +61,13 @@ const (
 
 // Mapping of various vid-pid values to servo types.
 var vidPidServoTypes = map[string]string{
-	"18d1:501b": SERVO_V4_TYPE,
-	"18d1:520d": SERVO_V4P1_TYPE,
-	"18d1:5014": SERVO_CR50_TYPE,
-	"18d1:504a": SERVO_TI50_TYPE,
-	"18d1:501a": SERVO_SERVO_MICRO_TYPE,
-	"18d1:5041": SERVO_C2D2_TYPE,
-	"18d1:5020": SERVO_SWEETBERRY_TYPE,
+	"18d1:501b": servo.SERVO_V4,
+	"18d1:520d": servo.SERVO_V4P1,
+	"18d1:5014": servo.CCD_CR50,
+	"18d1:504a": servo.CCD_GSC,
+	"18d1:501a": servo.SERVO_MICRO,
+	"18d1:5041": servo.C2D2,
+	"18d1:5020": servo.SWEETBERRY,
 }
 
 // GetRootServo fetches the ServoTopologyItem representing the

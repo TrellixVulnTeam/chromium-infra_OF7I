@@ -12,6 +12,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/components/servo"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/execs/servo/topology"
 	"infra/cros/recovery/internal/log"
@@ -46,11 +47,11 @@ const (
 var (
 	// Map for all the supported servo devices that are capable of updating its servo firmware.
 	updatableServoNames = map[string]bool{
-		topology.SERVO_V4_TYPE:          true,
-		topology.SERVO_V4P1_TYPE:        true,
-		topology.SERVO_SERVO_MICRO_TYPE: true,
-		topology.SERVO_C2D2_TYPE:        true,
-		topology.SERVO_SWEETBERRY_TYPE:  true,
+		servo.SERVO_V4:    true,
+		servo.SERVO_V4P1:  true,
+		servo.SERVO_MICRO: true,
+		servo.C2D2:        true,
+		servo.SWEETBERRY:  true,
 	}
 	// servoUpdateIssueMessages is the list of known, tracking issue related to servo_updater.
 	servoUpdateIssueMessages = []string{"Configuration not set"}
