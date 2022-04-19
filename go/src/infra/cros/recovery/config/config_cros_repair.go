@@ -960,12 +960,34 @@ func crosRepairActions() map[string]*Action {
 				"servod_has_control_cr50_reboot",
 			},
 			Dependencies: []string{
-				"servo_power_state_cr50_reset",
-				"sleep_1_second",
-				"init_dut_for_servo",
+				"Trigger power_state:cr50_reset",
+				"Re-initialize DUT part of servo",
 				"Wait DUT to be SSHable after reset",
 			},
 			ExecName: "sample_pass",
+		},
+		"Re-initialize DUT part of servo": {
+			Docs: []string{
+				"cr50 reset will clear some some init like `ccd testlab open` so we want to re-initialize servo after cr50 reset if the main device uses cr50/gsc console commands.",
+			},
+			Conditions: []string{
+				"is_not_servo_v3",
+				"Servo main device is GSC chip",
+			},
+			Dependencies: []string{
+				"sleep_1_second",
+			},
+			ExecName: "init_dut_for_servo",
+		},
+		"Servo main device is GSC chip": {
+			Docs: []string{
+				"Verify that main device is cr50/GSC",
+			},
+			Dependencies: []string{
+				"dut_servo_host_present",
+				"servo_host_is_labstation",
+			},
+			ExecName: "servo_main_device_is_gcs",
 		},
 		"servod_has_control_cr50_reboot": {
 			Docs: []string{
@@ -976,7 +998,7 @@ func crosRepairActions() map[string]*Action {
 			},
 			ExecName: "servo_check_servod_control",
 		},
-		"servo_power_state_cr50_reset": {
+		"Trigger power_state:cr50_reset": {
 			Docs: []string{
 				"Repair a ChromeOS Device by resetting cr50 by servo.",
 			},

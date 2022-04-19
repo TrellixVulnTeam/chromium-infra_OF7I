@@ -10,6 +10,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	comp_servo "infra/cros/recovery/internal/components/servo"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
@@ -114,6 +115,27 @@ func servoVerifyServoCCDExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+// mainDeviceIsGSCExec checks whether or not the servo device is CR50 or TI50.
+func mainDeviceIsGSCExec(ctx context.Context, info *execs.ExecInfo) error {
+	sType, err := WrappedServoType(ctx, info)
+	if err != nil {
+		return errors.Annotate(err, "main devices is gsc").Err()
+	}
+	md, err := mainServoDeviceHelper(sType.String())
+	if err != nil {
+		return errors.Annotate(err, "main devices is gsc").Err()
+	}
+	switch md {
+	case comp_servo.CCD_CR50:
+		fallthrough
+	case comp_servo.CCD_GSC:
+		info.NewLogger().Debugf("Found main device: %q", md)
+		return nil
+	default:
+		return errors.Reason("main devices is gsc: found %q does not match expectations", md).Err()
+	}
+}
+
 func init() {
 	execs.Register("is_servo_v3", servoVerifyV3Exec)
 	execs.Register("is_servo_v4", servoVerifyV4Exec)
@@ -121,4 +143,5 @@ func init() {
 	execs.Register("is_dual_setup_configured", servoIsDualSetupConfiguredExec)
 	execs.Register("is_dual_setup", servoVerifyDualSetupExec)
 	execs.Register("is_servo_type_ccd", servoVerifyServoCCDExec)
+	execs.Register("servo_main_device_is_gcs", mainDeviceIsGSCExec)
 }

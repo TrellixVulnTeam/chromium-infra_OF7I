@@ -24,24 +24,6 @@ func servoVerifyPortNumberExec(ctx context.Context, info *execs.ExecInfo) error 
 	return errors.Reason("servo verify port number: port number is not available").Err()
 }
 
-// servoVerifyMainCcdCr50Exec checks whether or not the servo device contains
-// CCD-CR50.
-func servoVerifyMainCcdCr50Exec(ctx context.Context, info *execs.ExecInfo) error {
-	sType, err := WrappedServoType(ctx, info)
-	if err != nil {
-		return errors.Annotate(err, "servo verify main ccd cr50").Err()
-	}
-	ccdCr50 := "ccd_cr50"
-	s, err := mainServoDeviceHelper(sType.String())
-	if err != nil {
-		return errors.Annotate(err, "servo verify main ccd cr50").Err()
-	} else if s != ccdCr50 {
-		return errors.Reason("servo verify main ccd cr50: servo type is %q does not match %q", s, ccdCr50).Err()
-	}
-	return nil
-}
-
 func init() {
 	execs.Register("servo_servod_port_present", servoVerifyPortNumberExec)
-	execs.Register("is_servo_main_ccd_cr50", servoVerifyMainCcdCr50Exec)
 }

@@ -51,13 +51,13 @@ func servoRepairPlan() *Plan {
 			"servod_get_serialname",
 			"Set state:SERVOD_ISSUE",
 			"servo_servod_echo_host",
+			"Set state:SERVOD_PROXY_ISSUE",
+			"Initialize DUT part for servo",
 			"Set state:CR50_CONSOLE_MISSING",
 			"servo_cr50_console",
 			"Set state:CCD_TESTLAB_ISSUE",
 			"cr50_testlab",
 			"Set state:SERVOD_PROXY_ISSUE",
-			"servod_set_main_device",
-			"init_dut_for_servo",
 			"servo_ec_check",
 			"Set state:BROKEN",
 			"servo_detect_usbkey",
@@ -342,19 +342,22 @@ func servoRepairPlan() *Plan {
 				},
 				ExecName: "sample_fail",
 			},
-			"is_servo_main_ccd_cr50": {
+			"Main device is GSC chip": {
 				Dependencies: []string{
 					"is_servo_v4",
 					"is_servo_type_ccd",
 				},
+				ExecName: "servo_main_device_is_gcs",
 			},
 			"servo_cr50_console": {
 				Docs: []string{"Create new action to check that servotype has ccd_cr50, and set that as a condition for this action."},
 				Conditions: []string{
 					"is_not_servo_v3",
-					"is_servo_main_ccd_cr50",
+					"Main device is GSC chip",
 				},
-				Dependencies: []string{"init_dut_for_servo"},
+				Dependencies: []string{
+					"Initialize DUT part for servo",
+				},
 				ExecExtraArgs: []string{
 					"commands:cr50_ccd_level,cr50_testlab,cr50_ccd_state_flags",
 					"any_one:true",
@@ -375,13 +378,14 @@ func servoRepairPlan() *Plan {
 			"cr50_testlab": {
 				Conditions: []string{
 					"is_not_servo_v3",
-					"is_servo_main_ccd_cr50",
+					"Main device is GSC chip",
 				},
 				ExecExtraArgs: []string{
 					"command:cr50_testlab",
 					"expected_string_value:on",
 				},
 				RecoveryActions: []string{
+					"Open gsc testlab",
 					"servo_power_delivery_repair",
 					"servo_fake_disconnect_dut_repair",
 					"servo_servod_cc_toggle_repair",
@@ -392,9 +396,30 @@ func servoRepairPlan() *Plan {
 				},
 				ExecName: "servo_check_servod_control",
 			},
-			"init_dut_for_servo": {
-				Conditions:   []string{"is_not_servo_v3"},
-				Dependencies: []string{"servod_set_main_device"},
+			"Open gsc testlab": {
+				Docs: []string{
+					"If servo uses cr50/gsc to control the DUT, open testlab will allowed to work (cr50_reboot, cold_reset, warm_reset)",
+				},
+				Conditions: []string{
+					"is_not_servo_v3",
+					"Main device is GSC chip",
+				},
+				ExecExtraArgs: []string{
+					"command:cr50_testlab",
+					"string_value:open",
+				},
+				ExecName:               "servo_set",
+				AllowFailAfterRecovery: true,
+				RunControl:             RunControl_ALWAYS_RUN,
+			},
+			"Initialize DUT part for servo": {
+				Conditions: []string{
+					"is_not_servo_v3",
+				},
+				Dependencies: []string{
+					"servod_set_main_device",
+					"Open gsc testlab",
+				},
 				RecoveryActions: []string{
 					"servo_power_delivery_repair",
 					"servo_fake_disconnect_dut_repair",
@@ -404,6 +429,7 @@ func servoRepairPlan() *Plan {
 					"reflash_cr_50_fw_on_dut",
 					"reset_ec_on_dut",
 				},
+				ExecName: "init_dut_for_servo",
 			},
 			"pwr_button_supported_models": {
 				Docs: []string{"power button check is not applicable for these models"},
@@ -603,8 +629,13 @@ func servoRepairPlan() *Plan {
 				ExecName:   "sample_fail",
 			},
 			"servod_set_main_device": {
-				Conditions:      []string{"servo_has_active_dut_controller"},
-				RecoveryActions: []string{"servo_host_servod_stop"},
+				Conditions: []string{
+					"servo_has_active_dut_controller",
+				},
+				ExecName: "servod_set_main_device",
+				RecoveryActions: []string{
+					"servo_host_servod_stop",
+				},
 			},
 			"servo_fw_update": {
 				Docs: []string{
@@ -798,14 +829,19 @@ func servoRepairPlan() *Plan {
 				ExecName: "sample_pass",
 			},
 			"servo_power_cycle_repair": {
-				Docs:         []string{"Toggle the servod command servo_pd_role only once. And then stop the servod afterwards. TODO: Add dependency for servo initialize."},
+				Docs: []string{
+					"Toggle the servod command servo_pd_role only once. And then stop the servod afterwards.",
+					"TODO: Add dependency for servo initialize.",
+				},
 				Dependencies: []string{"servo_pd_toggle_once"},
 				ExecTimeout:  &durationpb.Duration{Seconds: 120},
 				RunControl:   RunControl_ALWAYS_RUN,
 				ExecName:     "servo_host_servod_stop",
 			},
 			"servo_pd_toggle_once": {
-				Docs: []string{"Toggle the servod command servo_pd_role only once."},
+				Docs: []string{
+					"Toggle the servod command servo_pd_role only once.",
+				},
 				ExecExtraArgs: []string{
 					"toggle_times:1",
 					"wait_in_retry:5",
@@ -980,9 +1016,11 @@ func servoRepairPlan() *Plan {
 					"is_servo_type_ccd",
 					"cros_is_time_to_reflash_cr50_fw",
 				},
-				Dependencies: []string{"cros_reflash_cr50_fw"},
-				RunControl:   RunControl_ALWAYS_RUN,
-				ExecName:     "servo_host_servod_stop",
+				Dependencies: []string{
+					"cros_reflash_cr50_fw",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
+				ExecName:   "servo_host_servod_stop",
 			},
 			"cros_reflash_cr50_fw": {
 				Docs: []string{
@@ -990,6 +1028,7 @@ func servoRepairPlan() *Plan {
 					"Reboot after the fw flash is successful.",
 				},
 				Dependencies: []string{"cros_ssh_dut"},
+				ExecName:     "cros_reflash_cr50_fw",
 				ExecExtraArgs: []string{
 					"flash_timeout:120",
 					"wait_timeout:30",
