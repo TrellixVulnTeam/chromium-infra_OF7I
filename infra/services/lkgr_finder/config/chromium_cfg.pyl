@@ -8,7 +8,6 @@
         'Android ASAN (dbg)',
         'Linux Builder',
         'Linux Builder (dbg)',
-        'Linux Builder (dbg)(32)',
         'Mac Builder',
         'Mac Builder (dbg)',
         'Win Builder',
