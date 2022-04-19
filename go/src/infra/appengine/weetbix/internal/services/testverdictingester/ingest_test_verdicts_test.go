@@ -115,7 +115,7 @@ func TestIngestTestVerdicts(t *testing.T) {
 
 			tvReq := &rdbpb.QueryTestVariantsRequest{
 				Invocations: []string{inv},
-				PageSize:    20000,
+				PageSize:    10000,
 			}
 			mrc.QueryTestVariants(tvReq, mockedQueryTestVariantsRsp())
 
