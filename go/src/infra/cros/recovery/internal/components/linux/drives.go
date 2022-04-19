@@ -18,7 +18,7 @@ const (
 	minRunTimeout = 30 * time.Second
 )
 
-// Mount an external drive on host.
+// MountDrive mounts an external drive on host.
 func MountDrive(ctx context.Context, run components.Runner, mountPath, srcPath string) error {
 	if _, err := run(ctx, minRunTimeout, "mkdir", "-p", mountPath); err != nil {
 		return errors.Annotate(err, "mount drive").Err()
@@ -29,7 +29,7 @@ func MountDrive(ctx context.Context, run components.Runner, mountPath, srcPath s
 	return nil
 }
 
-// Unmount a drive from host.
+// UnmountDrive unmounts a drive from host.
 func UnmountDrive(ctx context.Context, run components.Runner, mountPath string) error {
 	_, err := run(ctx, minRunTimeout, "umount", mountPath)
 	return errors.Annotate(err, "unmount drive %q", mountPath).Err()

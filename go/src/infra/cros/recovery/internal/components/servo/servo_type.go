@@ -39,37 +39,37 @@ func NewServoType(servoType string) *ServoType {
 	return &ServoType{servoType}
 }
 
-// Servo used servo_v2 component.
+// IsV2 checks whether the servo has a servo_v2 component.
 func (s *ServoType) IsV2() bool {
 	return strings.Contains(s.str, SERVO_V2)
 }
 
-// Servo used servo_v3 component.
+// IsV3 checks whether the servo has a servo_v3 component.
 func (s *ServoType) IsV3() bool {
 	return strings.Contains(s.str, SERVO_V3)
 }
 
-// Servo used servo_v4 or servo_v4p1 component.
+// IsV4 checks whether the servo has servo_v4 or servo_v4p1 component.
 func (s *ServoType) IsV4() bool {
 	return strings.Contains(s.str, SERVO_V4)
 }
 
-// Servo used c2d2 component.
+// IsC2D2 checks whether the servo has a c2d2 component.
 func (s *ServoType) IsC2D2() bool {
 	return strings.Contains(s.str, C2D2)
 }
 
-// Servo used cr50 component.
+// IsCCD checks whether the servo has a CCD component.
 func (s *ServoType) IsCCD() bool {
 	return strings.Contains(s.str, CCD_PREFIX)
 }
 
-// Servo used servo_micro component.
+// IsMicro checks whether the servo has a servo_micro component.
 func (s *ServoType) IsMicro() bool {
 	return strings.Contains(s.str, SERVO_MICRO)
 }
 
-// Servo has dual setup.
+// IsDualSetup checks whether the servo has a dual setup.
 func (s *ServoType) IsDualSetup() bool {
 	return s.IsV4() && (s.IsMicro() || s.IsC2D2()) && s.IsCCD()
 }
@@ -86,7 +86,7 @@ func (s *ServoType) SerialnameOption() string {
 	return "serialname"
 }
 
-// Servo has more than one component.
+// IsMultipleServos checks whether the servo has more than one component.
 func (s *ServoType) IsMultipleServos() bool {
 	return strings.Contains(s.str, "_and_")
 }

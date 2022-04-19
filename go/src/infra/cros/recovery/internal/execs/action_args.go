@@ -115,7 +115,7 @@ func (parsedArgs ParsedArgs) Has(key string) bool {
 	return ok
 }
 
-// ParseActionArgs returns parsed action arguments with default splitter.
+// GetActionArgs returns parsed action arguments with default splitter.
 func (ei *ExecInfo) GetActionArgs(ctx context.Context) ParsedArgs {
 	return ParseActionArgs(ctx, ei.ActionArgs, DefaultSplitter)
 }

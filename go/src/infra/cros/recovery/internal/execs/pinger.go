@@ -11,12 +11,12 @@ import (
 	"infra/cros/recovery/internal/log"
 )
 
-// DefaultRunner returns pinger for current resource name specified per plan.
+// DefaultPinger returns pinger for current resource name specified per plan.
 func (ei *ExecInfo) DefaultPinger() components.Pinger {
 	return ei.NewPinger(ei.RunArgs.ResourceName)
 }
 
-// NewRunner returns pinger for requested resource.
+// NewPinger returns pinger for requested resource.
 func (ei *ExecInfo) NewPinger(resource string) components.Pinger {
 	pinger := func(ctx context.Context, count int) error {
 		log.Debugf(ctx, "Start ping %q %d times", resource, count)

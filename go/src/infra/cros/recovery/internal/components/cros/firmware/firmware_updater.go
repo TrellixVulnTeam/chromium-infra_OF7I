@@ -48,7 +48,7 @@ func RunFirmwareUpdater(ctx context.Context, req *FirmwareUpdaterRequest, run co
 	return errors.Annotate(err, "run firmware update").Err()
 }
 
-// DisableWriteProtection disables software-controlled write-protect for both FPROMs, and install the RO firmware
+// DisableWriteProtect disables software-controlled write-protect for both FPROMs, and install the RO firmware
 func DisableWriteProtect(ctx context.Context, run components.Runner, log logger.Logger, timeout time.Duration, fprom string) error {
 	switch fprom {
 	case "host", "ec":

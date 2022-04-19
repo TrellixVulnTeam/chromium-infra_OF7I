@@ -228,7 +228,7 @@ type FwUpdaterRequest struct {
 	IgnoreVersion bool
 }
 
-// UpdateBoardsServoFw will try to update every board (servo devices) within the servo topology.
+// UpdateDevicesServoFw will try to update every board (servo devices) within the servo topology.
 //
 // @return: slice of the board (servo device) that didn't update successfully.
 func UpdateDevicesServoFw(ctx context.Context, r execs.Runner, req FwUpdaterRequest, devices []*tlw.ServoTopologyItem) []*tlw.ServoTopologyItem {
