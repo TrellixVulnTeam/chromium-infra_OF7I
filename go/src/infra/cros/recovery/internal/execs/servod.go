@@ -25,7 +25,7 @@ type iServod struct {
 	timeout time.Duration
 }
 
-// NewServod() returns a struct of type components.Servod that allowes communication with servod service.
+// NewServod returns a struct of type components.Servod that allowes communication with servod service.
 func (ei *ExecInfo) NewServod() components.Servod {
 	return &iServod{
 		dut:     ei.RunArgs.DUT,

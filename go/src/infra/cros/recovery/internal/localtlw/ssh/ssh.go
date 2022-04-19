@@ -22,7 +22,7 @@ const (
 	DefaultPort    = 22
 )
 
-// getSSHConfig provides default config for SSH.
+// SSHConfig provides default config for SSH.
 func SSHConfig() *ssh.ClientConfig {
 	return &ssh.ClientConfig{
 		User:            defaultSSHUser,

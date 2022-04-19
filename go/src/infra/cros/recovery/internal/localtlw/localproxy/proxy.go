@@ -81,7 +81,7 @@ func newProxy(ctx context.Context, host string, hostPort int, jumpHost string, j
 	return p
 }
 
-// Close the proxyPool.
+// ClosePool closes the proxyPool.
 func ClosePool() {
 	for _, p := range proxyPool {
 		closeProxy(p)

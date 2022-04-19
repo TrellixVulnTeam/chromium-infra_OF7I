@@ -37,7 +37,7 @@ func IsBootedFromExternalStorage(ctx context.Context, run components.Runner, log
 	return errors.Reason("booted from external storage: booted from main storage").Err()
 }
 
-// BootFromExternalStorageInDevMode performs booting device from external storage when DUT is in DEV-mode.
+// BootFromServoUSBDriveInDevMode performs booting device from external storage when DUT is in DEV-mode.
 // Device already should to be in DEV-mode and enabled to boot from USB-drive.
 // The make to be able boot from USB-drive you need one of followed options:
 // 1) Run enable_dev_usb_boot.

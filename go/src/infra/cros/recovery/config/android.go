@@ -23,7 +23,7 @@ func AndroidRepairConfig() *Configuration {
 		}}
 }
 
-// CrosDeployConfig provides config for deploy cros setup in the lab task.
+// AndroidDeployConfig provides config for deploy Android setup in the lab task.
 func AndroidDeployConfig() *Configuration {
 	return AndroidRepairConfig()
 }

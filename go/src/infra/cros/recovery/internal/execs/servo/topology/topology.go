@@ -126,7 +126,7 @@ func RereadServoFwVersion(ctx context.Context, runner execs.Runner, servo *tlw.S
 	}
 }
 
-// Get the path of root servo on servo host.
+// GetRootServoPath gets the path of root servo on servo host.
 func GetRootServoPath(ctx context.Context, runner execs.Runner, servoSerial string) (string, error) {
 	servoPath, err := runner(ctx, time.Minute, fmt.Sprintf(servodtoolDeviceUSBPathCMD, servoSerial))
 	if err != nil {
@@ -138,7 +138,7 @@ func GetRootServoPath(ctx context.Context, runner execs.Runner, servoSerial stri
 	return servoPath, nil
 }
 
-// Get the current usb devnum of servo.
+// GetServoUsbDevnum returns the current usb devnum of servo.
 func GetServoUsbDevnum(ctx context.Context, runner execs.Runner, servoSerial string) (string, error) {
 	rootServoPath, err := GetRootServoPath(ctx, runner, servoSerial)
 	if err != nil {
@@ -192,7 +192,7 @@ func convertVidPidToServoType(vidPid string) (string, error) {
 	return deviceType, nil
 }
 
-// Retrieve the servo topology consisting of root servo and servo
+// RetrieveServoTopology retries the servo topology consisting of root servo and servo
 // children on a host.
 func RetrieveServoTopology(ctx context.Context, runner execs.Runner, servoSerial string) (*tlw.ServoTopology, error) {
 	servoTopology := &tlw.ServoTopology{}
@@ -274,7 +274,7 @@ func IsItemGood(ctx context.Context, c *tlw.ServoTopologyItem) bool {
 	return c.Serial != "" && c.Type != "" && c.UsbHubPort != ""
 }
 
-// Create and return a slice of the servo devices in servo topology.
+// Devices creates and returns a slice of the servo devices in servo topology.
 // if there is a filteredBoard, then only return the slice of topology
 // item that contains that one filtered board.
 func Devices(c *tlw.ServoTopology, filteredBoard string) []*tlw.ServoTopologyItem {
