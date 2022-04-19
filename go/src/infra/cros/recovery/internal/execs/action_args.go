@@ -109,6 +109,12 @@ func (parsedArgs ParsedArgs) AsDuration(ctx context.Context, key string, default
 	return defaultDuration
 }
 
+// Has returns true if key is found.
+func (parsedArgs ParsedArgs) Has(key string) bool {
+	_, ok := parsedArgs[key]
+	return ok
+}
+
 // ParseActionArgs returns parsed action arguments with default splitter.
 func (ei *ExecInfo) GetActionArgs(ctx context.Context) ParsedArgs {
 	return ParseActionArgs(ctx, ei.ActionArgs, DefaultSplitter)
