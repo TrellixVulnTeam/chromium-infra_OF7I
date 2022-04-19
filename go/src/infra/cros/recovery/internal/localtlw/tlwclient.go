@@ -488,37 +488,37 @@ func (c *tlwClient) CopyFileTo(ctx context.Context, req *tlw.CopyRequest) error 
 }
 
 // CopyFileFrom copies file from remote device to local.
-func (c *tlwClient) CopyFileFrom(ctx context.Context, req *tlw.CopyRequest) error {
-	if err := validateCopyRequest(req); err != nil {
-		return errors.Annotate(err, "copy file from").Err()
+func (c *tlwClient) CopyFileFrom(ctx context.Context, req *tlw.CopyRequest) (mainErr error) {
+	if vErr := validateCopyRequest(req); vErr != nil {
+		return errors.Annotate(vErr, "copy file from").Err()
 	}
-	dut, err := c.getDevice(ctx, req.Resource)
-	if err != nil {
-		return errors.Annotate(err, "copy file from %q", req.Resource).Err()
+	dut, dErr := c.getDevice(ctx, req.Resource)
+	if dErr != nil {
+		return errors.Annotate(dErr, "copy file from %q", req.Resource).Err()
 	}
 	// The containerized servo-host does not support SSH so we need use docker client.
 	if c.isServoHost(req.Resource) && isServodContainer(dut) {
-		d, err := c.dockerClient(ctx)
-		if err != nil {
-			return errors.Annotate(err, "copy file from %q", req.Resource).Err()
+		d, cErr := c.dockerClient(ctx)
+		if cErr != nil {
+			return errors.Annotate(cErr, "copy file from %q", req.Resource).Err()
 		}
 		containerName := servoContainerName(dut)
-		if up, err := d.IsUp(ctx, containerName); err != nil {
-			return errors.Annotate(err, "copy file from %q", req.Resource).Err()
+		if up, iErr := d.IsUp(ctx, containerName); iErr != nil {
+			return errors.Annotate(iErr, "copy file from %q", req.Resource).Err()
 		} else if !up {
 			log.Infof(ctx, "Copy file from: servod container %s is down!", containerName)
-			return errors.Annotate(err, "copy file from %q", req.Resource).Err()
+			return errors.Annotate(iErr, "copy file from %q", req.Resource).Err()
 		}
-		err = d.CopyFrom(ctx, containerName, req.PathSource, req.PathDestination)
+		mainErr = d.CopyFrom(ctx, containerName, req.PathSource, req.PathDestination)
 	} else {
 		// Use dirrect copy if hosts support SSH.
-		err = tlwio.CopyFileFrom(ctx, c.sshPool, &tlw.CopyRequest{
+		mainErr = tlwio.CopyFileFrom(ctx, c.sshPool, &tlw.CopyRequest{
 			Resource:        localproxy.BuildAddr(req.Resource),
 			PathSource:      req.PathSource,
 			PathDestination: req.PathDestination,
 		})
 	}
-	return errors.Annotate(err, "copy file from %q", req.Resource).Err()
+	return errors.Annotate(mainErr, "copy file from %q", req.Resource).Err()
 }
 
 // CopyDirectoryTo copies directory to remote device from local, recursively.
