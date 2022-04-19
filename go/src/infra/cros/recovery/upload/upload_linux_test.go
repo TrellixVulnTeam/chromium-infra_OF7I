@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/gcloud/gs"
 	lucigs "go.chromium.org/luci/common/gcloud/gs"
 )
 
@@ -52,7 +51,7 @@ func (w *fakeWriter) Count() int64 {
 	return 0
 }
 
-func (c *fakeInnerClient) NewWriter(p lucigs.Path) (gs.Writer, error) {
+func (c *fakeInnerClient) NewWriter(p lucigs.Path) (lucigs.Writer, error) {
 	path := filepath.Join(c.baseDir, string(p))
 	d := filepath.Dir(path)
 	if err := os.MkdirAll(d, 0b111_111_111); err != nil {
