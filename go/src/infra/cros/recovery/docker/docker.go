@@ -94,7 +94,7 @@ func createDockerClient(ctx context.Context) (*client.Client, error) {
 
 // StartContainer pull and start container by request.
 // More details https://docs.docker.com/engine/reference/run/
-func (dc *dockerClient) Start(ctx context.Context, containerName string, req *ContainerArgs, timeout time.Duration) (*StartResponse, error) {
+func (d *dockerClient) Start(ctx context.Context, containerName string, req *ContainerArgs, timeout time.Duration) (*StartResponse, error) {
 	// TODO: migrate to use docker SDK.
 	// TODO: move logic to separate method with tests.
 	args := []string{"run"}
@@ -190,8 +190,8 @@ func (d *dockerClient) Exec(ctx context.Context, containerName string, req *Exec
 }
 
 // PrintAllContainers prints all active containers.
-func (dc *dockerClient) PrintAll(ctx context.Context) error {
-	containers, err := dc.client.ContainerList(ctx, types.ContainerListOptions{})
+func (d *dockerClient) PrintAll(ctx context.Context) error {
+	containers, err := d.client.ContainerList(ctx, types.ContainerListOptions{})
 	if err != nil {
 		return errors.Annotate(err, "docker print all").Err()
 	}

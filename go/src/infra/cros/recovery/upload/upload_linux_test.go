@@ -27,8 +27,8 @@ type fakeWriter struct {
 	os.File
 }
 
-func (w *fakeInnerClient) Init(tempdir func() string) error {
-	if w.initialized {
+func (c *fakeInnerClient) Init(tempdir func() string) error {
+	if c.initialized {
 		return nil
 	}
 	path := ""
@@ -41,12 +41,12 @@ func (w *fakeInnerClient) Init(tempdir func() string) error {
 	} else {
 		path = tempdir()
 	}
-	w.baseDir = path
-	w.initialized = true
+	c.baseDir = path
+	c.initialized = true
 	return nil
 }
 
-func (w *fakeWriter) Count() int64 {
+func (c *fakeWriter) Count() int64 {
 	// Not _really_ implemented.
 	return 0
 }
