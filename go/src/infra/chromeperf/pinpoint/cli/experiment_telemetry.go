@@ -43,6 +43,7 @@ type experimentTelemetryRun struct {
 	experimentBaseRun
 	benchmark, measurement string
 	stories, storyTags     []string
+	initialAttemptCount    int
 }
 
 func cmdTelemetryExperiment(p Param) *subcommands.Command {
@@ -97,6 +98,9 @@ func (e *experimentTelemetryRun) RegisterFlags(p Param) {
 	e.Flags.StringVar(&e.measurement, "measurement", "", text.Doc(`
 		The measurement to pick out.
 		When empty defaults to all measurements produced by the benchmark (optional).
+	`))
+	e.Flags.IntVar(&e.initialAttemptCount, "attempts", 10, text.Doc(`
+		The number of A and B iterations to execute.
 	`))
 }
 
@@ -247,6 +251,7 @@ func scheduleTelemetryJob(e *experimentTelemetryRun,
 	ctx context.Context,
 	c proto.PinpointClient,
 	batch_id string,
+	initial_attempt_count int,
 	experiment *proto.Experiment,
 	bot_cfg, benchmark, measurement, story string,
 	storyTags, extraArgs []string, priority int32) (*proto.Job, error) {
@@ -262,7 +267,8 @@ func scheduleTelemetryJob(e *experimentTelemetryRun,
 			TelemetryBenchmark: newTelemetryBenchmark(
 				benchmark, measurement, story, storyTags, extraArgs),
 		},
-		Priority: priority,
+		Priority:            priority,
+		InitialAttemptCount: int32(initial_attempt_count),
 	}
 
 	if e.issue.issueID != 0 {
@@ -312,7 +318,8 @@ func runBatchJob(e *experimentTelemetryRun,
 					story := story
 					workC <- func() error {
 						j, err := scheduleTelemetryJob(e, ctx,
-							c, batch_id, experiment, bot_config, config.Benchmark,
+							c, batch_id, e.initialAttemptCount,
+							experiment, bot_config, config.Benchmark,
 							config.Measurement, story,
 							[]string{}, config.ExtraArgs, priority)
 						if err != nil {
@@ -327,7 +334,8 @@ func runBatchJob(e *experimentTelemetryRun,
 				if len(config.StoryTags) > 0 {
 					workC <- func() error {
 						j, err := scheduleTelemetryJob(e, ctx,
-							c, batch_id, experiment, bot_config, config.Benchmark,
+							c, batch_id, e.initialAttemptCount,
+							experiment, bot_config, config.Benchmark,
 							config.Measurement, "",
 							config.StoryTags, config.ExtraArgs, priority)
 						if err != nil {

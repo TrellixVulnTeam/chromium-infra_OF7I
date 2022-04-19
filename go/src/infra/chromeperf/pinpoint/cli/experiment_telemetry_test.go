@@ -32,13 +32,15 @@ import (
 )
 
 const testPriority = 42
+const testInitialAttemptCount int32 = 22
 
 type startedJob struct {
-	Benchmark     string
-	Configuration string
-	Priority      int32
-	Story         string
-	StoryTags     []string
+	Benchmark           string
+	Configuration       string
+	InitialAttemptCount int32
+	Priority            int32
+	Story               string
+	StoryTags           []string
 }
 
 type fakePinpointClient struct {
@@ -71,10 +73,11 @@ func (c *fakePinpointClient) ScheduleJob(ctx context.Context, in *proto.Schedule
 	out := new(proto.Job)
 	out.Name = "jobs/legacy-4242"
 	started_job := startedJob{
-		Benchmark:     in.Job.GetTelemetryBenchmark().Benchmark,
-		Configuration: in.Job.Config,
-		Story:         in.Job.GetTelemetryBenchmark().GetStory(),
-		Priority:      in.Job.Priority,
+		Benchmark:           in.Job.GetTelemetryBenchmark().Benchmark,
+		Configuration:       in.Job.Config,
+		Story:               in.Job.GetTelemetryBenchmark().GetStory(),
+		Priority:            in.Job.Priority,
+		InitialAttemptCount: in.Job.InitialAttemptCount,
 	}
 	if in.Job.GetTelemetryBenchmark().GetStoryTags() != nil {
 		started_job.StoryTags = in.Job.GetTelemetryBenchmark().GetStoryTags().StoryTags
@@ -130,52 +133,59 @@ func TestBatchKickoff(t *testing.T) {
 
 		var err error
 		runner.baseCommandRun.workDir, err = ioutil.TempDir("", "tmp")
+		runner.initialAttemptCount = int(testInitialAttemptCount)
 		So(err, ShouldBeNil)
 		jobs, err := runBatchJob(&runner, context.Background(), os.Stdout, c, "batch", batch_experiments, &experiment, testPriority)
 		So(err, ShouldBeNil)
 
 		expected := []startedJob{
 			{
-				Benchmark:     "desktop",
-				Configuration: "linux",
-				Priority:      testPriority,
-				Story:         "dsA",
-				StoryTags:     []string{},
+				Benchmark:           "desktop",
+				Configuration:       "linux",
+				InitialAttemptCount: testInitialAttemptCount,
+				Priority:            testPriority,
+				Story:               "dsA",
+				StoryTags:           []string{},
 			},
 			{
-				Benchmark:     "desktop",
-				Configuration: "linux",
-				Priority:      testPriority,
-				Story:         "dsB",
-				StoryTags:     []string{},
+				Benchmark:           "desktop",
+				Configuration:       "linux",
+				InitialAttemptCount: testInitialAttemptCount,
+				Priority:            testPriority,
+				Story:               "dsB",
+				StoryTags:           []string{},
 			},
 			{
-				Benchmark:     "desktop",
-				Configuration: "win",
-				Priority:      testPriority,
-				Story:         "dsA",
-				StoryTags:     []string{},
+				Benchmark:           "desktop",
+				Configuration:       "win",
+				InitialAttemptCount: testInitialAttemptCount,
+				Priority:            testPriority,
+				Story:               "dsA",
+				StoryTags:           []string{},
 			},
 			{
-				Benchmark:     "desktop",
-				Configuration: "win",
-				Priority:      testPriority,
-				Story:         "dsB",
-				StoryTags:     []string{},
+				Benchmark:           "desktop",
+				Configuration:       "win",
+				InitialAttemptCount: testInitialAttemptCount,
+				Priority:            testPriority,
+				Story:               "dsB",
+				StoryTags:           []string{},
 			},
 			{
-				Benchmark:     "mobile",
-				Configuration: "pixel",
-				Priority:      testPriority,
-				Story:         "msA",
-				StoryTags:     []string{},
+				Benchmark:           "mobile",
+				Configuration:       "pixel",
+				InitialAttemptCount: testInitialAttemptCount,
+				Priority:            testPriority,
+				Story:               "msA",
+				StoryTags:           []string{},
 			},
 			{
-				Benchmark:     "mobile",
-				Configuration: "pixel",
-				Priority:      testPriority,
-				Story:         "",
-				StoryTags:     []string{"tagA", "tagB"},
+				Benchmark:           "mobile",
+				Configuration:       "pixel",
+				InitialAttemptCount: testInitialAttemptCount,
+				Priority:            testPriority,
+				Story:               "",
+				StoryTags:           []string{"tagA", "tagB"},
 			},
 		}
 		So(cmp.Equal(c.Jobs, expected, cmpopts.SortSlices(less)), ShouldBeTrue)

@@ -79,6 +79,8 @@ func JobToValues(job *proto.JobSpec, userEmail string) (url.Values, error) {
 
 	v.Set("priority", fmt.Sprintf("%d", job.Priority))
 
+	v.Set("initial_attempt_count", fmt.Sprintf("%d", job.InitialAttemptCount))
+
 	// We're turning a floating point comparison magnitude to a string.
 	if job.ComparisonMagnitude != 0.0 {
 		v.Set("comparison_magnitude", fmt.Sprintf("%f", job.ComparisonMagnitude))
@@ -233,6 +235,7 @@ type jsonJob struct {
 	Cfg                 string                  `json:"configuration,omitempty"`
 	Created             microTime               `json:"created,omitempty"`
 	Exception           *map[string]interface{} `json:"exception,omitempty"`
+	InitialAttemptCount string                  `json:"initial_attempt_count,omitempty"`
 	JobID               string                  `json:"job_id,omitempty"`
 	Metric              string                  `json:"metric,omitempty"`
 	Name                string                  `json:"name,omitempty"`

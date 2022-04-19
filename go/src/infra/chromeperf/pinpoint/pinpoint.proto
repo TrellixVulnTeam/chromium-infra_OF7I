@@ -290,6 +290,9 @@ message JobSpec {
   // Determines when this job will be run (lower numbers run first).
   int32 priority = 12;
 
+  // How many attempts a try job should do for A and B
+  int32 initial_attempt_count = 13;
+
   // TODO(crbug/1059667): Fill this out with more details like priority, other
   // constraints, when relevant.
 }

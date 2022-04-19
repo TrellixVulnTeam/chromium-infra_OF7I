@@ -865,10 +865,11 @@ func TestSimpleConversions(t *testing.T) {
 
 			})
 
-			Convey("We support jobs with a Batch ID", func() {
+			Convey("We support jobs with a Batch ID and Attempts", func() {
 				telemetryJob :=
 					&pinpoint_proto.JobSpec{
-						BatchId: "defined-job-id",
+						BatchId:             "defined-job-id",
+						InitialAttemptCount: 42,
 						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
 							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
@@ -912,6 +913,9 @@ func TestSimpleConversions(t *testing.T) {
 					"extra_test_args":  `["--browser","some-browser"]`,
 				})
 
+				So(v, shouldContainMap, map[string]interface{}{
+					"initial_attempt_count": "42",
+				})
 			})
 
 			Convey("We support GTest", func() {
