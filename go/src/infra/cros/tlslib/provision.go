@@ -50,7 +50,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 
 	var p *provisionState
 	createProvisionFailedMarker := func() {
-		if p == nil {
+		if p == nil || p.c == nil {
 			return
 		}
 		if err := runCmd(p.c, fmt.Sprintf("touch %s %s", provisionFailed, provisionFailedMarker)); err != nil {
@@ -85,7 +85,11 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	}
 
 	// Connect to the DUT.
-	disconnect, err := p.connect(ctx, addr)
+
+	initialSSHCtx, cancel := context.WithTimeout(ctx, 120*time.Second)
+	defer cancel()
+
+	disconnect, err := p.connect(initialSSHCtx, addr)
 	if err != nil {
 		setError(newOperationError(
 			codes.FailedPrecondition,
@@ -118,11 +122,16 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
 			return
 		}
-		disconnect, err = p.connect(ctx, addr)
+
+		// Shorten the time waiting for reboot to complete booting into the new OS.
+		rebootWaitCtx, cancel := context.WithTimeout(ctx, 300*time.Second)
+		defer cancel()
+
+		disconnect, err = p.connect(rebootWaitCtx, addr)
 		if err != nil {
 			setError(newOperationError(
 				codes.Aborted,
-				fmt.Sprintf("provision: failed to connect to DUT after OS provision, %s", err),
+				fmt.Sprintf("provision: failed to connect to DUT after OS provision, DUT might be rolling back, %s", err),
 				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
 			return
 		}
@@ -186,7 +195,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		if err != nil {
 			setError(newOperationError(
 				codes.Aborted,
-				fmt.Sprintf("provision: failed to connect to DUT after reboot, %s", err),
+				fmt.Sprintf("provision: failed to connect to DUT after stateful update and reboot, %s", err),
 				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
 			return
 		}
