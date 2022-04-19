@@ -172,6 +172,7 @@ enum AttachedDeviceType {
 message Devboard {
   oneof board {
     Andreiboard andreiboard = 1;
+    Icetower icetower = 2;
   }
 }
 
@@ -182,4 +183,12 @@ message Andreiboard {
   // Serial for the UltraDebug interface.
   // Can be empty if the devboard does not have UltraDebug.
   string ultradebug_serial = 1;
+}
+
+// Icetower refers to icetower type development boards.
+//
+// Next Tag: 2
+message Icetower {
+  // Fingerprint module ID.
+  string fingerprint_id = 1;
 }
