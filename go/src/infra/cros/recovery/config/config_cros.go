@@ -61,6 +61,7 @@ func crosClosePlan() *Plan {
 			"Servo-host logs",
 			"Remove in-use flag on servo-host",
 			"Remove request to reboot is servo is good",
+			"Update DUT state",
 		},
 		Actions: map[string]*Action{
 			"servo_state_is_working": {
@@ -134,6 +135,32 @@ func crosClosePlan() *Plan {
 					"wifi_router_host_present",
 				},
 				ExecName:               "update_peripheral_wifi_state",
+				AllowFailAfterRecovery: true,
+			},
+			"Check failure count": {
+				Docs: []string{
+					"Check if the number of times the recovery task ",
+					"has failed is greater than a threshold value or ",
+					"not.",
+				},
+				ExecName: "metrics_check_task_failures",
+				ExecExtraArgs: []string{
+					"task_name:recovery",
+					"repair_failed_count:49",
+				},
+			},
+			"Update DUT state": {
+				Docs: []string{
+					"Set the DUT state to the value passed in the ",
+					"extra args.",
+				},
+				Conditions: []string{
+					"Check failure count",
+				},
+				ExecName: "dut_set_state",
+				ExecExtraArgs: []string{
+					"state:needs_manual_repair",
+				},
 				AllowFailAfterRecovery: true,
 			},
 		},

@@ -63,6 +63,24 @@ func metricsFoundAtLastTimeExec(ctx context.Context, info *execs.ExecInfo) error
 	return errors.Reason("metrics found at last time: no metric kind of: %q found within the last %v", metricsKind, timeFrameHours).Err()
 }
 
+// checkTaskFailuresExec counts the number of times the task has
+// failed, and verifies if it is greater than a threshold number.
+func checkTaskFailuresExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
+	taskName := argsMap.AsString(ctx, "task_name", "")
+	repairFailedCountTarget := argsMap.AsInt(ctx, "repair_failed_count", 49)
+	repairFailedCount, err := CountFailedRepairFromMetrics(ctx, taskName, info)
+	if err != nil {
+		return errors.Annotate(err, "check task failures").Err()
+	}
+	if repairFailedCount > repairFailedCountTarget {
+		log.Infof(ctx, "The number of repair attempts %d exceeded the threshold of %d", repairFailedCount, repairFailedCountTarget)
+		return nil
+	}
+	return errors.Reason("check task failures: Fail count: %d", repairFailedCount).Err()
+}
+
 func init() {
 	execs.Register("metrics_found_at_last_time", metricsFoundAtLastTimeExec)
+	execs.Register("metrics_check_task_failures", checkTaskFailuresExec)
 }
