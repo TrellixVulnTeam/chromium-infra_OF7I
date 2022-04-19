@@ -72,12 +72,9 @@ func servodDUTColdResetActionExec(ctx context.Context, info *execs.ExecInfo) err
 // mentioned in action args.
 func servodHasExec(ctx context.Context, info *execs.ExecInfo) error {
 	argsMap := info.GetActionArgs(ctx)
-	command, ok := argsMap[commandToken]
-	log.Debugf(ctx, "Servod Has Exec: %s ok :%t", commandToken, ok)
-	if !ok {
-		// It is a failure condition if an action invokes this exec,
-		// and does not specify the servod command.
-		return errors.Reason("servod has exec: no command is mentioned for this action.").Err()
+	command := argsMap.AsString(ctx, "command", "")
+	if len(command) == 0 {
+		return errors.Reason("servod has exec: no command is not provided").Err()
 	}
 	if err := info.NewServod().Has(ctx, command); err != nil {
 		return errors.Annotate(err, "servod has exec").Err()
