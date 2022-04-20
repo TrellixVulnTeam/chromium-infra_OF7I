@@ -279,7 +279,7 @@ func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName str
 	if r.args != nil {
 		if r.args.ShowSteps {
 			var step *build.Step
-			step, ctx = build.StartStep(ctx, "Run continions")
+			step, ctx = build.StartStep(ctx, "Run conditions")
 			defer func() { step.End(err) }()
 		}
 		if i, ok := r.args.Logger.(logger.LogIndenter); ok {
