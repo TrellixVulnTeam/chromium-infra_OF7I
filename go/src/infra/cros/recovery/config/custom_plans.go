@@ -29,3 +29,19 @@ func DownloadImageToServoUSBDrive(gsImagePath, imageName string) *Configuration 
 	cp.GetActions()[targetAction].ExecExtraArgs = newArgs
 	return rc
 }
+
+// ReserveDutConfig creates configuration to reserve a dut
+func ReserveDutConfig() *Configuration {
+	return &Configuration{
+		PlanNames: []string{
+			PlanCrOS,
+		},
+		Plans: map[string]*Plan{
+			PlanCrOS: {
+				CriticalActions: []string{
+					"dut_state_reserved",
+				},
+			},
+		},
+	}
+}

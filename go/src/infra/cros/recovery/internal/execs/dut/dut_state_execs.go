@@ -29,10 +29,17 @@ func dutStateNeedsDeployActionExec(ctx context.Context, info *execs.ExecInfo) er
 	return nil
 }
 
+// dutStateReservedActionExec sets dut-state as reserved.
+func dutStateReservedActionExec(ctx context.Context, info *execs.ExecInfo) error {
+	info.RunArgs.DUT.State = dutstate.Reserved
+	return nil
+}
+
 // TODO(otabek@): Add execs for other states.
 
 func init() {
 	execs.Register("dut_state_ready", dutStateReadyActionExec)
 	execs.Register("dut_state_repair_failed", dutStateRepairFailedActionExec)
 	execs.Register("dut_state_needs_deploy", dutStateNeedsDeployActionExec)
+	execs.Register("dut_state_reserved", dutStateReservedActionExec)
 }
