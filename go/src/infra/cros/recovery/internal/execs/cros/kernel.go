@@ -31,6 +31,9 @@ var (
 	kernelB = &kernelInfo{name: "KERN-B", kernelPartition: 4, rootPartition: 5}
 )
 
+// kernelPriorityChangePattern is the leading 3 or 5 in the output of rootdev -s -d.
+var kernelPriorityChangePattern = regexp.MustCompile(`(\d)`)
+
 // IsKernelPriorityChanged check if kernel priority changed and is waiting for reboot to apply the change.
 func IsKernelPriorityChanged(ctx context.Context, run execs.Runner) (bool, error) {
 	// Determine if we have an update that pending on reboot by check if
@@ -49,11 +52,7 @@ func IsKernelPriorityChanged(ctx context.Context, run execs.Runner) (bool, error
 	log.Debugf(ctx, "Booted root disk: %q.", diskRoot)
 	diskSuffix := strings.TrimPrefix(diskRoot, diskBlockResult)
 	// Find first number. We expected number 3 or 5.
-	p, err := regexp.Compile(`(\d)`)
-	if err != nil {
-		return false, errors.Annotate(err, "is kernel priority changed").Err()
-	}
-	parts := p.FindStringSubmatch(diskSuffix)
+	parts := kernelPriorityChangePattern.FindStringSubmatch(diskSuffix)
 	if len(parts) < 2 || parts[1] == "" {
 		return false, errors.Reason("is kernel priority changed: fail to read value from %s", diskSuffix).Err()
 	}

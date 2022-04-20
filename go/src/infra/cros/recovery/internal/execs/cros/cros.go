@@ -39,6 +39,9 @@ const (
 	extactReleaseBuilderPathCommand = "cat /etc/lsb-release | grep CHROMEOS_RELEASE_BUILDER_PATH"
 )
 
+// releaseBuildPattern matches only the release build line in /etc/lsb-release.
+var releaseBuildPattern = regexp.MustCompile(`CHROMEOS_RELEASE_BUILDER_PATH=([\w\W]*)`)
+
 // releaseBuildPath reads release build path from lsb-release.
 func releaseBuildPath(ctx context.Context, run execs.Runner) (string, error) {
 	// lsb-release is set of key=value so we need extract right part from it.
@@ -48,16 +51,15 @@ func releaseBuildPath(ctx context.Context, run execs.Runner) (string, error) {
 		return "", errors.Annotate(err, "release build path").Err()
 	}
 	log.Debugf(ctx, "Read value: %q.", output)
-	p, err := regexp.Compile(`CHROMEOS_RELEASE_BUILDER_PATH=([\w\W]*)`)
-	if err != nil {
-		return "", errors.Annotate(err, "release build path").Err()
-	}
-	parts := p.FindStringSubmatch(output)
+	parts := releaseBuildPattern.FindStringSubmatch(output)
 	if len(parts) < 2 {
 		return "", errors.Reason("release build path: fail to read value from %s", output).Err()
 	}
 	return strings.TrimSpace(parts[1]), nil
 }
+
+// uptimePattern is a decimal number, possibly containing a decimal point.
+var uptimePattern = regexp.MustCompile(`([\d.]{6,})`)
 
 // uptime returns uptime of resource.
 func uptime(ctx context.Context, run execs.Runner) (*time.Duration, error) {
@@ -71,11 +73,7 @@ func uptime(ctx context.Context, run execs.Runner) (*time.Duration, error) {
 		return nil, errors.Annotate(err, "uptime").Err()
 	}
 	log.Debugf(ctx, "Read value: %q.", out)
-	p, err := regexp.Compile(`([\d.]{6,})`)
-	if err != nil {
-		return nil, errors.Annotate(err, "uptime").Err()
-	}
-	parts := p.FindStringSubmatch(out)
+	parts := uptimePattern.FindStringSubmatch(out)
 	if len(parts) < 2 {
 		return nil, errors.Reason("uptime: fail to read value from %s", out).Err()
 	}
