@@ -48,7 +48,7 @@ func WithTimeout(ctx context.Context, interval, duration time.Duration, f func()
 			if err == nil {
 				log.Debugf(ctx, getSuccessMessage(opName, atomic.LoadInt32(&attempts), startTime))
 			}
-			spentTime := time.Now().Sub(startTime).Seconds()
+			spentTime := time.Since(startTime).Seconds()
 			log.Debugf(ctx, "Retry %q: attempt %d (used %0.2f of %0.2f seconds), error: %s", opName, attempts, spentTime, duration.Seconds(), err)
 			return err
 		},
@@ -150,7 +150,7 @@ func retry(ctx context.Context, o *retryOptions) error {
 
 // getSuccessMessage creates a message for retry when it succeeded.
 func getSuccessMessage(opName string, attempts int32, startTime time.Time) string {
-	spentTime := time.Now().Sub(startTime).Seconds()
+	spentTime := time.Since(startTime).Seconds()
 	if attempts == 1 {
 		return fmt.Sprintf("Retry %q: succeeded in first try. Spent %0.2f seconds.", opName, spentTime)
 	}
@@ -159,5 +159,5 @@ func getSuccessMessage(opName string, attempts int32, startTime time.Time) strin
 
 // getEndErrorMessage creates an error message for each attempts in retry.
 func getEndErrorMessage(opName string, attempts int32, startTime time.Time) string {
-	return fmt.Sprintf("%s: failed %d attempts took %0.2f seconds", opName, attempts, time.Now().Sub(startTime).Seconds())
+	return fmt.Sprintf("%s: failed %d attempts took %0.2f seconds", opName, attempts, time.Since(startTime).Seconds())
 }
