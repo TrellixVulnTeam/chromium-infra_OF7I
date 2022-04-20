@@ -154,8 +154,9 @@ func TestIngestTestResults(t *testing.T) {
 		Convey(`partition time`, func() {
 			payload := &taskspb.IngestTestResults{
 				Build: &ctrlpb.BuildResult{
-					Host: "host",
-					Id:   13131313,
+					Host:    "host",
+					Id:      13131313,
+					Project: "chromium",
 				},
 				PartitionTime: timestamppb.New(clock.Now(ctx).Add(-1 * time.Hour)),
 			}
@@ -229,8 +230,9 @@ func TestIngestTestResults(t *testing.T) {
 
 			payload := &taskspb.IngestTestResults{
 				Build: &ctrlpb.BuildResult{
-					Host: "host",
-					Id:   bID,
+					Host:    "host",
+					Id:      bID,
+					Project: "chromium",
 				},
 				PartitionTime: timestamppb.New(clock.Now(ctx).Add(-1 * time.Hour)),
 			}
@@ -369,23 +371,11 @@ func TestIngestTestResults(t *testing.T) {
 			mbc := buildbucket.NewMockedClient(ctx, ctl)
 			ctx = mbc.Ctx
 
-			bID := int64(87654321)
-			inv := "invocations/build-87654321"
-
-			request := &bbpb.GetBuildRequest{
-				Id: bID,
-				Mask: &bbpb.BuildMask{
-					Fields: &field_mask.FieldMask{
-						Paths: []string{"builder", "infra.resultdb", "status"},
-					},
-				},
-			}
-			mbc.GetBuild(request, mockedGetBuildRsp(inv))
-
 			payload := &taskspb.IngestTestResults{
 				Build: &ctrlpb.BuildResult{
-					Host: "host",
-					Id:   bID,
+					Host:    "host",
+					Id:      87654321,
+					Project: "chromium",
 				},
 				PartitionTime: timestamppb.New(clock.Now(ctx).Add(-1 * time.Hour)),
 			}
