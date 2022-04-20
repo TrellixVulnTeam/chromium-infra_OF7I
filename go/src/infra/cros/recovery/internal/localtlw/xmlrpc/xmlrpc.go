@@ -303,7 +303,7 @@ func getTimeout(ctx context.Context, cl Call) time.Duration {
 		timeout = maxRPCTimeout
 	}
 	if dl, ok := ctx.Deadline(); ok {
-		newTimeout := dl.Sub(time.Now())
+		newTimeout := time.Until(dl)
 		if newTimeout < timeout {
 			timeout = newTimeout
 		}
