@@ -5,6 +5,7 @@
 import React from 'react';
 import {createStyles, createTheme} from '@material-ui/core/styles';
 import {makeStyles} from '@material-ui/styles';
+import { TextareaAutosize } from '@material-ui/core';
 import TextField from '@material-ui/core/TextField';
 import {red, grey} from '@material-ui/core/colors';
 import DotMobileStepper from './DotMobileStepper.tsx';
@@ -119,10 +120,10 @@ export default function DetailsStep(props: Props): React.ReactElement {
           <TextField id="outlined-basic-1" variant="outlined" inputProps={{maxLength: 100}} onChange={handleChange('oneLineSummary')} value={textValues.oneLineSummary}/>
 
           <h3 className={classes.head}>Steps to reproduce problem (5000 character limit) <span className={classes.red}>*</span></h3>
-          <TextField multiline rows={4} id="outlined-basic-2" variant="outlined" inputProps={{maxLength: 5000}} onChange={handleChange('stepsToReproduce')} value={textValues.stepsToReproduce}/>
+          <TextareaAutosize minRows={4} id="outlined-basic-2" maxLength={5000} onChange={handleChange('stepsToReproduce')} value={textValues.stepsToReproduce}/>
 
           <h3 className={classes.head}>Please describe the problem (5000 character limit)<span className={classes.red}>*</span></h3>
-          <TextField multiline rows={3} id="outlined-basic-3" variant="outlined" inputProps={{maxLength: 5000}} onChange={handleChange('describeProblem')} value={textValues.describeProblem}/>
+          <TextareaAutosize minRows={3} id="outlined-basic-3" maxLength={5000} onChange={handleChange('describeProblem')} value={textValues.describeProblem}/>
 
           <CustomQuestionSelector
             question="Did this work before?"
