@@ -13,9 +13,12 @@ import (
 	"infra/cros/recovery/logger"
 )
 
+// loggerKeyType is a unique type for a context key.
+type loggerKeyType string
+
 const (
 	// loggerKey is key to access to logger from context.
-	loggerKey = "recovery_logger"
+	loggerKey loggerKeyType = "recovery_logger"
 )
 
 // WithLogger sets logger to the context.
