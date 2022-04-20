@@ -180,17 +180,13 @@ func copyToHelper(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest)
 	// If either the upload of data to SSH session, or extracting the
 	// archive on the remote side run into errors, we will return an
 	// error.
-	select {
-	case e, ok := <-uploadErrors:
-		if ok {
-			// goroutines encountered an error.
-			return errors.Annotate(e, "copy to helper").Err()
-		} else {
-			// Errors channels is closed without any incidents of
-			// error. This implies successful copy operation.
-			return nil
-		}
+	if e, ok := <-uploadErrors; ok {
+		// goroutines encountered an error.
+		return errors.Annotate(e, "copy to helper").Err()
 	}
+	// Errors channels is closed without any incidents of
+	// error. This implies successful copy operation.
+	return nil
 }
 
 // copyFromHelper copies contents of the remote source path to a local
