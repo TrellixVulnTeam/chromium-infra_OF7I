@@ -5,7 +5,7 @@ cron:
 
 - description: push bots for admin tasks for need_repair
   url: /internal/cron/push-bots-for-admin-tasks
-  schedule: every 5 minutes
+  schedule: every 2 minutes
   retry_parameters:
     # We see a small number of jobs fails with code 500 (internal failure of GAE).
     # As the handler is idempotent & has low time cost, retry won't cause any
