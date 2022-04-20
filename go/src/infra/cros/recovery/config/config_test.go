@@ -293,7 +293,7 @@ func TestVerifyPlanAcyclic(t *testing.T) {
 			// Assume "A" as the critical action.
 			tt.in.CriticalActions = []string{"A"}
 			if err := verifyPlanAcyclic(tt.in); err != nil {
-				m := strings.Trim(err.Error(), ": found loop")
+				m := strings.Replace(err.Error(), ": found loop", "", -1)
 				errMessages := strings.Split(m, ":")
 				raiseError := false
 				if len(tt.errorActions) != len(errMessages) {
