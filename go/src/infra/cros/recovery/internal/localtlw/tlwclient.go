@@ -691,9 +691,7 @@ func (c *tlwClient) readInventory(ctx context.Context, name string) (resourceNam
 		resourceNames = []string{dut.Name}
 	case ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_SCHEDULING_UNIT:
 		su := ddrsp.GetSchedulingUnit()
-		for _, hostname := range su.GetMachineLSEs() {
-			resourceNames = append(resourceNames, hostname)
-		}
+		resourceNames = su.GetMachineLSEs()
 	default:
 		return resourceNames, errors.Reason("get device %q: unsupported type %q", name, ddrsp.GetResourceType()).Err()
 	}
