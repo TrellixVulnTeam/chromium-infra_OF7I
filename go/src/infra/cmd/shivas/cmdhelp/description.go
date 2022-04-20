@@ -683,48 +683,39 @@ This file must contain required machine field and optional nics/drac field.
 
 Example Browser machine creation request:
 {
-    "name": "cr85-XXX",
-    "serialNumber": "FVSMVXX",
+  "machine": {
+    "name": "cr254-32-3930",
+    "serialNumber": "92YL673",
     "location": {
-        "rack": "cr85XX",
-        "zone": "ZONE_ATL97"
+      "rack": "cr254",
+      "zone": "ZONE_ATL97"
     },
-    "tags": ["dell", "8g"],
     "chromeBrowserMachine": {
-        "displayName": "cr85-XXX",
-        "chromePlatform": "Dell_R720",
-        "deploymentTicket": "846026XX",
-        "description": "adding a machine cr85-XXX",
-        "kvmInterface": {
-            "kvm": "ax101-kvm1",
-            "port": 34
+      "displayName": "cr254-32-3930",
+      "chromePlatform": "Dell_3930_RX5500XT",
+      "deploymentTicket": "crbug/1275174",
+      "kvmInterface": {
+        "kvm": "cr254-kvm1",
+        "portName": "32"
+      },
+      "nicObjects": [
+        {
+          "name": "cr254-32-3930:eth0",
+          "macAddress": "A4BB6D5A1BBF",
+          "switchInterface": {
+            "switch": "eq188.atl97",
+            "portName": "32"
+          }
         },
-        "rpmInterface": {
-            "rpm": "rpm-23",
-            "port": 65
-        },
-        "nicObjects": [{
-            "name": "cr85-XXX:eth0",
-            "macAddress": "ec:f4:bb:c4:6e:qq",
-            "switchInterface": {
-                "switch": "eq082.atl97",
-                "portName": "11"
-            },
-            "tags": ["dell", "8g"]
-        }],
-        "dracObject": {
-            "name": "lin64-38-m0-dracXXX",
-            "displayName": "cr85-XXX:drac",
-            "macAddress": "5c:f9:dd:fd:6d:ff",
-            "switchInterface": {
-                "switch": "eq082.atl97",
-                "portName": "41"
-            },
-            "password": "WelcomeDrac***",
-            "tags": ["dell", "8g"]
+        {
+          "name": "cr254-32-3930:eth1",
+          "macAddress": "A4BB6D5A1BC0"
         }
+      ]
     }
+  }
 }
+
 
 Example OS machine creation request:
 {
