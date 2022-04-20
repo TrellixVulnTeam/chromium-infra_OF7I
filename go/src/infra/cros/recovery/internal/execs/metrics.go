@@ -106,7 +106,6 @@ func createMetric(ctx context.Context, m metrics.Metrics, action *metrics.Action
 		if uErr := m.Update(ctx, action); uErr != nil {
 			log.Errorf(ctx, "Updating action %q during close had error during upload: %s", action.Name, uErr.Error())
 		}
-		return
 	}
 	return closer
 }
