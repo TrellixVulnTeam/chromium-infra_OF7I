@@ -49,7 +49,7 @@ func IsKernelPriorityChanged(ctx context.Context, run execs.Runner) (bool, error
 	log.Debugf(ctx, "Booted root disk: %q.", diskRoot)
 	diskSuffix := strings.TrimPrefix(diskRoot, diskBlockResult)
 	// Find first number. We expected number 3 or 5.
-	p, err := regexp.Compile("(\\d)")
+	p, err := regexp.Compile(`(\d)`)
 	if err != nil {
 		return false, errors.Annotate(err, "is kernel priority changed").Err()
 	}

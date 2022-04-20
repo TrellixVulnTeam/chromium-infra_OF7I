@@ -48,7 +48,7 @@ func releaseBuildPath(ctx context.Context, run execs.Runner) (string, error) {
 		return "", errors.Annotate(err, "release build path").Err()
 	}
 	log.Debugf(ctx, "Read value: %q.", output)
-	p, err := regexp.Compile("CHROMEOS_RELEASE_BUILDER_PATH=([\\w\\W]*)")
+	p, err := regexp.Compile(`CHROMEOS_RELEASE_BUILDER_PATH=([\w\W]*)`)
 	if err != nil {
 		return "", errors.Annotate(err, "release build path").Err()
 	}
@@ -71,7 +71,7 @@ func uptime(ctx context.Context, run execs.Runner) (*time.Duration, error) {
 		return nil, errors.Annotate(err, "uptime").Err()
 	}
 	log.Debugf(ctx, "Read value: %q.", out)
-	p, err := regexp.Compile("([\\d.]{6,})")
+	p, err := regexp.Compile(`([\d.]{6,})`)
 	if err != nil {
 		return nil, errors.Annotate(err, "uptime").Err()
 	}
