@@ -253,7 +253,7 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 			So(res, ShouldNotBeNil)
 
 			tasks := tqt.GetScheduledTasks()
-			validateTasksInQueue(tasks, auditQ, "audit", []string{"id3", "id4", "su_id1"}, actions)
+			validateTasksInQueue(tasks, auditQ, "audit", []string{"id3", "id4", "id6", "su_id1"}, actions)
 		})
 	})
 }

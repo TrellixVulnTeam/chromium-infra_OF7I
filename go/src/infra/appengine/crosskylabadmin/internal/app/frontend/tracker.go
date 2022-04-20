@@ -332,11 +332,12 @@ func identifyBotsForAudit(ctx context.Context, bots []*swarming.SwarmingRpcsBotI
 		}
 		switch auditTask {
 		case fleet.AuditTask_ServoUSBKey:
-			state := swarming_utils.ExtractBotState(b).ServoUSBState
-			if len(state) > 0 && state[0] == "NEED_REPLACEMENT" {
-				logging.Infof(ctx, "Skipping BOT with id: %q as USB-key marked for replacement", b.BotId)
-				continue
-			}
+			// Disable skip to verify flakiness. (b/229656121)
+			// state := swarming_utils.ExtractBotState(b).ServoUSBState
+			// if len(state) > 0 && state[0] == "NEED_REPLACEMENT" {
+			// 	logging.Infof(ctx, "Skipping BOT with id: %q as USB-key marked for replacement", b.BotId)
+			// 	continue
+			// }
 		case fleet.AuditTask_DUTStorage:
 			state := swarming_utils.ExtractBotState(b).StorageState
 			if len(state) > 0 && state[0] == "NEED_REPLACEMENT" {
