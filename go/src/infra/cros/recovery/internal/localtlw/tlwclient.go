@@ -270,8 +270,20 @@ func (c *tlwClient) InitServod(ctx context.Context, req *tlw.InitServodRequest) 
 
 // dockerServodImageName provides image for servod when use container.
 func dockerServodImageName() string {
-	// TODO(otabek): Value has to come here from somewhere.
-	return "us-docker.pkg.dev/chromeos-partner-moblab/common-core/servod:release"
+	label := getEnv("SERVOD_CONTAINER_LABEL", "release")
+	registry := getEnv("REGISTRY_URI", "us-docker.pkg.dev/chromeos-partner-moblab/common-core")
+	return fmt.Sprintf("%s/servod:%s", registry, label)
+}
+
+// getEnv retrieves the value of the environment variable named by the key.
+// If retrieved value is empty return default value.
+func getEnv(key, defaultvalue string) string {
+	if key != "" {
+		if v := os.Getenv(key); v != "" {
+			return v
+		}
+	}
+	return defaultvalue
 }
 
 // createServodContainerArgs creates default args for servodContainer.
