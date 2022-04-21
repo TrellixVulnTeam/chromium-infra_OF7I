@@ -146,8 +146,15 @@ func uploadLogs(ctx context.Context, state *build.State, lg logger.Logger) (rErr
 	if authenticator != nil {
 		lg.Infof("NewAuthenticator(...): successfully authed!")
 	} else {
-		lg.Errorf("NewAuthenticator(...): did not successfully auth!")
+		return errors.Reason("NewAuthenticator(...): did not successfully auth!").Err()
 	}
+	email, err := authenticator.GetEmail()
+	if err == nil {
+		lg.Infof("Auth email is %q", email)
+	} else {
+		return errors.Annotate(err, "upload logs").Err()
+	}
+
 	rt, err := authenticator.Transport()
 	if err == nil {
 		lg.Infof("authenticator.Transport(): successfully authed!")
