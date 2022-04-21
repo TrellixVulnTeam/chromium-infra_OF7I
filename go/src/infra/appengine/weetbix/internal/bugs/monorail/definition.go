@@ -40,8 +40,13 @@ var priorityRE = regexp.MustCompile(`^Pri-([0123])$`)
 
 // AutomationUsers are the identifiers of Weetbix automation users in monorail.
 var AutomationUsers = []string{
+	"users/3816576959", // chops-weetbix@appspot.gserviceaccount.com
 	"users/4149141945", // chops-weetbix-dev@appspot.gserviceaccount.com
 }
+
+// ChromiumDefaultAssignee is the default issue assignee for chromium.
+// This should be deleted in future when auto-assignment is implemented.
+const ChromiumDefaultAssignee = "users/2581171748" // mwarton@chromium.org
 
 // VerifiedStatus is that status of bugs that have been fixed and verified.
 const VerifiedStatus = "Verified"
@@ -96,6 +101,10 @@ func (g *Generator) PrepareNew(description *clustering.ClusterDescription) *mpb.
 			Field: fmt.Sprintf("projects/%s/fieldDefs/%v", g.monorailCfg.Project, fv.FieldId),
 			Value: fv.Value,
 		})
+	}
+	if g.monorailCfg.Project == "chromium" {
+		// mwarton@chromium.org in both prod and staging monorail.
+		issue.Owner = &mpb.Issue_UserValue{User: ChromiumDefaultAssignee}
 	}
 
 	return &mpb.MakeIssueRequest{

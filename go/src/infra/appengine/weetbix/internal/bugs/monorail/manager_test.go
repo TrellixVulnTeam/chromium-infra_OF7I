@@ -64,6 +64,7 @@ func TestManager(t *testing.T) {
 					Name:     "projects/chromium/issues/100",
 					Summary:  "Tests are failing: Expected equality of these values: \"Expected_Value\" my_expr.evaluate(123) Which is: \"Unexpected_Value\"",
 					Reporter: AutomationUsers[0],
+					Owner:    &mpb.Issue_UserValue{User: ChromiumDefaultAssignee},
 					State:    mpb.IssueContentState_ACTIVE,
 					Status:   &mpb.Issue_StatusValue{Status: "Untriaged"},
 					FieldValues: []*mpb.FieldValue{
@@ -105,6 +106,7 @@ func TestManager(t *testing.T) {
 					Name:     "projects/chromium/issues/100",
 					Summary:  "Tests are failing: ninja://:blink_web_tests/media/my-suite/my-test.html",
 					Reporter: AutomationUsers[0],
+					Owner:    &mpb.Issue_UserValue{User: ChromiumDefaultAssignee},
 					State:    mpb.IssueContentState_ACTIVE,
 					Status:   &mpb.Issue_StatusValue{Status: "Untriaged"},
 					FieldValues: []*mpb.FieldValue{
@@ -354,6 +356,12 @@ func TestManager(t *testing.T) {
 							updateDoesNothing()
 						})
 						Convey("Issue has no owner", func() {
+							// Remove owner.
+							updateReq := updateOwnerRequest(f.Issues[0].Issue.Name, "")
+							err = usercl.ModifyIssues(ctx, updateReq)
+							So(err, ShouldBeNil)
+							So(f.Issues[0].Issue.Owner.GetUser(), ShouldEqual, "")
+
 							// Issue should return to "Untriaged" status.
 							err := bm.Update(ctx, bugsToUpdate)
 							So(err, ShouldBeNil)
@@ -367,8 +375,8 @@ func TestManager(t *testing.T) {
 								"- Test Runs Failed (1-day) < 9, and\n" +
 								"- Test Results Failed (1-day) < 90\n" +
 								"Weetbix has decreased the bug priority from 2 to 3."
-							So(f.Issues[0].Comments, ShouldHaveLength, 4)
-							So(f.Issues[0].Comments[3].Content, ShouldEqual, expectedComment)
+							So(f.Issues[0].Comments, ShouldHaveLength, 5)
+							So(f.Issues[0].Comments[4].Content, ShouldEqual, expectedComment)
 
 							// Verify repeated update has no effect.
 							updateDoesNothing()
