@@ -9,7 +9,6 @@ const webpack = require('webpack');
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
 
 const config = {
@@ -33,37 +32,27 @@ const config = {
     }),
     new HtmlWebpackPlugin({
       chunks: ['mr-app'],
+      inject: false,
       template: 'static_src/webpacked-scripts-template.html',
       filename: '../../templates/webpack-out/mr-app.ezt',
     }),
     new HtmlWebpackPlugin({
       chunks: ['mr-profile-page'],
+      inject: false,
       template: 'static_src/webpacked-scripts-template.html',
       filename: '../../templates/webpack-out/mr-profile-page.ezt',
     }),
     new HtmlWebpackPlugin({
       chunks: ['ezt-element-package'],
+      inject: false,
       template: 'static_src/webpacked-scripts-template.html',
       filename: '../../templates/webpack-out/ezt-element-package.ezt',
     }),
     new HtmlWebpackPlugin({
       chunks: ['ezt-footer-scripts-package'],
+      inject: false,
       template: 'static_src/webpacked-scripts-template.html',
       filename: '../../templates/webpack-out/ezt-footer-scripts-package.ezt',
-    }),
-    new ScriptExtHtmlWebpackPlugin({
-      custom: [
-        {
-          test: /\.js$/,
-          attribute: 'nonce',
-          value: '[nonce]',
-        },
-        {
-          test: /\.js$/,
-          attribute: 'type',
-          value: 'module',
-        },
-      ],
     }),
   ],
   module: {
