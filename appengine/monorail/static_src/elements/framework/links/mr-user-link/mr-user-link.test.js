@@ -139,7 +139,7 @@ describe('mr-user-link', () => {
     await element.updateComplete;
     getElements();
 
-    assert.isTrue(availabilityIcon.classList.contains("inline-icon-unseen"));
+    assert.isFalse(availabilityIcon.classList.contains("inline-icon-unseen"));
   });
 
   it('show availability user visited', async () => {

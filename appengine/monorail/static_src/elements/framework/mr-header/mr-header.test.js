@@ -84,9 +84,7 @@ describe('mr-header', () => {
       element.presentationConfig = {customIssueEntryUrl: 'https://issue.wizard'};
       element.userProjects = {ownerOf: ['not-proj']};
       element.userDisplayName = 'test@example.com';
-      assert.equal(element.issueEntryUrl,
-          'https://issue.wizard?token=token1&role=&' +
-          'continue=http://localhost/p/proj/issues/entry.do');
+      assert.equal(element.issueEntryUrl, '/p/proj/issues/wizard');
     });
 
     it('uses default issue filing URL when user is not logged in', () => {

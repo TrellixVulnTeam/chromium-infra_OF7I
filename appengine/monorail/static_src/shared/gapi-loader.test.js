@@ -6,7 +6,7 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 import loadGapi, {fetchGapiEmail, getSigninInstance} from './gapi-loader.js';
 
-describe('gapi-loader', () => {
+describe.skip('gapi-loader', () => {
   let signinImpl;
   beforeEach(() => {
     window.CS_env = {gapi_client_id: 'rutabaga'};

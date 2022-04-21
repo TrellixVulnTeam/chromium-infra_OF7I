@@ -18,7 +18,7 @@ describe('DotMobileStepper', () => {
 
     // this is checking the buttons for the stepper rendered
       const count = document.querySelectorAll('button').length;
-      assert.equal(count, 2)
+      assert.equal(count, 1)
   });
 
   it('back button not avlialbe on first step', () => {

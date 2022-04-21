@@ -7,7 +7,7 @@ import {assert} from 'chai';
 import {cleanup, render} from '@testing-library/react';
 import {ConfirmBackModal} from 'react/issue-wizard/ConfirmBackModal.tsx';
 
-describe.only('IssueWizard confirm back modal', () => {
+describe('IssueWizard confirm back modal', () => {
 
   afterEach(cleanup);
 

@@ -4,11 +4,12 @@
 
 import React from 'react';
 import {assert} from 'chai';
-import {render} from '@testing-library/react';
+import {render, cleanup} from '@testing-library/react';
 import CustomQuestionsStep from 'react/issue-wizard/CustomQuestionsStep.tsx';
 import {CustomQuestionType} from 'react/issue-wizard/IssueWizardTypes.tsx';
 
 describe('IssueWizard CustomQuestionsStep', () => {
+  afterEach(cleanup);
   it('renders', async () => {
     render(<CustomQuestionsStep questions={[]}/>);
     const stepper = document.getElementById("mobile-stepper")

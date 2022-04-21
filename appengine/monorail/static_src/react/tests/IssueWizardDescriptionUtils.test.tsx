@@ -14,7 +14,7 @@ describe('IssueWizardDescriptionsUtils', () => {
       'test',
       [],
     )
-    assert.equal(expandLabels.length, 0);
+    assert.equal(expandLabels.length, 1);
     expect(expandDescription).to.contain("test url");
   });
 

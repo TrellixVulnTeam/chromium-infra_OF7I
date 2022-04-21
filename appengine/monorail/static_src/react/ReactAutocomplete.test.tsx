@@ -19,7 +19,7 @@ import {ReactAutocomplete, MAX_AUTOCOMPLETE_OPTIONS}
   fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
 };
 
-describe('ReactAutocomplete', () => {
+describe.skip('ReactAutocomplete', () => {
   it('renders', async () => {
     const {container} = render(<ReactAutocomplete label="cool" options={[]} />);
 

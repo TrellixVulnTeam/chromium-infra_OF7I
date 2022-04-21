@@ -25,7 +25,7 @@ describe('DetailsStep', () => {
 
     // this is checking for the rest
     const count = document.querySelectorAll('textarea').length;
-    assert.equal(count, 2)
+    assert.equal(count, 4)
   });
 
   it('renders category in title', async () => {
