@@ -3,16 +3,18 @@
 // found in the LICENSE file.
 
 import React from 'react';
-import { AssetList } from './features/asset/AssetList';
 import './App.css';
+import { BrowserRouter } from 'react-router-dom';
+
+import SideDrawerWithAppBar from './features/utility/App.Bar';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <AssetList />
-      </header>
-    </div>
+    <BrowserRouter>
+      <div className="App">
+        <SideDrawerWithAppBar />
+      </div>
+    </BrowserRouter>
   );
 }
 
