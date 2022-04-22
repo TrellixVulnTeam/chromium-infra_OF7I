@@ -28,7 +28,6 @@ import (
 	"strings"
 
 	"go.chromium.org/luci/appengine/gaemiddleware"
-	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/router"
 
@@ -50,9 +49,6 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	// Import config.cfg from LUCI Config.
 	r.GET("/internal/cron/import-service-config", mwCron, logAndSetHTTPErr(importServiceConfig))
 
-	r.GET("/internal/cron/refresh-inventory", mwCron, logAndSetHTTPErr(refreshInventoryCronHandler))
-	r.GET("/internal/cron/balance-pools", mwCron, logAndSetHTTPErr(balancePoolCronHandler))
-
 	// Generate repair jobs for needs_repair CrOS DUTs.
 	r.GET("/internal/cron/push-bots-for-admin-tasks", mwCron, logAndSetHTTPErr(pushBotsForAdminTasksHandler(fleet.DutState_NeedsRepair)))
 
@@ -73,11 +69,6 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 
 	// Generate audit-rpm jobs for CrOS DUTs.
 	r.GET("/internal/cron/push-admin-audit-rpm-tasks-for-duts", mwCron, logAndSetHTTPErr(pushAdminAuditActionHandler(fleet.AuditTask_RPMConfig)))
-
-	// Report Bot metrics.
-	r.GET("/internal/cron/report-bots", mwCron, logAndSetHTTPErr(reportBotsCronHandler))
-	// Report inventory metrics
-	r.GET("/internal/cron/report-inventory", mwCron, logAndSetHTTPErr(reportInventoryCronHandler))
 
 	// dump information from stable version file to datastore
 	r.GET("/internal/cron/dump-stable-version-to-datastore", mwCron, logAndSetHTTPErr(dumpStableVersionToDatastoreHandler))
@@ -177,78 +168,12 @@ func pushAdminAuditJobsCronHandler(c *router.Context, auditTask fleet.AuditTask)
 	return nil
 }
 
-func reportBotsCronHandler(c *router.Context) (err error) {
-	defer func() {
-		reportBotsCronHandlerTick.Add(c.Context, 1, err == nil)
-	}()
-
-	tsi := frontend.TrackerServerImpl{}
-	if _, err := tsi.ReportBots(c.Context, &fleet.ReportBotsRequest{}); err != nil {
-		return err
-	}
-	logging.Infof(c.Context, "Successfully report bot metrics")
-	return nil
-}
-
-func reportInventoryCronHandler(c *router.Context) (err error) {
-	defer func() {
-		reportInventoryCronHandlerTick.Add(c.Context, 1, err == nil)
-	}()
-
-	inv := createInventoryServer(c)
-	cfg := config.Get(c.Context)
-	_, err = inv.ReportInventory(c.Context, &fleet.ReportInventoryRequest{
-		SkipInventoryMetrics: cfg.GetInventoryProvider().GetInventoryV2Only(),
-	})
-	return err
-}
-
 func logAndSetHTTPErr(f func(c *router.Context) error) func(*router.Context) {
 	return func(c *router.Context) {
 		if err := f(c); err != nil {
 			http.Error(c.Writer, "Internal server error", http.StatusInternalServerError)
 		}
 	}
-}
-
-func refreshInventoryCronHandler(c *router.Context) error {
-	cfg := config.Get(c.Context)
-	if cfg.RpcControl != nil && cfg.RpcControl.GetDisableRefreshInventory() {
-		return nil
-	}
-	inv := createInventoryServer(c)
-	_, err := inv.UpdateCachedInventory(c.Context, &fleet.UpdateCachedInventoryRequest{})
-	return err
-}
-
-func balancePoolCronHandler(c *router.Context) (err error) {
-	cronCfg := config.Get(c.Context)
-	if cronCfg.RpcControl.DisableEnsureCriticalPoolsHealthy {
-		logging.Infof(c.Context, "EnsureCriticalPoolsHealthy is disabled via config.")
-		return nil
-	}
-
-	cfg := config.Get(c.Context).GetCron().GetPoolBalancer()
-	if cfg == nil {
-		return errors.New("invalid pool balancer configuration")
-	}
-
-	inv := createInventoryServer(c)
-	merr := make(errors.MultiError, 0)
-	for _, target := range cfg.GetTargetPools() {
-		resp, err := inv.BalancePools(c.Context, &fleet.BalancePoolsRequest{
-			TargetPool:       target,
-			SparePool:        cfg.GetSparePool(),
-			MaxUnhealthyDuts: cfg.GetMaxUnhealthyDuts(),
-		})
-		if err != nil {
-			logging.Errorf(c.Context, "Error in balancing pool for %s: %s", target, err.Error())
-			merr = append(merr, errors.Annotate(err, "ensure critical pools healthy for pool %s", target).Err())
-			continue
-		}
-		logging.Infof(c.Context, "Successfully balanced pool for target pool %s. Inventory change: %s", target, resp.GetGeneratedChangeUrl())
-	}
-	return merr.First()
 }
 
 func createInventoryServer(c *router.Context) *inventory.ServerImpl {
