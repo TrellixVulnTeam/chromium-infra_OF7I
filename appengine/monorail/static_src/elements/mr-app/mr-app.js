@@ -31,6 +31,7 @@ import 'elements/chops/chops-snackbar/chops-snackbar.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 
 const QUERY_PARAMS_THAT_RESET_SCROLL = ['q', 'mode', 'id'];
+const GOOGLE_EMAIL_SUFFIX = '@google.com';
 
 /**
  * `<mr-app>`
@@ -258,6 +259,8 @@ export class MrApp extends connectStore(LitElement) {
   connectedCallback() {
     super.connectedCallback();
 
+    this._logGooglerUsage();
+
     // TODO(zhangtiff): Figure out some way to save Redux state between
     // page loads.
 
@@ -310,6 +313,20 @@ export class MrApp extends connectStore(LitElement) {
     page('/users/:user/hotlists/:hotlist/details', hotlistRedirect('settings'));
 
     page();
+  }
+
+  /**
+   * Helper to log how often Googlers access Monorail.
+   */
+  _logGooglerUsage() {
+    const email = this.userDisplayName;
+    if (!email) return;
+    if (!email.endsWith(GOOGLE_EMAIL_SUFFIX)) return;
+
+    const username = email.replace(GOOGLE_EMAIL_SUFFIX, '');
+
+    // Context: b/229758140
+    window.fetch(`https://buganizer.corp.google.com/action/yes?monorail=yes&username=${username}`);
   }
 
   /**
