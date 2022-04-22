@@ -283,7 +283,7 @@ class Builder(ndb.Model):
     return False
 
   # Binary config content.
-  config = datastore_utils.ProtobufProperty(project_config_pb2.Builder)
+  config = datastore_utils.ProtobufProperty(project_config_pb2.BuilderConfig)
   # Hash used for fast deduplication of configs. Set automatically on put.
   config_hash = ndb.StringProperty(required=True)
 
@@ -611,7 +611,7 @@ def builder_matches(builder_id_msg, predicate):
   """Returns True iff builder_id_msg matches the predicate.
 
   Args:
-    * builder_id_msg (builder_pb2.BuilderID)
+    * builder_id_msg (builder_common_pb2.BuilderID)
     * predicate (service_config_pb2.BuilderPredicate)
   """
   builder_str = builder_id_string(builder_id_msg)

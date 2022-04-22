@@ -5,7 +5,7 @@
 import logging
 
 from go.chromium.org.luci.buildbucket.proto import common_pb2
-from go.chromium.org.luci.buildbucket.proto.builder_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto.builder_common_pb2 import BuilderID
 from google.protobuf.field_mask_pb2 import FieldMask
 
 from common import constants

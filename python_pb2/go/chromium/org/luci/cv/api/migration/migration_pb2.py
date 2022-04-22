@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
-from go.chromium.org.luci.buildbucket.proto import builder_pb2 as go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__pb2
+from go.chromium.org.luci.buildbucket.proto import builder_common_pb2 as go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__common__pb2
 from go.chromium.org.luci.common.proto.gerrit import gerrit_pb2 as go_dot_chromium_dot_org_dot_luci_dot_common_dot_proto_dot_gerrit_dot_gerrit__pb2
 from go.chromium.org.luci.cv.api.bigquery.v1 import attempt_pb2 as go_dot_chromium_dot_org_dot_luci_dot_cv_dot_api_dot_bigquery_dot_v1_dot_attempt__pb2
 
@@ -25,9 +25,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z1go.chromium.org/luci/cv/api/migration;migrationpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n5go.chromium.org/luci/cv/api/migration/migration.proto\x12\tmigration\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x34go.chromium.org/luci/buildbucket/proto/builder.proto\x1a\x35go.chromium.org/luci/common/proto/gerrit/gerrit.proto\x1a\x35go.chromium.org/luci/cv/api/bigquery/v1/attempt.proto\"\x88\x02\n\x18ReportVerifiedRunRequest\x12#\n\x03run\x18\x01 \x01(\x0b\x32\x16.migration.ReportedRun\x12:\n\x06\x61\x63tion\x18\x0b \x01(\x0e\x32*.migration.ReportVerifiedRunRequest.Action\x12\x15\n\rfinal_message\x18\x0c \x01(\t\x12\x17\n\x0f\x66\x61iled_verifier\x18\r \x01(\t\"[\n\x06\x41\x63tion\x12\x16\n\x12\x41\x43TION_UNSPECIFIED\x10\x00\x12\x11\n\rACTION_SUBMIT\x10\x01\x12\x15\n\x11\x41\x43TION_DRY_RUN_OK\x10\x02\x12\x0f\n\x0b\x41\x43TION_FAIL\x10\x03\"=\n\x0bReportedRun\x12\n\n\x02id\x18\x02 \x01(\t\x12\"\n\x07\x61ttempt\x18\x01 \x01(\x0b\x32\x11.bigquery.Attempt\"\xa5\x01\n\x18PostGerritMessageRequest\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x13\n\x0b\x61ttempt_key\x18\x03 \x01(\t\x12\x0c\n\x04host\x18\x0b \x01(\t\x12\x0e\n\x06\x63hange\x18\x0c \x01(\x03\x12\x10\n\x08revision\x18\x0f \x01(\t\x12\x0f\n\x07\x63omment\x18\r \x01(\t\x12\x12\n\nsend_email\x18\x0e \x01(\x08\"\x1b\n\x19PostGerritMessageResponse\"C\n\x16ReportUsedNetrcRequest\x12\x13\n\x0bgerrit_host\x18\x01 \x01(\t\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x02 \x01(\t\".\n\x16\x46\x65tchActiveRunsRequest\x12\x14\n\x0cluci_project\x18\x01 \x01(\t\"D\n\x17\x46\x65tchActiveRunsResponse\x12)\n\x0b\x61\x63tive_runs\x18\x02 \x03(\x0b\x32\x14.migration.ActiveRun\"Z\n\tActiveRun\x12\n\n\x02id\x18\x01 \x01(\t\x12\x1d\n\x03\x63ls\x18\x02 \x03(\x0b\x32\x10.migration.RunCL\x12\"\n\x08\x66yi_deps\x18\x03 \x03(\x0b\x32\x10.migration.RunCL\"\xb0\x02\n\x05RunCL\x12\n\n\x02id\x18\x01 \x01(\x03\x12\"\n\x02gc\x18\x02 \x01(\x0b\x32\x16.bigquery.GerritChange\x12 \n\x04info\x18\x03 \x01(\x0b\x32\x12.gerrit.ChangeInfo\x12\r\n\x05\x66iles\x18\x04 \x03(\t\x12)\n\x07trigger\x18\x05 \x01(\x0b\x32\x18.migration.RunCL.Trigger\x12\"\n\x04\x64\x65ps\x18\x06 \x03(\x0b\x32\x14.migration.RunCL.Dep\x1aV\n\x07Trigger\x12(\n\x04time\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x12\n\naccount_id\x18\x03 \x01(\x03\x12\r\n\x05\x65mail\x18\x04 \x01(\t\x1a\x1f\n\x03\x44\x65p\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x0c\n\x04hard\x18\x02 \x01(\x08\"Q\n\x15\x46\x65tchRunStatusRequest\x12\x14\n\x0cluci_project\x18\x01 \x01(\t\x12\r\n\x05\x63v_id\x18\x02 \x01(\t\x12\x13\n\x0b\x61ttempt_key\x18\x03 \x01(\t\"6\n\x16\x46\x65tchRunStatusResponse\x12\r\n\x05\x65vent\x18\x01 \x01(\t\x12\r\n\x05\x65xtra\x18\x02 \x01(\t\"c\n\x14ReportTryjobsRequest\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\"\n\x07tryjobs\x18\x02 \x03(\x0b\x32\x11.migration.Tryjob\x12\x17\n\x0f\x63onfig_revision\x18\x03 \x01(\t\"\xae\x01\n\x06Tryjob\x12\x1e\n\x05\x62uild\x18\x01 \x01(\x0b\x32\x0f.bigquery.Build\x12\'\n\x06status\x18\x02 \x01(\x0e\x32\x17.migration.TryjobStatus\x12/\n\x0b\x63reate_time\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12*\n\x07\x62uilder\x18\x04 \x01(\x0b\x32\x19.buildbucket.v2.BuilderID*\x84\x01\n\x0cTryjobStatus\x12\x1d\n\x19TRYJOB_STATUS_UNSPECIFIED\x10\x00\x12\x11\n\rNOT_TRIGGERED\x10\x01\x12\x0b\n\x07PENDING\x10\x02\x12\x0b\n\x07RUNNING\x10\x03\x12\r\n\tSUCCEEDED\x10\x04\x12\n\n\x06\x46\x41ILED\x10\x05\x12\r\n\tTIMED_OUT\x10\x06\x32\x86\x04\n\tMigration\x12P\n\x11ReportVerifiedRun\x12#.migration.ReportVerifiedRunRequest\x1a\x16.google.protobuf.Empty\x12U\n\x0e\x46\x65tchRunStatus\x12 .migration.FetchRunStatusRequest\x1a!.migration.FetchRunStatusResponse\x12^\n\x11PostGerritMessage\x12#.migration.PostGerritMessageRequest\x1a$.migration.PostGerritMessageResponse\x12X\n\x0f\x46\x65tchActiveRuns\x12!.migration.FetchActiveRunsRequest\x1a\".migration.FetchActiveRunsResponse\x12L\n\x0fReportUsedNetrc\x12!.migration.ReportUsedNetrcRequest\x1a\x16.google.protobuf.Empty\x12H\n\rReportTryjobs\x12\x1f.migration.ReportTryjobsRequest\x1a\x16.google.protobuf.EmptyB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
+  serialized_pb=b'\n5go.chromium.org/luci/cv/api/migration/migration.proto\x12\tmigration\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a;go.chromium.org/luci/buildbucket/proto/builder_common.proto\x1a\x35go.chromium.org/luci/common/proto/gerrit/gerrit.proto\x1a\x35go.chromium.org/luci/cv/api/bigquery/v1/attempt.proto\"\x88\x02\n\x18ReportVerifiedRunRequest\x12#\n\x03run\x18\x01 \x01(\x0b\x32\x16.migration.ReportedRun\x12:\n\x06\x61\x63tion\x18\x0b \x01(\x0e\x32*.migration.ReportVerifiedRunRequest.Action\x12\x15\n\rfinal_message\x18\x0c \x01(\t\x12\x17\n\x0f\x66\x61iled_verifier\x18\r \x01(\t\"[\n\x06\x41\x63tion\x12\x16\n\x12\x41\x43TION_UNSPECIFIED\x10\x00\x12\x11\n\rACTION_SUBMIT\x10\x01\x12\x15\n\x11\x41\x43TION_DRY_RUN_OK\x10\x02\x12\x0f\n\x0b\x41\x43TION_FAIL\x10\x03\"=\n\x0bReportedRun\x12\n\n\x02id\x18\x02 \x01(\t\x12\"\n\x07\x61ttempt\x18\x01 \x01(\x0b\x32\x11.bigquery.Attempt\"\xa5\x01\n\x18PostGerritMessageRequest\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x13\n\x0b\x61ttempt_key\x18\x03 \x01(\t\x12\x0c\n\x04host\x18\x0b \x01(\t\x12\x0e\n\x06\x63hange\x18\x0c \x01(\x03\x12\x10\n\x08revision\x18\x0f \x01(\t\x12\x0f\n\x07\x63omment\x18\r \x01(\t\x12\x12\n\nsend_email\x18\x0e \x01(\x08\"\x1b\n\x19PostGerritMessageResponse\"C\n\x16ReportUsedNetrcRequest\x12\x13\n\x0bgerrit_host\x18\x01 \x01(\t\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x02 \x01(\t\".\n\x16\x46\x65tchActiveRunsRequest\x12\x14\n\x0cluci_project\x18\x01 \x01(\t\"D\n\x17\x46\x65tchActiveRunsResponse\x12)\n\x0b\x61\x63tive_runs\x18\x02 \x03(\x0b\x32\x14.migration.ActiveRun\"Z\n\tActiveRun\x12\n\n\x02id\x18\x01 \x01(\t\x12\x1d\n\x03\x63ls\x18\x02 \x03(\x0b\x32\x10.migration.RunCL\x12\"\n\x08\x66yi_deps\x18\x03 \x03(\x0b\x32\x10.migration.RunCL\"\xb0\x02\n\x05RunCL\x12\n\n\x02id\x18\x01 \x01(\x03\x12\"\n\x02gc\x18\x02 \x01(\x0b\x32\x16.bigquery.GerritChange\x12 \n\x04info\x18\x03 \x01(\x0b\x32\x12.gerrit.ChangeInfo\x12\r\n\x05\x66iles\x18\x04 \x03(\t\x12)\n\x07trigger\x18\x05 \x01(\x0b\x32\x18.migration.RunCL.Trigger\x12\"\n\x04\x64\x65ps\x18\x06 \x03(\x0b\x32\x14.migration.RunCL.Dep\x1aV\n\x07Trigger\x12(\n\x04time\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x12\n\naccount_id\x18\x03 \x01(\x03\x12\r\n\x05\x65mail\x18\x04 \x01(\t\x1a\x1f\n\x03\x44\x65p\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x0c\n\x04hard\x18\x02 \x01(\x08\"Q\n\x15\x46\x65tchRunStatusRequest\x12\x14\n\x0cluci_project\x18\x01 \x01(\t\x12\r\n\x05\x63v_id\x18\x02 \x01(\t\x12\x13\n\x0b\x61ttempt_key\x18\x03 \x01(\t\"6\n\x16\x46\x65tchRunStatusResponse\x12\r\n\x05\x65vent\x18\x01 \x01(\t\x12\r\n\x05\x65xtra\x18\x02 \x01(\t\"c\n\x14ReportTryjobsRequest\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\"\n\x07tryjobs\x18\x02 \x03(\x0b\x32\x11.migration.Tryjob\x12\x17\n\x0f\x63onfig_revision\x18\x03 \x01(\t\"\xae\x01\n\x06Tryjob\x12\x1e\n\x05\x62uild\x18\x01 \x01(\x0b\x32\x0f.bigquery.Build\x12\'\n\x06status\x18\x02 \x01(\x0e\x32\x17.migration.TryjobStatus\x12/\n\x0b\x63reate_time\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12*\n\x07\x62uilder\x18\x04 \x01(\x0b\x32\x19.buildbucket.v2.BuilderID*\x84\x01\n\x0cTryjobStatus\x12\x1d\n\x19TRYJOB_STATUS_UNSPECIFIED\x10\x00\x12\x11\n\rNOT_TRIGGERED\x10\x01\x12\x0b\n\x07PENDING\x10\x02\x12\x0b\n\x07RUNNING\x10\x03\x12\r\n\tSUCCEEDED\x10\x04\x12\n\n\x06\x46\x41ILED\x10\x05\x12\r\n\tTIMED_OUT\x10\x06\x32\x86\x04\n\tMigration\x12P\n\x11ReportVerifiedRun\x12#.migration.ReportVerifiedRunRequest\x1a\x16.google.protobuf.Empty\x12U\n\x0e\x46\x65tchRunStatus\x12 .migration.FetchRunStatusRequest\x1a!.migration.FetchRunStatusResponse\x12^\n\x11PostGerritMessage\x12#.migration.PostGerritMessageRequest\x1a$.migration.PostGerritMessageResponse\x12X\n\x0f\x46\x65tchActiveRuns\x12!.migration.FetchActiveRunsRequest\x1a\".migration.FetchActiveRunsResponse\x12L\n\x0fReportUsedNetrc\x12!.migration.ReportUsedNetrcRequest\x1a\x16.google.protobuf.Empty\x12H\n\rReportTryjobs\x12\x1f.migration.ReportTryjobsRequest\x1a\x16.google.protobuf.EmptyB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
   ,
-  dependencies=[google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_common_dot_proto_dot_gerrit_dot_gerrit__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_cv_dot_api_dot_bigquery_dot_v1_dot_attempt__pb2.DESCRIPTOR,])
+  dependencies=[google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__common__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_common_dot_proto_dot_gerrit_dot_gerrit__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_cv_dot_api_dot_bigquery_dot_v1_dot_attempt__pb2.DESCRIPTOR,])
 
 _TRYJOBSTATUS = _descriptor.EnumDescriptor(
   name='TryjobStatus',
@@ -74,8 +74,8 @@ _TRYJOBSTATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1825,
-  serialized_end=1957,
+  serialized_start=1832,
+  serialized_end=1964,
 )
 _sym_db.RegisterEnumDescriptor(_TRYJOBSTATUS)
 
@@ -119,8 +119,8 @@ _REPORTVERIFIEDRUNREQUEST_ACTION = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=468,
-  serialized_end=559,
+  serialized_start=475,
+  serialized_end=566,
 )
 _sym_db.RegisterEnumDescriptor(_REPORTVERIFIEDRUNREQUEST_ACTION)
 
@@ -174,8 +174,8 @@ _REPORTVERIFIEDRUNREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=295,
-  serialized_end=559,
+  serialized_start=302,
+  serialized_end=566,
 )
 
 
@@ -213,8 +213,8 @@ _REPORTEDRUN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=561,
-  serialized_end=622,
+  serialized_start=568,
+  serialized_end=629,
 )
 
 
@@ -294,8 +294,8 @@ _POSTGERRITMESSAGEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=625,
-  serialized_end=790,
+  serialized_start=632,
+  serialized_end=797,
 )
 
 
@@ -319,8 +319,8 @@ _POSTGERRITMESSAGERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=792,
-  serialized_end=819,
+  serialized_start=799,
+  serialized_end=826,
 )
 
 
@@ -358,8 +358,8 @@ _REPORTUSEDNETRCREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=821,
-  serialized_end=888,
+  serialized_start=828,
+  serialized_end=895,
 )
 
 
@@ -390,8 +390,8 @@ _FETCHACTIVERUNSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=890,
-  serialized_end=936,
+  serialized_start=897,
+  serialized_end=943,
 )
 
 
@@ -422,8 +422,8 @@ _FETCHACTIVERUNSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=938,
-  serialized_end=1006,
+  serialized_start=945,
+  serialized_end=1013,
 )
 
 
@@ -468,8 +468,8 @@ _ACTIVERUN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1008,
-  serialized_end=1098,
+  serialized_start=1015,
+  serialized_end=1105,
 )
 
 
@@ -514,8 +514,8 @@ _RUNCL_TRIGGER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1286,
-  serialized_end=1372,
+  serialized_start=1293,
+  serialized_end=1379,
 )
 
 _RUNCL_DEP = _descriptor.Descriptor(
@@ -552,8 +552,8 @@ _RUNCL_DEP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1374,
-  serialized_end=1405,
+  serialized_start=1381,
+  serialized_end=1412,
 )
 
 _RUNCL = _descriptor.Descriptor(
@@ -618,8 +618,8 @@ _RUNCL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1101,
-  serialized_end=1405,
+  serialized_start=1108,
+  serialized_end=1412,
 )
 
 
@@ -664,8 +664,8 @@ _FETCHRUNSTATUSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1407,
-  serialized_end=1488,
+  serialized_start=1414,
+  serialized_end=1495,
 )
 
 
@@ -703,8 +703,8 @@ _FETCHRUNSTATUSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1490,
-  serialized_end=1544,
+  serialized_start=1497,
+  serialized_end=1551,
 )
 
 
@@ -749,8 +749,8 @@ _REPORTTRYJOBSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1546,
-  serialized_end=1645,
+  serialized_start=1553,
+  serialized_end=1652,
 )
 
 
@@ -802,8 +802,8 @@ _TRYJOB = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1648,
-  serialized_end=1822,
+  serialized_start=1655,
+  serialized_end=1829,
 )
 
 _REPORTVERIFIEDRUNREQUEST.fields_by_name['run'].message_type = _REPORTEDRUN
@@ -824,7 +824,7 @@ _REPORTTRYJOBSREQUEST.fields_by_name['tryjobs'].message_type = _TRYJOB
 _TRYJOB.fields_by_name['build'].message_type = go_dot_chromium_dot_org_dot_luci_dot_cv_dot_api_dot_bigquery_dot_v1_dot_attempt__pb2._BUILD
 _TRYJOB.fields_by_name['status'].enum_type = _TRYJOBSTATUS
 _TRYJOB.fields_by_name['create_time'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
-_TRYJOB.fields_by_name['builder'].message_type = go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__pb2._BUILDERID
+_TRYJOB.fields_by_name['builder'].message_type = go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__common__pb2._BUILDERID
 DESCRIPTOR.message_types_by_name['ReportVerifiedRunRequest'] = _REPORTVERIFIEDRUNREQUEST
 DESCRIPTOR.message_types_by_name['ReportedRun'] = _REPORTEDRUN
 DESCRIPTOR.message_types_by_name['PostGerritMessageRequest'] = _POSTGERRITMESSAGEREQUEST
@@ -958,8 +958,8 @@ _MIGRATION = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=1960,
-  serialized_end=2478,
+  serialized_start=1967,
+  serialized_end=2485,
   methods=[
   _descriptor.MethodDescriptor(
     name='ReportVerifiedRun',

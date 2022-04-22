@@ -29,7 +29,7 @@ import webapp2
 
 from legacy import api_common
 from go.chromium.org.luci.buildbucket.proto import build_pb2
-from go.chromium.org.luci.buildbucket.proto import builder_pb2
+from go.chromium.org.luci.buildbucket.proto import builder_common_pb2
 from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto import launcher_pb2
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
@@ -505,7 +505,7 @@ class TaskDefTest(BaseTest):
         scheduling_timeout=dict(seconds=3600),
         execution_timeout=dict(seconds=3600),
         grace_period=dict(seconds=45),
-        builder=builder_pb2.BuilderID(
+        builder=builder_common_pb2.BuilderID(
             project='chromium', bucket='try', builder='linux'
         ),
         exe=dict(
@@ -695,7 +695,7 @@ class TaskDefTest(BaseTest):
 
   def test_legacy_kitchen(self):
     build = self._test_build(
-        builder=builder_pb2.BuilderID(
+        builder=builder_common_pb2.BuilderID(
             project='chromium', bucket='try', builder='linux_kitchen'
         ),
     )

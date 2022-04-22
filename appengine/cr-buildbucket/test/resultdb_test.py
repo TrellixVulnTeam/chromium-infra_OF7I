@@ -30,8 +30,8 @@ import tq
 
 
 def _make_builder_cfg():
-  return project_config_pb2.Builder(
-      resultdb=project_config_pb2.Builder.ResultDB(
+  return project_config_pb2.BuilderConfig(
+      resultdb=project_config_pb2.BuilderConfig.ResultDB(
           bq_exports=[
               invocation_pb2.BigQueryExport(
                   project='luci-resultdb',

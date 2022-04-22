@@ -518,7 +518,7 @@ class ProjectCfgTest(testing.AppengineTestCase):
   def test_validate_resultdb(self):
 
     def test(resultdb_text, expected_error):
-      resultdb = project_config_pb2.Builder.ResultDB()
+      resultdb = project_config_pb2.BuilderConfig.ResultDB()
       protobuf.text_format.Merge(resultdb_text, resultdb)
       ctx = config_component.validation.Context()
       swarmingcfg._validate_resultdb(resultdb, ctx)

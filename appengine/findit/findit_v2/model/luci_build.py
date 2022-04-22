@@ -9,7 +9,7 @@ builds. And also to differentiate from the data models in v1.
 
 from google.appengine.ext import ndb
 
-from go.chromium.org.luci.buildbucket.proto.builder_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto.builder_common_pb2 import BuilderID
 
 from findit_v2.model.gitiles_commit import GitilesCommit
 from services import git

@@ -79,7 +79,7 @@ def validate_tags(string_pairs, mode):
 
 
 def validate_builder_id(builder_id):
-  """Validates builder_pb2.BuilderID."""
+  """Validates builder_common_pb2.BuilderID."""
   _check_truth(builder_id, 'project')
   _check_truth(builder_id, 'bucket')
 

@@ -96,7 +96,7 @@ def generate_async(seq_name, count):
 def builder_seq_name(builder_id):  # pragma: no cover
   """Returns name of a number sequence for the builder.
 
-  builder_id must be a builder_pb2.BuilderID.
+  builder_id must be a builder_common_pb2.BuilderID.
   """
   return '%s/%s/%s' % (
       builder_id.project, builder_id.bucket, builder_id.builder

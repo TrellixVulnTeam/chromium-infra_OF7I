@@ -8,7 +8,7 @@ import textwrap
 
 from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
-from go.chromium.org.luci.buildbucket.proto.builder_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto.builder_common_pb2 import BuilderID
 
 from findit_v2.model.compile_failure import CompileFailure, CompileFailureGroup
 from findit_v2.model.culprit_action import CulpritAction

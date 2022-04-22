@@ -7,7 +7,7 @@ from datetime import timedelta
 import mock
 
 from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
-from go.chromium.org.luci.buildbucket.proto.builder_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto.builder_common_pb2 import BuilderID
 
 from findit_v2.services.context import Context
 from gae_libs.gitiles.cached_gitiles_repository import CachedGitilesRepository

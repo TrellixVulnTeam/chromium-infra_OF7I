@@ -14,7 +14,7 @@ from testing_utils import testing
 import mock
 
 from go.chromium.org.luci.buildbucket.proto import build_pb2
-from go.chromium.org.luci.buildbucket.proto import builder_pb2
+from go.chromium.org.luci.buildbucket.proto import builder_common_pb2
 from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto import builds_service_pb2 as rpc_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
@@ -217,7 +217,7 @@ class CreationTest(testing.AppengineTestCase):
     build.proto = pb
 
   def test_add(self):
-    builder_id = builder_pb2.BuilderID(
+    builder_id = builder_common_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='linux',
@@ -252,7 +252,7 @@ class CreationTest(testing.AppengineTestCase):
     self.assertEqual(build.proto.wait_for_capacity, False)
 
   def test_add_legacy(self):
-    builder_id = builder_pb2.BuilderID(
+    builder_id = builder_common_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='linux_legacy',
@@ -261,7 +261,7 @@ class CreationTest(testing.AppengineTestCase):
     self.assertEqual(build.proto.exe.cmd, ['recipes'])
 
   def test_add_linux_bbagent_opt_in(self):
-    builder_id = builder_pb2.BuilderID(
+    builder_id = builder_common_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='linux_bbagent_opt_in',
@@ -273,7 +273,7 @@ class CreationTest(testing.AppengineTestCase):
     )
 
   def test_add_wait(self):
-    builder_id = builder_pb2.BuilderID(
+    builder_id = builder_common_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='linux_wait',
@@ -282,7 +282,7 @@ class CreationTest(testing.AppengineTestCase):
     self.assertEqual(build.proto.wait_for_capacity, True)
 
   def test_add_custom_exe(self):
-    builder_id = builder_pb2.BuilderID(
+    builder_id = builder_common_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='linux_modern',
@@ -295,7 +295,7 @@ class CreationTest(testing.AppengineTestCase):
     self.assertEqual(actual, bbutil.dict_to_struct({"recipe": "something"}))
 
   def test_non_existing_builder(self):
-    builder_id = builder_pb2.BuilderID(
+    builder_id = builder_common_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='non-existing',
@@ -308,7 +308,7 @@ class CreationTest(testing.AppengineTestCase):
     config.put_bucket(
         'legacy', 'try', test_util.parse_bucket_cfg('name: "luci.legacy.try"')
     )
-    builder_id = builder_pb2.BuilderID(
+    builder_id = builder_common_pb2.BuilderID(
         project='legacy',
         bucket='try',
         builder='non-existing',
@@ -414,7 +414,7 @@ class CreationTest(testing.AppengineTestCase):
     self._test_experimental({}, True)
 
   def test_builder_config_experiments(self):
-    builder_id = builder_pb2.BuilderID(
+    builder_id = builder_common_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='mac_exp',
@@ -435,7 +435,7 @@ class CreationTest(testing.AppengineTestCase):
     )
 
   def test_schedule_build_request_experiments(self):
-    builder_id = builder_pb2.BuilderID(
+    builder_id = builder_common_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='mac_exp',
@@ -478,7 +478,7 @@ class CreationTest(testing.AppengineTestCase):
     exp.default_value = 100
     exp.builders.regex.append('notchromium/other/thing')
 
-    builder_id = builder_pb2.BuilderID(
+    builder_id = builder_common_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='mac_exp',
@@ -514,7 +514,7 @@ class CreationTest(testing.AppengineTestCase):
     exp.name = "luci.global_min"
     exp.minimum_value = 100
 
-    builder_id = builder_pb2.BuilderID(
+    builder_id = builder_common_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='mac_exp',

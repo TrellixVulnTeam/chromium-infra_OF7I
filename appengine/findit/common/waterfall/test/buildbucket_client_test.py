@@ -8,7 +8,7 @@ import json
 import mock
 
 from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
-from go.chromium.org.luci.buildbucket.proto.builder_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto.builder_common_pb2 import BuilderID
 from go.chromium.org.luci.buildbucket.proto.builds_service_pb2 import (
     SearchBuildsResponse)
 from go.chromium.org.luci.buildbucket.proto.common_pb2 import GitilesCommit

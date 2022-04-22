@@ -12,7 +12,7 @@ import re
 from parameterized import parameterized
 
 from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
-from go.chromium.org.luci.buildbucket.proto.builder_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto.builder_common_pb2 import BuilderID
 from google.appengine.api import taskqueue
 import webtest
 

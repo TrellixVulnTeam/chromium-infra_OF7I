@@ -26,13 +26,14 @@ regenerate: $(PROTOC) $(TOOLS)/protoc-gen-prpc-python
 		--proto_path $(INFRA)/go/src \
 		--proto_path $(LUCI_GO)/common/proto/googleapis \
 		$(LUCI_GO)/buildbucket/proto/*.proto \
+		$(LUCI_GO)/common/bq/pb/*.proto \
+		$(LUCI_GO)/common/proto/gerrit/gerrit.proto \
 		$(LUCI_GO)/common/proto/options.proto \
 		$(LUCI_GO)/common/proto/structmask/structmask.proto \
-		$(LUCI_GO)/common/proto/gerrit/gerrit.proto \
 		$(LUCI_GO)/cv/api/bigquery/v1/*.proto \
+		$(LUCI_GO)/cv/api/config/v2/*.proto \
 		$(LUCI_GO)/cv/api/migration/*.proto \
 		$(LUCI_GO)/cv/api/recipe/v1/*.proto \
-		$(LUCI_GO)/cv/api/config/v2/*.proto \
 		$(LUCI_GO)/resultdb/proto/v1/*.proto \
 		$(LUCI_GO)/scheduler/appengine/messages/config.proto  \
 		$(LUCI_GO)/server/auth/delegation/messages/*.proto  \

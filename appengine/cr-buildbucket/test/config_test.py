@@ -22,7 +22,7 @@ from testing_utils import testing
 import mock
 
 from go.chromium.org.luci.buildbucket.proto import build_pb2
-from go.chromium.org.luci.buildbucket.proto import builder_pb2
+from go.chromium.org.luci.buildbucket.proto import builder_common_pb2
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 from test import test_util
@@ -543,12 +543,14 @@ class ConfigTest(testing.AppengineTestCase):
 
     # Will be updated.
     config.put_builders(
-        'chromium', 'try', project_config_pb2.Builder(name='linux')
+        'chromium', 'try', project_config_pb2.BuilderConfig(name='linux')
     )
     # Will not be updated.
     config.put_builders('dart', 'try', LUCI_DART_TRY.swarming.builders[0])
     # Will be deleted.
-    config.put_builders('dart', 'try', project_config_pb2.Builder(name='linux'))
+    config.put_builders(
+        'dart', 'try', project_config_pb2.BuilderConfig(name='linux')
+    )
     # Will be deleted.
     config.put_builders(
         'chromium', 'try', LUCI_CHROMIUM_TRY.swarming.builders[0]
@@ -841,7 +843,7 @@ class BuilderMatchesTest(testing.AppengineTestCase):
     predicate = service_config_pb2.BuilderPredicate(
         regex=regex, regex_exclude=regex_exclude
     )
-    builder_id = builder_pb2.BuilderID(
+    builder_id = builder_common_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='linux-rel',

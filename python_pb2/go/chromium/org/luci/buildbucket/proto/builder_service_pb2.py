@@ -11,7 +11,7 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from go.chromium.org.luci.buildbucket.proto import builder_pb2 as go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__pb2
+from go.chromium.org.luci.buildbucket.proto import builder_common_pb2 as go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__common__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -20,9 +20,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z4go.chromium.org/luci/buildbucket/proto;buildbucketpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n<go.chromium.org/luci/buildbucket/proto/builder_service.proto\x12\x0e\x62uildbucket.v2\x1a\x34go.chromium.org/luci/buildbucket/proto/builder.proto\":\n\x11GetBuilderRequest\x12%\n\x02id\x18\x01 \x01(\x0b\x32\x19.buildbucket.v2.BuilderID\"]\n\x13ListBuildersRequest\x12\x0f\n\x07project\x18\x01 \x01(\t\x12\x0e\n\x06\x62ucket\x18\x02 \x01(\t\x12\x11\n\tpage_size\x18\x03 \x01(\x05\x12\x12\n\npage_token\x18\x04 \x01(\t\"^\n\x14ListBuildersResponse\x12-\n\x08\x62uilders\x18\x01 \x03(\x0b\x32\x1b.buildbucket.v2.BuilderItem\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\xb7\x01\n\x08\x42uilders\x12N\n\nGetBuilder\x12!.buildbucket.v2.GetBuilderRequest\x1a\x1b.buildbucket.v2.BuilderItem\"\x00\x12[\n\x0cListBuilders\x12#.buildbucket.v2.ListBuildersRequest\x1a$.buildbucket.v2.ListBuildersResponse\"\x00\x42\x36Z4go.chromium.org/luci/buildbucket/proto;buildbucketpbb\x06proto3'
+  serialized_pb=b'\n<go.chromium.org/luci/buildbucket/proto/builder_service.proto\x12\x0e\x62uildbucket.v2\x1a;go.chromium.org/luci/buildbucket/proto/builder_common.proto\":\n\x11GetBuilderRequest\x12%\n\x02id\x18\x01 \x01(\x0b\x32\x19.buildbucket.v2.BuilderID\"]\n\x13ListBuildersRequest\x12\x0f\n\x07project\x18\x01 \x01(\t\x12\x0e\n\x06\x62ucket\x18\x02 \x01(\t\x12\x11\n\tpage_size\x18\x03 \x01(\x05\x12\x12\n\npage_token\x18\x04 \x01(\t\"^\n\x14ListBuildersResponse\x12-\n\x08\x62uilders\x18\x01 \x03(\x0b\x32\x1b.buildbucket.v2.BuilderItem\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\xb7\x01\n\x08\x42uilders\x12N\n\nGetBuilder\x12!.buildbucket.v2.GetBuilderRequest\x1a\x1b.buildbucket.v2.BuilderItem\"\x00\x12[\n\x0cListBuilders\x12#.buildbucket.v2.ListBuildersRequest\x1a$.buildbucket.v2.ListBuildersResponse\"\x00\x42\x36Z4go.chromium.org/luci/buildbucket/proto;buildbucketpbb\x06proto3'
   ,
-  dependencies=[go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__pb2.DESCRIPTOR,])
+  dependencies=[go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__common__pb2.DESCRIPTOR,])
 
 
 
@@ -54,8 +54,8 @@ _GETBUILDERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=134,
-  serialized_end=192,
+  serialized_start=141,
+  serialized_end=199,
 )
 
 
@@ -107,8 +107,8 @@ _LISTBUILDERSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=194,
-  serialized_end=287,
+  serialized_start=201,
+  serialized_end=294,
 )
 
 
@@ -146,12 +146,12 @@ _LISTBUILDERSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=289,
-  serialized_end=383,
+  serialized_start=296,
+  serialized_end=390,
 )
 
-_GETBUILDERREQUEST.fields_by_name['id'].message_type = go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__pb2._BUILDERID
-_LISTBUILDERSRESPONSE.fields_by_name['builders'].message_type = go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__pb2._BUILDERITEM
+_GETBUILDERREQUEST.fields_by_name['id'].message_type = go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__common__pb2._BUILDERID
+_LISTBUILDERSRESPONSE.fields_by_name['builders'].message_type = go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__common__pb2._BUILDERITEM
 DESCRIPTOR.message_types_by_name['GetBuilderRequest'] = _GETBUILDERREQUEST
 DESCRIPTOR.message_types_by_name['ListBuildersRequest'] = _LISTBUILDERSREQUEST
 DESCRIPTOR.message_types_by_name['ListBuildersResponse'] = _LISTBUILDERSRESPONSE
@@ -188,8 +188,8 @@ _BUILDERS = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=386,
-  serialized_end=569,
+  serialized_start=393,
+  serialized_end=576,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetBuilder',
@@ -197,7 +197,7 @@ _BUILDERS = _descriptor.ServiceDescriptor(
     index=0,
     containing_service=None,
     input_type=_GETBUILDERREQUEST,
-    output_type=go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__pb2._BUILDERITEM,
+    output_type=go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__common__pb2._BUILDERITEM,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),

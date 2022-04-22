@@ -8,7 +8,7 @@ import mock
 import textwrap
 
 from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
-from go.chromium.org.luci.buildbucket.proto.builder_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto.builder_common_pb2 import BuilderID
 from go.chromium.org.luci.buildbucket.proto.step_pb2 import Step
 from google.appengine.api import taskqueue
 
