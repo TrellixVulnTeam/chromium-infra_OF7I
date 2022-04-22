@@ -47,7 +47,25 @@ func (e *AssetHandler) Get(ctx context.Context, req *GetAssetRequest) (*proto.As
 // Update a single asset in Enterprise Asset.
 func (e *AssetHandler) Update(ctx context.Context, req *UpdateAssetRequest) (*proto.AssetEntity, error) {
 	id := req.GetAsset().GetAssetId()
-	// TODO: Will implement Update functionality later.
+	mask := req.GetUpdateMask()
+
+	if mask == nil || len(mask.GetPaths()) == 0 || !mask.IsValid(req.GetAsset()) {
+		return nil, errors.New("Update Mask can't be empty or invalid")
+	}
+	// In a transaction load asset, set fields based on field mask.
+	err := datastore.RunInTransaction(ctx, func(ctx context.Context) error {
+		asset := &proto.AssetEntity{AssetId: id}
+		if err := datastore.Get(ctx, asset); err != nil {
+			return err
+		}
+		asset.ModifiedAt = timestamppb.Now()
+		err := datastore.Put(ctx, id, &asset)
+		return err
+	}, nil)
+
+	if err != nil {
+		return nil, err
+	}
 
 	return getById(ctx, id)
 }
@@ -64,8 +82,18 @@ func (e *AssetHandler) Delete(ctx context.Context, req *DeleteAssetRequest) (*em
 
 // Lists all Assets.
 func (e *AssetHandler) List(ctx context.Context, in *ListAssetsRequest) (*ListAssetsResponse, error) {
-	// TODO: Wil implement List functionality later.
-	return nil, nil
+	// TODO: crbug/1318606 - Implement Asset List functionality with filter & paging.
+	assets := []proto.AssetEntity{}
+	res := &ListAssetsResponse{}
+	query := datastore.NewQuery("AssetEntity").Order("created_at")
+	err := datastore.GetAll(ctx, query, &assets)
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < len(assets); i++ {
+		res.Assets = append(res.Assets, &assets[i])
+	}
+	return res, nil
 }
 
 func getById(ctx context.Context, id string) (*proto.AssetEntity, error) {
