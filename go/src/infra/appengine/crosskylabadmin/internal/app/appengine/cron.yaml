@@ -44,14 +44,6 @@ cron:
   schedule: every sunday 1:15
   timezone: America/Los_Angeles
 
-- description: sync device configs to inventory file and datastore
-  url: /internal/cron/update-device-configs
-  schedule: every 5 minutes
-
-- description: sync manufacturing configs to inventory file
-  url: /internal/cron/update-manufacturing-configs
-  schedule: every 5 minutes
-
 - description: report metrics related to swarming bots.
   url: /internal/cron/report-bots
   # No retry, if it fails it can catch the next cron train.

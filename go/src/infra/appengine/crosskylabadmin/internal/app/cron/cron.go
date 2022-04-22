@@ -74,11 +74,6 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	// Generate audit-rpm jobs for CrOS DUTs.
 	r.GET("/internal/cron/push-admin-audit-rpm-tasks-for-duts", mwCron, logAndSetHTTPErr(pushAdminAuditActionHandler(fleet.AuditTask_RPMConfig)))
 
-	// Update device config asynchronously.
-	r.GET("/internal/cron/update-device-configs", mwCron, logAndSetHTTPErr(updateDeviceConfigCronHandler))
-	// Update (part of) manufacturing config asynchronously.
-	r.GET("/internal/cron/update-manufacturing-configs", mwCron, logAndSetHTTPErr(updateManufacturingConfigCronHandler))
-
 	// Report Bot metrics.
 	r.GET("/internal/cron/report-bots", mwCron, logAndSetHTTPErr(reportBotsCronHandler))
 	// Report inventory metrics
@@ -90,29 +85,6 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 
 func importServiceConfig(c *router.Context) error {
 	return config.Import(c.Context)
-}
-
-func updateDeviceConfigCronHandler(c *router.Context) (err error) {
-	defer func() {
-		updateDeviceConfigCronHandlerTick.Add(c.Context, 1, err == nil)
-	}()
-	inv := createInventoryServer(c)
-	if _, err := inv.UpdateDeviceConfig(c.Context, &fleet.UpdateDeviceConfigRequest{}); err != nil {
-		logging.Errorf(c.Context, "fail to update device config: %s", err.Error())
-		return err
-	}
-	logging.Infof(c.Context, "update device config successfully")
-	return nil
-}
-
-func updateManufacturingConfigCronHandler(c *router.Context) (err error) {
-	inv := createInventoryServer(c)
-	if _, err := inv.UpdateManufacturingConfig(c.Context, &fleet.UpdateManufacturingConfigRequest{}); err != nil {
-		logging.Errorf(c.Context, "fail to update manufacturing config: %s", err.Error())
-		return err
-	}
-	logging.Infof(c.Context, "update manufacturing config successfully")
-	return nil
 }
 
 // pushBotsForAdminTasksHandler high-order for pushBotsForAdminTasksCronHandler.
