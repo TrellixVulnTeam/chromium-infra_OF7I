@@ -107,6 +107,7 @@ var AddDUTCmd = &subcommands.Command{
 		c.Flags.BoolVar(&c.audioBox, "audiobox", false, "adding this flag will specify if audiobox is present")
 		c.Flags.BoolVar(&c.atrus, "atrus", false, "adding this flag will specify if atrus is present")
 		c.Flags.BoolVar(&c.wifiCell, "wificell", false, "adding this flag will specify if wificell is present")
+		c.Flags.BoolVar(&c.appcap, "appcap", false, "adding this flag will specify if lab wifi ap/pcap is present")
 		c.Flags.BoolVar(&c.touchMimo, "touchmimo", false, "adding this flag will specify if touchmimo is present")
 		c.Flags.BoolVar(&c.cameraBox, "camerabox", false, "adding this flag will specify if camerabox is present")
 		c.Flags.BoolVar(&c.chaos, "chaos", false, "adding this flag will specify if chaos is present")
@@ -173,6 +174,7 @@ type addDUT struct {
 	audioBox          bool
 	atrus             bool
 	wifiCell          bool
+	appcap            bool
 	touchMimo         bool
 	cameraBox         bool
 	chaos             bool
@@ -620,6 +622,12 @@ func (c *addDUT) initializeLSEAndAsset(recMap map[string]string) (*dutDeployUFSP
 	peripherals.Camerabox = c.cameraBox
 	peripherals.Chaos = c.chaos
 	peripherals.SmartUsbhub = c.smartUSBHub
+	if c.appcap {
+		peripherals.GetWifi().WifiRouters = []*chromeosLab.WifiRouter{
+			{Hostname: fmt.Sprintf("%s-router", name)},
+			{Hostname: fmt.Sprintf("%s-pcap", name)},
+		}
+	}
 	// Get the updated asset and update paths
 	asset, paths := utils.GenerateAssetUpdate(machines[0], model, board, c.zone, c.rack)
 	return &dutDeployUFSParams{
