@@ -23,7 +23,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/gerrit"
+	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"google.golang.org/grpc"
 
@@ -51,16 +51,16 @@ type InventoryStore struct {
 //
 // This is a subset of the interface defined at luci/common/proto/gerrit.
 type GerritClient interface {
-	GetChange(ctx context.Context, in *gerrit.GetChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error)
-	CreateChange(ctx context.Context, in *gerrit.CreateChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error)
-	SubmitChange(ctx context.Context, in *gerrit.SubmitChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error)
-	AbandonChange(ctx context.Context, in *gerrit.AbandonChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error)
+	GetChange(ctx context.Context, in *gerritpb.GetChangeRequest, opts ...grpc.CallOption) (*gerritpb.ChangeInfo, error)
+	CreateChange(ctx context.Context, in *gerritpb.CreateChangeRequest, opts ...grpc.CallOption) (*gerritpb.ChangeInfo, error)
+	SubmitChange(ctx context.Context, in *gerritpb.SubmitChangeRequest, opts ...grpc.CallOption) (*gerritpb.ChangeInfo, error)
+	AbandonChange(ctx context.Context, in *gerritpb.AbandonChangeRequest, opts ...grpc.CallOption) (*gerritpb.ChangeInfo, error)
 
-	ChangeEditFileContent(ctx context.Context, in *gerrit.ChangeEditFileContentRequest, opts ...grpc.CallOption) (*empty.Empty, error)
-	DeleteEditFileContent(ctx context.Context, in *gerrit.DeleteEditFileContentRequest, opts ...grpc.CallOption) (*empty.Empty, error)
-	ChangeEditPublish(ctx context.Context, in *gerrit.ChangeEditPublishRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	ChangeEditFileContent(ctx context.Context, in *gerritpb.ChangeEditFileContentRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteEditFileContent(ctx context.Context, in *gerritpb.DeleteEditFileContentRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	ChangeEditPublish(ctx context.Context, in *gerritpb.ChangeEditPublishRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 
-	SetReview(ctx context.Context, in *gerrit.SetReviewRequest, opts ...grpc.CallOption) (*gerrit.ReviewResult, error)
+	SetReview(ctx context.Context, in *gerritpb.SetReviewRequest, opts ...grpc.CallOption) (*gerritpb.ReviewResult, error)
 }
 
 // GitilesClient is a client interface for Gitiles API.

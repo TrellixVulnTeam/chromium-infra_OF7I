@@ -17,7 +17,7 @@ import (
 	gerritapi "go.chromium.org/luci/common/api/gerrit"
 	gitilesapi "go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/proto/gerrit"
+	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/retry/transient"
 )
@@ -30,7 +30,7 @@ const crosPrefix = `chromeos`
 
 // C includes clients required for inventory changes.
 type C struct {
-	gerritC  gerrit.GerritClient
+	gerritC  gerritpb.GerritClient
 	gitilesC gitiles.GitilesClient
 }
 
@@ -66,12 +66,12 @@ func (c *C) fetchLatestSHA1(ctx context.Context) (string, error) {
 }
 
 // CreateChange creates a gerrit change.
-func (c *C) CreateChange(ctx context.Context, subject string) (*gerrit.ChangeInfo, error) {
+func (c *C) CreateChange(ctx context.Context, subject string) (*gerritpb.ChangeInfo, error) {
 	latestSHA, err := c.fetchLatestSHA1(ctx)
 	if err != nil {
 		return nil, err
 	}
-	changeInfo, err := c.gerritC.CreateChange(ctx, &gerrit.CreateChangeRequest{
+	changeInfo, err := c.gerritC.CreateChange(ctx, &gerritpb.CreateChangeRequest{
 		Project:    project,
 		Ref:        branch,
 		Subject:    subject,
@@ -84,8 +84,8 @@ func (c *C) CreateChange(ctx context.Context, subject string) (*gerrit.ChangeInf
 }
 
 // MakeDeleteHostChange edit CL by deleting the inventory file of a given host.
-func (c *C) MakeDeleteHostChange(ctx context.Context, changeInfo *gerrit.ChangeInfo, host string) error {
-	_, err := c.gerritC.DeleteEditFileContent(ctx, &gerrit.DeleteEditFileContentRequest{
+func (c *C) MakeDeleteHostChange(ctx context.Context, changeInfo *gerritpb.ChangeInfo, host string) error {
+	_, err := c.gerritC.DeleteEditFileContent(ctx, &gerritpb.DeleteEditFileContentRequest{
 		Number:   changeInfo.Number,
 		Project:  changeInfo.Project,
 		FilePath: invPathForDut(host),
@@ -107,23 +107,23 @@ func invPathForDut(hostname string) string {
 }
 
 // SubmitChange submit the change to gerrit.
-func (c *C) SubmitChange(ctx context.Context, changeInfo *gerrit.ChangeInfo) error {
-	if _, err := c.gerritC.ChangeEditPublish(ctx, &gerrit.ChangeEditPublishRequest{
+func (c *C) SubmitChange(ctx context.Context, changeInfo *gerritpb.ChangeInfo) error {
+	if _, err := c.gerritC.ChangeEditPublish(ctx, &gerritpb.ChangeEditPublishRequest{
 		Number:  changeInfo.Number,
 		Project: changeInfo.Project,
 	}); err != nil {
 		return err
 	}
 
-	ci, err := c.gerritC.GetChange(ctx, &gerrit.GetChangeRequest{
+	ci, err := c.gerritC.GetChange(ctx, &gerritpb.GetChangeRequest{
 		Number:  changeInfo.Number,
-		Options: []gerrit.QueryOption{gerrit.QueryOption_CURRENT_REVISION},
+		Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 	})
 	if err != nil {
 		return err
 	}
 
-	if _, err = c.gerritC.SetReview(ctx, &gerrit.SetReviewRequest{
+	if _, err = c.gerritC.SetReview(ctx, &gerritpb.SetReviewRequest{
 		Number:     changeInfo.Number,
 		Project:    changeInfo.Project,
 		RevisionId: ci.CurrentRevision,
@@ -135,7 +135,7 @@ func (c *C) SubmitChange(ctx context.Context, changeInfo *gerrit.ChangeInfo) err
 		return err
 	}
 
-	if _, err := c.gerritC.SubmitChange(ctx, &gerrit.SubmitChangeRequest{
+	if _, err := c.gerritC.SubmitChange(ctx, &gerritpb.SubmitChangeRequest{
 		Number:  changeInfo.Number,
 		Project: changeInfo.Project,
 	}); err != nil {
@@ -149,8 +149,8 @@ func (c *C) SubmitChange(ctx context.Context, changeInfo *gerrit.ChangeInfo) err
 }
 
 // AbandonChange abandon the change to gerrit.
-func (c *C) AbandonChange(ctx context.Context, ci *gerrit.ChangeInfo) error {
-	if _, err := c.gerritC.AbandonChange(ctx, &gerrit.AbandonChangeRequest{
+func (c *C) AbandonChange(ctx context.Context, ci *gerritpb.ChangeInfo) error {
+	if _, err := c.gerritC.AbandonChange(ctx, &gerritpb.AbandonChangeRequest{
 		Number:  ci.Number,
 		Project: ci.Project,
 		Message: "CL cleanup on error",

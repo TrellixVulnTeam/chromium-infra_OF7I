@@ -21,7 +21,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/gerrit"
+	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/common/retry/transient"
 	"go.chromium.org/luci/gae/service/info"
 	"go.chromium.org/luci/server/auth"
@@ -37,14 +37,14 @@ import (
 //
 // commitFileContents returns the gerrit change number for the commit.
 func commitFileContents(ctx context.Context, client GerritClient, project string, branch string, baseCommitSha string, reason string, fileContents map[string]string) (int, error) {
-	var changeInfo *gerrit.ChangeInfo
+	var changeInfo *gerritpb.ChangeInfo
 	defer func() {
 		if changeInfo != nil {
 			abandonChange(ctx, client, changeInfo)
 		}
 	}()
 
-	changeInfo, err := client.CreateChange(ctx, &gerrit.CreateChangeRequest{
+	changeInfo, err := client.CreateChange(ctx, &gerritpb.CreateChangeRequest{
 		Project:    project,
 		Ref:        branch,
 		Subject:    changeSubject(ctx, reason),
@@ -67,13 +67,13 @@ func commitFileContents(ctx context.Context, client GerritClient, project string
 		}
 		if contents == "" {
 			logging.Debugf(ctx, "delete call: %s, %s, %s", changeInfo.Number, changeInfo.Project, path)
-			_, err = client.DeleteEditFileContent(ctx, &gerrit.DeleteEditFileContentRequest{
+			_, err = client.DeleteEditFileContent(ctx, &gerritpb.DeleteEditFileContentRequest{
 				Number:   changeInfo.Number,
 				Project:  changeInfo.Project,
 				FilePath: path,
 			})
 		} else {
-			_, err = client.ChangeEditFileContent(ctx, &gerrit.ChangeEditFileContentRequest{
+			_, err = client.ChangeEditFileContent(ctx, &gerritpb.ChangeEditFileContentRequest{
 				Number:   changeInfo.Number,
 				Project:  changeInfo.Project,
 				FilePath: path,
@@ -88,22 +88,22 @@ func commitFileContents(ctx context.Context, client GerritClient, project string
 			break
 		}
 	}
-	if _, err = client.ChangeEditPublish(ctx, &gerrit.ChangeEditPublishRequest{
+	if _, err = client.ChangeEditPublish(ctx, &gerritpb.ChangeEditPublishRequest{
 		Number:  changeInfo.Number,
 		Project: changeInfo.Project,
 	}); err != nil {
 		return -1, err
 	}
 
-	ci, err := client.GetChange(ctx, &gerrit.GetChangeRequest{
+	ci, err := client.GetChange(ctx, &gerritpb.GetChangeRequest{
 		Number:  changeInfo.Number,
-		Options: []gerrit.QueryOption{gerrit.QueryOption_CURRENT_REVISION},
+		Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 	})
 	if err != nil {
 		return -1, err
 	}
 
-	if _, err = client.SetReview(ctx, &gerrit.SetReviewRequest{
+	if _, err = client.SetReview(ctx, &gerritpb.SetReviewRequest{
 		Number:     changeInfo.Number,
 		Project:    changeInfo.Project,
 		RevisionId: ci.CurrentRevision,
@@ -115,7 +115,7 @@ func commitFileContents(ctx context.Context, client GerritClient, project string
 		return -1, err
 	}
 
-	if _, err := client.SubmitChange(ctx, &gerrit.SubmitChangeRequest{
+	if _, err := client.SubmitChange(ctx, &gerritpb.SubmitChangeRequest{
 		Number:  changeInfo.Number,
 		Project: changeInfo.Project,
 	}); err != nil {
@@ -149,8 +149,8 @@ func changeSubject(ctx context.Context, reason string) string {
 	return fmt.Sprintf("%s by %s for %s", reason, info.AppID(ctx), user)
 }
 
-func abandonChange(ctx context.Context, client GerritClient, ci *gerrit.ChangeInfo) {
-	if _, err := client.AbandonChange(ctx, &gerrit.AbandonChangeRequest{
+func abandonChange(ctx context.Context, client GerritClient, ci *gerritpb.ChangeInfo) {
+	if _, err := client.AbandonChange(ctx, &gerritpb.AbandonChangeRequest{
 		Number:  ci.Number,
 		Project: ci.Project,
 		Message: "CL cleanup on error",

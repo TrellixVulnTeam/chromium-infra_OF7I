@@ -22,7 +22,7 @@ import (
 	gerritapi "go.chromium.org/luci/common/api/gerrit"
 	"go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/proto/gerrit"
+	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/server/auth"
 )
 
@@ -32,7 +32,7 @@ import (
 // app. The returned gerrit client forwards the oauth token used for the
 // original RPC. In particular, this means that the original oauth credentials
 // must include the gerrit OAuth 2.0 scope.
-func NewGerritClient(c context.Context, host string) (gerrit.GerritClient, error) {
+func NewGerritClient(c context.Context, host string) (gerritpb.GerritClient, error) {
 	t, err := auth.GetRPCTransport(c, auth.AsCredentialsForwarder)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to get RPC transport").Err()
@@ -46,7 +46,7 @@ func NewGerritClient(c context.Context, host string) (gerrit.GerritClient, error
 //
 // This function is intended to be used from cron calls that are not part of a
 // user session. For normal RPC users, see NewGerritClient.
-func NewGerritClientAsSelf(ctx context.Context, host string) (gerrit.GerritClient, error) {
+func NewGerritClientAsSelf(ctx context.Context, host string) (gerritpb.GerritClient, error) {
 	t, err := auth.GetRPCTransport(ctx, auth.AsSelf, auth.WithScopes(authclient.OAuthScopeEmail, gitiles.OAuthScope))
 	if err != nil {
 		return nil, errors.Annotate(err, "new gerrit client as self").Err()

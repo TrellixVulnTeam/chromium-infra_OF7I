@@ -14,7 +14,6 @@ import (
 	gitilesapi "go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/gerrit"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/common/proto/gitiles"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
@@ -22,7 +21,7 @@ import (
 
 // Client consists of resources needed for querying gitiles and gerrit.
 type Client struct {
-	gerritC    gerrit.GerritClient
+	gerritC    gerritpb.GerritClient
 	gitilesC   gitiles.GitilesClient
 	gerritHost string
 	project    string

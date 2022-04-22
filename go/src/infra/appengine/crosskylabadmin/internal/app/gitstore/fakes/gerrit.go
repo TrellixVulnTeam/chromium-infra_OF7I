@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"go.chromium.org/luci/common/proto/gerrit"
+	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
@@ -33,7 +33,7 @@ type GerritClient struct {
 // GerritChange captures information about a single gerrit change created via
 // GerritClient.CreateChange()
 type GerritChange struct {
-	*gerrit.ChangeInfo
+	*gerritpb.ChangeInfo
 	GerritChangeEdit
 	IsSubmitted bool
 }
@@ -48,24 +48,24 @@ type GerritChangeEdit struct {
 	Subject     string
 }
 
-// GetChange implements the gerrit.GerritClient interface.
-func (gc *GerritClient) GetChange(ctx context.Context, in *gerrit.GetChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error) {
+// GetChange implements the gerritpb.GerritClient interface.
+func (gc *GerritClient) GetChange(ctx context.Context, in *gerritpb.GetChangeRequest, opts ...grpc.CallOption) (*gerritpb.ChangeInfo, error) {
 	for _, c := range gc.Changes {
 		if in.Number == c.Number {
-			return proto.Clone(c.ChangeInfo).(*gerrit.ChangeInfo), nil
+			return proto.Clone(c.ChangeInfo).(*gerritpb.ChangeInfo), nil
 		}
 	}
 	return nil, fmt.Errorf("No change for %+v", in)
 }
 
-// CreateChange implements the gerrit.GerritClient interface.
-func (gc *GerritClient) CreateChange(ctx context.Context, in *gerrit.CreateChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error) {
+// CreateChange implements the gerritpb.GerritClient interface.
+func (gc *GerritClient) CreateChange(ctx context.Context, in *gerritpb.CreateChangeRequest, opts ...grpc.CallOption) (*gerritpb.ChangeInfo, error) {
 	c := &GerritChange{
-		ChangeInfo: &gerrit.ChangeInfo{
+		ChangeInfo: &gerritpb.ChangeInfo{
 			Number:          gc.nextNumber,
 			Project:         in.Project,
 			Ref:             in.Ref,
-			Status:          gerrit.ChangeStatus_NEW,
+			Status:          gerritpb.ChangeStatus_NEW,
 			CurrentRevision: "patch_set_1",
 		},
 	}
@@ -74,11 +74,11 @@ func (gc *GerritClient) CreateChange(ctx context.Context, in *gerrit.CreateChang
 	gc.nextNumber++
 	gc.Changes = append(gc.Changes, c)
 
-	return proto.Clone(c.ChangeInfo).(*gerrit.ChangeInfo), nil
+	return proto.Clone(c.ChangeInfo).(*gerritpb.ChangeInfo), nil
 }
 
-// ChangeEditFileContent implements the gerrit.GerritClient interface.
-func (gc *GerritClient) ChangeEditFileContent(ctx context.Context, in *gerrit.ChangeEditFileContentRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+// ChangeEditFileContent implements the gerritpb.GerritClient interface.
+func (gc *GerritClient) ChangeEditFileContent(ctx context.Context, in *gerritpb.ChangeEditFileContentRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
 	for _, c := range gc.Changes {
 		if in.Number == c.Number {
 			c.GerritChangeEdit.Files[in.FilePath] = string(in.Content)
@@ -88,8 +88,8 @@ func (gc *GerritClient) ChangeEditFileContent(ctx context.Context, in *gerrit.Ch
 	return &empty.Empty{}, fmt.Errorf("No change edit for %+v", in)
 }
 
-// DeleteEditFileContent implements the gerrit.GerritClient interface.
-func (gc *GerritClient) DeleteEditFileContent(ctx context.Context, in *gerrit.DeleteEditFileContentRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+// DeleteEditFileContent implements the gerritpb.GerritClient interface.
+func (gc *GerritClient) DeleteEditFileContent(ctx context.Context, in *gerritpb.DeleteEditFileContentRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
 	for _, c := range gc.Changes {
 		if in.Number == c.Number {
 			c.GerritChangeEdit.Files[in.FilePath] = ""
@@ -99,8 +99,8 @@ func (gc *GerritClient) DeleteEditFileContent(ctx context.Context, in *gerrit.De
 	return &empty.Empty{}, fmt.Errorf("No change edit for %+v", in)
 }
 
-// ChangeEditPublish implements the gerrit.GerritClient interface.
-func (gc *GerritClient) ChangeEditPublish(ctx context.Context, in *gerrit.ChangeEditPublishRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+// ChangeEditPublish implements the gerritpb.GerritClient interface.
+func (gc *GerritClient) ChangeEditPublish(ctx context.Context, in *gerritpb.ChangeEditPublishRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
 	for _, c := range gc.Changes {
 		if in.Number == c.Number {
 			c.GerritChangeEdit.IsPublished = true
@@ -110,42 +110,42 @@ func (gc *GerritClient) ChangeEditPublish(ctx context.Context, in *gerrit.Change
 	return &empty.Empty{}, fmt.Errorf("No change edit for %+v", in)
 }
 
-// SetReview implements the gerrit.GerritClient interface.
-func (gc *GerritClient) SetReview(ctx context.Context, in *gerrit.SetReviewRequest, opts ...grpc.CallOption) (*gerrit.ReviewResult, error) {
+// SetReview implements the gerritpb.GerritClient interface.
+func (gc *GerritClient) SetReview(ctx context.Context, in *gerritpb.SetReviewRequest, opts ...grpc.CallOption) (*gerritpb.ReviewResult, error) {
 	// Not needed for tests.
-	return &gerrit.ReviewResult{}, nil
+	return &gerritpb.ReviewResult{}, nil
 }
 
-// SubmitChange implements the gerrit.GerritClient interface.
-func (gc *GerritClient) SubmitChange(ctx context.Context, in *gerrit.SubmitChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error) {
+// SubmitChange implements the gerritpb.GerritClient interface.
+func (gc *GerritClient) SubmitChange(ctx context.Context, in *gerritpb.SubmitChangeRequest, opts ...grpc.CallOption) (*gerritpb.ChangeInfo, error) {
 	for _, c := range gc.Changes {
 		if in.Number == c.Number {
 			c.IsSubmitted = true
-			c.ChangeInfo.Status = gerrit.ChangeStatus_MERGED
-			return proto.Clone(c.ChangeInfo).(*gerrit.ChangeInfo), nil
+			c.ChangeInfo.Status = gerritpb.ChangeStatus_MERGED
+			return proto.Clone(c.ChangeInfo).(*gerritpb.ChangeInfo), nil
 		}
 	}
 	return nil, fmt.Errorf("No change for %+v", in)
 }
 
-// AbandonChange implements the gerrit.GerritClient interface.
-func (gc *GerritClient) AbandonChange(ctx context.Context, in *gerrit.AbandonChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error) {
+// AbandonChange implements the gerritpb.GerritClient interface.
+func (gc *GerritClient) AbandonChange(ctx context.Context, in *gerritpb.AbandonChangeRequest, opts ...grpc.CallOption) (*gerritpb.ChangeInfo, error) {
 	for _, c := range gc.Changes {
 		if in.Number == c.Number {
 			c.IsAbandoned = true
-			return proto.Clone(c.ChangeInfo).(*gerrit.ChangeInfo), nil
+			return proto.Clone(c.ChangeInfo).(*gerritpb.ChangeInfo), nil
 		}
 	}
 	return nil, fmt.Errorf("No change for %+v", in)
 }
 
-// GetMergeable implements the gerrit.GerritClient interface.
-func (gc *GerritClient) GetMergeable(ctx context.Context, req *gerrit.GetMergeableRequest, opts ...grpc.CallOption) (*gerrit.MergeableInfo, error) {
+// GetMergeable implements the gerritpb.GerritClient interface.
+func (gc *GerritClient) GetMergeable(ctx context.Context, req *gerritpb.GetMergeableRequest, opts ...grpc.CallOption) (*gerritpb.MergeableInfo, error) {
 	return nil, fmt.Errorf("Fake GetMergeable not yet implemented")
 }
 
-// ListFiles implements the gerrit.GerritClient interface.
-func (gc *GerritClient) ListFiles(ctx context.Context, req *gerrit.ListFilesRequest, opts ...grpc.CallOption) (*gerrit.ListFilesResponse, error) {
+// ListFiles implements the gerritpb.GerritClient interface.
+func (gc *GerritClient) ListFiles(ctx context.Context, req *gerritpb.ListFilesRequest, opts ...grpc.CallOption) (*gerritpb.ListFilesResponse, error) {
 	return nil, fmt.Errorf("Fake ListFiles not yet implemented")
 }
 
@@ -156,6 +156,6 @@ func (gc *GerritClient) ListFiles(ctx context.Context, req *gerrit.ListFilesRequ
 // so this API just includes one query with one returned list of changes.
 //
 // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-changes
-func (gc *GerritClient) ListChanges(ctx context.Context, in *gerrit.ListChangesRequest, opts ...grpc.CallOption) (*gerrit.ListChangesResponse, error) {
+func (gc *GerritClient) ListChanges(ctx context.Context, in *gerritpb.ListChangesRequest, opts ...grpc.CallOption) (*gerritpb.ListChangesResponse, error) {
 	return nil, fmt.Errorf("Fake ListChanges not yet implemented")
 }
