@@ -1327,6 +1327,33 @@ func crosRepairActions() map[string]*Action {
 				Seconds: 6000,
 			},
 		},
+		"Update FW from fw-image by servo and set GBB to 0x18": {
+			Docs: []string{
+				"Download fw-image specified in stable version and flash EC/AP to the DUT by servo",
+				"Set timeout for 100 minutes for now as = 10m(download)+ 7*3m(extraction-file)+10m(ec-update)+30m(ap-update).",
+				"The time will be updated later based on collected metrics",
+				"Each operation with extraction files can take up to a few minutes.",
+				"Ap update on the DUT can take up to 30 minutes",
+				"The GBB will set to 0x18 which equal to switch to DEV mode and enable boot from USB drive in DEV mode.",
+			},
+			Conditions: []string{
+				"dut_servo_host_present",
+				"servo_state_is_working",
+			},
+			Dependencies: []string{
+				"has_stable_version_fw_version",
+			},
+			ExecName: "cros_update_fw_with_fw_image_by_servo_from",
+			ExecExtraArgs: []string{
+				"update_ec:true",
+				"update_ap:true",
+				"download_timeout:600",
+				"gbb_flags:0x18",
+			},
+			ExecTimeout: &durationpb.Duration{
+				Seconds: 6000,
+			},
+		},
 		"Boot DUT from USB in DEV mode": {
 			Docs: []string{
 				"Restart and try to boot from USB-drive",

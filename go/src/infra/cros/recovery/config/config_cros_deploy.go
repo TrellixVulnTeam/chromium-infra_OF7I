@@ -64,10 +64,6 @@ func deployActions() map[string]*Action {
 			RecoveryActions: []string{
 				"Cold reset DUT by servo and wait to boot",
 				"Power cycle DUT by RPM and wait",
-				"Install OS in DEV mode",
-				"Install OS in DEV mode, with force to DEV-mode",
-				"Install OS in DEV mode with fresh image",
-				"Install OS in DEV mode, with force to DEV-mode (2)",
 			},
 		},
 		"DUT has expected OS": {
@@ -85,7 +81,7 @@ func deployActions() map[string]*Action {
 				"Install OS in DEV mode",
 				"Install OS in DEV mode, with force to DEV-mode",
 				"Install OS in DEV mode with fresh image",
-				"Install OS in DEV mode, with force to DEV-mode (2)",
+				"Install OS in DEV mode, with force to DEV-mode with test firmware",
 			},
 		},
 		"DUT has expected dev firmware": {
@@ -270,7 +266,7 @@ func deployActions() map[string]*Action {
 			},
 			ExecName: "sample_pass",
 		},
-		"Install OS in DEV mode, with force to DEV-mode (2)": {
+		"Install OS in DEV mode, with force to DEV-mode with test firmware": {
 			Docs: []string{
 				"Second attempt to install image in DEV mode",
 			},
@@ -278,7 +274,7 @@ func deployActions() map[string]*Action {
 				"servo_state_is_working",
 			},
 			Dependencies: []string{
-				"Set GBB flags to 0x18 by servo",
+				"Update FW from fw-image by servo and set GBB to 0x18",
 				"Install OS in DEV mode by USB-drive",
 			},
 			ExecName: "sample_pass",
