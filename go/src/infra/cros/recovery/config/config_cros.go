@@ -65,20 +65,26 @@ func crosClosePlan() *Plan {
 		},
 		Actions: map[string]*Action{
 			"servo_state_is_working": {
-				Docs:          []string{"check the servo's state is ServoStateWorking."},
+				Docs: []string{
+					"check the servo's state is ServoStateWorking.",
+				},
 				ExecName:      "servo_match_state",
 				ExecExtraArgs: []string{"state:WORKING"},
 			},
 			"Remove request to reboot is servo is good": {
 				Conditions: []string{
 					"is_not_flex_board",
+					"dut_servo_host_present",
 					"servo_state_is_working",
 				},
 				ExecName:               "cros_remove_reboot_request",
 				AllowFailAfterRecovery: true,
 			},
 			"Remove in-use flag on servo-host": {
-				Conditions:             []string{"is_not_flex_board"},
+				Conditions: []string{
+					"is_not_flex_board",
+					"dut_servo_host_present",
+				},
 				ExecName:               "cros_remove_servo_in_use",
 				AllowFailAfterRecovery: true,
 			},

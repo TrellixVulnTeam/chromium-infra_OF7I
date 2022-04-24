@@ -12,14 +12,14 @@ func servoRepairPlan() *Plan {
 	return &Plan{
 		CriticalActions: []string{
 			"Set state:MISSING_CONFIG",
-			"servo_host_info",
-			"servod_info",
+			"Servo is know in the setup",
 			"Set state:WRONG_CONFIG",
-			"servo_has_serial",
-			"init_docker_host",
+			"Servod port specified",
+			"Servo serial is specified",
+			"Initialize docker container",
 			"Set state:NO_SSH",
-			"cros_ping",
-			"cros_ssh",
+			"Device is pingable",
+			"Device is SSHable",
 			"servo_v3_uptime",
 			"servo_power_cycle_root_servo",
 			"Set state:SERVO_HOST_ISSUE",
@@ -65,6 +65,39 @@ func servoRepairPlan() *Plan {
 			"Set state:WORKING",
 		},
 		Actions: map[string]*Action{
+			"Servo is know in the setup": {
+				Docs: []string{
+					"Verify if setup data has any data related to servo-host which mean servo is present in setup.",
+				},
+				ExecName: "dut_servo_host_present",
+			},
+			"Servo serial is specified": {
+				Docs: []string{
+					"Check if root servo serial is present.",
+				},
+				Conditions: []string{"is_not_servo_v3"},
+				ExecName:   "dut_servo_has_serial",
+			},
+			"Device is pingable": {
+				Docs: []string{
+					"Verify that device is reachable by ping.",
+					"Limited to 15 seconds.",
+				},
+				ExecName: "cros_ping",
+				ExecTimeout: &durationpb.Duration{
+					Seconds: 15,
+				},
+				RunControl: RunControl_ALWAYS_RUN,
+			},
+			"Device is SSHable": {
+				Docs: []string{
+					"Verify that device is reachable by SSH.",
+					"Limited to 15 seconds.",
+				},
+				ExecTimeout: &durationpb.Duration{Seconds: 15},
+				ExecName:    "cros_ssh",
+				RunControl:  RunControl_ALWAYS_RUN,
+			},
 			"Cache latest servod start time": {
 				Docs: []string{
 					"Cache servod start time based on previous runs.",
@@ -91,7 +124,7 @@ func servoRepairPlan() *Plan {
 				Docs:       []string{"Stop the servod."},
 				RunControl: RunControl_ALWAYS_RUN,
 			},
-			"init_docker_host": {
+			"Initialize docker container": {
 				Docs: []string{
 					"Initiate docker to have access to the host.",
 					"TODO: Need close docker host, and add to cros plan.",
@@ -106,17 +139,13 @@ func servoRepairPlan() *Plan {
 				},
 				ExecName: "servo_host_servod_init",
 			},
-			"servo_host_info": {
-				ExecName: "dut_has_name",
-			},
-			"servod_info": {
+			"Servod port specified": {
 				Docs: []string{
-					"Verify that servo port is available, and servo serial is readable.",
-					"This is applicable only if the servo version is not V3.",
+					"Verify that servod port is present in servo data.",
+					"Port is not expected to be specified for servo_V3.",
 				},
-				Conditions:   []string{"is_not_servo_v3"},
-				Dependencies: []string{"servo_servod_port_present"},
-				ExecName:     "sample_pass",
+				Conditions: []string{"is_not_servo_v3"},
+				ExecName:   "servo_servod_port_present",
 			},
 			"servo_v3_uptime": {
 				ExecName:        "cros_validate_uptime",
@@ -876,13 +905,6 @@ func servoRepairPlan() *Plan {
 				ExecExtraArgs: []string{"state:WRONG_CONFIG"},
 				ExecName:      "servo_set_servo_state",
 				RunControl:    RunControl_ALWAYS_RUN,
-			},
-			"servo_has_serial": {
-				Docs: []string{
-					"Check if root servo serial is present.",
-				},
-				Conditions: []string{"is_not_servo_v3"},
-				ExecName:   "dut_servo_has_serial",
 			},
 			"Set state:NO_SSH": {
 				ExecExtraArgs: []string{"state:NO_SSH"},
