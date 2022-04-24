@@ -870,10 +870,12 @@ func servoRepairPlan() *Plan {
 			"Set state:MISSING_CONFIG": {
 				ExecExtraArgs: []string{"state:MISSING_CONFIG"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:WRONG_CONFIG": {
 				ExecExtraArgs: []string{"state:WRONG_CONFIG"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"servo_has_serial": {
 				Docs: []string{
@@ -885,78 +887,97 @@ func servoRepairPlan() *Plan {
 			"Set state:NO_SSH": {
 				ExecExtraArgs: []string{"state:NO_SSH"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:BROKEN": {
 				ExecExtraArgs: []string{"state:BROKEN"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:NOT_CONNECTED": {
 				ExecExtraArgs: []string{"state:NOT_CONNECTED"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:NEED_REPLACEMENT": {
 				ExecExtraArgs: []string{"state:NEED_REPLACEMENT"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:TOPOLOGY_ISSUE": {
 				ExecExtraArgs: []string{"state:TOPOLOGY_ISSUE"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:SERVO_UPDATER_ISSUE": {
 				ExecExtraArgs: []string{"state:SERVO_UPDATER_ISSUE"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:SERVOD_ISSUE": {
 				ExecExtraArgs: []string{"state:SERVOD_ISSUE"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:SERVO_HOST_ISSUE": {
 				ExecExtraArgs: []string{"state:SERVO_HOST_ISSUE"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:SERVOD_PROXY_ISSUE": {
 				ExecExtraArgs: []string{"state:SERVOD_PROXY_ISSUE"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:COLD_RESET_PIN_ISSUE": {
 				ExecExtraArgs: []string{"state:COLD_RESET_PIN_ISSUE"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:WARM_RESET_PIN_ISSUE": {
 				ExecExtraArgs: []string{"state:WARM_RESET_PIN_ISSUE"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:SBU_LOW_VOLTAGE": {
 				ExecExtraArgs: []string{"state:SBU_LOW_VOLTAGE"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:DUT_NOT_CONNECTED": {
 				ExecExtraArgs: []string{"state:DUT_NOT_CONNECTED"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:CR50_CONSOLE_MISSING": {
 				ExecExtraArgs: []string{"state:CR50_CONSOLE_MISSING"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:EC_BROKEN": {
 				ExecExtraArgs: []string{"state:EC_BROKEN"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:BAD_RIBBON_CABLE": {
 				ExecExtraArgs: []string{"state:BAD_RIBBON_CABLE"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:LID_OPEN_FAILED": {
 				ExecExtraArgs: []string{"state:LID_OPEN_FAILED"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:CCD_TESTLAB_ISSUE": {
 				ExecExtraArgs: []string{"state:CCD_TESTLAB_ISSUE"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:WORKING": {
 				ExecExtraArgs: []string{"state:WORKING"},
 				ExecName:      "servo_set_servo_state",
+				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"servo_fake_disconnect_dut_repair": {
 				Docs:         []string{"Try to repair servod by mimic reconnection of servo."},
