@@ -18,7 +18,7 @@ from recipe_engine import recipe_api
 # Usage of snoopy recipe_module will have significant downstream impact and to
 # avoid any production outage, we are pinning the latest known good build of
 # the tool here. Upstream changes are intentionally left out.
-_LATEST_STABLE_VERSION = 'git_revision:7fabcd7ceec5e7e1a2462b9aad1f7082244fc0f7'
+_LATEST_STABLE_VERSION = 'git_revision:636775ad273599bf5f3f5912394ceec4dd8b7aa9'
 
 class SnoopyApi(recipe_api.RecipeApi):
   """API for interacting with Snoopy using the snoopy_broker tool."""
