@@ -15,6 +15,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/golang/protobuf/jsonpb"
+
 	"go.chromium.org/luci/common/errors"
 )
 
@@ -89,4 +91,9 @@ func FindFile(fileName string, rootDir string) (string, error) {
 	}
 
 	return "", errors.Reason(fmt.Sprintf("file '%s' not found!", fileName)).Err()
+}
+
+// JsonPbUnMarshaler returns the unmarshaler which should be used across CTR.
+func JsonPbUnmarshaler() jsonpb.Unmarshaler {
+	return jsonpb.Unmarshaler{AllowUnknownFields: true}
 }

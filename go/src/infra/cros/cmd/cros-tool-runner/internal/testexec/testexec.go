@@ -22,6 +22,7 @@ import (
 	"go.chromium.org/chromiumos/config/go/test/api"
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/cmd/cros-tool-runner/internal/common"
 	"infra/cros/cmd/cros-tool-runner/internal/services"
 )
 
@@ -138,7 +139,7 @@ func readTestOutput(filePath string) (*api.CrosTestResponse, error) {
 	}
 	out := &api.CrosTestResponse{}
 
-	umrsh := jsonpb.Unmarshaler{AllowUnknownFields: true}
+	umrsh := common.JsonPbUnmarshaler()
 	err = umrsh.Unmarshal(r, out)
 	return out, errors.Annotate(err, "read output").Err()
 }

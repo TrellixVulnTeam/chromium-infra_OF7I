@@ -18,6 +18,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/cmd/cros-tool-runner/internal/common"
 	"infra/cros/cmd/cros-tool-runner/internal/testfinder"
 )
 
@@ -111,7 +112,7 @@ func readTestFinderRequest(p string) (*api.CrosToolRunnerTestFinderRequest, erro
 		return nil, errors.Annotate(err, "inner run: read test finder request %q", p).Err()
 	}
 
-	umrsh := jsonpb.Unmarshaler{AllowUnknownFields: true}
+	umrsh := common.JsonPbUnmarshaler()
 	err = umrsh.Unmarshal(r, in)
 	return in, errors.Annotate(err, "inner run: read test finder request %q", p).Err()
 }
