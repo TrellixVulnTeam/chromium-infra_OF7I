@@ -68,13 +68,14 @@ func (c *downloadToUsbDriveRun) innerRun(a subcommands.Application, args []strin
 	if len(args) == 0 {
 		return errors.Reason("create recovery task: unit is not specified").Err()
 	}
+	v := labpack.CIPDProd
 	for _, unit := range args {
 		e := c.envFlags.Env()
 		configuration := b64.StdEncoding.EncodeToString(c.createPlan())
 		taskID, err := labpack.ScheduleTask(
 			ctx,
 			bc,
-			labpack.CIPDProd,
+			v,
 			&labpack.Params{
 				UnitName:         unit,
 				TaskName:         string(tasknames.Custom),
@@ -84,6 +85,11 @@ func (c *downloadToUsbDriveRun) innerRun(a subcommands.Application, args []strin
 				Configuration:    configuration,
 				// We do not update as this is just manual action.
 				UpdateInventory: false,
+				ExtraTags: []string{
+					"task:download_to_usb",
+					clientTag,
+					fmt.Sprintf("version:%s", v),
+				},
 			},
 		)
 		if err != nil {

@@ -43,6 +43,9 @@ var Recovery = &subcommands.Command{
 	},
 }
 
+// Client tag used for PARIS tasks scheduling.
+const clientTag = "client:mallet"
+
 type recoveryRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
@@ -118,6 +121,9 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 				Configuration:    configuration,
 				ExtraTags: []string{
 					sessionTag,
+					fmt.Sprintf("task:%s", task),
+					clientTag,
+					fmt.Sprintf("version:%s", v),
 				},
 			},
 		)

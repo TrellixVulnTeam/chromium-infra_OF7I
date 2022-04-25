@@ -67,11 +67,12 @@ func (c *customProvisionRun) innerRun(a subcommands.Application, args []string, 
 	}
 	unit := args[0]
 	e := c.envFlags.Env()
+	v := labpack.CIPDProd
 	configuration := b64.StdEncoding.EncodeToString([]byte(c.createPlan()))
 	taskID, err := labpack.ScheduleTask(
 		ctx,
 		bc,
-		labpack.CIPDProd,
+		v,
 		&labpack.Params{
 			UnitName:         unit,
 			TaskName:         string(tasknames.Custom),
@@ -81,6 +82,11 @@ func (c *customProvisionRun) innerRun(a subcommands.Application, args []string, 
 			Configuration:    configuration,
 			// We do not update as this is just manual action.
 			UpdateInventory: false,
+			ExtraTags: []string{
+				"task:custom_provision",
+				clientTag,
+				fmt.Sprintf("version:%s", v),
+			},
 		},
 	)
 	if err != nil {
