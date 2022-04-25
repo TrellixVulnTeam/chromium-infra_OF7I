@@ -154,7 +154,9 @@ func readProvisionOutput(filePath string) (*api.CrosProvisionResponse, error) {
 		return nil, errors.Annotate(err, "read output").Err()
 	}
 	out := &api.CrosProvisionResponse{}
-	err = jsonpb.Unmarshal(r, out)
+
+	umrsh := jsonpb.Unmarshaler{AllowUnknownFields: true}
+	err = umrsh.Unmarshal(r, out)
 
 	log.Printf("cros-provision response:" + out.String())
 	return out, errors.Annotate(err, "read output").Err()

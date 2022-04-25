@@ -154,7 +154,9 @@ func readProvisionRequest(p string) (*api.CrosToolRunnerProvisionRequest, error)
 	if err != nil {
 		return nil, errors.Annotate(err, "read provision request %q", p).Err()
 	}
-	err = jsonpb.Unmarshal(r, in)
+
+	umrsh := jsonpb.Unmarshaler{AllowUnknownFields: true}
+	err = umrsh.Unmarshal(r, in)
 	return in, errors.Annotate(err, "read provision request %q", p).Err()
 }
 

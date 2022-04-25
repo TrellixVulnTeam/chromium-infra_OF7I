@@ -29,7 +29,9 @@ func readContainersMetadata(p string) (*build_api.ContainerMetadata, error) {
 	if err != nil {
 		return nil, errors.Annotate(err, "read container metadata %q", p).Err()
 	}
-	err = jsonpb.Unmarshal(r, in)
+
+	umrsh := jsonpb.Unmarshaler{AllowUnknownFields: true}
+	err = umrsh.Unmarshal(r, in)
 	return in, errors.Annotate(err, "read container metadata %q", p).Err()
 }
 

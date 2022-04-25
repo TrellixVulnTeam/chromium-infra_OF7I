@@ -137,7 +137,9 @@ func readTestOutput(filePath string) (*api.CrosTestResponse, error) {
 		return nil, errors.Annotate(err, "read output").Err()
 	}
 	out := &api.CrosTestResponse{}
-	err = jsonpb.Unmarshal(r, out)
+
+	umrsh := jsonpb.Unmarshaler{AllowUnknownFields: true}
+	err = umrsh.Unmarshal(r, out)
 	return out, errors.Annotate(err, "read output").Err()
 }
 
