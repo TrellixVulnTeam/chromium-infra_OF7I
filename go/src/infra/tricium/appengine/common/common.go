@@ -106,6 +106,8 @@ func MiddlewareForRPC() router.MiddlewareChain {
 	return MiddlewareBase()
 }
 
+const gerritAuthHeader = "X-Gerrit-Auth"
+
 // NewRPCServer returns preconfigured pRPC server that can host gRPC APIs.
 //
 // Usage:
@@ -118,7 +120,14 @@ func NewRPCServer() *prpc.Server {
 	// TODO(vadimsh): Enable monitoring interceptor.
 	// UnaryServerInterceptor: grpcmon.NewUnaryServerInterceptor(nil),
 	return &prpc.Server{
-		AccessControl: prpc.AllowOriginAll,
+		// Allow cross-origin calls, in particular calls using Gerrit auth headers.
+		AccessControl: func(context.Context, string) prpc.AccessControlDecision {
+			return prpc.AccessControlDecision{
+				AllowCrossOriginRequests: true,
+				AllowCredentials:         true,
+				AllowHeaders:             []string{gerritAuthHeader},
+			}
+		},
 		Authenticator: &auth.Authenticator{
 			Methods: []auth.Method{
 				// The default method used by majority of clients.
@@ -127,7 +136,7 @@ func NewRPCServer() *prpc.Server {
 				},
 				// For authenticating calls from Gerrit plugins.
 				&gerritauth.AuthMethod{
-					Header:        "X-Gerrit-Auth",
+					Header:        gerritAuthHeader,
 					SignerAccount: "gerritcodereview@system.gserviceaccount.com",
 					Audience:      "https://api.cr.dev",
 				},
