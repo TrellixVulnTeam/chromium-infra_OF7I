@@ -67,6 +67,8 @@ var failedToLookupAllowList map[string]bool = stringSliceToStringSet([]string{
 	"hatch;unprovisioned_helios",
 	"hatch;unprovisioned_kindred",
 	"hatch;unprovisioned_kohaku",
+	// For more details see b:228229403
+	"kefka;sabin",
 	"puff;unprovisioned_puff",
 	"zork;dalboz",
 	"zork;trembyle",
