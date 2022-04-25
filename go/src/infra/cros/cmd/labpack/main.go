@@ -168,43 +168,61 @@ func uploadLogs(ctx context.Context, state *build.State, lg logger.Logger) (rErr
 		lg.Errorf("Failed to create client: %s", err)
 	}
 
-	// Actually persist the logs
+	// Actually persist the logs.
 	swarmingTaskID := state.Infra().GetSwarming().GetTaskId()
-	if swarmingTaskID == "" {
-		lg.Errorf("Swarming task is empty! Skipping upload logs")
-	} else {
-		// upload.Upload can potentially run for a long time. Set a timeout of 30s.
-		//
-		// upload.Upload does respond to cancellation (which callFuncWithTimeout uses internally), but
-		// the correct of this code does not and should not depend on this fact.
-		//
-		// callFuncWithTimeout synchronously calls a function with a timeout and then unconditionally hands control
-		// back to its caller. The goroutine that's created in the background will not by itself keep the process alive.
-		// TODO(gregorynisbet): Allow this parameter to be overridden from outside.
-		// TODO(crbug/1311842): Switch this bucket back to chromeos-autotest-results.
-		gsURL := fmt.Sprintf("gs://chrome-fleet-karte-autotest-results/swarming-%s", swarmingTaskID)
-		lg.Infof("Swarming task %q is non-empty. Uploading to %q", swarmingTaskID, gsURL)
-		status, err := callFuncWithTimeout(ctx, 5*time.Minute, func(ctx context.Context) error {
-			lg.Infof("Beginning upload attempt. Starting five minute timeout.")
-			lg.Infof("Writing upload marker.")
-			// TODO(b:227489086): Remove this file.
-			if wErr := ioutil.WriteFile("_labpack_upload_marker", []byte("ca85a1f7-0de3-43c5-90ff-2e00b1041007"), 0o666); wErr != nil {
-				lg.Errorf("Failed to write upload marker file: %s", wErr)
-			}
+	if err := parallelUpload(ctx, lg, client, swarmingTaskID); err != nil {
+		return errors.Annotate(err, "upload logs").Err()
+	}
+	return nil
+}
 
-			lg.Infof("Calling upload.")
-			return upload.Upload(ctx, client, &upload.Params{
-				// TODO(gregorynisbet): Change this to the log root.
-				SourceDir:         ".",
-				GSURL:             gsURL,
-				MaxConcurrentJobs: 10,
-			})
-		})
-		lg.Infof("Upload log subtask status: %s", status)
-		if err != nil {
-			// TODO: Register error to Karte.
-			lg.Errorf("Upload task error: %s", err)
+// parallelUpload performs an upload in parallel to the google-storage bucket.
+//
+// parallelUpload will fail when given invalid arguments. However, it will not fail
+// simply because the upload attempt was unsuccessful.
+func parallelUpload(ctx context.Context, lg logger.Logger, client lucigs.Client, swarmingTaskID string) error {
+	if lg == nil {
+		return errors.Reason("parallel-upload: logger cannot be nil").Err()
+	}
+	if client == nil {
+		return errors.Reason("paralel-upload: client cannot be nil").Err()
+	}
+	if swarmingTaskID == "" {
+		timestamp := fmt.Sprintf("%d", time.Now().Unix())
+		lg.Errorf("Swarming task is empty. Falling back to timestamp %q.", timestamp)
+		swarmingTaskID = fmt.Sprintf("FAKE-ID-%s", timestamp)
+	}
+	// upload.Upload can potentially run for a long time. Set a timeout of 30s.
+	//
+	// upload.Upload does respond to cancellation (which callFuncWithTimeout uses internally), but
+	// the correct of this code does not and should not depend on this fact.
+	//
+	// callFuncWithTimeout synchronously calls a function with a timeout and then unconditionally hands control
+	// back to its caller. The goroutine that's created in the background will not by itself keep the process alive.
+	// TODO(gregorynisbet): Allow this parameter to be overridden from outside.
+	// TODO(crbug/1311842): Switch this bucket back to chromeos-autotest-results.
+	gsURL := fmt.Sprintf("gs://chrome-fleet-karte-autotest-results/swarming-%s", swarmingTaskID)
+	lg.Infof("Swarming task %q is non-empty. Uploading to %q", swarmingTaskID, gsURL)
+	status, err := callFuncWithTimeout(ctx, 5*time.Minute, func(ctx context.Context) error {
+		lg.Infof("Beginning upload attempt. Starting five minute timeout.")
+		lg.Infof("Writing upload marker.")
+		// TODO(b:227489086): Remove this file.
+		if wErr := ioutil.WriteFile("_labpack_upload_marker", []byte("ca85a1f7-0de3-43c5-90ff-2e00b1041007"), 0o666); wErr != nil {
+			lg.Errorf("Failed to write upload marker file: %s", wErr)
 		}
+
+		lg.Infof("Calling upload.")
+		return upload.Upload(ctx, client, &upload.Params{
+			// TODO(gregorynisbet): Change this to the log root.
+			SourceDir:         ".",
+			GSURL:             gsURL,
+			MaxConcurrentJobs: 10,
+		})
+	})
+	lg.Infof("Upload log subtask status: %s", status)
+	if err != nil {
+		// TODO: Register error to Karte.
+		lg.Errorf("Upload task error: %s", err)
 	}
 	return nil
 }
