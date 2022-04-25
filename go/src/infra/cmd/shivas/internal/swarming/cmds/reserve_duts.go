@@ -125,6 +125,7 @@ func scheduleReserveBuilder(ctx context.Context, bc buildbucket.Client, e site.E
 	}
 	config := base64.StdEncoding.EncodeToString(jsonByte)
 	// TODO(b/229896419): refactor to hide labpack.Params struct.
+	v := labpack.CIPDProd
 	p := &labpack.Params{
 		UnitName:     host,
 		TaskName:     string(tasknames.Custom),
@@ -138,9 +139,11 @@ func scheduleReserveBuilder(ctx context.Context, bc buildbucket.Client, e site.E
 		ExtraTags: []string{
 			adminSession,
 			"task:reserve",
+			parisClientTag,
+			fmt.Sprintf("version:%s", v),
 		},
 	}
-	taskID, err := labpack.ScheduleTask(ctx, bc, labpack.CIPDProd, p)
+	taskID, err := labpack.ScheduleTask(ctx, bc, v, p)
 	if err != nil {
 		return nil, err
 	}

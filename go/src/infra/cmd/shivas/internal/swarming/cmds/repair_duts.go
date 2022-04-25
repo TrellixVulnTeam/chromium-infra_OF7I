@@ -50,6 +50,8 @@ var RepairDutsCmd = &subcommands.Command{
 	},
 }
 
+const parisClientTag = "client:shivas"
+
 // Run represent runner for reserve command
 func (c *repairDuts) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
@@ -126,23 +128,27 @@ func (c *repairDuts) taskName() string {
 
 // ScheduleRepairBuilder schedules a labpack Buildbucket builder/recipe with the necessary arguments to run repair.
 func scheduleRepairBuilder(ctx context.Context, bc buildbucket.Client, e site.Environment, host string, runRepair bool, adminSession string) (*swarming.TaskInfo, error) {
+	v := labpack.CIPDProd
 	p := &labpack.Params{
 		UnitName:       host,
 		TaskName:       string(tasknames.Recovery),
 		EnableRecovery: runRepair,
 		AdminService:   e.AdminService,
-		// NOTE: We use the UFS service, not the Inventory service here.
+		// Note: UFS service is inventory service for fleet.
 		InventoryService: e.UnifiedFleetService,
 		NoStepper:        false,
 		NoMetrics:        false,
 		UpdateInventory:  true,
-		// TODO(gregorynisbet): Pass config file to labpack task.
+		// Note: Scheduled tasks are not expected custom configuration.
 		Configuration: "",
 		ExtraTags: []string{
 			adminSession,
+			"task:recovery",
+			parisClientTag,
+			fmt.Sprintf("version:%s", v),
 		},
 	}
-	taskID, err := labpack.ScheduleTask(ctx, bc, labpack.CIPDProd, p)
+	taskID, err := labpack.ScheduleTask(ctx, bc, v, p)
 	if err != nil {
 		return nil, err
 	}

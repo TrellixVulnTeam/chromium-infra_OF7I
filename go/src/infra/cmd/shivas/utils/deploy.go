@@ -23,6 +23,7 @@ func ScheduleDeployTask(ctx context.Context, bc buildbucket.Client, e site.Envir
 	if unit == "" {
 		return errors.Reason("schedule deploy task: unit name is empty").Err()
 	}
+	v := labpack.CIPDProd
 	p := &labpack.Params{
 		UnitName:       unit,
 		TaskName:       string(tasknames.Deploy),
@@ -33,9 +34,12 @@ func ScheduleDeployTask(ctx context.Context, bc buildbucket.Client, e site.Envir
 		UpdateInventory:  true,
 		ExtraTags: []string{
 			sessionTag,
+			"task:deploy",
+			"client:shivas",
+			fmt.Sprintf("version:%s", v),
 		},
 	}
-	taskID, err := labpack.ScheduleTask(ctx, bc, labpack.CIPDProd, p)
+	taskID, err := labpack.ScheduleTask(ctx, bc, v, p)
 	if err != nil {
 		return errors.Annotate(err, "schedule deploy task").Err()
 	}
