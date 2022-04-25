@@ -37,7 +37,7 @@
       "-root",
       "[START_DIR]/snoopy",
       "-ensure-file",
-      "infra/tools/security/snoopy_broker/${platform} git_revision:3d4e74afb729a2809cd5e02f044f0318c972a984",
+      "infra/tools/security/snoopy_broker/${platform} git_revision:7fabcd7ceec5e7e1a2462b9aad1f7082244fc0f7",
       "-max-threads",
       "0",
       "-json-output",
@@ -61,7 +61,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
       "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:3d4\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:7fa\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/security/snoopy_broker/resolved-platform\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }@@@",
       "@@@STEP_LOG_LINE@json.output@    ]@@@",
@@ -77,7 +77,9 @@
       "-stage",
       "start",
       "-recipe",
-      "3pp"
+      "3pp",
+      "-pid",
+      "12345"
     ],
     "luci_context": {
       "realm": {

@@ -35,4 +35,4 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield api.test('simple')
+  yield api.test('simple') + api.snoopy(54321)

@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from recipe_engine import recipe_api
 
 # Usage of snoopy recipe_module will have significant downstream impact and to
 # avoid any production outage, we are pinning the latest known good build of
 # the tool here. Upstream changes are intentionally left out.
-_LATEST_STABLE_VERSION = 'git_revision:3d4e74afb729a2809cd5e02f044f0318c972a984'
+_LATEST_STABLE_VERSION = 'git_revision:7fabcd7ceec5e7e1a2462b9aad1f7082244fc0f7'
 
 class SnoopyApi(recipe_api.RecipeApi):
   """API for interacting with Snoopy using the snoopy_broker tool."""
@@ -25,6 +26,11 @@ class SnoopyApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(SnoopyApi, self).__init__(**kwargs)
     self._snoopy_bin = None
+
+    if self._test_data.enabled:
+      self._pid = self._test_data.get('pid', 12345)
+    else:  # pragma: no cover
+      self._pid = os.getpid()
 
   @property
   def snoopy_path(self):
@@ -41,6 +47,11 @@ class SnoopyApi(recipe_api.RecipeApi):
       self.m.cipd.ensure(snoopy_dir, ensure_file)
       self._snoopy_bin = snoopy_dir.join('snoopy_broker')
     return self._snoopy_bin
+
+  @property
+  def pid(self):
+    """Returns the current process id if the recipe is running."""
+    return self._pid
 
   def report_stage(self, stage, snoopy_url=None):
     """Reports task stage to local snoopy server.
@@ -65,8 +76,11 @@ class SnoopyApi(recipe_api.RecipeApi):
     if snoopy_url:
       args.extend(['-backend-url', snoopy_url])
 
+    # When task starts, they must report recipe name and recipe's process id.
     if stage == "start":
       args.extend(['-recipe', self.m.properties['recipe']])
+    if stage == "start":
+      args.extend(['-pid', self.pid])
 
     self.m.step('report_stage', args)
 

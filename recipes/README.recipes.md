@@ -599,11 +599,15 @@ Args:
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-#### **class [SnoopyApi](/recipes/recipe_modules/snoopy/api.py#22)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [SnoopyApi](/recipes/recipe_modules/snoopy/api.py#23)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for interacting with Snoopy using the snoopy_broker tool.
 
-&mdash; **def [report\_cipd](/recipes/recipe_modules/snoopy/api.py#73)(self, digest, pkg, iid, snoopy_url=None):**
+&emsp; **@property**<br>&mdash; **def [pid](/recipes/recipe_modules/snoopy/api.py#51)(self):**
+
+Returns the current process id if the recipe is running.
+
+&mdash; **def [report\_cipd](/recipes/recipe_modules/snoopy/api.py#87)(self, digest, pkg, iid, snoopy_url=None):**
 
 Reports cipd digest to local snoopy server.
 
@@ -617,7 +621,7 @@ Args:
   * snoopy_url (Optional[str]) - URL for the local snoopy server, snoopy
     broker tool will use default if not specified.
 
-&mdash; **def [report\_gcs](/recipes/recipe_modules/snoopy/api.py#102)(self, digest, guri, snoopy_url=None):**
+&mdash; **def [report\_gcs](/recipes/recipe_modules/snoopy/api.py#116)(self, digest, guri, snoopy_url=None):**
 
 Reports cipd digest to local snoopy server.
 
@@ -631,7 +635,7 @@ Args:
   * snoopy_url (Optional[str]) - URL for the local snoopy server, snoopy
     broker tool will use default if not specified.
 
-&mdash; **def [report\_stage](/recipes/recipe_modules/snoopy/api.py#45)(self, stage, snoopy_url=None):**
+&mdash; **def [report\_stage](/recipes/recipe_modules/snoopy/api.py#56)(self, stage, snoopy_url=None):**
 
 Reports task stage to local snoopy server.
 
@@ -645,7 +649,7 @@ Args:
   * snoopy_url (Optional[str]) - URL for the local snoopy server, snoopy
     broker tool will use default if not specified.
 
-&emsp; **@property**<br>&mdash; **def [snoopy\_path](/recipes/recipe_modules/snoopy/api.py#29)(self):**
+&emsp; **@property**<br>&mdash; **def [snoopy\_path](/recipes/recipe_modules/snoopy/api.py#35)(self):**
 
 Returns the path to snoopy_broker binary.
 
