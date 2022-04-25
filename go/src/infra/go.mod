@@ -22,7 +22,7 @@ require (
 	github.com/alecthomas/participle/v2 v2.0.0-alpha7
 	github.com/andygrunwald/go-gerrit v0.0.0-20210726065827-cc4e14e40b5b
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210907221601-4f80a5e09cd0 // indirect
-	github.com/bazelbuild/remote-apis-sdks v0.0.0-20220301013006-36f659de32ef
+	github.com/bazelbuild/remote-apis-sdks v0.0.0-20220422144733-8780f11b1bb2
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/containerd/containerd v1.5.5 // indirect
 	github.com/danjacques/gofslock v0.0.0-20220131014315-6e321f4509c8

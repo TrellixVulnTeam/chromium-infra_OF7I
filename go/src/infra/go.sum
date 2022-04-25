@@ -262,8 +262,8 @@ github.com/bazelbuild/remote-apis v0.0.0-20210718193713-0ecef08215cf/go.mod h1:r
 github.com/bazelbuild/remote-apis v0.0.0-20210812183132-3e816456ee28 h1:lxnT86MpnwOnQoYVc/SaFwl8hZwVBEcznJWt9kYLwvs=
 github.com/bazelbuild/remote-apis v0.0.0-20210812183132-3e816456ee28/go.mod h1:ry8Y6CkQqCVcYsjPOlLXDX2iRVjOnjogdNwhvHmRcz8=
 github.com/bazelbuild/remote-apis-sdks v0.0.0-20201110004117-e776219c9bb7/go.mod h1:SvHtabqK9r562BLgmQfd+s5hzd9UUS903b0OmQHvzrI=
-github.com/bazelbuild/remote-apis-sdks v0.0.0-20220301013006-36f659de32ef h1:1fQckaJ6+aRfshDJio2YEH7DK3h+S/fw10nXt8JapcU=
-github.com/bazelbuild/remote-apis-sdks v0.0.0-20220301013006-36f659de32ef/go.mod h1:p6PH8Kyjfm/hhbwC8ymX8SarB7CQTUiW6J0T/zbEKj8=
+github.com/bazelbuild/remote-apis-sdks v0.0.0-20220422144733-8780f11b1bb2 h1:P/AG2n11jVtXVWH9Zk9LPaopLD8pr2x5xROxpw5Qlk0=
+github.com/bazelbuild/remote-apis-sdks v0.0.0-20220422144733-8780f11b1bb2/go.mod h1:p6PH8Kyjfm/hhbwC8ymX8SarB7CQTUiW6J0T/zbEKj8=
 github.com/bazelbuild/rules_go v0.0.0-20190719190356-6dae44dc5cab/go.mod h1:MC23Dc/wkXEyk3Wpq6lCqz0ZAYOZDw2DR5y3N1q2i7M=
 github.com/beorn7/perks v0.0.0-20160804104726-4c0e84591b9a/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
