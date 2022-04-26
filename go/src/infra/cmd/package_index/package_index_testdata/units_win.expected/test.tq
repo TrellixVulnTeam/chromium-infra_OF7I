@@ -7,7 +7,7 @@ unit {
     required_input {
         v_name {
             corpus: "chromium-test"
-            path: "src/test.tq"
+            path: "test.tq"
         }
         info {
             path: "../../test.tq"

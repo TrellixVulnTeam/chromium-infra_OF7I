@@ -6,7 +6,7 @@ unit {
   required_input {
     v_name {
       corpus: "chromium-test"
-      path: "src/main.proto"
+      path: "main.proto"
     }
     info {
       path: "../../main.proto"
@@ -16,7 +16,7 @@ unit {
   required_input {
     v_name {
       corpus: "chromium-test"
-      path: "src/out/Debug/gen/main.pb.h.meta"
+      path: "out/Debug/gen/main.pb.h.meta"
     }
     info {
       path: "gen/main.pb.h.meta"
@@ -26,7 +26,7 @@ unit {
   required_input {
     v_name {
       corpus: "chromium-test"
-      path: "src/out/Debug/gen/sub.pb.h.meta"
+      path: "out/Debug/gen/sub.pb.h.meta"
     }
     info {
       path: "gen/sub.pb.h.meta"
@@ -36,7 +36,7 @@ unit {
   required_input {
     v_name {
       corpus: "chromium-test"
-      path: "src/out/Debug/gen/subsub.pb.h.meta"
+      path: "out/Debug/gen/subsub.pb.h.meta"
     }
     info {
       path: "gen/subsub.pb.h.meta"
@@ -46,7 +46,7 @@ unit {
   required_input {
     v_name {
       corpus: "chromium-test"
-      path: "src/sub.proto"
+      path: "sub.proto"
     }
     info {
       path: "../../sub.proto"
@@ -56,7 +56,7 @@ unit {
   required_input {
     v_name {
       corpus: "chromium-test"
-      path: "src/subsub.proto"
+      path: "subsub.proto"
     }
     info {
       path: "../../subsub.proto"

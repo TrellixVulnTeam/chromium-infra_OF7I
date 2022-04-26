@@ -6,7 +6,7 @@ unit {
   required_input {
     v_name {
       corpus: "chromium-test"
-      path: "src/test.cc"
+      path: "test.cc"
     }
     info {
       path: "../../test.cc"
@@ -16,7 +16,7 @@ unit {
   required_input {
     v_name {
       corpus: "chromium-test"
-      path: "src/test.h"
+      path: "test.h"
     }
     info {
       path: "../../test.h"
@@ -26,7 +26,7 @@ unit {
   required_input {
     v_name {
       corpus: "chromium-test"
-      path: "src/test2.h"
+      path: "test2.h"
     }
     info {
       path: "../../test2.h"
@@ -36,7 +36,7 @@ unit {
   required_input {
     v_name {
       corpus: "chromium-test"
-      root: "src/third_party/depot_tools/win_toolchain"
+      root: "third_party/depot_tools/win_toolchain"
       path: "sdk_header.h"
     }
     info {
@@ -47,7 +47,7 @@ unit {
   required_input {
     v_name {
       corpus: "chromium-test"
-      root: "src/build/linux/debian_sid_amd64-sysroot"
+      root: "build/linux/debian_sid_amd64-sysroot"
       path: "usr/include/debian_header.h"
     }
     info {
@@ -58,7 +58,7 @@ unit {
   required_input {
     v_name {
       corpus: "chromium-test"
-      path: "src/out/Debug/gen/main.pb.h"
+      path: "out/Debug/gen/main.pb.h"
     }
     info {
       path: "gen/main.pb.h"
@@ -68,7 +68,7 @@ unit {
   required_input {
     v_name {
       corpus: "chromium-test"
-      path: "src/out/Debug/gen/main.pb.h.meta"
+      path: "out/Debug/gen/main.pb.h.meta"
     }
     info {
       path: "gen/main.pb.h.meta"

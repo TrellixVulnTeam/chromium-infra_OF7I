@@ -87,12 +87,11 @@ func (m *torqueTarget) getUnit() (*kpb.CompilationUnit, error) {
 
 		h, _ := m.hashMap.Filehash(p)
 
+		vname := &kpb.VName{}
+		setVnameForFile(vname, convertPathToForwardSlashes(
+			normalizePath(m.outDir, requiredFile)), m.corpus)
 		requiredInput := &kpb.CompilationUnit_FileInput{
-			VName: &kpb.VName{
-				Corpus: m.corpus,
-				Path: convertPathToForwardSlashes(
-					normalizePath(m.outDir, requiredFile)),
-			},
+			VName: vname,
 			Info: &kpb.FileInfo{
 				Digest: h,
 				Path:   convertPathToForwardSlashes(requiredFile),

@@ -359,7 +359,7 @@ func addClangUnitInput(ctx context.Context, fname, dir, outDir, corpus string, h
 	}
 
 	vname := &kpb.VName{}
-	setVnameForFile(ctx, vname, convertPathToForwardSlashes(normalizePath(outDir, fname)), corpus)
+	setVnameForFile(vname, convertPathToForwardSlashes(normalizePath(outDir, fname)), corpus)
 	requiredInput := &kpb.CompilationUnit_FileInput{
 		VName: vname,
 		Info: &kpb.FileInfo{

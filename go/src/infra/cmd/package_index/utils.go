@@ -20,8 +20,8 @@ import (
 // A list of path prefixes to set a different root and path, used by
 // kythe/grimoire to find external headers.
 var rootModifiers = []string{
-	"src/third_party/depot_tools/win_toolchain",
-	"src/build/linux/debian_sid_amd64-sysroot",
+	"third_party/depot_tools/win_toolchain",
+	"build/linux/debian_sid_amd64-sysroot",
 }
 
 // Substrings of arguments that should be removed from compile commands on Windows.
@@ -183,9 +183,14 @@ func findImports(ctx context.Context, regex *regexp.Regexp, fpath string, import
 // Specifically, this checks if the file should be put in a special corpus
 // (e.g. the one for the Windows SDK), and if so overrides defaultCorpus
 // and moves the windows path to root.
-func setVnameForFile(ctx context.Context, vnameProto *kpb.VName, filepath, defaultCorpus string) {
+func setVnameForFile(vnameProto *kpb.VName, filepath, defaultCorpus string) {
 	if strings.Contains(filepath, "\\") {
 		panic("Filepath contains \\")
+	}
+
+	// Strip prefix src/ from Paths
+	if strings.HasPrefix(filepath, "src/") {
+		filepath = filepath[4:]
 	}
 
 	vnameProto.Corpus = defaultCorpus

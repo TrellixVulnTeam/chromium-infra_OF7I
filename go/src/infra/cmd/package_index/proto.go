@@ -156,11 +156,10 @@ func (p protoTarget) getUnit() (*kpb.CompilationUnit, error) {
 			logging.Warningf(p.ctx, "File %s was not found.", f)
 		}
 
+		vname := &kpb.VName{}
+		setVnameForFile(vname, convertPathToForwardSlashes(vnamePath), p.corpus)
 		requiredInput := &kpb.CompilationUnit_FileInput{
-			VName: &kpb.VName{
-				Corpus: p.corpus,
-				Path:   convertPathToForwardSlashes(vnamePath),
-			},
+			VName: vname,
 			Info: &kpb.FileInfo{
 				Digest: h,
 				Path:   convertPathToForwardSlashes(infoPath),
