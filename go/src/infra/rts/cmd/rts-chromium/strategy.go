@@ -16,16 +16,9 @@ import (
 
 	"infra/rts"
 	"infra/rts/filegraph/git"
+	"infra/rts/internal/chromium"
 	"infra/rts/presubmit/eval"
 	evalpb "infra/rts/presubmit/eval/proto"
-)
-
-// The range of the number of changed files to enable RTS.
-// If the number of changed files is not in this range, then RTS is disabled.
-// Note that 99.3% of developer-authored git commits change <= 100 files, see bit.ly/chromium-rts
-const (
-	minChangedFiles = 1
-	maxChangedFiles = 100
 )
 
 // mustAlwaysRunTest returns true if the test file must never be skipped.
@@ -69,14 +62,14 @@ var (
 // selectTests calls skipFile for test files that should be skipped.
 // May return an error annotated with disableRTS tag and the message explaining
 // why RTS was disabled.
-func (r *selectRun) selectTests(skipFile func(*TestFile) error) (err error) {
+func (r *selectRun) selectTests(skipFile func(*chromium.TestFile) error) (err error) {
 	// Disable RTS if the number of files is unusual.
-	if len(r.changedFiles) < minChangedFiles || len(r.changedFiles) > maxChangedFiles {
+	if len(r.changedFiles) < chromium.MinChangedFiles || len(r.changedFiles) > chromium.MaxChangedFiles {
 		return errors.Reason(
 			"%d files were changed, which is outside of [%d, %d] range",
 			len(r.changedFiles),
-			minChangedFiles,
-			maxChangedFiles,
+			chromium.MinChangedFiles,
+			chromium.MaxChangedFiles,
 		).Tag(disableRTS).Err()
 	}
 

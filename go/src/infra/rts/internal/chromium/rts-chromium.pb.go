@@ -8,7 +8,7 @@
 // 	protoc        v3.12.1
 // source: infra/rts/cmd/rts-chromium/rts-chromium.proto
 
-package main
+package chromium
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"

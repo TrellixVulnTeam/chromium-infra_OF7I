@@ -24,6 +24,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	"infra/rts/filegraph/git"
+	"infra/rts/internal/chromium"
 	"infra/rts/internal/gitutil"
 	evalpb "infra/rts/presubmit/eval/proto"
 )
@@ -77,8 +78,8 @@ type selectRun struct {
 
 	// Indirect input.
 
-	testFiles    map[string]*TestFile // indexed by source-absolute test file name
-	changedFiles stringset.Set        // files different between origin/main and the working tree
+	testFiles    map[string]*chromium.TestFile // indexed by source-absolute test file name
+	changedFiles stringset.Set                 // files different between origin/main and the working tree
 	strategy     git.SelectionStrategy
 }
 
@@ -111,7 +112,7 @@ func (r *selectRun) Run(a subcommands.Application, args []string, env subcommand
 		return r.done(err)
 	}
 
-	if err := prepareOutDir(r.out, "*.filter"); err != nil {
+	if err := chromium.PrepareOutDir(r.out, "*.filter"); err != nil {
 		return r.done(errors.Annotate(err, "failed to prepare filter file dir %q", r.out).Err())
 	}
 
@@ -137,7 +138,7 @@ func (r *selectRun) Run(a subcommands.Application, args []string, env subcommand
 func (r *selectRun) writeFilterFiles() error {
 	// Maps a test target to the list of tests to skip.
 	testsToSkip := map[string][]string{}
-	err := r.selectTests(func(testFileToSkip *TestFile) error {
+	err := r.selectTests(func(testFileToSkip *chromium.TestFile) error {
 		for _, target := range testFileToSkip.TestTargets {
 			testsToSkip[target] = append(testsToSkip[target], testFileToSkip.TestNames...)
 		}
@@ -229,7 +230,7 @@ func (r *selectRun) loadStrategy(cfgFileName string) error {
 	if err != nil {
 		return err
 	}
-	cfg := &GitBasedStrategyConfig{}
+	cfg := &chromium.GitBasedStrategyConfig{}
 	if err := protojson.Unmarshal(cfgBytes, cfg); err != nil {
 		return err
 	}
@@ -269,8 +270,8 @@ func (r *selectRun) loadTestFileSet(fileName string) error {
 	}
 	defer f.Close()
 
-	r.testFiles = map[string]*TestFile{}
-	return readTestFiles(bufio.NewReader(f), func(file *TestFile) error {
+	r.testFiles = map[string]*chromium.TestFile{}
+	return chromium.ReadTestFiles(bufio.NewReader(f), func(file *chromium.TestFile) error {
 		r.testFiles[file.Path] = file
 		return nil
 	})

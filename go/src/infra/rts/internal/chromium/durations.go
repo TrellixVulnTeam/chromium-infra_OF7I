@@ -2,9 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package chromium
 
 import (
+	"fmt"
+	"os"
 	"time"
 
 	"cloud.google.com/go/bigquery"
@@ -16,7 +18,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
-func cmdFetchDurations(authOpt *auth.Options) *subcommands.Command {
+func SubcommandCommandFetchDurations(authOpt *auth.Options) *subcommands.Command {
 	return &subcommands.Command{
 		UsageLine: `fetch-durations`,
 		ShortDesc: "fetch test duration data",
@@ -40,6 +42,18 @@ type fetchDurationsRun struct {
 	baseHistoryRun
 	frac        float64
 	minDuration time.Duration
+}
+
+type baseCommandRun struct {
+	subcommands.CommandRunBase
+}
+
+func (r *baseCommandRun) done(err error) int {
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	return 0
 }
 
 func (r *fetchDurationsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {

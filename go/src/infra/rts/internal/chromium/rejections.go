@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package chromium
 
 import (
 	"cloud.google.com/go/bigquery"
@@ -14,7 +14,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
-func cmdFetchRejections(authOpt *auth.Options) *subcommands.Command {
+func SubcommandCommandFetchRejections(authOpt *auth.Options) *subcommands.Command {
 	return &subcommands.Command{
 		UsageLine: `fetch-rejections`,
 		ShortDesc: "fetch test rejection data",

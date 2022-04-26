@@ -23,6 +23,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	"infra/rts/filegraph/git"
+	"infra/rts/internal/chromium"
 	"infra/rts/presubmit/eval"
 )
 
@@ -91,7 +92,7 @@ func (r *createModelRun) Run(a subcommands.Application, args []string, env subco
 	}
 
 	var err error
-	if r.bqClient, err = newBQClient(ctx, auth.NewAuthenticator(ctx, auth.InteractiveLogin, *r.authOpt)); err != nil {
+	if r.bqClient, err = chromium.NewBQClient(ctx, auth.NewAuthenticator(ctx, auth.InteractiveLogin, *r.authOpt)); err != nil {
 		return r.done(errors.Annotate(err, "failed to create BigQuery client").Err())
 	}
 
@@ -195,7 +196,7 @@ func (r *createModelRun) writeStrategyConfig(ctx context.Context, fileName strin
 	}
 
 	eval.PrintResults(res, os.Stdout, 0.97)
-	cfgBytes, err := protojson.Marshal(&GitBasedStrategyConfig{
+	cfgBytes, err := protojson.Marshal(&chromium.GitBasedStrategyConfig{
 		ChangeLogDistanceFactor:     float32(er.ChangeLogDistanceFactor),
 		FileStructureDistanceFactor: float32(er.FileStructureDistanceFactor),
 		Thresholds:                  res.Thresholds,
@@ -218,7 +219,7 @@ func (r *createModelRun) writeTestFileSet(ctx context.Context, fileName string) 
 	defer f.Close()
 	bufW := bufio.NewWriter(f)
 
-	if err := writeTestFiles(ctx, r.bqClient, bufW); err != nil {
+	if err := chromium.WriteTestFiles(ctx, r.bqClient, bufW); err != nil {
 		return err
 	}
 

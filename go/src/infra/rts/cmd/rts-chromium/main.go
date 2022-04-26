@@ -12,9 +12,7 @@ import (
 	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/storage"
 	"github.com/maruel/subcommands"
-	"google.golang.org/api/option"
 
-	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/api/gerrit"
 	"go.chromium.org/luci/common/cli"
@@ -22,6 +20,8 @@ import (
 	"go.chromium.org/luci/common/flag/fixflagpos"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
+
+	"infra/rts/internal/chromium"
 )
 
 var logCfg = gologger.LoggerConfig{
@@ -41,10 +41,12 @@ func main() {
 			return logCfg.Use(ctx)
 		},
 		Commands: []*subcommands.Command{
-			cmdFetchRejections(&authOpt),
-			cmdFetchDurations(&authOpt),
 			cmdCreateModel(&authOpt),
 			cmdSelect(),
+
+			{}, // a separator
+			chromium.SubcommandCommandFetchRejections(&authOpt),
+			chromium.SubcommandCommandFetchDurations(&authOpt),
 
 			{}, // a separator
 			authcli.SubcommandLogin(authOpt, "auth-login", false),
@@ -69,12 +71,4 @@ func (r *baseCommandRun) done(err error) int {
 		return 1
 	}
 	return 0
-}
-
-func newBQClient(ctx context.Context, auth *auth.Authenticator) (*bigquery.Client, error) {
-	http, err := auth.Client()
-	if err != nil {
-		return nil, err
-	}
-	return bigquery.NewClient(ctx, "chrome-rts", option.WithHTTPClient(http))
 }

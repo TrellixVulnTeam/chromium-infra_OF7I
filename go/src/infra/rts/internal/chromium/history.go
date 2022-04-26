@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package chromium
 
 import (
 	"context"
@@ -27,6 +27,14 @@ import (
 	"go.chromium.org/luci/common/sync/parallel"
 )
 
+// The range of the number of changed files to enable RTS.
+// If the number of changed files is not in this range, then RTS is disabled.
+// Note that 99.3% of developer-authored git commits change <= 100 files, see bit.ly/chromium-rts
+const (
+	MinChangedFiles = 1
+	MaxChangedFiles = 100
+)
+
 type baseHistoryRun struct {
 	out          string
 	startTime    time.Time
@@ -38,6 +46,14 @@ type baseHistoryRun struct {
 	authOpt       *auth.Options
 	authenticator *auth.Authenticator
 	http          *http.Client
+}
+
+func NewBQClient(ctx context.Context, auth *auth.Authenticator) (*bigquery.Client, error) {
+	http, err := auth.Client()
+	if err != nil {
+		return nil, err
+	}
+	return bigquery.NewClient(ctx, "chrome-rts", option.WithHTTPClient(http))
 }
 
 func (r *baseHistoryRun) RegisterBaseFlags(fs *flag.FlagSet) {
@@ -91,7 +107,7 @@ func (r *baseHistoryRun) runAndFetchResults(ctx context.Context, sql string, ext
 
 // runQuery runs the query and returns the table with results.
 func (r *baseHistoryRun) runQuery(ctx context.Context, sql string, extraParams ...bigquery.QueryParameter) (*bigquery.Table, error) {
-	client, err := newBQClient(ctx, r.authenticator)
+	client, err := NewBQClient(ctx, r.authenticator)
 	if err != nil {
 		return nil, err
 	}
@@ -111,8 +127,8 @@ func (r *baseHistoryRun) runQuery(ctx context.Context, sql string, extraParams .
 		{Name: "endTime", Value: r.endTime},
 		{Name: "builderRegexp", Value: prepRe(r.builderRegex)},
 		{Name: "testIdRegexp", Value: prepRe(r.testIDRegex)},
-		{Name: "minChangedFiles", Value: minChangedFiles},
-		{Name: "maxChangedFiles", Value: maxChangedFiles},
+		{Name: "minChangedFiles", Value: MinChangedFiles},
+		{Name: "maxChangedFiles", Value: MaxChangedFiles},
 		{Name: "clOwner", Value: r.clOwner},
 	}
 	q.Parameters = append(q.Parameters, extraParams...)
@@ -143,7 +159,7 @@ func (r *baseHistoryRun) fetchResults(ctx context.Context, table *bigquery.Table
 	//    This also takes care of the converting from tabular format to a file format.
 	// 2. Download the prepared files to the destination directory.
 
-	if err := prepareOutDir(r.out, "*.jsonl.gz"); err != nil {
+	if err := PrepareOutDir(r.out, "*.jsonl.gz"); err != nil {
 		return err
 	}
 

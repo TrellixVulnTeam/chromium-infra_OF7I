@@ -2,13 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package chromium
 
 import (
 	"bufio"
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"cloud.google.com/go/bigquery"
 	"google.golang.org/api/iterator"
@@ -16,7 +17,7 @@ import (
 )
 
 // writeTestFiles writes TestFile protobuf messages to w in JSON Lines format.
-func writeTestFiles(ctx context.Context, bqClient *bigquery.Client, w io.Writer) error {
+func WriteTestFiles(ctx context.Context, bqClient *bigquery.Client, w io.Writer) error {
 	// Grab all tests in the past 1 week.
 	// Use ci_test_results table (not CQ) because it is smaller and it does not
 	// include test file names that never made it to the repo.
@@ -73,8 +74,27 @@ func writeTestFilesFrom(ctx context.Context, w io.Writer, source func(dest inter
 	}
 }
 
-// readTestFiles reads test files written by writeTestFilesFrom().
-func readTestFiles(r io.Reader, callback func(*TestFile) error) error {
+// mustAlwaysRunTest returns true if the test file must never be skipped.
+func mustAlwaysRunTest(testFile string) bool {
+	switch {
+	// Always run all third-party tests (never skip them),
+	// except //third_party/blink which is actually first party.
+	case strings.Contains(testFile, "/third_party/") && !strings.HasPrefix(testFile, "//third_party/blink/"):
+		return true
+
+	case testFile == "//third_party/blink/web_tests/wpt_internal/webgpu/cts.html":
+		// Most of cts.html commits are auto-generated.
+		// https://source.chromium.org/chromium/chromium/src/+/HEAD:third_party/blink/web_tests/wpt_internal/webgpu/cts.html;l=5;bpv=1;bpt=0
+		// cts.html does not have meaningful edges in the file graph.
+		return true
+
+	default:
+		return false
+	}
+}
+
+// ReadTestFiles reads test files written by writeTestFilesFrom().
+func ReadTestFiles(r io.Reader, callback func(*TestFile) error) error {
 	scan := bufio.NewScanner(r)
 	scan.Buffer(nil, 1e7) // 10 MB.
 	for scan.Scan() {

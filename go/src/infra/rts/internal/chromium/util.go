@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package chromium
 
 import (
 	"os"
@@ -13,7 +13,7 @@ import (
 
 // prepareOutDir ensures that a dir exists and does not have files that match
 // clearPattern glob, e.g. "*.jsonl.gz".
-func prepareOutDir(path, clearPattern string) error {
+func PrepareOutDir(path, clearPattern string) error {
 	if err := os.MkdirAll(path, 0777); err != nil {
 		return err
 	}
