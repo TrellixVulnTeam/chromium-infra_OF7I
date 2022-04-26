@@ -2,6 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// These tests are not fundamentally platform-specific. However, they are
+// more brittle than one would expect on Windows under high load for mysterious
+// reasons that haven't been determined yet.
+//
+// See b:230128605 for more details.
+
 package retry
 
 import (
