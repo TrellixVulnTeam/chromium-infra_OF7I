@@ -112,7 +112,11 @@ class FlaskServlet(object):
     try:
       self.ratelimiter.CheckStart(self.request)
 
-      #TODO: parse request and call the actual function to process data
+      with self.mr.profiler.Phase('parsing request and doing lookups'):
+        self.mr.ParseFlaskRequest(self.request, self.services)
+
+      self.response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+
       if self.request.method == 'POST':
         self.post()
       elif self.request.method == 'GET':

@@ -270,7 +270,6 @@ class MonorailRequest(MonorailRequestBase):
       if self.viewed_username:
         self._LookupViewedUser(services)
       self._LookupLoggedInUser(services)
-      # TODO(jrobbins): re-implement HandleLurkerViewingSelf()
 
     if not self.hotlist:
       self._LookupHotlist(services)
@@ -284,6 +283,62 @@ class MonorailRequest(MonorailRequestBase):
                           (settings.local_mode or prod_debug_allowed))
     # temporary option for perf testing on staging instance.
     if request.params.get('disable_cache'):
+      if settings.local_mode or 'staging' in request.host:
+        self.use_cached_searches = False
+
+  def ParseFlaskRequest(self, request, services, do_user_lookups=True):
+    """Parse tons of useful info from the given flask request object.
+
+    Args:
+      request: flask Request object w/ path and query params.
+      services: connections to backend servers including DB.
+      do_user_lookups: Set to False to disable lookups during testing.
+    """
+    with self.profiler.Phase('basic parsing'):
+      self.request = request
+      self.current_page_url = request.url
+      self.current_page_url_encoded = urllib.quote_plus(self.current_page_url)
+
+      # Only accept a hostport from the request that looks valid.
+      if not _HOSTPORT_RE.match(request.host):
+        raise exceptions.InputException(
+            'request.host looks funny: %r', request.host)
+
+      logging.info('Flask Request: %s', self.current_page_url)
+
+    with self.profiler.Phase('path parsing'):
+      (viewed_user_val, self.project_name, self.hotlist_id,
+       self.hotlist_name) = _ParsePathIdentifiers(self.request.url)
+      self.viewed_username = _GetViewedEmail(
+          viewed_user_val, self.cnxn, services)
+    with self.profiler.Phase('qs parsing'):
+      self._ParseQueryParameters()
+    with self.profiler.Phase('overrides parsing'):
+      self._ParseFormOverrides()
+
+    if not self.project:  # It can be already set in unit tests.
+      self._LookupProject(services)
+    if self.project_id and services.config:
+      self.config = services.config.GetProjectConfig(self.cnxn, self.project_id)
+
+    if do_user_lookups:
+      if self.viewed_username:
+        self._LookupViewedUser(services)
+      self._LookupLoggedInUser(services)
+
+    if not self.hotlist:
+      self._LookupHotlist(services)
+
+    if self.query is None:
+      self.query = self._CalcDefaultQuery()
+
+    prod_debug_allowed = self.perms.HasPerm(
+        permissions.VIEW_DEBUG, self.auth.user_id, None)
+    self.debug_enabled = (
+        request.args.get('debug') and
+        (settings.local_mode or prod_debug_allowed))
+    # temporary option for perf testing on staging instance.
+    if request.args.get('disable_cache'):
       if settings.local_mode or 'staging' in request.host:
         self.use_cached_searches = False
 
@@ -538,7 +593,11 @@ class MonorailRequest(MonorailRequestBase):
   def GetParam(self, query_param_name, default_value=None,
                antitamper_re=None):
     """Get a query parameter from the URL as a utf8 string."""
-    value = self.request.params.get(query_param_name)
+    value = None
+    if hasattr(self.request, 'params'):
+      value = self.request.params.get(query_param_name)
+    else:
+      value = self.request.args.get(query_param_name)
     assert value is None or isinstance(value, six.text_type)
     using_default = value is None
     if using_default:
@@ -557,7 +616,11 @@ class MonorailRequest(MonorailRequestBase):
 
   def GetIntParam(self, query_param_name, default_value=None):
     """Get an integer param from the URL or default."""
-    value = self.request.params.get(query_param_name)
+    value = None
+    if hasattr(self.request, 'params'):
+      value = self.request.params.get(query_param_name)
+    else:
+      value = self.request.args.get(query_param_name)
     if value is None or value == '':
       return default_value
 
@@ -574,7 +637,11 @@ class MonorailRequest(MonorailRequestBase):
 
   def GetListParam(self, query_param_name, default_value=None):
     """Get a list of strings from the URL or default."""
-    params = self.request.params.get(query_param_name)
+    params = None
+    if hasattr(self.request, 'params'):
+      params = self.request.params.get(query_param_name)
+    else:
+      params = self.request.args.get(query_param_name)
     if params is None:
       return default_value
     if not params:
@@ -594,7 +661,12 @@ class MonorailRequest(MonorailRequestBase):
 
   def GetBoolParam(self, query_param_name, default_value=None):
     """Get a boolean param from the URL or default."""
-    value = self.request.params.get(query_param_name)
+    value = None
+    if hasattr(self.request, 'params'):
+      value = self.request.params.get(query_param_name)
+    else:
+      value = self.request.args.get(query_param_name)
+
     if value is None:
       return default_value
 
