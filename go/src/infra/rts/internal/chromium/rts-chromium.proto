@@ -8,7 +8,7 @@ package chrome.rts;
 
 import "infra/rts/presubmit/eval/proto/results.proto";
 
-option go_package = "infra/rts/cmd/rts-chromium;main";
+option go_package = "infra/rts/internal/chromium;chromium";
 
 // A test file used in Chromium.
 //
