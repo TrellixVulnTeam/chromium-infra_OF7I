@@ -31,17 +31,17 @@ const (
 
 // pingExec verifies the DUT is pingable.
 func pingExec(ctx context.Context, info *execs.ExecInfo) error {
-	return WaitUntilPingable(ctx, info, info.RunArgs.ResourceName, info.ActionTimeout, 2)
+	return cros.WaitUntilPingable(ctx, info.ActionTimeout, cros.PingRetryInteval, 2, info.DefaultPinger(), info.NewLogger())
 }
 
 // sshExec verifies ssh access to the current plan's device (named by the default resource name).
 func sshExec(ctx context.Context, info *execs.ExecInfo) error {
-	return WaitUntilSSHable(ctx, info.DefaultRunner(), info.ActionTimeout)
+	return cros.WaitUntilSSHable(ctx, info.ActionTimeout, cros.SSHRetryInteval, info.DefaultRunner(), info.NewLogger())
 }
 
 // sshDUTExec verifies ssh access to the DUT.
 func sshDUTExec(ctx context.Context, info *execs.ExecInfo) error {
-	return WaitUntilSSHable(ctx, info.NewRunner(info.RunArgs.DUT.Name), info.ActionTimeout)
+	return cros.WaitUntilSSHable(ctx, info.ActionTimeout, cros.SSHRetryInteval, info.NewRunner(info.RunArgs.DUT.Name), info.NewLogger())
 }
 
 // rebootExec reboots the cros DUT.

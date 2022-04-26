@@ -10,9 +10,9 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/components/cros"
 	"infra/cros/recovery/internal/components/cros/rpm"
 	"infra/cros/recovery/internal/execs"
-	"infra/cros/recovery/internal/execs/cros"
 	"infra/cros/recovery/tlw"
 )
 
@@ -22,18 +22,23 @@ func rpmAuditWithoutBatteryExec(ctx context.Context, info *execs.ExecInfo) error
 	argsMap := info.GetActionArgs(ctx)
 	downTimeout := argsMap.AsDuration(ctx, "down_timeout", 120, time.Second)
 	bootTimeout := argsMap.AsDuration(ctx, "boot_timeout", 150, time.Second)
+	waitInterval := argsMap.AsDuration(ctx, "wait_interval", 5, time.Second)
+	log := info.NewLogger()
+	ping := info.DefaultPinger()
+	run := info.DefaultRunner()
 	if err := rpmPowerOffExec(ctx, info); err != nil {
 		return errors.Annotate(err, "rpm audit").Err()
 	}
 	// RPM service is single thread, perform the action OFF can take up-to 60 seconds.
-	if waitDownErr := cros.WaitUntilNotPingable(ctx, info, info.RunArgs.ResourceName, downTimeout, 2); waitDownErr != nil {
+	// WaitUntilNotPingable(ctx context.Context, waitTime, waitInterval time.Duration, countPerAttempt int, ping components.Pinger, log logger.Logger)
+	if waitDownErr := cros.WaitUntilNotPingable(ctx, downTimeout, waitInterval, 2, ping, log); waitDownErr != nil {
 		info.RunArgs.DUT.RPMOutlet.State = tlw.RPMOutlet_WRONG_CONFIG
 		return errors.Annotate(waitDownErr, "rpm audit: resource still pingable").Err()
 	}
 	if err := rpmPowerOnExec(ctx, info); err != nil {
 		return errors.Annotate(err, "rpm audit").Err()
 	}
-	if err := cros.WaitUntilSSHable(ctx, info.DefaultRunner(), bootTimeout); err != nil {
+	if err := cros.WaitUntilSSHable(ctx, bootTimeout, waitInterval, run, log); err != nil {
 		info.RunArgs.DUT.RPMOutlet.State = tlw.RPMOutlet_WRONG_CONFIG
 		return errors.Annotate(err, "rpm audit: resource did not booted").Err()
 	}

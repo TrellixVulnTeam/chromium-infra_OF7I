@@ -13,6 +13,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	components_cros "infra/cros/recovery/internal/components/cros"
 	"infra/cros/recovery/internal/components/servo"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/execs/cros"
@@ -170,7 +171,7 @@ func runCheckOnHost(ctx context.Context, run execs.Runner, usbPath string, timeo
 func servoAuditUSBKeyExec(ctx context.Context, info *execs.ExecInfo) error {
 	dutUsb := ""
 	dutRunner := info.NewRunner(info.RunArgs.DUT.Name)
-	if cros.IsSSHable(ctx, dutRunner) == nil {
+	if components_cros.IsSSHable(ctx, dutRunner) == nil {
 		log.Debugf(ctx, "Servo Audit USB-Key Exec: %q is reachable through SSH", info.RunArgs.DUT.Name)
 		var err error = nil
 		dutUsb, err = GetUSBDrivePathOnDut(ctx, dutRunner, info.NewServod())

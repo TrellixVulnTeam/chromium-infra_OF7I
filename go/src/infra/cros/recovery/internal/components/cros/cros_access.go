@@ -25,6 +25,15 @@ func IsPingable(ctx context.Context, count int, ping components.Pinger) error {
 	return errors.Annotate(err, "is pingable").Err()
 }
 
+// IsNotPingable checks whether the resource is not pingable
+func IsNotPingable(ctx context.Context, count int, ping components.Pinger, log logger.Logger) error {
+	if err := ping(ctx, count); err != nil {
+		log.Debugf("Resource is not pingable, but expected!")
+		return nil
+	}
+	return errors.Reason("not pingable: is pingable").Err()
+}
+
 // IsSSHable checks whether the resource is sshable
 func IsSSHable(ctx context.Context, run components.Runner) error {
 	_, err := run(ctx, time.Minute, "true")
@@ -42,6 +51,13 @@ func WaitUntilPingable(ctx context.Context, waitTime, waitInterval time.Duration
 	return retry.WithTimeout(ctx, waitInterval, waitTime, func() error {
 		return IsPingable(ctx, countPerAttempt, ping)
 	}, "wait to ping")
+}
+
+// WaitUntilNotPingable waiting resource to be not pingable.
+func WaitUntilNotPingable(ctx context.Context, waitTime, waitInterval time.Duration, countPerAttempt int, ping components.Pinger, log logger.Logger) error {
+	return retry.WithTimeout(ctx, waitInterval, waitTime, func() error {
+		return IsNotPingable(ctx, countPerAttempt, ping, log)
+	}, "wait to be not pingable")
 }
 
 // WaitUntilSSHable waiting resource to be sshable.
