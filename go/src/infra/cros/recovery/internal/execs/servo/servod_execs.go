@@ -131,25 +131,26 @@ func servodCanReadAllExec(ctx context.Context, info *execs.ExecInfo) error {
 // servodSetActiveDutControllerExec sets the main servo device as the
 // active DUT controller.
 func servodSetActiveDutControllerExec(ctx context.Context, info *execs.ExecInfo) error {
-	mainDevice, err := MainServoDevice(ctx, info)
+	servod := info.NewServod()
+	mainDevice, err := MainServoDevice(ctx, servod)
 	if err != nil {
-		return errors.Annotate(err, "servod set active dut controller exec").Err()
+		return errors.Annotate(err, "servod set active dut controller").Err()
 	}
 	if mainDevice == "" {
-		return errors.Reason("servod set active dut controller exec: main device is empty.").Err()
+		return errors.Reason("servod set active dut controller: main device is empty.").Err()
 	}
 	command := "active_dut_controller"
-	if err = info.NewServod().Set(ctx, command, mainDevice); err != nil {
-		return errors.Annotate(err, "servod set active dut controller exec").Err()
+	if err = servod.Set(ctx, command, mainDevice); err != nil {
+		return errors.Annotate(err, "servod set active dut controller").Err()
 	}
-	returnedMainDevice, err := servodGetString(ctx, info.NewServod(), command)
+	returnedMainDevice, err := servodGetString(ctx, servod, command)
 	if err != nil {
-		return errors.Annotate(err, "servod set active dut controller exec").Err()
+		return errors.Annotate(err, "servod set active dut controller").Err()
 	}
 	if returnedMainDevice != mainDevice {
-		return errors.Reason("servod set active dut controller exec: expected the main device to be %q, but found it to be %q", mainDevice, returnedMainDevice).Err()
+		return errors.Reason("servod set active dut controller: expected the main device to be %q, but found it to be %q", mainDevice, returnedMainDevice).Err()
 	}
-	log.Debugf(ctx, "Servod Set Active Dut Controller Exec: the expected value of servod control %q matches the value returned.", command)
+	log.Debugf(ctx, "Servod Set Active Dut Controller: the expected value of servod control %q matches the value returned.", command)
 	return nil
 }
 

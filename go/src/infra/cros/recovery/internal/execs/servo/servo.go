@@ -57,14 +57,9 @@ func GetUSBDrivePathOnDut(ctx context.Context, run components.Runner, s componen
 	return "", errors.Reason("get usb drive path on dut: did not find any USB Drive connected to the DUT as we checked that DUT is up").Err()
 }
 
-const (
-	// servoTypeCmd is the servod command for getting the servo type information.
-	servoTypeCmd = "servo_type"
-)
-
 // GetServoType finds and returns the servo type of the DUT's servo.
-func GetServoType(ctx context.Context, info *execs.ExecInfo) (string, error) {
-	servoType, err := servodGetString(ctx, info.NewServod(), servoTypeCmd)
+func GetServoType(ctx context.Context, servod components.Servod) (string, error) {
+	servoType, err := servodGetString(ctx, servod, "servo_type")
 	if err != nil {
 		return "", errors.Annotate(err, "get servo type").Err()
 	}
@@ -87,8 +82,8 @@ func GetServoType(ctx context.Context, info *execs.ExecInfo) (string, error) {
 // servo_type: "servo_v4", returned value: "servo_v4"
 // servo_type: "servo_v4_with_ccd_cr50", returned value: "ccd_cr50"
 // servo_type: "servo_v4_with_servo_micro_and_ccd_cr50", returned value: "servo_micro"
-func MainServoDevice(ctx context.Context, info *execs.ExecInfo) (string, error) {
-	servoType, err := GetServoType(ctx, info)
+func MainServoDevice(ctx context.Context, servod components.Servod) (string, error) {
+	servoType, err := GetServoType(ctx, servod)
 	if err != nil {
 		return "", errors.Annotate(err, "main servo device").Err()
 	}
@@ -128,7 +123,7 @@ func IsContainerizedServoHost(ctx context.Context, servoHost *tlw.ServoHost) boo
 // control. If that does not work, it looks up the dut information for
 // the servo host.
 func WrappedServoType(ctx context.Context, info *execs.ExecInfo) (*servo.ServoType, error) {
-	servoType, err := GetServoType(ctx, info)
+	servoType, err := GetServoType(ctx, info.NewServod())
 	if err != nil {
 		log.Debugf(ctx, "Wrapped Servo Type: Could not read the servo type from servod.")
 		if info.RunArgs.DUT != nil && info.RunArgs.DUT.ServoHost != nil && info.RunArgs.DUT.ServoHost.Servo != nil && info.RunArgs.DUT.ServoHost.Servo.Type != "" {

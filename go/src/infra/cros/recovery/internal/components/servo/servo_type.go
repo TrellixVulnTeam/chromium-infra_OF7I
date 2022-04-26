@@ -64,6 +64,16 @@ func (s *ServoType) IsCCD() bool {
 	return strings.Contains(s.str, CCD_PREFIX)
 }
 
+// IsCr50 checks whether the servo has a CCD by CR50 component.
+func (s *ServoType) IsCr50() bool {
+	return strings.Contains(s.str, CCD_CR50)
+}
+
+// IsGSC checks whether the servo has a CCD by GSC component.
+func (s *ServoType) IsGSC() bool {
+	return strings.Contains(s.str, CCD_GSC)
+}
+
 // IsMicro checks whether the servo has a servo_micro component.
 func (s *ServoType) IsMicro() bool {
 	return strings.Contains(s.str, SERVO_MICRO)

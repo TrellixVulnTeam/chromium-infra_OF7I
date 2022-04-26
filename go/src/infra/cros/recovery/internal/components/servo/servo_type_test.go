@@ -60,6 +60,16 @@ func TestServoType(t *testing.T) {
 		SERVO_V4P1_CCD_TI50,
 		SERVO_V4P1_CCD_GSC,
 	}
+	GSC_SERVOS := []string{
+		SERVO_CCD_GSC,
+		SERVO_V4_CCD_GSC,
+		SERVO_V4P1_CCD_GSC,
+	}
+	CR50_SERVOS := []string{
+		SERVO_CCD_CR50,
+		SERVO_V4_CCD_CR50,
+		SERVO_V4P1_CCD_CR50,
+	}
 	MICRO_SERVOS := []string{SERVO_MICRO, SERVO_V4_MICRO, SERVO_V4P1_MICRO}
 	V2_SERVOS := []string{SERVO_V2}
 	V4_SERVOS := []string{SERVO_V4_C2D2, SERVO_V4_CCD, SERVO_V4_CCD_CR50,
@@ -88,6 +98,12 @@ func TestServoType(t *testing.T) {
 		}
 		if servo.IsCCD() != listContains(CCD_SERVOS, servoStr) {
 			t.Errorf("servo %v: expected IsCCD() to return %v", servoStr, !servo.IsCCD())
+		}
+		if servo.IsCr50() != listContains(CR50_SERVOS, servoStr) {
+			t.Errorf("servo %v: expected IsCr50() to return %v", servoStr, !servo.IsCr50())
+		}
+		if servo.IsGSC() != listContains(GSC_SERVOS, servoStr) {
+			t.Errorf("servo %v: expected IsGSC() to return %v", servoStr, !servo.IsGSC())
 		}
 		if servo.IsC2D2() != listContains(C2D2_SERVOS, servoStr) {
 			t.Errorf("servo %v: expected IsC2D2() to return %v", servoStr, !servo.IsC2D2())

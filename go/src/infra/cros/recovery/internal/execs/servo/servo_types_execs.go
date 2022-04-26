@@ -6,6 +6,7 @@ package servo
 
 import (
 	"context"
+	"regexp"
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
@@ -136,6 +137,27 @@ func mainDeviceIsGSCExec(ctx context.Context, info *execs.ExecInfo) error {
 	}
 }
 
+// servoTypeRegexMatchExec checks if servo_type match to provided regex.
+func servoTypeRegexMatchExec(ctx context.Context, info *execs.ExecInfo) error {
+	actionMap := info.GetActionArgs(ctx)
+	regex := actionMap.AsString(ctx, "regex", "")
+	if regex == "" {
+		return errors.Reason("servo-type regex match: regex is empty").Err()
+	}
+	servoType, err := GetServoType(ctx, info.NewServod())
+	if err != nil {
+		return errors.Annotate(err, "servo-type regex match").Err()
+	}
+	m, err := regexp.MatchString(regex, servoType)
+	if err != nil {
+		return errors.Annotate(err, "servo-type regex match").Err()
+	}
+	if !m {
+		return errors.Reason("servo-type regex match: not match").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("is_servo_v3", servoVerifyV3Exec)
 	execs.Register("is_servo_v4", servoVerifyV4Exec)
@@ -144,4 +166,5 @@ func init() {
 	execs.Register("is_dual_setup", servoVerifyDualSetupExec)
 	execs.Register("is_servo_type_ccd", servoVerifyServoCCDExec)
 	execs.Register("servo_main_device_is_gcs", mainDeviceIsGSCExec)
+	execs.Register("servo_type_regex_match", servoTypeRegexMatchExec)
 }

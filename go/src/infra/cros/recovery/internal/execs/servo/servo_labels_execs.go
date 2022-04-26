@@ -15,7 +15,7 @@ import (
 
 // updateServoTypeLabelExec updates DUT's servo type to the correct servo type string.
 func updateServoTypeLabelExec(ctx context.Context, info *execs.ExecInfo) error {
-	servoType, err := GetServoType(ctx, info)
+	servoType, err := GetServoType(ctx, info.NewServod())
 	if err != nil {
 		return errors.Annotate(err, "update servo type label").Err()
 	}
