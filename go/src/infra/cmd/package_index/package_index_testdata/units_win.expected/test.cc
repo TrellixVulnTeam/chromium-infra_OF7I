@@ -35,7 +35,7 @@ unit {
   }
   required_input {
     v_name {
-      corpus: "winsdk"
+      corpus: "chromium-test"
       root: "src/third_party/depot_tools/win_toolchain"
       path: "sdk_header.h"
     }
@@ -46,7 +46,7 @@ unit {
   }
   required_input {
     v_name {
-      corpus: "debian_amd64"
+      corpus: "chromium-test"
       root: "src/build/linux/debian_sid_amd64-sysroot"
       path: "usr/include/debian_header.h"
     }
