@@ -312,7 +312,7 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 		if bc, err = buildbucket.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, "chromeos", "labpack", "labpack"); err != nil {
 			return err
 		}
-		sessionTag = uuid.New().String()
+		sessionTag = fmt.Sprintf("admin-session:%s", uuid.New().String())
 	} else {
 		fmt.Fprintf(a.GetErr(), "Using PARIS flow for repair\n")
 		if tc, err = swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService); err != nil {

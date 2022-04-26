@@ -182,7 +182,7 @@ func (c *addLabstation) innerRun(a subcommands.Application, args []string, env s
 		if cErr != nil {
 			return cErr
 		}
-		sessionTag = uuid.New().String()
+		sessionTag = fmt.Sprintf("admin-session:%s", uuid.New().String())
 	}
 
 	for _, params := range deployParams {

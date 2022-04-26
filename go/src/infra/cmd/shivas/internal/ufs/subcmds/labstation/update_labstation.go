@@ -183,7 +183,7 @@ func (c *updateLabstation) innerRun(a subcommands.Application, args []string, en
 			if err != nil {
 				return err
 			}
-			sessionTag = uuid.New().String()
+			sessionTag = fmt.Sprintf("admin-session:%s", uuid.New().String())
 		} else {
 			tc, err = swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService)
 			if err != nil {

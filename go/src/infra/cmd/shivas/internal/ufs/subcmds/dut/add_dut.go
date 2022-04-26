@@ -263,7 +263,7 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		if err != nil {
 			return err
 		}
-		sessionTag = uuid.New().String()
+		sessionTag = fmt.Sprintf("admin-session:%s", uuid.New().String())
 	} else {
 		c.updateDeployActions()
 	}
