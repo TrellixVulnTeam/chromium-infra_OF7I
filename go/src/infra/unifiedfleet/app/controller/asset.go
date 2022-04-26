@@ -461,7 +461,7 @@ func processAssetUpdateMask(updatedAsset, oldAsset *ufspb.Asset, mask *field_mas
 		updatedAsset.Info = &ufspb.AssetInfo{}
 	}
 	// If we are updating zone. We need to reset all the fields in the Location
-	if util.ContainsAnyStrings(mask.Paths, "location.zone") && updatedAsset.GetLocation().GetZone() != oldAsset.GetLocation().GetZone() {
+	if util.ContainsAnyStrings(mask.GetPaths(), "location.zone") && updatedAsset.GetLocation().GetZone() != oldAsset.GetLocation().GetZone() {
 		oldAsset.Location = &ufspb.Location{}
 	}
 	if mask != nil {
