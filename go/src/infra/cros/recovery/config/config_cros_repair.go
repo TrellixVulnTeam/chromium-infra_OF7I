@@ -277,13 +277,16 @@ func crosRepairActions() map[string]*Action {
 		"servo_mac_address": {
 			Conditions: []string{
 				"dut_servo_host_present",
-				"is_not_servo_v3",
+				"Is not servo_v3",
 				"servod_control_exist_for_mac_address",
 			},
 			ExecName:               "servo_audit_nic_mac_address",
 			AllowFailAfterRecovery: true,
 		},
-		"is_not_servo_v3": {
+		"Is not servo_v3": {
+			Docs: []string{
+				"Verify that servo_v3 isn ot used in setup.",
+			},
 			Conditions: []string{
 				"is_servo_v3",
 			},
@@ -971,7 +974,7 @@ func crosRepairActions() map[string]*Action {
 				"cr50 reset will clear some some init like `ccd testlab open` so we want to re-initialize servo after cr50 reset if the main device uses cr50/gsc console commands.",
 			},
 			Conditions: []string{
-				"is_not_servo_v3",
+				"Is not servo_v3",
 				"Servo main device is GSC chip",
 			},
 			Dependencies: []string{

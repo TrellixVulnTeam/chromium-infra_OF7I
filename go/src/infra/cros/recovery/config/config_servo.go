@@ -41,7 +41,7 @@ func servoRepairPlan() *Plan {
 			"Set state:WARM_RESET_PIN_ISSUE",
 			"servo_warm_reset_pin",
 			"Set state:SERVOD_ISSUE",
-			"servod_servo_pd",
+			"Check if PD is src state",
 			"servo_cr50_checks",
 			"Set state:DUT_NOT_CONNECTED",
 			"dut_controller_missing_fault_off",
@@ -75,8 +75,10 @@ func servoRepairPlan() *Plan {
 				Docs: []string{
 					"Check if root servo serial is present.",
 				},
-				Conditions: []string{"is_not_servo_v3"},
-				ExecName:   "dut_servo_has_serial",
+				Conditions: []string{
+					"Is not servo_v3",
+				},
+				ExecName: "dut_servo_has_serial",
 			},
 			"Device is pingable": {
 				Docs: []string{
@@ -104,7 +106,7 @@ func servoRepairPlan() *Plan {
 					"If we fail all logs will be collected",
 				},
 				Conditions: []string{
-					"is_not_servo_v3",
+					"Is not servo_v3",
 				},
 				ExecName:               "cros_register_servod_logs_start",
 				AllowFailAfterRecovery: true,
@@ -144,14 +146,22 @@ func servoRepairPlan() *Plan {
 					"Verify that servod port is present in servo data.",
 					"Port is not expected to be specified for servo_V3.",
 				},
-				Conditions: []string{"is_not_servo_v3"},
-				ExecName:   "servo_servod_port_present",
+				Conditions: []string{
+					"Is not servo_v3",
+				},
+				ExecName: "servo_servod_port_present",
 			},
 			"servo_v3_uptime": {
-				ExecName:        "cros_validate_uptime",
-				ExecExtraArgs:   []string{"max_duration:96h"},
-				Conditions:      []string{"is_servo_v3"},
-				RecoveryActions: []string{"reboot"},
+				Conditions: []string{
+					"Is servo_v3 used",
+				},
+				ExecName: "cros_validate_uptime",
+				ExecExtraArgs: []string{
+					"max_duration:96h",
+				},
+				RecoveryActions: []string{
+					"reboot",
+				},
 			},
 			"reboot": {ExecName: "sample_pass"},
 			"is_labstation": {
@@ -162,8 +172,11 @@ func servoRepairPlan() *Plan {
 				Docs:     []string{"Condition to check if servo uses servod container."},
 				ExecName: "servo_uses_servod_container",
 			},
-			"is_servo_v3": {
-				Docs: []string{"Condition to check if the servo is v3."},
+			"Is servo_v3 used": {
+				Docs: []string{
+					"Condition to check if the servo is v3.",
+				},
+				ExecName: "is_servo_v3",
 			},
 			"lock_labstation": {
 				Docs:       []string{"create lock file is_in_use"},
@@ -199,8 +212,12 @@ func servoRepairPlan() *Plan {
 				ExecName:   "sample_fail",
 			},
 			"servo_topology": {
-				Docs:       []string{"host.check_diskspace('/mnt/stateful_partition', 0.5)"},
-				Conditions: []string{"is_not_servo_v3"},
+				Docs: []string{
+					"host.check_diskspace('/mnt/stateful_partition', 0.5)",
+				},
+				Conditions: []string{
+					"Is not servo_v3",
+				},
 				Dependencies: []string{
 					"cros_ssh",
 					"servo_topology_single_child",
@@ -209,8 +226,10 @@ func servoRepairPlan() *Plan {
 				ExecName: "sample_pass",
 			},
 			"servo_topology_single_child": {
-				Conditions: []string{"is_not_servo_v3"},
-				ExecName:   "servo_topology_update",
+				Conditions: []string{
+					"Is not servo_v3",
+				},
+				ExecName: "servo_topology_update",
 				ExecExtraArgs: []string{
 					"min_child:1",
 					"persist_topology:true",
@@ -230,7 +249,7 @@ func servoRepairPlan() *Plan {
 			},
 			"servo_topology_dual_setup": {
 				Conditions: []string{
-					"is_not_servo_v3",
+					"Is not servo_v3",
 					"is_dual_setup",
 				},
 				ExecName: "servo_topology_update",
@@ -252,23 +271,42 @@ func servoRepairPlan() *Plan {
 				},
 			},
 			"servo_v3_root_present": {
-				Docs:            []string{"This remains to be implemented."},
-				Dependencies:    []string{"cros_ssh"},
-				Conditions:      []string{"is_servo_v3"},
-				RecoveryActions: []string{"servo_host_v3_reboot"},
-				ExecName:        "servo_v3_root_present",
+				Docs: []string{
+					"This remains to be implemented.",
+				},
+				Conditions: []string{
+					"Is servo_v3 used",
+				},
+				RecoveryActions: []string{
+					"servo_host_v3_reboot",
+				},
+				ExecName: "servo_v3_root_present",
 			},
 			"servo_v4_root_present": {
-				Dependencies:    []string{"cros_ssh"},
-				Conditions:      []string{"is_not_servo_v3"},
-				ExecExtraArgs:   []string{"update_topology:true"},
-				RecoveryActions: []string{"cros_create_reboot_request"},
-				ExecName:        "servo_v4_root_present",
+				Conditions: []string{
+					"Is not servo_v3",
+				},
+				ExecExtraArgs: []string{
+					"update_topology:true",
+				},
+				RecoveryActions: []string{
+					"cros_create_reboot_request",
+				},
+				ExecName: "servo_v4_root_present",
 			},
 			"servo_fw_need_update": {
-				Conditions:      []string{"is_not_servo_v3"},
-				ExecTimeout:     &durationpb.Duration{Seconds: 300},
-				RecoveryActions: []string{"servo_fw_update"},
+				Docs: []string{
+					"Check whether servo devices required firmware update.",
+					"Check running agains version specified by servo_updater channel.",
+				},
+				Conditions: []string{
+					"Is not servo_v3",
+				},
+				ExecName:    "servo_fw_need_update",
+				ExecTimeout: &durationpb.Duration{Seconds: 300},
+				RecoveryActions: []string{
+					"servo_fw_update",
+				},
 			},
 			"servod_get_serialname": {
 				Docs:     []string{"run command from xmlrpc"},
@@ -285,18 +323,35 @@ func servoRepairPlan() *Plan {
 					"reset_ec_on_dut",
 				},
 			},
-			"servo_get_ppdut5_mv": {
-				ExecExtraArgs: []string{"command:ppdut5_mv"},
-				ExecName:      "servo_check_servod_control",
+			"Read ppdut5_mv value": {
+				Docs: []string{
+					"Read and print ppdut5_mv control value to logs.",
+				},
+				ExecExtraArgs: []string{
+					"command:ppdut5_mv",
+				},
+				ExecName: "servo_check_servod_control",
 			},
-			"servo_get_ppchg5_mv": {
-				ExecExtraArgs: []string{"command:ppchg5_mv"},
-				ExecName:      "servo_check_servod_control",
+			"Read ppchg5_mv value": {
+				Docs: []string{
+					"Read and print ppchg5_mv control value to logs.",
+				},
+				ExecExtraArgs: []string{
+					"command:ppchg5_mv",
+				},
+				ExecName: "servo_check_servod_control",
 			},
-			"servod_servo_pd": {
-				Docs:         []string{"run command from xmlrpc"},
-				Conditions:   []string{"is_servo_v4_type_c"},
-				Dependencies: []string{"servo_get_ppdut5_mv", "servo_get_ppchg5_mv"},
+			"Check if PD is src state": {
+				Docs: []string{
+					"Verify that PD is src power to the DUT.",
+				},
+				Conditions: []string{
+					"Is servo_v4(p1) used with type-c connector",
+				},
+				Dependencies: []string{
+					"Read ppdut5_mv value",
+					"Read ppchg5_mv value",
+				},
 				ExecExtraArgs: []string{
 					"command:servo_pd_role",
 					"expected_string_value:src",
@@ -305,16 +360,17 @@ func servoRepairPlan() *Plan {
 					"servo_power_delivery_repair",
 					"servo_fake_disconnect_dut_repair",
 					"servo_servod_cc_toggle_repair",
-					"servo_reboot_ec_on_dut",
-					"reboot_dut_by_power_state:reset",
-					"cros_create_reboot_request",
-					"reflash_cr_50_fw_on_dut",
 				},
 				ExecName:               "servo_check_servod_control",
 				AllowFailAfterRecovery: true,
 			},
 			"servo_cr50_checks": {
-				Conditions: []string{"is_not_servo_v3"},
+				Docs: []string{
+					"Run basic cr50/ti50 detections checks.",
+				},
+				Conditions: []string{
+					"Is not servo_v3",
+				},
 				Dependencies: []string{
 					"Set state:SBU_LOW_VOLTAGE",
 					"servo_cr50_low_sbu",
@@ -325,8 +381,8 @@ func servoRepairPlan() *Plan {
 			},
 			"servo_cr50_low_sbu": {
 				Conditions: []string{
-					"is_not_servo_v3",
-					"is_servo_v4_type_c",
+					"Is not servo_v3",
+					"Is servo_v4(p1) used with type-c connector",
 					"servo_is_sbu_voltage_issue",
 				},
 				RecoveryActions: []string{
@@ -361,8 +417,8 @@ func servoRepairPlan() *Plan {
 			"servo_cr50_enumerated": {
 				Docs: []string{"prev name servo_cr50_off"},
 				Conditions: []string{
-					"is_not_servo_v3",
-					"is_servo_v4_type_c",
+					"Is not servo_v3",
+					"Is servo_v4(p1) used with type-c connector",
 					"servo_is_sbu_voltage_issue",
 				},
 				RecoveryActions: []string{
@@ -381,7 +437,7 @@ func servoRepairPlan() *Plan {
 			"servo_cr50_console": {
 				Docs: []string{"Create new action to check that servotype has ccd_cr50, and set that as a condition for this action."},
 				Conditions: []string{
-					"is_not_servo_v3",
+					"Is not servo_v3",
 					"Main device is GSC chip",
 				},
 				Dependencies: []string{
@@ -405,32 +461,29 @@ func servoRepairPlan() *Plan {
 				ExecName: "servod_can_read_all",
 			},
 			"cr50_testlab": {
+				Docs: []string{
+					"Verify that testlab flag is enabled in GSC chip.",
+				},
 				Conditions: []string{
-					"is_not_servo_v3",
+					"Is not servo_v3",
 					"Main device is GSC chip",
 				},
+				ExecName: "servo_check_servod_control",
 				ExecExtraArgs: []string{
 					"command:cr50_testlab",
 					"expected_string_value:on",
 				},
 				RecoveryActions: []string{
 					"Open gsc testlab",
-					"servo_power_delivery_repair",
 					"servo_fake_disconnect_dut_repair",
-					"servo_servod_cc_toggle_repair",
-					"servo_reboot_ec_on_dut",
-					"reboot_dut_by_power_state:reset",
-					"reflash_cr_50_fw_on_dut",
-					"reset_ec_on_dut",
 				},
-				ExecName: "servo_check_servod_control",
 			},
 			"Open gsc testlab": {
 				Docs: []string{
 					"If servo uses cr50/gsc to control the DUT, open testlab will allowed to work (cr50_reboot, cold_reset, warm_reset)",
 				},
 				Conditions: []string{
-					"is_not_servo_v3",
+					"Is not servo_v3",
 					"Main device is GSC chip",
 				},
 				ExecExtraArgs: []string{
@@ -443,7 +496,7 @@ func servoRepairPlan() *Plan {
 			},
 			"Initialize DUT part for servo": {
 				Conditions: []string{
-					"is_not_servo_v3",
+					"Is not servo_v3",
 				},
 				Dependencies: []string{
 					"servod_set_main_device",
@@ -486,8 +539,8 @@ func servoRepairPlan() *Plan {
 			},
 			"servo_dut_detected": {
 				Conditions: []string{
-					"is_not_servo_v3",
-					"is_servo_v4_type_a",
+					"Is not servo_v3",
+					"Is servo_v4(p1) with type-a connector",
 				},
 				RecoveryActions: []string{
 					"servo_host_servod_stop",
@@ -543,7 +596,7 @@ func servoRepairPlan() *Plan {
 			},
 			"servo_ec_check": {
 				Conditions: []string{
-					"is_not_servo_v3",
+					"Is not servo_v3",
 					"dut_has_cros_ec",
 				},
 				Dependencies: []string{
@@ -572,7 +625,7 @@ func servoRepairPlan() *Plan {
 			},
 			"servo_ec_console": {
 				Conditions: []string{
-					"is_not_servo_v3",
+					"Is not servo_v3",
 					"dut_has_cros_ec",
 				},
 				ExecExtraArgs: []string{
@@ -595,7 +648,7 @@ func servoRepairPlan() *Plan {
 			},
 			"servo_battery_charging": {
 				Conditions: []string{
-					"is_not_servo_v3",
+					"Is not servo_v3",
 					"dut_has_cros_ec",
 					"battery_last_charge_readable",
 				},
@@ -616,11 +669,18 @@ func servoRepairPlan() *Plan {
 				ExecTimeout:            &durationpb.Duration{Seconds: 7300},
 			},
 			"is_servo_v4": {
-				Docs: []string{"This action will detect whether or not the attached servo device is of type V4."},
+				Docs: []string{
+					"This action will detect whether or not the attached servo device is of type V4.",
+				},
+				ExecName: "is_servo_v4",
 			},
-			"is_servo_v4_type_c": {
-				Docs:       []string{"This action will detect whether or not the attached servo V4 device is connect to DUT using Type-C connection."},
-				Conditions: []string{"is_servo_v4"},
+			"Is servo_v4(p1) used with type-c connector": {
+				Docs: []string{
+					"Verify whether servo_V4(p1) device is connect to DUT using Type-C connection.",
+				},
+				Conditions: []string{
+					"is_servo_v4",
+				},
 				ExecExtraArgs: []string{
 					"command:root.dut_connection_type",
 					"expected_string_value:type-c",
@@ -636,13 +696,22 @@ func servoRepairPlan() *Plan {
 				},
 				ExecName: "servod_lidopen",
 			},
-			"is_not_servo_v3": {
-				Conditions: []string{"is_servo_v3"},
-				ExecName:   "sample_fail",
+			"Is not servo_v3": {
+				Docs: []string{
+					"Verify that servo_v3 isn ot used in setup.",
+				},
+				Conditions: []string{
+					"Is servo_v3 used",
+				},
+				ExecName: "sample_fail",
 			},
-			"is_servo_v4_type_a": {
-				Docs:       []string{"This action will detect whether or not the attached servo V4 device is connect to DUT using Type-A connection."},
-				Conditions: []string{"is_servo_v4"},
+			"Is servo_v4(p1) with type-a connector": {
+				Docs: []string{
+					"Verify whether servo V4(p1) device is connect to DUT using Type-A connection.",
+				},
+				Conditions: []string{
+					"is_servo_v4",
+				},
 				ExecExtraArgs: []string{
 					"command:root.dut_connection_type",
 					"expected_string_value:type-a",
@@ -650,12 +719,16 @@ func servoRepairPlan() *Plan {
 				ExecName: "servo_check_servod_control",
 			},
 			"is_dual_setup": {
-				Docs:     []string{"Check whether the servo device has dual setup. This check only applies to the devices that have the dual setup configured on them."},
+				Docs: []string{
+					"Check whether the servo device has dual setup. This check only applies to the devices that have the dual setup configured on them.",
+				},
 				ExecName: "is_dual_setup_configured",
 			},
 			"is_not_dual_setup": {
-				Conditions: []string{"is_dual_setup"},
-				ExecName:   "sample_fail",
+				Conditions: []string{
+					"is_dual_setup",
+				},
+				ExecName: "sample_fail",
 			},
 			"servod_set_main_device": {
 				Conditions: []string{
@@ -671,7 +744,9 @@ func servoRepairPlan() *Plan {
 					"Try to update in  normal ways 3 times",
 					"if fail allow run force update",
 				},
-				Conditions: []string{"is_not_servo_v3"},
+				Conditions: []string{
+					"Is not servo_v3",
+				},
 				Dependencies: []string{
 					"Set state:SERVO_UPDATER_ISSUE",
 					"servo_host_servod_stop",
@@ -738,7 +813,7 @@ func servoRepairPlan() *Plan {
 			},
 			"servo_warm_reset_pin_for_servo_v3": {
 				Conditions: []string{
-					"is_servo_v3",
+					"Is servo_v3 used",
 					"servo_warm_reset_supported",
 				},
 				ExecExtraArgs: []string{
@@ -788,8 +863,8 @@ func servoRepairPlan() *Plan {
 			},
 			"servo_cold_reset_pin": {
 				Conditions: []string{
-					"is_servo_v3",
-					"is_servo_v4_type_a",
+					"Is servo_v3 used",
+					"Is servo_v4(p1) with type-a connector",
 				},
 				ExecExtraArgs: []string{
 					"command:cold_reset",
@@ -829,7 +904,9 @@ func servoRepairPlan() *Plan {
 				ExecExtraArgs: []string{"command:dut_controller_missing_fault",
 					"expected_string_value:off",
 				},
-				Conditions: []string{"is_not_servo_v3"},
+				Conditions: []string{
+					"Is not servo_v3",
+				},
 				RecoveryActions: []string{
 					"servo_power_delivery_repair",
 					"servo_fake_disconnect_dut_repair",
@@ -880,91 +957,125 @@ func servoRepairPlan() *Plan {
 				ExecName:   "servo_servod_toggle_pd_role",
 			},
 			"servo_power_delivery_repair": {
-				Docs:         []string{"Toggle the servod command servo_pd_role 5 times. And then stop the servod afterwards. TODO: Add dependency for servo initialize."},
-				Dependencies: []string{"servo_pd_toggle_five_times"},
-				ExecTimeout:  &durationpb.Duration{Seconds: 600},
-				RunControl:   RunControl_ALWAYS_RUN,
-				ExecName:     "servo_host_servod_stop",
+				Docs: []string{
+					"Toggle the servod command servo_pd_role 5 times. And then stop the servod afterwards. TODO: Add dependency for servo initialize.",
+				},
+				Dependencies: []string{
+					"servo_pd_toggle_five_times",
+				},
+				ExecName:    "servo_host_servod_stop",
+				ExecTimeout: &durationpb.Duration{Seconds: 600},
+				RunControl:  RunControl_ALWAYS_RUN,
 			},
 			"servo_pd_toggle_five_times": {
-				Docs: []string{"Toggle the servod command servo_pd_role 5 times."},
+				Docs: []string{
+					"Toggle the servod command servo_pd_role 5 times.",
+				},
+				ExecName: "servo_servod_toggle_pd_role",
 				ExecExtraArgs: []string{
 					"toggle_times:5",
 					"wait_in_retry:5",
 					"wait_before_retry:1",
 				},
 				RunControl: RunControl_ALWAYS_RUN,
-				ExecName:   "servo_servod_toggle_pd_role",
 			},
 			"Set state:MISSING_CONFIG": {
-				ExecExtraArgs: []string{"state:MISSING_CONFIG"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:MISSING_CONFIG",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:WRONG_CONFIG": {
-				ExecExtraArgs: []string{"state:WRONG_CONFIG"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:WRONG_CONFIG",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:NO_SSH": {
-				ExecExtraArgs: []string{"state:NO_SSH"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:NO_SSH",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:BROKEN": {
-				ExecExtraArgs: []string{"state:BROKEN"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:BROKEN",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:NOT_CONNECTED": {
-				ExecExtraArgs: []string{"state:NOT_CONNECTED"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:NOT_CONNECTED",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:NEED_REPLACEMENT": {
-				ExecExtraArgs: []string{"state:NEED_REPLACEMENT"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:NEED_REPLACEMENT",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:TOPOLOGY_ISSUE": {
-				ExecExtraArgs: []string{"state:TOPOLOGY_ISSUE"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:TOPOLOGY_ISSUE",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:SERVO_UPDATER_ISSUE": {
-				ExecExtraArgs: []string{"state:SERVO_UPDATER_ISSUE"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:SERVO_UPDATER_ISSUE",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:SERVOD_ISSUE": {
-				ExecExtraArgs: []string{"state:SERVOD_ISSUE"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:SERVOD_ISSUE",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:SERVO_HOST_ISSUE": {
-				ExecExtraArgs: []string{"state:SERVO_HOST_ISSUE"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:SERVO_HOST_ISSUE",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:SERVOD_PROXY_ISSUE": {
-				ExecExtraArgs: []string{"state:SERVOD_PROXY_ISSUE"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:SERVOD_PROXY_ISSUE",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:COLD_RESET_PIN_ISSUE": {
-				ExecExtraArgs: []string{"state:COLD_RESET_PIN_ISSUE"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:COLD_RESET_PIN_ISSUE",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:WARM_RESET_PIN_ISSUE": {
-				ExecExtraArgs: []string{"state:WARM_RESET_PIN_ISSUE"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:WARM_RESET_PIN_ISSUE",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:SBU_LOW_VOLTAGE": {
-				ExecExtraArgs: []string{"state:SBU_LOW_VOLTAGE"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:SBU_LOW_VOLTAGE",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:DUT_NOT_CONNECTED": {
 				ExecExtraArgs: []string{"state:DUT_NOT_CONNECTED"},
@@ -972,34 +1083,46 @@ func servoRepairPlan() *Plan {
 				RunControl:    RunControl_ALWAYS_RUN,
 			},
 			"Set state:CR50_CONSOLE_MISSING": {
-				ExecExtraArgs: []string{"state:CR50_CONSOLE_MISSING"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:CR50_CONSOLE_MISSING",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:EC_BROKEN": {
-				ExecExtraArgs: []string{"state:EC_BROKEN"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:EC_BROKEN",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:BAD_RIBBON_CABLE": {
-				ExecExtraArgs: []string{"state:BAD_RIBBON_CABLE"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:BAD_RIBBON_CABLE",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:LID_OPEN_FAILED": {
-				ExecExtraArgs: []string{"state:LID_OPEN_FAILED"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:LID_OPEN_FAILED",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:CCD_TESTLAB_ISSUE": {
-				ExecExtraArgs: []string{"state:CCD_TESTLAB_ISSUE"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:CCD_TESTLAB_ISSUE",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"Set state:WORKING": {
-				ExecExtraArgs: []string{"state:WORKING"},
-				ExecName:      "servo_set_servo_state",
-				RunControl:    RunControl_ALWAYS_RUN,
+				ExecName: "servo_set_servo_state",
+				ExecExtraArgs: []string{
+					"state:WORKING",
+				},
+				RunControl: RunControl_ALWAYS_RUN,
 			},
 			"servo_fake_disconnect_dut_repair": {
 				Docs:         []string{"Try to repair servod by mimic reconnection of servo."},
@@ -1123,11 +1246,17 @@ func servoRepairPlan() *Plan {
 				AllowFailAfterRecovery: true,
 			},
 			"servo_host_v3_reboot": {
-				Docs:          []string{"Try to reboot servo host v3."},
-				Conditions:    []string{"is_servo_v3"},
-				ExecTimeout:   &durationpb.Duration{Seconds: 300},
-				ExecExtraArgs: []string{"reboot_timeout:10"},
-				RunControl:    RunControl_RUN_ONCE,
+				Docs: []string{
+					"Try to reboot servo host v3.",
+				},
+				Conditions: []string{
+					"Is servo_v3 used",
+				},
+				ExecTimeout: &durationpb.Duration{Seconds: 300},
+				ExecExtraArgs: []string{
+					"reboot_timeout:10",
+				},
+				RunControl: RunControl_RUN_ONCE,
 			},
 		},
 	}

@@ -109,7 +109,7 @@ func crosClosePlan() *Plan {
 				},
 				Conditions: []string{
 					"dut_servo_host_present",
-					"is_not_servo_v3",
+					"Is not servo_v3",
 				},
 				ExecName:               "cros_collect_servod_logs",
 				AllowFailAfterRecovery: true,
@@ -120,7 +120,7 @@ func crosClosePlan() *Plan {
 				},
 				Conditions: []string{
 					"dut_servo_host_present",
-					"is_not_servo_v3",
+					"Is not servo_v3",
 				},
 				ExecName: "cros_copy_file_to_log",
 				ExecExtraArgs: []string{
@@ -129,9 +129,14 @@ func crosClosePlan() *Plan {
 				},
 				AllowFailAfterRecovery: true,
 			},
-			"is_not_servo_v3": {
-				Conditions: []string{"is_servo_v3"},
-				ExecName:   "sample_fail",
+			"Is not servo_v3": {
+				Docs: []string{
+					"Verify that servo_v3 isn ot used in setup.",
+				},
+				Conditions: []string{
+					"is_servo_v3",
+				},
+				ExecName: "sample_fail",
 			},
 			"Update peripheral wifi state": {
 				Docs: []string{
