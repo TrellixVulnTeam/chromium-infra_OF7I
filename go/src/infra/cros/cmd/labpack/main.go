@@ -142,7 +142,16 @@ func uploadLogs(ctx context.Context, state *build.State, lg logger.Logger) (rErr
 	// Construct the client that we will need to push the logs first.
 	// Eventually, we will make this error fatal. However, for right now, we will
 	// just log whether we succeeded or failed to build the client.
-	authenticator := luciauth.NewAuthenticator(ctx, luciauth.SilentLogin, luciauth.Options{})
+	authenticator := luciauth.NewAuthenticator(
+		ctx,
+		luciauth.SilentLogin,
+		luciauth.Options{
+			Scopes: []string{
+				luciauth.OAuthScopeEmail,
+				"https://www.googleapis.com/auth/devstorage.read_write",
+			},
+		},
+	)
 	if authenticator != nil {
 		lg.Infof("NewAuthenticator(...): successfully authed!")
 	} else {
