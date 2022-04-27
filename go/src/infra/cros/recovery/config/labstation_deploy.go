@@ -20,7 +20,7 @@ func LabstationDeployConfig() *Configuration {
 					"check_host_info",
 					"cros_ping",
 					"cros_ssh",
-					"update_inv_info",
+					"Update inventory info",
 					"install_stable_os",
 					"remove_reboot_requests",
 					"Update provisioned info",
@@ -39,7 +39,7 @@ func LabstationDeployConfig() *Configuration {
 							"dut_has_model_name",
 						},
 					},
-					"update_inv_info": {
+					"Update inventory info": {
 						Docs: []string{
 							"Updating device info in inventory.",
 						},

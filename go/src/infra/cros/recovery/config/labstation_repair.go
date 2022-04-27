@@ -11,7 +11,9 @@ import (
 // LabstationRepairConfig provides config for repair labstation task.
 func LabstationRepairConfig() *Configuration {
 	return &Configuration{
-		PlanNames: []string{PlanCrOS},
+		PlanNames: []string{
+			PlanCrOS,
+		},
 		Plans: map[string]*Plan{
 			PlanCrOS: {
 				AllowFail: false,
@@ -24,6 +26,7 @@ func LabstationRepairConfig() *Configuration {
 					"Update provisioned info",
 					"booted_from_right_kernel",
 					"reboot_by_request",
+					"Update inventory info",
 					"dut_state_ready",
 				},
 				Actions: map[string]*Action{
@@ -220,6 +223,16 @@ func LabstationRepairConfig() *Configuration {
 						ExecTimeout: &durationpb.Duration{Seconds: 300},
 						ExecName:    "cros_ssh",
 						RunControl:  RunControl_ALWAYS_RUN,
+					},
+					"Update inventory info": {
+						Docs: []string{
+							"Updating device info in inventory.",
+						},
+						ExecName: "sample_pass",
+						Dependencies: []string{
+							"cros_update_hwid_to_inventory",
+							"cros_update_serial_number_inventory",
+						},
 					},
 				},
 			},
