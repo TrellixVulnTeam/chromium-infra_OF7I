@@ -21,7 +21,6 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_tool"
 	"go.chromium.org/luci/auth/client/authcli"
-	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 )
@@ -158,23 +157,6 @@ func isBuildFailed(build *bb.Build) bool {
 
 func isBuildPassed(build *bb.Build) bool {
 	return build.Response != nil && build.Response.GetState().GetVerdict() == test_platform.TaskState_VERDICT_PASSED
-}
-
-func outputIsolatePath(ctx context.Context, result *skylab_tool.WaitTaskResult) (string, error) {
-	ser, err := swarming_api.NewService(ctx)
-	if err != nil {
-		return "", err
-	}
-	ts := swarming_api.NewTaskService(ser)
-	id := result.Result.TaskRunId
-	call := ts.Result(id)
-	call = call.Fields("outputsRef/isolatedserver", "outputsRef/namespace", "outputsRef/isolated")
-	res, err := call.Do()
-	if err != nil {
-		return "", err
-	}
-	fr := res.OutputsRef
-	return fmt.Sprintf("%s/browse?namespace=%s&digest=%s", fr.Isolatedserver, fr.Namespace, fr.Isolated), nil
 }
 
 func sleepOrCancel(ctx context.Context, duration time.Duration) error {
