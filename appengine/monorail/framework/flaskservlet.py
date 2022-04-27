@@ -21,18 +21,35 @@ import logging
 import time
 
 import flask
+from search import query2ast
 
 import settings
-from framework import exceptions
+from framework import exceptions, framework_helpers
 from framework import framework_constants
 from framework import monorailrequest
 from framework import permissions
 from framework import ratelimiter
 from framework import template_helpers
 from framework import xsrf
+from third_party import httpagentparser
+
+from google.appengine.api import app_identity
+from google.appengine.api import modules
+from google.appengine.api import users
+
+NONCE_LENGTH = 32
 
 if not settings.unit_test_mode:
   import MySQLdb
+
+
+class MethodNotSupportedError(NotImplementedError):
+  """An exception class for indicating that the method is not supported.
+
+  Used by GatherPageData and ProcessFormData to indicate that GET and POST,
+  respectively, are not supported methods on the given Servlet.
+  """
+  pass
 
 
 class FlaskServlet(object):
@@ -170,9 +187,143 @@ class FlaskServlet(object):
     return self.response
 
   def get(self):
-    #TODO: implement basic data processing
-    logging.info('process get request')
+    """Collect page-specific and generic info, then render the page.
+
+    Args:
+      Any path components parsed by webapp2 will be in kwargs, but we do
+        our own parsing later anyway, so ignore them for now.
+    """
+    page_data = {}
+    nonce = framework_helpers.MakeRandomKey(length=NONCE_LENGTH)
+    try:
+      csp_header = 'Content-Security-Policy'
+      csp_scheme = 'https:'
+      if settings.local_mode:
+        csp_header = 'Content-Security-Policy-Report-Only'
+        csp_scheme = 'http:'
+      user_agent_str = self.mr.request.headers.get('User-Agent', '')
+      ua = httpagentparser.detect(user_agent_str)
+      browser, browser_major_version = 'Unknown browser', 0
+      if ua.has_key('browser'):
+        browser = ua['browser']['name']
+        try:
+          browser_major_version = int(ua['browser']['version'].split('.')[0])
+        except ValueError:
+          logging.warn('Could not parse version: %r', ua['browser']['version'])
+      csp_supports_report_sample = (
+          (browser == 'Chrome' and browser_major_version >= 59) or
+          (browser == 'Opera' and browser_major_version >= 46))
+      version_base = _VersionBaseURL(self.mr.request)
+      self.response.headers.add(
+          csp_header,
+          (
+              "default-src %(scheme)s ; "
+              "script-src"
+              " %(rep_samp)s"  # Report 40 chars of any inline violation.
+              " 'unsafe-inline'"  # Only counts in browsers that lack CSP2.
+              " 'strict-dynamic'"  # Allows <script nonce> to load more.
+              " %(version_base)s/static/dist/"
+              " 'self' 'nonce-%(nonce)s'; "
+              "child-src 'none'; "
+              "frame-src accounts.google.com"  # All used by gapi.js auth.
+              " content-issuetracker.corp.googleapis.com"
+              " login.corp.google.com up.corp.googleapis.com"
+              # Used by Google Feedback
+              " feedback.googleusercontent.com"
+              " www.google.com; "
+              "img-src %(scheme)s data: blob: ; "
+              "style-src %(scheme)s 'unsafe-inline'; "
+              "object-src 'none'; "
+              "base-uri 'self'; "  # Used by Google Feedback
+              "report-uri /csp.do" % {
+                  'nonce':
+                      nonce,
+                  'scheme':
+                      csp_scheme,
+                  'rep_samp':
+                      "'report-sample'" if csp_supports_report_sample else '',
+                  'version_base':
+                      version_base,
+              }))
+
+      #TODO: (crbug.com/monorail/10857)
+      # add the function to get data and render page
+      # page_data.update(self._GatherFlagData(self.mr))
+
+      # # Page-specific work happens in this call.
+      # page_data.update(self._DoPageProcessing(self.mr, nonce))
+
+      # self._AddHelpDebugPageData(page_data)
+
+      # with self.mr.profiler.Phase('rendering template'):
+      #   self._RenderResponse(page_data)
+
+    except (MethodNotSupportedError, NotImplementedError) as e:
+      # Instead of these pages throwing 500s display the 404 message and log.
+      # The motivation of this is to minimize 500s on the site to keep alerts
+      # meaningful during fuzzing. For more context see
+      # https://bugs.chromium.org/p/monorail/issues/detail?id=659
+      logging.warning('Trapped NotImplementedError %s', e)
+      flask.abort(404, 'invalid page')
+    except query2ast.InvalidQueryError as e:
+      logging.warning('Trapped InvalidQueryError: %s', e)
+      logging.exception(e)
+      msg = e.message if e.message else 'invalid query'
+      flask.abort(400, msg)
+    except permissions.PermissionException as e:
+      logging.warning('Trapped PermissionException %s', e)
+      logging.warning('mr.auth.user_id is %s', self.mr.auth.user_id)
+      logging.warning('mr.auth.effective_ids is %s', self.mr.auth.effective_ids)
+      logging.warning('mr.perms is %s', self.mr.perms)
+      if not self.mr.auth.user_id:
+        # If not logged in, let them log in
+        url = _SafeCreateLoginURL(self.mr)
+        flask.redirect(url, code=307)
+      else:
+        # Display the missing permissions template.
+        page_data = {
+            'reason': e.message,
+            'http_response_code': httplib.FORBIDDEN,
+        }
+        # with self.mr.profiler.Phase('gather base data'):
+        #   page_data.update(self.GatherBaseData(self.mr, nonce))
+        # self._AddHelpDebugPageData(page_data)
+        self._missing_permissions_template.WriteFlaskResponse(
+            self.response, page_data, content_type=self.content_type)
 
   def post(self):
     #TODO: implement basic data processing
     logging.info('process post request')
+
+
+def _VersionBaseURL(request):
+  """Return a version-specific URL that we use to load static assets."""
+  if settings.local_mode:
+    version_base = '%s://%s' % (request.scheme, request.host)
+  else:
+    version_base = '%s://%s-dot-%s' % (
+        request.scheme, modules.get_current_version_name(),
+        app_identity.get_default_version_hostname())
+
+  return version_base
+
+
+def _SafeCreateLoginURL(mr, continue_url=None):
+  """Make a login URL w/ a detailed continue URL, otherwise use a short one."""
+  continue_url = continue_url or mr.current_page_url
+  try:
+    url = users.create_login_url(continue_url)
+  except users.RedirectTooLongError:
+    if mr.project_name:
+      url = users.create_login_url('/p/%s' % mr.project_name)
+    else:
+      url = users.create_login_url('/')
+
+  # Give the user a choice of existing accounts in their session
+  # or the option to add an account, even if they are currently
+  # signed in to exactly one account.
+  if mr.auth.user_id:
+    # Notice: this makes assumptions about the output of users.create_login_url,
+    # which can change at any time. See https://crbug.com/monorail/3352.
+    url = url.replace('/ServiceLogin', '/AccountChooser', 1)
+  return url
