@@ -229,7 +229,7 @@ func ResourceExist(ctx context.Context, resources []*Resource, errorMsg *strings
 	if errorMsg == nil {
 		errorMsg = &strings.Builder{}
 	}
-	var NotFound bool = false
+	var NotFound = false
 	checkEntities := make([]ufsds.FleetEntity, 0, len(resources))
 	for _, resource := range resources {
 		logging.Debugf(ctx, "checking resource existence: %#v", resource)
@@ -266,7 +266,7 @@ func resourceAlreadyExists(ctx context.Context, resources []*Resource, errorMsg 
 	if errorMsg == nil {
 		errorMsg = &strings.Builder{}
 	}
-	var alreadyExists bool = false
+	var alreadyExists = false
 	checkEntities := make([]ufsds.FleetEntity, 0, len(resources))
 	for _, resource := range resources {
 		logging.Debugf(ctx, "checking resource existence: %#v", resource)
