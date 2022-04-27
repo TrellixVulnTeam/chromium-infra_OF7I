@@ -129,17 +129,15 @@ func servoRepairPlan() *Plan {
 			"Initialize docker container": {
 				Docs: []string{
 					"Initiate docker to have access to the host.",
-					"TODO: Need close docker host, and add to cros plan.",
 				},
-				ExecTimeout: &durationpb.Duration{Seconds: 360},
-				Conditions:  []string{"is_container"},
+				Conditions: []string{
+					"is_container",
+				},
 				RecoveryActions: []string{
 					"servo_host_servod_stop",
-					"servo_power_delivery_repair",
-					"servo_fake_disconnect_dut_repair",
-					"servo_servod_cc_toggle_repair",
 				},
-				ExecName: "servo_host_servod_init",
+				ExecName:    "servo_host_servod_init",
+				ExecTimeout: &durationpb.Duration{Seconds: 360},
 			},
 			"Servod port specified": {
 				Docs: []string{
@@ -1132,7 +1130,10 @@ func servoRepairPlan() *Plan {
 				ExecName:     "servo_host_servod_stop",
 			},
 			"servo_fake_disconnect_dut": {
-				Conditions: []string{"is_servo_type_ccd"},
+				Conditions: []string{
+					"is_servo_type_ccd",
+				},
+				ExecName: "servo_fake_disconnect_dut",
 				ExecExtraArgs: []string{
 					"delay_in_ms:100",
 					"timeout_in_ms:2000",
@@ -1147,6 +1148,7 @@ func servoRepairPlan() *Plan {
 			},
 			"servo_servod_cc_toggle": {
 				Conditions: []string{"is_servo_type_ccd"},
+				ExecName:   "servo_servod_cc_toggle",
 				ExecExtraArgs: []string{
 					"cc_off_timeout:10",
 					"cc_on_timeout:30",
