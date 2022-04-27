@@ -109,12 +109,12 @@ func (c *Client) EnsurePackages(ctx context.Context, packages common.PinSliceByS
 		} else if instance == nil {
 			return nil, errors.Reason("unknown instance ID %#v of package %#v", pin.InstanceID, pin.PackageName).Err()
 		}
-		recipeRoot := filepath.Join(c.cipdRoot, filepath.FromSlash(subdir))
+		packageRoot := filepath.Join(c.cipdRoot, filepath.FromSlash(subdir))
 		contents := instance.Contents
 		if contents == nil {
 			contents = map[string]string{}
 		}
-		util.PanicOnError(testfs.Build(recipeRoot, contents))
+		util.PanicOnError(testfs.Build(packageRoot, contents))
 	}
 	return nil, nil
 }

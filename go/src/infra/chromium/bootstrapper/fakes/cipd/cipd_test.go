@@ -163,20 +163,20 @@ func TestIntegration(t *testing.T) {
 
 	ctx := context.Background()
 
-	Convey("recipe using fake CIPD client", t, func() {
+	Convey("CIPD using fake factory", t, func() {
 
 		cipdRoot := t.TempDir()
 
 		ctx := bscipd.UseCipdClientFactory(ctx, Factory(nil))
 
-		Convey("succeeds when calling SetupRecipe", func() {
+		Convey("succeeds when calling DownloadPackage", func() {
 			client, err := bscipd.NewClient(ctx, cipdRoot)
 			util.PanicOnError(err)
 
-			recipesPyPath, err := client.DownloadPackage(ctx, "fake-package", "fake-version")
+			packagePath, err := client.DownloadPackage(ctx, "fake-package", "fake-version", "fake-subdir")
 
 			So(err, ShouldBeNil)
-			So(recipesPyPath, ShouldNotBeEmpty)
+			So(packagePath, ShouldNotBeEmpty)
 		})
 
 	})

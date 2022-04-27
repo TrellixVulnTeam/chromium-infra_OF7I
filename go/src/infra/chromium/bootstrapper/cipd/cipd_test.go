@@ -140,7 +140,7 @@ func TestDownloadPackage(t *testing.T) {
 			ctx := UseCipdClientFactory(ctx, factory)
 			client, _ := NewClient(ctx, cipdRoot)
 
-			packagePath, err := client.DownloadPackage(ctx, "fake-package", "fake-instance-id")
+			packagePath, err := client.DownloadPackage(ctx, "fake-package", "fake-instance-id", "fake-subdir")
 
 			So(err, ShouldErrLike, "test EnsurePackages failure")
 			So(packagePath, ShouldBeEmpty)
@@ -155,10 +155,10 @@ func TestDownloadPackage(t *testing.T) {
 			ctx := UseCipdClientFactory(ctx, factory)
 			client, _ := NewClient(ctx, cipdRoot)
 
-			packagePath, err := client.DownloadPackage(ctx, "fake-package", "fake-instance-id")
+			packagePath, err := client.DownloadPackage(ctx, "fake-package", "fake-instance-id", "fake-subdir")
 
 			So(err, ShouldBeNil)
-			So(packagePath, ShouldEqual, filepath.Join(cipdRoot))
+			So(packagePath, ShouldEqual, filepath.Join(cipdRoot, "fake-subdir"))
 
 		})
 

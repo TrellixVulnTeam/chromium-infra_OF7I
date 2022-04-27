@@ -63,7 +63,7 @@ func (b *ExeBootstrapper) DeployExe(ctx context.Context, exe *BootstrappedExe) (
 		cipdSource := source.Cipd
 		logging.Infof(ctx, "downloading CIPD package %s@%s", cipdSource.Package, cipdSource.ActualVersion)
 		var err error
-		packagePath, err = b.cipd.DownloadPackage(ctx, cipdSource.Package, cipdSource.ActualVersion)
+		packagePath, err = b.cipd.DownloadPackage(ctx, cipdSource.Package, cipdSource.ActualVersion, "bootstrapped-exe")
 		if err != nil {
 			return nil, err
 		}

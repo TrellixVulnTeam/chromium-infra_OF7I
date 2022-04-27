@@ -6,6 +6,7 @@ package cipd
 
 import (
 	"context"
+	"path/filepath"
 
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/cipd/client/cipd"
@@ -81,16 +82,16 @@ func (c *Client) ResolveVersion(ctx context.Context, name, version string) (comm
 
 // DownloadPackage downloads and installs the CIPD package with the given name
 // and instance ID and returns the path to the deployed package.
-func (c *Client) DownloadPackage(ctx context.Context, name, instanceId string) (string, error) {
+func (c *Client) DownloadPackage(ctx context.Context, name, instanceId, subdir string) (string, error) {
 	pin := common.Pin{
 		PackageName: name,
 		InstanceID:  instanceId,
 	}
-	packages := common.PinSliceBySubdir{"": common.PinSlice{pin}}
+	packages := common.PinSliceBySubdir{subdir: common.PinSlice{pin}}
 	if _, err := c.client.EnsurePackages(ctx, packages, &cipd.EnsureOptions{
 		Paranoia: cipd.CheckIntegrity,
 	}); err != nil {
 		return "", err
 	}
-	return c.cipdRoot, nil
+	return filepath.Join(c.cipdRoot, subdir), nil
 }

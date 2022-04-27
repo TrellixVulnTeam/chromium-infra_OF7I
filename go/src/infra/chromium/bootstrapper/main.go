@@ -43,7 +43,7 @@ func parseFlags() options {
 	flag.Parse()
 	return options{
 		outputPath:         *outputPath,
-		exeRoot:            "exe",
+		cipdRoot:           "cipd",
 		propertiesOptional: *propertiesOptional,
 	}
 }
@@ -64,7 +64,7 @@ func getBuild(ctx context.Context, input io.Reader) (*buildbucketpb.Build, error
 
 type options struct {
 	outputPath         string
-	exeRoot            string
+	cipdRoot           string
 	propertiesOptional bool
 }
 
@@ -96,12 +96,12 @@ func performBootstrap(ctx context.Context, input io.Reader, opts options) ([]str
 		// Get the arguments for the command
 		group.Go(func() error {
 			logging.Infof(ctx, "creating CIPD client")
-			cipdClient, err := cipd.NewClient(ctx, opts.exeRoot)
+			cipdClient, err := cipd.NewClient(ctx, opts.cipdRoot)
 			if err != nil {
 				return err
 			}
 
-			bootstrapper := bootstrap.NewExeBootstrapper(cipdClient, cas.NewClient(ctx, opts.exeRoot))
+			bootstrapper := bootstrap.NewExeBootstrapper(cipdClient, cas.NewClient(ctx, opts.cipdRoot))
 
 			logging.Infof(ctx, "determining bootstrapped executable")
 			exe, err := bootstrapper.GetBootstrappedExeInfo(ctx, bootstrapInput)
