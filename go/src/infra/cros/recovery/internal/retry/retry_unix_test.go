@@ -59,11 +59,11 @@ func TestLimitCount(t *testing.T) {
 	})
 	t.Run("Cancel by parent context", func(t *testing.T) {
 		// t.Parallel() -- b:227523207
-		ctx, cancel := context.WithTimeout(ctx, time.Nanosecond)
+		ctx, cancel := context.WithTimeout(ctx, time.Millisecond)
 		defer func() { cancel() }()
 		if err := LimitCount(ctx, 10, time.Second, createFunc(10, 0, 0), "Retry test by count"); err == nil {
 			t.Errorf("Expected to fail by pass")
-		} else if !strings.Contains(err.Error(), "attempts took 0.00 seconds: context deadline exceeded") {
+		} else if !strings.Contains(err.Error(), ": context deadline exceeded") {
 			t.Errorf("Expected to stop by abort: %s", err)
 		}
 	})
@@ -105,11 +105,11 @@ func TestLimitTime(t *testing.T) {
 	})
 	t.Run("Cancel by parent context", func(t *testing.T) {
 		// t.Parallel() -- b:227523207
-		ctx, cancel := context.WithTimeout(ctx, time.Nanosecond)
+		ctx, cancel := context.WithTimeout(ctx, time.Millisecond)
 		defer func() { cancel() }()
-		if err := WithTimeout(ctx, time.Second, time.Second, createFunc(10, 0, 10*time.Millisecond), "Retry test by time"); err == nil {
+		if err := WithTimeout(ctx, 10*time.Second, time.Second, createFunc(10, 0, 10*time.Millisecond), "Retry test by time"); err == nil {
 			t.Errorf("Expected to fail by pass")
-		} else if !strings.Contains(err.Error(), "attempts took 0.00 seconds: context deadline exceeded") {
+		} else if !strings.Contains(err.Error(), ": context deadline exceeded") {
 			t.Errorf("Expected to stop by abort: %s", err)
 		}
 	})
