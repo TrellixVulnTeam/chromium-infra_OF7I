@@ -63,8 +63,7 @@ class FlaskServlet(object):
 
     self._missing_permissions_template = template_helpers.MonorailTemplate(
         self._TEMPLATE_PATH + self._MISSING_PERMISSIONS_TEMPLATE)
-    # TODO(https://crbug.com/monorail/6511): set service in app config
-    self.services = services
+    self.services = services or flask.current_app.config['services']
     self.content_type = content_type
     self.mr = None
     self.request = flask.request
