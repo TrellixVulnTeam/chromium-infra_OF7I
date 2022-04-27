@@ -85,7 +85,7 @@ func InitServer(srv *server.Server) {
 	}
 }
 
-// Triggers a job by name. Returns error if the job is not found.
+// TriggerJob triggers a job by name. Returns error if the job is not found.
 func TriggerJob(name string) error {
 	for _, job := range Jobs {
 		if job.Name == name {
