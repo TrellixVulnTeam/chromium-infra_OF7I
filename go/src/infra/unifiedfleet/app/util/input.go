@@ -885,7 +885,7 @@ func GetSuffixAfterSeparator(name, seprator string) string {
 // ServoV3HostnameRegex is used to identify servo V3 hosts.
 var ServoV3HostnameRegex = regexp.MustCompile(`.*-servo`)
 
-// Regular expression used to ensure pool name is valid.
+// PoolNameRegex ensures that a pool name is valid.
 var PoolNameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]*$`)
 
 // Invalid characters for tags field. Used by Contains/ContainsAny method.
