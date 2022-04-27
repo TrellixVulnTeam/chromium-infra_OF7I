@@ -71,12 +71,22 @@ class FlaskServlet(object):
     self.response = None
     self.ratelimiter = ratelimiter.RateLimiter()
 
-  def preProcess(self):
+  def handler(self):
+    """Do common stuff then dispatch the request to get() or put() methods."""
+    self.response = flask.make_response()
+    handler_start_time = time.time()
+    logging.info('\n\n\nRequest handler: %r', self)
+
+    #TODO: add the ts_mon.NonCumulativeDistributionMetric
+    # count0, count1, count2 = gc.get_count()
+    # logging.info('gc counts: %d %d %d', count0, count1, count2)
+    # GC_COUNT.add(count0, {'generation': 0})
+    # GC_COUNT.add(count1, {'generation': 1})
+    # GC_COUNT.add(count2, {'generation': 2})
 
     self.mr = monorailrequest.MonorailRequest(self.services)
-    # TODO: add the header to response
-    # self.response.headers.add('Strict-Transport-Security',
-    #     'max-age=31536000; includeSubDomains')
+    self.response.headers.add(
+        'Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
 
     if 'X-Cloud-Trace-Context' in self.request.headers:
       self.mr.profiler.trace_context = (
@@ -96,18 +106,9 @@ class FlaskServlet(object):
         self.template = template_helpers.GetTemplate(
             'templates/framework/database-maintenance.ezt',
             eliminate_blank_lines=self._ELIMINATE_BLANK_LINES)
-        # TODO: create the function for create falsk response
-        # self.template.WriteResponse(
-        #   self.response, page_data, content_type='text/html')
-        return str(page_data)
-
-  def handler(self):
-    """Do common stuff then dispatch the request to get() or put() methods."""
-    self.response = flask.make_response()
-    handler_start_time = time.time()
-    logging.info('\n\n\nRequest handler: %r', self)
-
-    self.preProcess()
+        self.template.WriteFlaskResponse(
+            self.response, page_data, content_type='text/html')
+        return self.response
 
     try:
       self.ratelimiter.CheckStart(self.request)
