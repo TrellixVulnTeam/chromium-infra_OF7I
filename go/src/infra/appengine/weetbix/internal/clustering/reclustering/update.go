@@ -9,15 +9,15 @@ import (
 	"fmt"
 	"time"
 
+	"go.chromium.org/luci/common/trace"
+	"go.chromium.org/luci/server/caching"
+
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms"
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
 	"infra/appengine/weetbix/internal/clustering/rules/cache"
 	"infra/appengine/weetbix/internal/clustering/state"
 	"infra/appengine/weetbix/internal/config/compiledcfg"
-
-	"go.chromium.org/luci/common/trace"
-	"go.chromium.org/luci/server/caching"
 )
 
 // TODO(crbug.com/1243174). Instrument the size of this cache so that we
@@ -26,6 +26,7 @@ var rulesCache = cache.NewRulesCache(caching.RegisterLRUCache(0))
 
 // Ruleset returns the cached ruleset for the given project. If a minimum
 // version of rule predicates is required, pass it as minimumPredicatesVersion.
+// If a strong read is required, pass cache.StrongRead.
 // Otherwise, pass rules.StartingEpoch.
 func Ruleset(ctx context.Context, project string, minimumPredicatesVersion time.Time) (*cache.Ruleset, error) {
 	ruleset, err := rulesCache.Ruleset(ctx, project, minimumPredicatesVersion)

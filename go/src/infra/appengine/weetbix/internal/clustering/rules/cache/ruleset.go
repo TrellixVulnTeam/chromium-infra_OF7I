@@ -55,8 +55,9 @@ type Ruleset struct {
 	// Version versions the contents of the Ruleset. These timestamps only
 	// change if a rule is modified.
 	Version rules.Version
-	// LastRefresh is the system time when the ruleset was last
-	// refreshed.
+	// LastRefresh contains the monotonic clock reading when the last ruleset
+	// refresh was initiated. The refresh is guaranteed to contain all rules
+	// changes made prior to this timestamp.
 	LastRefresh time.Time
 }
 
@@ -123,6 +124,11 @@ func (r *Ruleset) refresh(ctx context.Context) (ruleset *Ruleset, err error) {
 	s.Attribute("project", r.Project)
 	defer func() { s.End(err) }()
 
+	// Use clock reading before refresh. The refresh is guaranteed
+	// to contain all rule changes committed to Spanner prior to
+	// this timestamp.
+	lastRefresh := clock.Now(ctx)
+
 	txn, cancel := span.ReadOnlyTransaction(ctx)
 	defer cancel()
 
@@ -157,7 +163,6 @@ func (r *Ruleset) refresh(ctx context.Context) (ruleset *Ruleset, err error) {
 		return nil, err
 	}
 
-	lastRefresh := clock.Now(ctx)
 	return NewRuleset(r.Project, activeRules, rulesVersion, lastRefresh), nil
 }
 

@@ -108,7 +108,11 @@ func TestRulesCache(t *testing.T) {
 					Predicates: reference,
 				}
 
-				Convey(`By Forced Eviction`, func() {
+				Convey(`By Strong Read`, func() {
+					test(StrongRead, rs, expectedRulesVersion)
+					test(StrongRead, rs, expectedRulesVersion)
+				})
+				Convey(`By Requesting Version`, func() {
 					test(expectedRulesVersion.Predicates, rs, expectedRulesVersion)
 				})
 				Convey(`By Cache Expiry`, func() {
@@ -175,7 +179,11 @@ func TestRulesCache(t *testing.T) {
 					Predicates: reference.Add(3 * time.Hour),
 				}
 
-				Convey(`By Forced Eviction`, func() {
+				Convey(`By Strong Read`, func() {
+					test(StrongRead, newRules, expectedRulesVersion)
+					test(StrongRead, newRules, expectedRulesVersion)
+				})
+				Convey(`By Requesting Version`, func() {
 					test(expectedRulesVersion.Predicates, newRules, expectedRulesVersion)
 				})
 				Convey(`By Cache Expiry`, func() {
@@ -226,6 +234,10 @@ func TestRulesCache(t *testing.T) {
 					Predicates: reference.Add(2 * time.Hour),
 				}
 
+				Convey(`By Strong Read`, func() {
+					test(StrongRead, newRules, expectedRulesVersion)
+					test(StrongRead, newRules, expectedRulesVersion)
+				})
 				Convey(`By Forced Eviction`, func() {
 					test(expectedRulesVersion.Predicates, newRules, expectedRulesVersion)
 				})

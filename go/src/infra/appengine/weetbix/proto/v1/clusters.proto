@@ -48,9 +48,17 @@ service Clusters {
     // This RPC returns the clusters of each test result, using
     // to current suggested cluster algorithms, configured failure
     // association rules, and ingested project configuration with
-    // a bounded staleness of up to 1 minute.
-    // (Returned clusters may be based on configured failure association rules
-    // and project configuration data that is up to one minute out-of-date).
+    // a bounded staleness of up to one minute. (Returned clusters
+    // may be based on project configuration data and configured failure
+    // association rules that is up to one minute out-of-date).
+    //
+    // As at April 2022, the implementation does not use stale
+    // rules, but you are instructed NOT to rely on this property to
+    // allow reversion to the faster implementation that is tolerant
+    // to higher QPS in future. If your use case require strong reads
+    // (e.g. you want to call cluster immediately after updating a rule),
+    // please contact Weetbix owners. We may be able to provide a
+    // request flag to select this processing behaviour.
     //
     // This RPC is a pure query API and does not lead to the ingestion of the
     // test failures by Weetbix (e.g. for cluster impact calculations).

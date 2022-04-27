@@ -13,7 +13,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms"
 	"infra/appengine/weetbix/internal/clustering/reclustering"
-	"infra/appengine/weetbix/internal/clustering/rules"
+	"infra/appengine/weetbix/internal/clustering/rules/cache"
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
@@ -56,8 +56,8 @@ func (*clustersServer) Cluster(ctx context.Context, req *pb.ClusterRequest) (*pb
 		return nil, err
 	}
 
-	// Fetch a recent ruleset. (May be a recent value that was cached.)
-	ruleset, err := reclustering.Ruleset(ctx, req.Project, rules.StartingEpoch)
+	// Fetch a recent ruleset.
+	ruleset, err := reclustering.Ruleset(ctx, req.Project, cache.StrongRead)
 	if err != nil {
 		return nil, err
 	}
