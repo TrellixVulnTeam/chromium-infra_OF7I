@@ -1,0 +1,32 @@
+// Copyright 2022 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package unifiedfleet.api.v1.models;
+
+option go_package = "infra/unifiedfleet/api/v1/models;ufspb";
+
+// A proto representation of the goldeneye all devices data json file at -
+// https://pantheon.corp.google.com/storage/browser/_details/chromeos-build-release-console/all_devices.json;tab=live_object?project=google.com:cros-goldeneye
+message GoldenEyeDevices  {
+    repeated GoldenEyeDevice devices = 1;
+}
+
+// Maps to an individual device object in the all devices json file, all fields except boards and launch date are ignored.
+message GoldenEyeDevice  {
+    repeated Board boards = 1;
+    string launch_date = 2;
+}
+
+// Maps to each Board json object, all fields except public_codename and models are ignored.
+message Board {
+    string public_codename = 1;
+    repeated Model models = 2;
+}
+
+//Maps to each Model json object, all fields except name are ignored.
+message Model {
+    string name = 1;
+}
