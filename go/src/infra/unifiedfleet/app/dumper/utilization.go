@@ -23,6 +23,8 @@ import (
 
 type inventoryCounter map[bucket]int
 
+// TODO(guocb): Remove below metric after the migration to scheduling unit
+// metric.
 var inventoryMetric = metric.NewInt(
 	"chromeos/skylab/inventory/dut_count",
 	"The number of DUTs in a given bucket",
@@ -31,7 +33,18 @@ var inventoryMetric = metric.NewInt(
 	field.String("model"),
 	field.String("pool"),
 	field.String("environment"),
-	field.String("hive"),
+)
+
+// suMetric is the metric name for scheduling unit count.
+var suMetric = metric.NewInt(
+	"chromeos/skylab/inventory/scheduling_unit_count",
+	"The number of scheduling units in a given bucket",
+	nil,
+	field.String("board"),
+	field.String("model"),
+	field.String("pool"),
+	field.String("environment"),
+	field.String("zone"),
 )
 
 // reportUFSInventoryCronHandler push the ufs duts metrics to tsmon
@@ -95,7 +108,8 @@ func reportUFSInventoryCronHandler(ctx context.Context) (err error) {
 func (c inventoryCounter) Report(ctx context.Context) {
 	for b, count := range c {
 		//logging.Infof(ctx, "bucket: %s, number: %d", b.String(), count)
-		inventoryMetric.Set(ctx, int64(count), b.board, b.model, b.pool, b.environment, b.hive)
+		inventoryMetric.Set(ctx, int64(count), b.board, b.model, b.pool, b.environment)
+		suMetric.Set(ctx, int64(count), b.board, b.model, b.pool, b.environment, b.zone)
 	}
 }
 
@@ -105,7 +119,7 @@ func getBucketForDevice(lse *ufspb.MachineLSE, machine *ufspb.Machine, env strin
 		model:       machine.GetChromeosMachine().GetModel(),
 		pool:        "[None]",
 		environment: env,
-		hive:        util.GetHiveForDut(lse.GetName()),
+		zone:        lse.GetZone(),
 	}
 	if dut := lse.GetChromeosMachineLse().GetDeviceLse().GetDut(); dut != nil {
 		b.pool = getReportPool(dut.GetPools())
@@ -126,11 +140,11 @@ type bucket struct {
 	model       string
 	pool        string
 	environment string
-	hive        string
+	zone        string
 }
 
 func (b bucket) String() string {
-	return fmt.Sprintf("board: %s, model: %s, pool: %s, env: %s, hive: %q", b.board, b.model, b.pool, b.environment, b.hive)
+	return fmt.Sprintf("board: %s, model: %s, pool: %s, env: %s, zone: %q", b.board, b.model, b.pool, b.environment, b.zone)
 }
 
 func summarizeValues(vs []string) string {
