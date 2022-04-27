@@ -20,6 +20,7 @@ import httplib
 import logging
 import time
 
+import ezt
 import flask
 from search import query2ast
 
@@ -246,15 +247,16 @@ class FlaskServlet(object):
                       version_base,
               }))
 
-      #TODO: (crbug.com/monorail/10857)
       # add the function to get data and render page
-      # page_data.update(self._GatherFlagData(self.mr))
+      page_data.update(self._GatherFlagData(self.mr))
 
       # # Page-specific work happens in this call.
-      # page_data.update(self._DoPageProcessing(self.mr, nonce))
+      page_data.update(self._DoPageProcessing(self.mr, nonce))
 
+      #TODO: (crbug.com/monorail/10863)
       # self._AddHelpDebugPageData(page_data)
 
+      #TODO: (crbug.com/monorail/10868)
       # with self.mr.profiler.Phase('rendering template'):
       #   self._RenderResponse(page_data)
 
@@ -294,6 +296,49 @@ class FlaskServlet(object):
   def post(self):
     #TODO: implement basic data processing
     logging.info('process post request')
+
+  def _GatherFlagData(self, mr):
+    page_data = {
+        'project_stars_enabled':
+            ezt.boolean(settings.enable_project_stars),
+        'user_stars_enabled':
+            ezt.boolean(settings.enable_user_stars),
+        'can_create_project':
+            ezt.boolean(permissions.CanCreateProject(mr.perms)),
+        'can_create_group':
+            ezt.boolean(permissions.CanCreateGroup(mr.perms)),
+    }
+
+    return page_data
+
+  # pylint: disable=unused-argument
+  def _DoPageProcessing(self, mr, nonce):
+    """Do user lookups and gather page-specific ezt data."""
+    with mr.profiler.Phase('common request data'):
+
+      # TODO: (crbug.com/monorail/10861)
+      # self._DoCommonRequestProcessing(self.request, mr)
+
+      # TODO: (crbug.com/monorail/10860)
+      # self._MaybeRedirectToBrandedDomain(self.request, mr.project_name)
+
+      # TODO: (crbug.com/monorail/10869)
+      # page_data = self.GatherBaseData(mr, nonce)
+      page_data = {}
+
+    with mr.profiler.Phase('page processing'):
+      page_data.update(self.GatherPageData(mr))
+      page_data.update(mr.form_overrides)
+      template_helpers.ExpandLabels(page_data)
+      # self._RecordVisitTime(mr)
+
+    return page_data
+
+  # pylint: disable=unused-argument
+  def GatherPageData(self, mr):
+    """Return a dict of page-specific ezt data."""
+    return {}
+    # raise MethodNotSupportedError()
 
 
 def _VersionBaseURL(request):
