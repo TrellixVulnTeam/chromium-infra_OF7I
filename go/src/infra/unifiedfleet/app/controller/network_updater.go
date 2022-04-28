@@ -86,7 +86,7 @@ func getFreeIPHelper(ctx context.Context, vlanName string) (*ufspb.IP, error) {
 		return nil, errors.Annotate(err, "GetFreeIP").Err()
 	}
 	if ips[0].GetIpv4Str() == "" {
-		return nil, fmt.Errorf("Found invalid ip %q (ipv4 %q) in vlan %s", ips[0].GetId(), ips[0].GetIpv4(), vlanName)
+		return nil, fmt.Errorf("found invalid ip %q (ipv4 %q) in vlan %s", ips[0].GetId(), ips[0].GetIpv4(), vlanName)
 	}
 	logging.Debugf(ctx, "Get free ip %s", ips[0].GetIpv4Str())
 	return ips[0], nil

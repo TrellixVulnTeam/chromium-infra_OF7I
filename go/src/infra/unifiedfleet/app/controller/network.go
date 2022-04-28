@@ -20,7 +20,7 @@ func getFreeIP(ctx context.Context, vlanName string, pageSize int) ([]*ufspb.IP,
 		return nil, err
 	}
 	if len(ips) == 0 {
-		return nil, fmt.Errorf("No non-occupied ips in vlan %s", vlanName)
+		return nil, fmt.Errorf("no non-occupied ips in vlan %s", vlanName)
 	}
 	res := make([]*ufspb.IP, pageSize)
 	count := 0
