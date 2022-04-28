@@ -2,6 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// Block building on windows in Go (1.17+ and <1.17 respectively)
+//go:build !windows
+//+build !windows
+
 // These tests are not fundamentally platform-specific. However, they are
 // more brittle than one would expect on Windows under high load for mysterious
 // reasons that haven't been determined yet.
