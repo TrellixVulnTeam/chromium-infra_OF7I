@@ -31,11 +31,11 @@ type FleetServerImpl struct {
 	importPageSize int
 }
 
-func (cs *FleetServerImpl) getImportPageSize() int {
-	if cs.importPageSize == 0 {
+func (fs *FleetServerImpl) getImportPageSize() int {
+	if fs.importPageSize == 0 {
 		return importPageSize
 	}
-	return cs.importPageSize
+	return fs.importPageSize
 }
 
 // Error messages for data import
