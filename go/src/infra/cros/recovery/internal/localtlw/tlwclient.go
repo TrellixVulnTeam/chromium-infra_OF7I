@@ -306,6 +306,8 @@ func (c *tlwClient) startServodContainer(ctx context.Context, dut *tlw.Dut, o *t
 	if err != nil {
 		return errors.Annotate(err, "start servod container").Err()
 	}
+	// Print all containers to know if something wrong.
+	d.PrintAll(ctx)
 	if up, err := d.IsUp(ctx, containerName); err != nil {
 		return errors.Annotate(err, "start servod container").Err()
 	} else if up {
