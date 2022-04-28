@@ -214,7 +214,7 @@ func (c *localRecoveryRun) getLogRoot() (string, error) {
 	if err != nil {
 		return logRoot, errors.Annotate(err, "get log root").Err()
 	}
-	err = os.MkdirAll(logRoot, 755)
+	err = os.MkdirAll(logRoot, 0755)
 	return logRoot, errors.Annotate(err, "get log root").Err()
 }
 
