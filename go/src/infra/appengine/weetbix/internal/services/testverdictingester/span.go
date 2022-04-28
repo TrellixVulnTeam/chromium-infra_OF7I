@@ -52,7 +52,7 @@ func recordIngestedInvocation(ctx context.Context, task *taskspb.IngestTestVerdi
 func recordTestVerdicts(ctx context.Context, task *taskspb.IngestTestVerdicts, build *bbpb.Build, inv *rdbpb.Invocation, tvsC chan []*rdbpb.TestVariant) error {
 	const (
 		workerCount = 8
-		batchSize   = 256
+		batchSize   = 1000
 	)
 
 	invId, err := rdbpbutil.ParseInvocationName(inv.Name)
@@ -121,7 +121,7 @@ func recordTestVerdicts(ctx context.Context, task *taskspb.IngestTestVerdicts, b
 			return nil
 		}
 
-		for batch := range tvsC {
+		for batch := range batchC {
 			// Bind to a local variable so it can be used in a goroutine without being
 			// overwritten. See https://go.dev/doc/faq#closures_and_goroutines
 			batch := batch
