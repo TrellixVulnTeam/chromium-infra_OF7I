@@ -204,8 +204,6 @@ func BootID(ctx context.Context, run execs.Runner) (string, error) {
 }
 
 const (
-	// defaultPingRetryCount is the default ping retry count.
-	defaultPingRetryCount = 2
 	// waitDownRebootTime is the time the program will wait for the device to be down.
 	waitDownRebootTime = 120 * time.Second
 	// waitUpRebootTime is the time the program will wait for the device to be up after reboot.
