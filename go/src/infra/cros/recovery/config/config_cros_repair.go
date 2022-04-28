@@ -591,13 +591,13 @@ func crosRepairActions() map[string]*Action {
 			Conditions: []string{
 				"Not Satlab device",
 			},
-			ExecName: "cros_update_hwid_to_inventory",
+			ExecName: "cros_update_serial_number_inventory",
 		},
 		"Read DUT serial-number from DUT (Satlab)": {
 			Conditions: []string{
 				"Is Satlab device",
 			},
-			ExecName:               "cros_update_hwid_to_inventory",
+			ExecName:               "cros_update_serial_number_inventory",
 			AllowFailAfterRecovery: true,
 		},
 		"Read HWID from DUT": {
