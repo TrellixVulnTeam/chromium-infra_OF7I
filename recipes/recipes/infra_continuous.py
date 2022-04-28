@@ -199,10 +199,13 @@ def build_main(api, checkout, buildername, project_name, repo_url, rev):
   # clang toolchain.
   with api.osx_sdk('mac'), checkout.go_env():
     if not is_packager:
-      api.step(
-          'infra go tests',
-          api.resultdb.wrap(
-              ['vpython', '-u', api.path['checkout'].join('go', 'test.py')]))
+      with api.depot_tools.on_path():
+        # Some go tests test interactions with depot_tools binaries, so put
+        # depot_tools on the path.
+        api.step(
+            'infra go tests',
+            api.resultdb.wrap(
+                ['vpython', '-u', api.path['checkout'].join('go', 'test.py')]))
 
     for plat in CIPD_PACKAGE_BUILDERS.get(buildername, []):
       options = plat.split(':')

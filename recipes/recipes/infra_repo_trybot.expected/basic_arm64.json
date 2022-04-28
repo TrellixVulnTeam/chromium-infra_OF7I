@@ -372,8 +372,12 @@
       ]
     },
     "env_suffixes": {
+      "DEPOT_TOOLS_UPDATE": [
+        "0"
+      ],
       "PATH": [
-        "[CACHE]/builder/infra/go/bin"
+        "[CACHE]/builder/infra/go/bin",
+        "RECIPE_REPO[depot_tools]"
       ]
     },
     "luci_context": {
