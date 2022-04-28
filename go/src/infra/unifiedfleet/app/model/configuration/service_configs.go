@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	serviceConfigID string = "UFS"
-	lowerHex               = "000000"
+	serviceConfigID = "UFS"
+	lowerHex        = "000000"
 )
 
 // ServiceConfig we stored for ufs.
