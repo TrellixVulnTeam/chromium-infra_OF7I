@@ -10,7 +10,6 @@ import (
 	"context"
 	base_error "errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -21,6 +20,8 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"go.chromium.org/luci/common/errors"
+
+	"infra/cros/recovery/internal/log"
 )
 
 // TODO (otabek): Add basic unittest for each method.
@@ -33,7 +34,6 @@ const (
 	// Enable more debug logs to triage issue.
 	// Will be set to false after stabilize work with container.
 	// TODO(otabek): Set false after testing in the prod.
-	enableDebugLogging       = false
 	enablePrintAllContainers = false
 )
 
@@ -46,7 +46,7 @@ type dockerClient struct {
 // NewClient creates client to work with docker client.
 func NewClient(ctx context.Context) (Client, error) {
 	if client, err := createDockerClient(ctx); err != nil {
-		log.Printf("New docker client: failed to create docker client: %s", err)
+		log.Debugf(ctx, "New docker client: failed to create docker client: %s", err)
 		if client != nil {
 			client.Close()
 		}
@@ -70,9 +70,7 @@ func createDockerClient(ctx context.Context) (*client.Client, error) {
 		if !base_error.Is(err, os.ErrNotExist) {
 			return nil, err
 		}
-		if enableDebugLogging {
-			log.Println("Docker client connecting over TCP")
-		}
+		log.Debugf(ctx, "Docker client connecting over TCP")
 		// Default HTTPClient inside the Docker Client object fails to
 		// connects to docker daemon. Create the transport with DialContext and use
 		// this while initializing new docker client object.
@@ -86,9 +84,7 @@ func createDockerClient(ctx context.Context) (*client.Client, error) {
 
 		return client.NewClientWithOpts(client.WithHost(dockerTcpPath), client.WithHTTPClient(&c), client.WithAPIVersionNegotiation())
 	}
-	if enableDebugLogging {
-		log.Println("Docker client connecting over docker.sock")
-	}
+	log.Debugf(ctx, "Docker client connecting over docker.sock")
 	return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 }
 
@@ -130,12 +126,10 @@ func (d *dockerClient) Start(ctx context.Context, containerName string, req *Con
 		args = append(args, req.Exec...)
 	}
 	res, err := runWithTimeout(ctx, timeout, "docker", args...)
-	if enableDebugLogging {
-		log.Printf("Run docker exec %q: exitcode: %v", containerName, res.ExitCode)
-		log.Printf("Run docker exec %q: stdout: %v", containerName, res.Stdout)
-		log.Printf("Run docker exec %q: stderr: %v", containerName, res.Stderr)
-		log.Printf("Run docker exec %q: err: %v", containerName, err)
-	}
+	log.Debugf(ctx, "Run docker exec %q: exitcode: %v", containerName, res.ExitCode)
+	log.Debugf(ctx, "Run docker exec %q: stdout: %v", containerName, res.Stdout)
+	log.Debugf(ctx, "Run docker exec %q: stderr: %v", containerName, res.Stderr)
+	log.Debugf(ctx, "Run docker exec %q: err: %v", containerName, err)
 	return &StartResponse{
 		ExitCode: res.ExitCode,
 		Stdout:   res.Stdout,
@@ -145,9 +139,7 @@ func (d *dockerClient) Start(ctx context.Context, containerName string, req *Con
 
 // Remove removes existed container.
 func (d *dockerClient) Remove(ctx context.Context, containerName string, force bool) error {
-	if enableDebugLogging {
-		log.Printf("Removing container %q, using force:%v", containerName, force)
-	}
+	log.Debugf(ctx, "Removing container %q, using force:%v", containerName, force)
 	args := []string{"rm", containerName}
 	if force {
 		args = append(args, "--force")
@@ -176,12 +168,10 @@ func (d *dockerClient) Exec(ctx context.Context, containerName string, req *Exec
 	args := []string{"exec", "-i", containerName}
 	args = append(args, req.Cmd...)
 	res, err := runWithTimeout(ctx, req.Timeout, "docker", args...)
-	if enableDebugLogging {
-		log.Printf("Run docker exec %q: exitcode: %v", containerName, res.ExitCode)
-		log.Printf("Run docker exec %q: stdout: %v", containerName, res.Stdout)
-		log.Printf("Run docker exec %q: stderr: %v", containerName, res.Stderr)
-		log.Printf("Run docker exec %q: err: %v", containerName, err)
-	}
+	log.Debugf(ctx, "Run docker exec %q: exitcode: %v", containerName, res.ExitCode)
+	log.Debugf(ctx, "Run docker exec %q: stdout: %v", containerName, res.Stdout)
+	log.Debugf(ctx, "Run docker exec %q: stderr: %v", containerName, res.Stderr)
+	log.Debugf(ctx, "Run docker exec %q: err: %v", containerName, err)
 	return &ExecResponse{
 		ExitCode: res.ExitCode,
 		Stdout:   res.Stdout,
@@ -196,7 +186,7 @@ func (d *dockerClient) PrintAll(ctx context.Context) error {
 		return errors.Annotate(err, "docker print all").Err()
 	}
 	for _, container := range containers {
-		log.Printf("docker ps: %s %s\n", container.ID[:10], container.Image)
+		log.Debugf(ctx, "docker ps: %s %s\n", container.ID[:10], container.Image)
 	}
 	return nil
 }
@@ -226,21 +216,17 @@ func (d *dockerClient) IsUp(ctx context.Context, containerName string) (bool, er
 func (d *dockerClient) IPAddress(ctx context.Context, containerName string) (string, error) {
 	args := []string{"inspect", "--format={{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}", containerName}
 	res, err := runWithTimeout(ctx, time.Minute, "docker", args...)
-	if enableDebugLogging {
-		log.Printf("Run docker exec %q: exitcode: %v", containerName, res.ExitCode)
-		log.Printf("Run docker exec %q: stdout: %v", containerName, res.Stdout)
-		log.Printf("Run docker exec %q: stderr: %v", containerName, res.Stderr)
-		log.Printf("Run docker exec %q: err: %v", containerName, err)
-	}
+	log.Debugf(ctx, "Run docker exec %q: exitcode: %v", containerName, res.ExitCode)
+	log.Debugf(ctx, "Run docker exec %q: stdout: %v", containerName, res.Stdout)
+	log.Debugf(ctx, "Run docker exec %q: stderr: %v", containerName, res.Stderr)
+	log.Debugf(ctx, "Run docker exec %q: err: %v", containerName, err)
 	if err != nil {
 		return "", errors.Annotate(err, "ip address %q", containerName).Err()
 	} else if res.ExitCode != 0 {
 		return "", errors.Reason("ip address %q: fail with exit code %v", containerName, res.ExitCode).Err()
 	}
 	addr := strings.TrimSpace(res.Stdout)
-	if enableDebugLogging {
-		log.Printf("IPAddress %q: %v", containerName, addr)
-	}
+	log.Debugf(ctx, "IPAddress %q: %v", containerName, addr)
 	return addr, nil
 }
 
@@ -248,12 +234,10 @@ func (d *dockerClient) IPAddress(ctx context.Context, containerName string) (str
 func (d *dockerClient) CopyTo(ctx context.Context, containerName string, sourcePath, destinationPath string) error {
 	// Using `docker cp -- src desc`  where `--` used to avoid interpret src as argument.
 	res, err := runWithTimeout(ctx, time.Minute, "docker", "cp", "--", sourcePath, fmt.Sprintf("%s:%s", containerName, destinationPath))
-	if enableDebugLogging {
-		log.Printf("Run docker copy to %q: exitcode: %v", containerName, res.ExitCode)
-		log.Printf("Run docker copy to %q: stdout: %v", containerName, res.Stdout)
-		log.Printf("Run docker copy to %q: stderr: %v", containerName, res.Stderr)
-		log.Printf("Run docker copy to %q: err: %v", containerName, err)
-	}
+	log.Debugf(ctx, "Run docker copy to %q: exitcode: %v", containerName, res.ExitCode)
+	log.Debugf(ctx, "Run docker copy to %q: stdout: %v", containerName, res.Stdout)
+	log.Debugf(ctx, "Run docker copy to %q: stderr: %v", containerName, res.Stderr)
+	log.Debugf(ctx, "Run docker copy to %q: err: %v", containerName, err)
 	if err != nil {
 		return errors.Annotate(err, "copy to %q", containerName).Err()
 	} else if res.ExitCode != 0 {
@@ -266,12 +250,10 @@ func (d *dockerClient) CopyTo(ctx context.Context, containerName string, sourceP
 func (d *dockerClient) CopyFrom(ctx context.Context, containerName string, sourcePath, destinationPath string) error {
 	// Using `docker cp -- src desc`  where `--` used to avoid interpret src as argument.
 	res, err := runWithTimeout(ctx, time.Minute, "docker", "cp", "--", fmt.Sprintf("%s:%s", containerName, sourcePath), destinationPath)
-	if enableDebugLogging {
-		log.Printf("Run docker copy from %q: exitcode: %v", containerName, res.ExitCode)
-		log.Printf("Run docker copy from %q: stdout: %v", containerName, res.Stdout)
-		log.Printf("Run docker copy from %q: stderr: %v", containerName, res.Stderr)
-		log.Printf("Run docker copy from %q: err: %v", containerName, err)
-	}
+	log.Debugf(ctx, "Run docker copy from %q: exitcode: %v", containerName, res.ExitCode)
+	log.Debugf(ctx, "Run docker copy from %q: stdout: %v", containerName, res.Stdout)
+	log.Debugf(ctx, "Run docker copy from %q: stderr: %v", containerName, res.Stderr)
+	log.Debugf(ctx, "Run docker copy from %q: err: %v", containerName, err)
 	if err != nil {
 		return errors.Annotate(err, "copy from %q", containerName).Err()
 	} else if res.ExitCode != 0 {

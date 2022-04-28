@@ -9,11 +9,12 @@ package docker
 import (
 	"bytes"
 	"context"
-	"log"
 	"os/exec"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
+
+	"infra/cros/recovery/internal/log"
 )
 
 // runResult holds info of execution.
@@ -39,9 +40,7 @@ func runWithTimeout(ctx context.Context, timeout time.Duration, command string, 
 		res.Stderr = se.String()
 	}()
 	go func() {
-		if enableDebugLogging {
-			log.Printf("Run cmd: %s", cmd)
-		}
+		log.Debugf(ctx, "Run cmd: %s", cmd)
 		cw <- cmd.Run()
 	}()
 	select {
