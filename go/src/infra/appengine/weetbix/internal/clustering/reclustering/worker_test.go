@@ -670,17 +670,17 @@ func (b *chunkBuilder) buildState() *state.Entry {
 	var crs clustering.ClusterResults
 	if b.oldAlgorithms {
 		algs := make(map[string]struct{})
-		algs["testname-v0"] = struct{}{}
-		algs["rules-v0"] = struct{}{}
+		algs["testname-v1"] = struct{}{}
+		algs["rules-v1"] = struct{}{}
 		var clusters [][]clustering.ClusterID
 		for range b.testResults {
 			cs := []clustering.ClusterID{
 				{
-					Algorithm: "testname-v0",
+					Algorithm: "testname-v1",
 					ID:        "01dc151e01dc151e01dc151e01dc151e",
 				},
 				{
-					Algorithm: "rules-v0",
+					Algorithm: "rules-v1",
 					ID:        "12341234123412341234123412341234",
 				},
 			}

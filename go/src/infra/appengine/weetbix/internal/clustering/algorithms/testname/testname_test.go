@@ -30,6 +30,11 @@ func TestAlgorithm(t *testing.T) {
 		},
 	}
 
+	Convey(`Name`, t, func() {
+		// Algorithm name should be valid.
+		a := &Algorithm{}
+		So(clustering.AlgorithmRe.MatchString(a.Name()), ShouldBeTrue)
+	})
 	Convey(`Cluster`, t, func() {
 		a := &Algorithm{}
 		cfg, err := compiledcfg.NewConfig(cfgpb)

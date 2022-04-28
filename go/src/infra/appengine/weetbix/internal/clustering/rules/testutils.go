@@ -51,7 +51,7 @@ func NewRule(uniqifier int) *RuleBuilder {
 		LastUpdatedUser:      "user@google.com",
 		PredicateLastUpdated: time.Date(1900, 1, 2, 3, 4, 6, uniqifier, time.UTC),
 		SourceCluster: clustering.ClusterID{
-			Algorithm: fmt.Sprintf("clusteralg%v", uniqifier),
+			Algorithm: fmt.Sprintf("clusteralg%v-v9", uniqifier),
 			ID:        hex.EncodeToString([]byte(fmt.Sprintf("id%v", uniqifier))),
 		},
 	}

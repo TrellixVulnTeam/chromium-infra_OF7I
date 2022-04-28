@@ -18,7 +18,11 @@ import (
 
 func TestAlgorithm(t *testing.T) {
 	cfgpb := &configpb.ProjectConfig{}
-
+	Convey(`Name`, t, func() {
+		// Algorithm name should be valid.
+		a := &Algorithm{}
+		So(clustering.AlgorithmRe.MatchString(a.Name()), ShouldBeTrue)
+	})
 	Convey(`Cluster`, t, func() {
 		a := &Algorithm{}
 		cfg, err := compiledcfg.NewConfig(cfgpb)

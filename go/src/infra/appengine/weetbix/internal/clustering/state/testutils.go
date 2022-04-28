@@ -12,9 +12,9 @@ import (
 	"fmt"
 	"time"
 
-	"infra/appengine/weetbix/internal/clustering"
-
 	"go.chromium.org/luci/server/span"
+
+	"infra/appengine/weetbix/internal/clustering"
 )
 
 const testProject = "myproject"
@@ -45,23 +45,23 @@ func NewEntry(uniqifier int) *EntryBuilder {
 			ConfigVersion:     time.Date(2025, 2, 1, 1, 1, 1, uniqifier, time.UTC),
 			RulesVersion:      time.Date(2025, 1, 1, 1, 1, 1, uniqifier, time.UTC),
 			Algorithms: map[string]struct{}{
-				fmt.Sprintf("alg-%v", uniqifier): {},
-				"alg-extra":                      {},
+				fmt.Sprintf("alg-%v-v1", uniqifier): {},
+				"alg-extra-v1":                      {},
 			},
 			Clusters: [][]clustering.ClusterID{
 				{
 					{
-						Algorithm: fmt.Sprintf("alg-%v", uniqifier),
+						Algorithm: fmt.Sprintf("alg-%v-v1", uniqifier),
 						ID:        "00112233445566778899aabbccddeeff",
 					},
 				},
 				{
 					{
-						Algorithm: fmt.Sprintf("alg-%v", uniqifier),
+						Algorithm: fmt.Sprintf("alg-%v-v1", uniqifier),
 						ID:        "00112233445566778899aabbccddeeff",
 					},
 					{
-						Algorithm: fmt.Sprintf("alg-%v", uniqifier),
+						Algorithm: fmt.Sprintf("alg-%v-v1", uniqifier),
 						ID:        "22",
 					},
 				},

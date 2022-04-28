@@ -31,6 +31,7 @@ import (
 	"infra/appengine/weetbix/frontend/handlers"
 	"infra/appengine/weetbix/internal/admin"
 	adminpb "infra/appengine/weetbix/internal/admin/proto"
+	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/analyzedtestvariants"
 	"infra/appengine/weetbix/internal/clustering/reclustering/orchestrator"
 	"infra/appengine/weetbix/internal/config"
@@ -153,7 +154,11 @@ func main() {
 		// TODO(crbug/1082369): Remove this workaround once field masks can be decoded.
 		srv.PRPC.HackFixFieldMasksForJSON = true
 
-		weetbixpb.RegisterClustersServer(srv.PRPC, rpc.NewClustersServer())
+		ac, err := analysis.NewClient(srv.Context, srv.Options.CloudProject)
+		if err != nil {
+			return errors.Annotate(err, "creating analysis client").Err()
+		}
+		weetbixpb.RegisterClustersServer(srv.PRPC, rpc.NewClustersServer(ac))
 		weetbixpb.RegisterRulesServer(srv.PRPC, rpc.NewRulesSever())
 		weetbixpb.RegisterProjectsServer(srv.PRPC, rpc.NewProjectsServer())
 		weetbixpb.RegisterInitDataGeneratorServer(srv.PRPC, rpc.NewInitDataGeneratorServer())

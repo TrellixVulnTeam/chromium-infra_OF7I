@@ -7,7 +7,6 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
@@ -21,7 +20,6 @@ import (
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/rules"
-	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/config/compiledcfg"
 	configpb "infra/appengine/weetbix/internal/config/proto"
 	pb "infra/appengine/weetbix/proto/v1"
@@ -39,11 +37,6 @@ func NewRulesSever() pb.RulesServer {
 		Postlude: gRPCifyAndLogPostlude,
 	}
 }
-
-var (
-	RuleNameRe    = regexp.MustCompile(`^projects/(` + config.ProjectRePattern + `)/rules/(` + rules.RuleIDRePattern + `)$`)
-	ProjectNameRe = regexp.MustCompile(`^projects/(` + config.ProjectRePattern + `)`)
-)
 
 // Retrieves a rule.
 func (*rulesServer) Get(ctx context.Context, req *pb.GetRuleRequest) (*pb.Rule, error) {
@@ -311,28 +304,6 @@ func (*rulesServer) LookupBug(ctx context.Context, req *pb.LookupBugRequest) (*p
 	return &pb.LookupBugResponse{
 		Rules: ruleNames,
 	}, nil
-}
-
-// parseRuleName parses a rule resource name into its constituent ID parts.
-func parseRuleName(name string) (project string, ruleID string, err error) {
-	match := RuleNameRe.FindStringSubmatch(name)
-	if match == nil {
-		return "", "", errors.New("invalid rule name, expected format: projects/{project}/rules/{rule_id}")
-	}
-	return match[1], match[2], nil
-}
-
-// parseProjectName parses a project resource name into a project ID.
-func parseProjectName(name string) (project string, err error) {
-	match := ProjectNameRe.FindStringSubmatch(name)
-	if match == nil {
-		return "", errors.New("invalid project name, expected format: projects/{project}")
-	}
-	return match[1], nil
-}
-
-func ruleName(project string, ruleID string) string {
-	return fmt.Sprintf("projects/%s/rules/%s", project, ruleID)
 }
 
 func createRulePB(r *rules.FailureAssociationRule, cfg *configpb.ProjectConfig) *pb.Rule {

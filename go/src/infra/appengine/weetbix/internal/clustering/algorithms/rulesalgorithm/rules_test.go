@@ -9,15 +9,19 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey"
+
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/rules/cache"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAlgorithm(t *testing.T) {
+	Convey(`Name`, t, func() {
+		// Algorithm name should be valid.
+		So(clustering.AlgorithmRe.MatchString(AlgorithmName), ShouldBeTrue)
+	})
 	Convey(`Cluster from scratch`, t, func() {
 		a := &Algorithm{}
 		existingRulesVersion := rules.StartingEpoch
