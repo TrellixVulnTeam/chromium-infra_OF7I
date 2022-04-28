@@ -24,7 +24,7 @@ type PublicBoardModelDataEntity struct {
 	Models []string `gae:"models"`
 }
 
-// AddPublicBoardData adds a public board name and its corresponding models in the datastore.
+// AddPublicBoardModelData adds a public board name and its corresponding models in the datastore.
 func AddPublicBoardModelData(ctx context.Context, board string, models []string) (*PublicBoardModelDataEntity, error) {
 	if board == "" {
 		return nil, status.Errorf(codes.Internal, "Empty board")
@@ -41,7 +41,7 @@ func AddPublicBoardModelData(ctx context.Context, board string, models []string)
 	return entity, nil
 }
 
-// GetPublicBoardData returns PublicBoardModelData for the given board from datastore.
+// GetPublicBoardModelData returns PublicBoardModelData for the given board from datastore.
 func GetPublicBoardModelData(ctx context.Context, board string) (*PublicBoardModelDataEntity, error) {
 	entity := &PublicBoardModelDataEntity{
 		Board: board,
