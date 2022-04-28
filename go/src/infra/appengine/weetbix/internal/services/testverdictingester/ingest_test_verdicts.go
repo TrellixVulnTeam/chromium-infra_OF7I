@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/clock"
@@ -125,6 +126,17 @@ func ingestTestVerdicts(ctx context.Context, payload *taskspb.IngestTestVerdicts
 		req := &rdbpb.QueryTestVariantsRequest{
 			Invocations: []string{invName},
 			PageSize:    10000,
+			ReadMask: &fieldmaskpb.FieldMask{
+				Paths: []string{
+					"test_id",
+					"variant_hash",
+					"status",
+					"variant",
+					"results.*.result.status",
+					"results.*.result.expected",
+					"results.*.result.duration",
+				},
+			},
 		}
 		return rc.QueryTestVariants(ctx, req, func(tvs []*rdbpb.TestVariant) error {
 			tvsC <- tvs

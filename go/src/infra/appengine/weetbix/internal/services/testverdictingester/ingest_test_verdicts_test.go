@@ -14,6 +14,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
@@ -116,6 +117,17 @@ func TestIngestTestVerdicts(t *testing.T) {
 			tvReq := &rdbpb.QueryTestVariantsRequest{
 				Invocations: []string{inv},
 				PageSize:    10000,
+				ReadMask: &fieldmaskpb.FieldMask{
+					Paths: []string{
+						"test_id",
+						"variant_hash",
+						"status",
+						"variant",
+						"results.*.result.status",
+						"results.*.result.expected",
+						"results.*.result.duration",
+					},
+				},
 			}
 			mrc.QueryTestVariants(tvReq, mockedQueryTestVariantsRsp())
 
