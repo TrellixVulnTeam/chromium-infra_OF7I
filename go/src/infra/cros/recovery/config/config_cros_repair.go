@@ -535,6 +535,9 @@ func crosRepairActions() map[string]*Action {
 			ExecName: "cros_is_not_in_dev_mode",
 		},
 		"Match HWID": {
+			Docs: []string{
+				"Match HWID to value in inventory",
+			},
 			Conditions: []string{
 				"is_not_flex_board",
 				"Not Satlab device",
@@ -544,8 +547,14 @@ func crosRepairActions() map[string]*Action {
 				"cros_storage_writing",
 			},
 			ExecName: "cros_match_hwid_to_inventory",
+			RecoveryActions: []string{
+				"Set state:need_deploy",
+			},
 		},
 		"Match serial-number": {
+			Docs: []string{
+				"Match serial number to value in inventory",
+			},
 			Conditions: []string{
 				"is_not_flex_board",
 				"Not Satlab device",
@@ -555,6 +564,15 @@ func crosRepairActions() map[string]*Action {
 				"cros_storage_writing",
 			},
 			ExecName: "cros_match_serial_number_inventory",
+			RecoveryActions: []string{
+				"Set state:need_deploy",
+			},
+		},
+		"Set state:need_deploy": {
+			Docs: []string{
+				"Set state needs_deploy",
+			},
+			ExecName: "dut_state_needs_deploy",
 		},
 		"Is HWID known": {
 			Docs: []string{
