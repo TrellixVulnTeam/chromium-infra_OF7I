@@ -13,6 +13,7 @@ import (
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	"infra/appengine/weetbix/internal"
 	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	pb "infra/appengine/weetbix/proto/v1"
@@ -57,21 +58,21 @@ func ComputeTestVariantStatusFromVerdicts(ctx context.Context, tvKey *taskspb.Te
 		if err != nil {
 			return pb.AnalyzedTestVariantStatus_STATUS_UNSPECIFIED, err
 		}
-		var verdictStatus pb.VerdictStatus
+		var verdictStatus internal.VerdictStatus
 		if err = b.FromSpanner(row, &verdictStatus); err != nil {
 			return pb.AnalyzedTestVariantStatus_STATUS_UNSPECIFIED, err
 		}
 
 		totalCount++
 		switch verdictStatus {
-		case pb.VerdictStatus_VERDICT_FLAKY:
+		case internal.VerdictStatus_VERDICT_FLAKY:
 			// Any flaky verdict means the test variant is flaky.
 			// Return status right away.
 			itr.Stop()
 			return pb.AnalyzedTestVariantStatus_FLAKY, nil
-		case pb.VerdictStatus_UNEXPECTED:
+		case internal.VerdictStatus_UNEXPECTED:
 			unexpectedCount++
-		case pb.VerdictStatus_EXPECTED:
+		case internal.VerdictStatus_EXPECTED:
 		default:
 			panic(fmt.Sprintf("got unsupported verdict status %d", int(verdictStatus)))
 		}

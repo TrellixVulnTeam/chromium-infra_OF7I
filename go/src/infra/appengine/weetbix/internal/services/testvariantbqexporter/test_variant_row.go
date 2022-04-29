@@ -27,6 +27,7 @@ import (
 	"go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/tq"
 
+	"infra/appengine/weetbix/internal"
 	"infra/appengine/weetbix/internal/bqutil"
 	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/pbutil"
@@ -56,7 +57,7 @@ func (b *BQExporter) populateQueryParameters() (inputs, params map[string]interf
 
 	params = map[string]interface{}{
 		"realm":              b.options.Realm,
-		"flakyVerdictStatus": int(pb.VerdictStatus_VERDICT_FLAKY),
+		"flakyVerdictStatus": int(internal.VerdictStatus_VERDICT_FLAKY),
 	}
 
 	st, err := pbutil.AsTime(b.options.TimeRange.GetEarliest())
@@ -182,7 +183,7 @@ type verdictInfo struct {
 // convertVerdicts converts strings to verdictInfos.
 // Ordered by IngestionTime.
 func (b *BQExporter) convertVerdicts(vs []string) ([]verdictInfo, error) {
-	verdicts := make([]verdictInfo, 0, len(vs))
+	vis := make([]verdictInfo, 0, len(vs))
 	for _, v := range vs {
 		parts := strings.Split(v, "/")
 		if len(parts) != 6 {
@@ -195,7 +196,7 @@ func (b *BQExporter) convertVerdicts(vs []string) ([]verdictInfo, error) {
 		if err != nil {
 			return nil, err
 		}
-		verdict.Status = pb.VerdictStatus(s).String()
+		verdict.Status = internal.VerdictStatus(s).String()
 
 		ct, err := time.Parse(time.RFC3339Nano, parts[2])
 		if err != nil {
@@ -218,7 +219,7 @@ func (b *BQExporter) convertVerdicts(vs []string) ([]verdictInfo, error) {
 			return nil, err
 		}
 
-		verdicts = append(verdicts, verdictInfo{
+		vis = append(vis, verdictInfo{
 			verdict:               verdict,
 			ingestionTime:         it,
 			unexpectedResultCount: unexpectedResultCount,
@@ -226,9 +227,9 @@ func (b *BQExporter) convertVerdicts(vs []string) ([]verdictInfo, error) {
 		})
 	}
 
-	sort.Slice(verdicts, func(i, j int) bool { return verdicts[i].ingestionTime.Before(verdicts[j].ingestionTime) })
+	sort.Slice(vis, func(i, j int) bool { return vis[i].ingestionTime.Before(vis[j].ingestionTime) })
 
-	return verdicts, nil
+	return vis, nil
 }
 
 func (b *BQExporter) populateVerdictsInRange(tv *bqpb.TestVariantRow, vs []verdictInfo, tr *pb.TimeRange) {
@@ -293,7 +294,7 @@ func (b *BQExporter) populateFlakeStatisticsByVerdicts(tv *bqpb.TestVariantRow, 
 			totalVerdicts++
 			unexpectedResults += v.unexpectedResultCount
 			totalResults += v.totalResultCount
-			if v.verdict.Status == pb.VerdictStatus_VERDICT_FLAKY.String() {
+			if v.verdict.Status == internal.VerdictStatus_VERDICT_FLAKY.String() {
 				flakyVerdicts++
 			}
 		}

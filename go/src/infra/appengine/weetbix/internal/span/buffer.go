@@ -14,6 +14,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/appengine/weetbix/internal"
 	"infra/appengine/weetbix/pbutil"
 	pb "infra/appengine/weetbix/proto/v1"
 )
@@ -45,7 +46,7 @@ type Ptr interface {
 //   - pb.Variant
 //   - pb.StringPair
 //   - proto.Message
-//   - pb.VerdictStatus
+//   - internal.VerdictStatus
 type Buffer struct {
 	NullString  spanner.NullString
 	NullTime    spanner.NullTime
@@ -100,7 +101,7 @@ func (b *Buffer) fromSpanner(row *spanner.Row, col int, goPtr interface{}) error
 		spanPtr = &b.ByteSlice
 	case *[]pb.AnalyzedTestVariantStatus:
 		spanPtr = &b.Int64Slice
-	case *pb.VerdictStatus:
+	case *internal.VerdictStatus:
 		spanPtr = &b.Int64
 	default:
 		spanPtr = goPtr
@@ -160,8 +161,8 @@ func (b *Buffer) fromSpanner(row *spanner.Row, col int, goPtr interface{}) error
 			panic(err)
 		}
 
-	case *pb.VerdictStatus:
-		*goPtr = pb.VerdictStatus(b.Int64)
+	case *internal.VerdictStatus:
+		*goPtr = internal.VerdictStatus(b.Int64)
 
 	case *[]pb.AnalyzedTestVariantStatus:
 		*goPtr = make([]pb.AnalyzedTestVariantStatus, len(b.Int64Slice))
@@ -236,7 +237,7 @@ func ToSpanner(v interface{}) interface{} {
 		}
 		return ret
 
-	case pb.VerdictStatus:
+	case internal.VerdictStatus:
 		return int64(v)
 
 	case []pb.AnalyzedTestVariantStatus:

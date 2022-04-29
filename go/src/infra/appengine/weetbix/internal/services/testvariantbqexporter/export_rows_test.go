@@ -19,6 +19,7 @@ import (
 	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/clock"
 
+	"infra/appengine/weetbix/internal"
 	"infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/testutil"
 	"infra/appengine/weetbix/internal/testutil/insert"
@@ -123,32 +124,32 @@ func TestQueryTestVariantsToExport(t *testing.T) {
 				"TestMetadata":     span.Compressed(tmdM),
 				"StatusUpdateTime": twoAndHalfHAgo,
 			}),
-			insert.Verdict(realm, tID1, vh, "build-0", pb.VerdictStatus_EXPECTED, twoAndHalfHAgo, map[string]interface{}{
+			insert.Verdict(realm, tID1, vh, "build-0", internal.VerdictStatus_EXPECTED, twoAndHalfHAgo, map[string]interface{}{
 				"IngestionTime":         oneAndHalfHAgo,
 				"UnexpectedResultCount": 0,
 				"TotalResultCount":      1,
 			}),
-			insert.Verdict(realm, tID1, vh, "build-1", pb.VerdictStatus_VERDICT_FLAKY, twoAndHalfHAgo, map[string]interface{}{
+			insert.Verdict(realm, tID1, vh, "build-1", internal.VerdictStatus_VERDICT_FLAKY, twoAndHalfHAgo, map[string]interface{}{
 				"IngestionTime":         halfHAgo,
 				"UnexpectedResultCount": 1,
 				"TotalResultCount":      2,
 			}),
-			insert.Verdict(realm, tID1, vh, "build-2", pb.VerdictStatus_EXPECTED, oneAndHalfHAgo, map[string]interface{}{
+			insert.Verdict(realm, tID1, vh, "build-2", internal.VerdictStatus_EXPECTED, oneAndHalfHAgo, map[string]interface{}{
 				"IngestionTime":         halfHAgo,
 				"UnexpectedResultCount": 0,
 				"TotalResultCount":      1,
 			}),
-			insert.Verdict(realm, tID2, vh, "build-2", pb.VerdictStatus_VERDICT_FLAKY, oneAndHalfHAgo, map[string]interface{}{
+			insert.Verdict(realm, tID2, vh, "build-2", internal.VerdictStatus_VERDICT_FLAKY, oneAndHalfHAgo, map[string]interface{}{
 				"IngestionTime":         halfHAgo,
 				"UnexpectedResultCount": 1,
 				"TotalResultCount":      2,
 			}),
-			insert.Verdict(realm, tID5, vh, "build-1", pb.VerdictStatus_EXPECTED, twoAndHalfHAgo, map[string]interface{}{
+			insert.Verdict(realm, tID5, vh, "build-1", internal.VerdictStatus_EXPECTED, twoAndHalfHAgo, map[string]interface{}{
 				"IngestionTime":         now.Add(-45 * time.Minute),
 				"UnexpectedResultCount": 0,
 				"TotalResultCount":      1,
 			}),
-			insert.Verdict(realm, tID5, vh, "build-2", pb.VerdictStatus_VERDICT_FLAKY, oneAndHalfHAgo, map[string]interface{}{
+			insert.Verdict(realm, tID5, vh, "build-2", internal.VerdictStatus_VERDICT_FLAKY, oneAndHalfHAgo, map[string]interface{}{
 				"IngestionTime":         halfHAgo,
 				"UnexpectedResultCount": 1,
 				"TotalResultCount":      2,

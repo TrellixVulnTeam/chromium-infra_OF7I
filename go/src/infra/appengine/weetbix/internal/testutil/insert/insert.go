@@ -10,6 +10,7 @@ import (
 
 	"cloud.google.com/go/spanner"
 
+	"infra/appengine/weetbix/internal"
 	"infra/appengine/weetbix/internal/span"
 	pb "infra/appengine/weetbix/proto/v1"
 )
@@ -35,7 +36,7 @@ func AnalyzedTestVariant(realm, tId, vHash string, status pb.AnalyzedTestVariant
 }
 
 // Verdict returns a spanner mutation that inserts a Verdicts row.
-func Verdict(realm, tId, vHash, invID string, status pb.VerdictStatus, invTime time.Time, extraValues map[string]interface{}) *spanner.Mutation {
+func Verdict(realm, tId, vHash, invID string, status internal.VerdictStatus, invTime time.Time, extraValues map[string]interface{}) *spanner.Mutation {
 	values := map[string]interface{}{
 		"Realm":                  realm,
 		"TestId":                 tId,

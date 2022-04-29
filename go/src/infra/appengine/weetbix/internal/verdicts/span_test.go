@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/server/span"
 
+	"infra/appengine/weetbix/internal"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
 	"infra/appengine/weetbix/internal/testutil/insert"
@@ -57,10 +58,10 @@ func TestComputeTestVariantStatusFromVerdicts(t *testing.T) {
 		Convey(`still_flaky`, func() {
 			tID := "ninja://still_flaky"
 			ms := []*spanner.Mutation{
-				insert.Verdict(realm, tID, vh, "build-0", pb.VerdictStatus_EXPECTED, clock.Now(ctx).UTC().Add(-time.Hour), nil),
-				insert.Verdict(realm, tID, vh, "build-1", pb.VerdictStatus_VERDICT_FLAKY, clock.Now(ctx).UTC().Add(-2*time.Hour), nil),
-				insert.Verdict(realm, tID, vh, "build-2", pb.VerdictStatus_VERDICT_FLAKY, clock.Now(ctx).UTC().Add(-3*time.Hour), nil),
-				insert.Verdict(realm, tID, vh, "build-3", pb.VerdictStatus_UNEXPECTED, clock.Now(ctx).UTC().Add(-4*time.Hour), nil),
+				insert.Verdict(realm, tID, vh, "build-0", internal.VerdictStatus_EXPECTED, clock.Now(ctx).UTC().Add(-time.Hour), nil),
+				insert.Verdict(realm, tID, vh, "build-1", internal.VerdictStatus_VERDICT_FLAKY, clock.Now(ctx).UTC().Add(-2*time.Hour), nil),
+				insert.Verdict(realm, tID, vh, "build-2", internal.VerdictStatus_VERDICT_FLAKY, clock.Now(ctx).UTC().Add(-3*time.Hour), nil),
+				insert.Verdict(realm, tID, vh, "build-3", internal.VerdictStatus_UNEXPECTED, clock.Now(ctx).UTC().Add(-4*time.Hour), nil),
 			}
 			testutil.MustApply(ctx, ms...)
 
@@ -70,7 +71,7 @@ func TestComputeTestVariantStatusFromVerdicts(t *testing.T) {
 		Convey(`no_new_results`, func() {
 			tID := "ninja://no_new_results"
 			ms := []*spanner.Mutation{
-				insert.Verdict(realm, tID, vh, "build-0", pb.VerdictStatus_EXPECTED, clock.Now(ctx).UTC().Add(-25*time.Hour), nil),
+				insert.Verdict(realm, tID, vh, "build-0", internal.VerdictStatus_EXPECTED, clock.Now(ctx).UTC().Add(-25*time.Hour), nil),
 			}
 			testutil.MustApply(ctx, ms...)
 			test(tID, pb.AnalyzedTestVariantStatus_NO_NEW_RESULTS)
@@ -79,9 +80,9 @@ func TestComputeTestVariantStatusFromVerdicts(t *testing.T) {
 		Convey(`consistently_unexpected`, func() {
 			tID := "ninja://consistently_unexpected"
 			ms := []*spanner.Mutation{
-				insert.Verdict(realm, tID, vh, "build-0", pb.VerdictStatus_VERDICT_FLAKY, clock.Now(ctx).UTC().Add(-26*time.Hour), nil),
-				insert.Verdict(realm, tID, vh, "build-1", pb.VerdictStatus_UNEXPECTED, clock.Now(ctx).UTC().Add(-time.Hour), nil),
-				insert.Verdict(realm, tID, vh, "build-2", pb.VerdictStatus_UNEXPECTED, clock.Now(ctx).UTC().Add(-2*time.Hour), nil),
+				insert.Verdict(realm, tID, vh, "build-0", internal.VerdictStatus_VERDICT_FLAKY, clock.Now(ctx).UTC().Add(-26*time.Hour), nil),
+				insert.Verdict(realm, tID, vh, "build-1", internal.VerdictStatus_UNEXPECTED, clock.Now(ctx).UTC().Add(-time.Hour), nil),
+				insert.Verdict(realm, tID, vh, "build-2", internal.VerdictStatus_UNEXPECTED, clock.Now(ctx).UTC().Add(-2*time.Hour), nil),
 			}
 			testutil.MustApply(ctx, ms...)
 			test(tID, pb.AnalyzedTestVariantStatus_CONSISTENTLY_UNEXPECTED)
@@ -90,8 +91,8 @@ func TestComputeTestVariantStatusFromVerdicts(t *testing.T) {
 		Convey(`consistently_expected`, func() {
 			tID := "ninja://consistently_expected"
 			ms := []*spanner.Mutation{
-				insert.Verdict(realm, tID, vh, "build-0", pb.VerdictStatus_EXPECTED, clock.Now(ctx).UTC().Add(-time.Hour), nil),
-				insert.Verdict(realm, tID, vh, "build-1", pb.VerdictStatus_EXPECTED, clock.Now(ctx).UTC().Add(-2*time.Hour), nil),
+				insert.Verdict(realm, tID, vh, "build-0", internal.VerdictStatus_EXPECTED, clock.Now(ctx).UTC().Add(-time.Hour), nil),
+				insert.Verdict(realm, tID, vh, "build-1", internal.VerdictStatus_EXPECTED, clock.Now(ctx).UTC().Add(-2*time.Hour), nil),
 			}
 			testutil.MustApply(ctx, ms...)
 			test(tID, pb.AnalyzedTestVariantStatus_CONSISTENTLY_EXPECTED)
@@ -100,8 +101,8 @@ func TestComputeTestVariantStatusFromVerdicts(t *testing.T) {
 		Convey(`has_unexpected_results`, func() {
 			tID := "ninja://has_unexpected_results"
 			ms := []*spanner.Mutation{
-				insert.Verdict(realm, tID, vh, "build-0", pb.VerdictStatus_EXPECTED, clock.Now(ctx).UTC().Add(-time.Hour), nil),
-				insert.Verdict(realm, tID, vh, "build-1", pb.VerdictStatus_UNEXPECTED, clock.Now(ctx).UTC().Add(-2*time.Hour), nil),
+				insert.Verdict(realm, tID, vh, "build-0", internal.VerdictStatus_EXPECTED, clock.Now(ctx).UTC().Add(-time.Hour), nil),
+				insert.Verdict(realm, tID, vh, "build-1", internal.VerdictStatus_UNEXPECTED, clock.Now(ctx).UTC().Add(-2*time.Hour), nil),
 			}
 			testutil.MustApply(ctx, ms...)
 			test(tID, pb.AnalyzedTestVariantStatus_HAS_UNEXPECTED_RESULTS)

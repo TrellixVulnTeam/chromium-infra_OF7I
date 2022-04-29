@@ -15,9 +15,9 @@ import (
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/span"
 
+	"infra/appengine/weetbix/internal"
 	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
-	pb "infra/appengine/weetbix/proto/v1"
 )
 
 func createVerdicts(ctx context.Context, task *taskspb.CollectTestResults, tvs []*rdbpb.TestVariant) error {
@@ -70,16 +70,16 @@ func insertVerdict(task *taskspb.CollectTestResults, tv *rdbpb.TestVariant, inge
 	return spanner.InsertOrUpdateMap("Verdicts", spanutil.ToSpannerMap(row))
 }
 
-func deriveVerdictStatus(tv *rdbpb.TestVariant) pb.VerdictStatus {
+func deriveVerdictStatus(tv *rdbpb.TestVariant) internal.VerdictStatus {
 	switch tv.Status {
 	case rdbpb.TestVariantStatus_FLAKY:
-		return pb.VerdictStatus_VERDICT_FLAKY
+		return internal.VerdictStatus_VERDICT_FLAKY
 	case rdbpb.TestVariantStatus_EXPECTED:
-		return pb.VerdictStatus_EXPECTED
+		return internal.VerdictStatus_EXPECTED
 	case rdbpb.TestVariantStatus_UNEXPECTED:
-		return pb.VerdictStatus_UNEXPECTED
+		return internal.VerdictStatus_UNEXPECTED
 	case rdbpb.TestVariantStatus_EXONERATED:
-		return pb.VerdictStatus_UNEXPECTED
+		return internal.VerdictStatus_UNEXPECTED
 	default:
 		panic(fmt.Sprintf("impossible verdict status: %d", tv.Status))
 	}

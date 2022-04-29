@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/server/tq"
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	"infra/appengine/weetbix/internal"
 	"infra/appengine/weetbix/internal/analyzedtestvariants"
 	"infra/appengine/weetbix/internal/config"
 	configpb "infra/appengine/weetbix/internal/config/proto"
@@ -149,8 +150,8 @@ func TestUpdateTestVariantStatus(t *testing.T) {
 				"PreviousStatuses":          statuses,
 				"PreviousStatusUpdateTimes": times,
 			}),
-			insert.Verdict(realm, tID1, vh, "build-1", pb.VerdictStatus_VERDICT_FLAKY, now.Add(-2*time.Hour), nil),
-			insert.Verdict(realm, tID2, vh, "build-1", pb.VerdictStatus_VERDICT_FLAKY, now.Add(-2*time.Hour), nil),
+			insert.Verdict(realm, tID1, vh, "build-1", internal.VerdictStatus_VERDICT_FLAKY, now.Add(-2*time.Hour), nil),
+			insert.Verdict(realm, tID2, vh, "build-1", internal.VerdictStatus_VERDICT_FLAKY, now.Add(-2*time.Hour), nil),
 		}
 		testutil.MustApply(ctx, ms...)
 

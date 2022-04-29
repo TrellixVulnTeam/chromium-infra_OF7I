@@ -11,6 +11,7 @@ import (
 	"cloud.google.com/go/spanner"
 	"go.chromium.org/luci/common/clock"
 
+	"infra/appengine/weetbix/internal"
 	"infra/appengine/weetbix/internal/testutil"
 	"infra/appengine/weetbix/internal/testutil/insert"
 	pb "infra/appengine/weetbix/proto/v1"
@@ -51,11 +52,11 @@ func TestPurge(t *testing.T) {
 			insert.AnalyzedTestVariant(realm, tID5, vh, pb.AnalyzedTestVariantStatus_CONSISTENTLY_EXPECTED, map[string]interface{}{
 				"StatusUpdateTime": now.Add(-2 * 31 * 24 * time.Hour),
 			}),
-			insert.Verdict(realm, tID1, vh, "build-0", pb.VerdictStatus_EXPECTED, now.Add(-time.Hour), nil),
-			insert.Verdict(realm, tID4, vh, "build-1", pb.VerdictStatus_VERDICT_FLAKY, now.Add(-5*30*24*time.Hour), nil),
-			insert.Verdict(realm, tID4, vh, "build-2", pb.VerdictStatus_EXPECTED, now.Add(-2*30*24*time.Hour), nil),
-			insert.Verdict(realm, tID5, vh, "build-1", pb.VerdictStatus_EXPECTED, now.Add(-2*30*24*time.Hour), nil),
-			insert.Verdict(realm, tID5, vh, "build-2", pb.VerdictStatus_VERDICT_FLAKY, now.Add(-5*24*time.Hour), nil),
+			insert.Verdict(realm, tID1, vh, "build-0", internal.VerdictStatus_EXPECTED, now.Add(-time.Hour), nil),
+			insert.Verdict(realm, tID4, vh, "build-1", internal.VerdictStatus_VERDICT_FLAKY, now.Add(-5*30*24*time.Hour), nil),
+			insert.Verdict(realm, tID4, vh, "build-2", internal.VerdictStatus_EXPECTED, now.Add(-2*30*24*time.Hour), nil),
+			insert.Verdict(realm, tID5, vh, "build-1", internal.VerdictStatus_EXPECTED, now.Add(-2*30*24*time.Hour), nil),
+			insert.Verdict(realm, tID5, vh, "build-2", internal.VerdictStatus_VERDICT_FLAKY, now.Add(-5*24*time.Hour), nil),
 		}
 		testutil.MustApply(ctx, ms...)
 

@@ -20,25 +20,6 @@ message TimeRange {
   google.protobuf.Timestamp latest = 2;
 }
 
-// Status of a Verdict.
-// It is determined by all the test results of the verdict, and exonerations are
-// ignored(i.e. failure is treated as a failure, even if it is exonerated).
-enum VerdictStatus {
-  // A verdict must not have this status.
-  // This is only used when filtering verdicts.
-  VERDICT_STATUS_UNSPECIFIED = 0;
-
-  // All results of the verdict are unexpected.
-  UNEXPECTED = 10;
-
-  // The verdict has both expected and unexpected results.
-  // To be differentiated with AnalyzedTestVariantStatus.FLAKY.
-  VERDICT_FLAKY = 30;
-
-  // All results of the verdict are expected.
-  EXPECTED = 50;
-}
-
 // Identity of a test result.
 message TestResultId {
   // The test results system.

@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/tq"
 
+	"infra/appengine/weetbix/internal"
 	"infra/appengine/weetbix/internal/resultdb"
 	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
@@ -34,7 +35,7 @@ type verdict struct {
 	variantHash     string
 	invID           string
 	exonerated      bool
-	status          pb.VerdictStatus
+	status          internal.VerdictStatus
 	unexpectedCount int64
 	totalCount      int64
 }
@@ -144,7 +145,7 @@ func TestSaveVerdicts(t *testing.T) {
 				variantHash:     vh,
 				invID:           invID,
 				exonerated:      false,
-				status:          pb.VerdictStatus_VERDICT_FLAKY,
+				status:          internal.VerdictStatus_VERDICT_FLAKY,
 				unexpectedCount: 1,
 				totalCount:      2,
 			},
@@ -154,7 +155,7 @@ func TestSaveVerdicts(t *testing.T) {
 				variantHash:     vh,
 				invID:           invID,
 				exonerated:      true,
-				status:          pb.VerdictStatus_UNEXPECTED,
+				status:          internal.VerdictStatus_UNEXPECTED,
 				unexpectedCount: 1,
 				totalCount:      1,
 			},
@@ -164,7 +165,7 @@ func TestSaveVerdicts(t *testing.T) {
 				variantHash:     vh,
 				invID:           invID,
 				exonerated:      false,
-				status:          pb.VerdictStatus_EXPECTED,
+				status:          internal.VerdictStatus_EXPECTED,
 				unexpectedCount: 0,
 				totalCount:      1,
 			},
