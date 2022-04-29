@@ -183,6 +183,7 @@ func LabstationRepairConfig() *Configuration {
 							"cros_clean_tmp_owner_request",
 							"cros_allowed_reboot",
 							"Simple reboot",
+							"Sysrq reboot",
 							// Waiting to tell if success.
 							"Wait to be SSHable",
 							"Remove reboot requests",
@@ -209,6 +210,10 @@ func LabstationRepairConfig() *Configuration {
 					"Simple reboot": {
 						Docs: []string{
 							"Simple un-blocker reboot.",
+							"The action will not run if the labstation's filesystem I/O is blocked because /sbin/reboot may not work if the filesystem is hosed.",
+						},
+						Conditions: []string{
+							"cros_filesystem_io_not_blocked",
 						},
 						ExecName: "cros_run_shell_command",
 						ExecExtraArgs: []string{
@@ -233,6 +238,31 @@ func LabstationRepairConfig() *Configuration {
 							"cros_update_hwid_to_inventory",
 							"cros_update_serial_number_inventory",
 						},
+					},
+					"Sysrq reboot": {
+						Docs: []string{
+							"Immediately reboot the system, without unmounting or syncing filesystems",
+							"The action only runs when the filesystem is hosed where regular reboot executable will not work.",
+						},
+						Conditions: []string{
+							"Filesystem IO blocked",
+						},
+						ExecName: "cros_run_shell_command",
+						ExecExtraArgs: []string{
+							"echo b > /proc/sysrq-trigger",
+						},
+						RunControl:             RunControl_ALWAYS_RUN,
+						AllowFailAfterRecovery: true,
+					},
+					"Filesystem IO blocked": {
+						Docs: []string{
+							"Filesystem I/O is blocked on the labstation.",
+							"The action is expected to fail when filesystem I/O is not blocked on the labstation.",
+						},
+						Conditions: []string{
+							"cros_filesystem_io_not_blocked",
+						},
+						ExecName: "sample_fail",
 					},
 				},
 			},

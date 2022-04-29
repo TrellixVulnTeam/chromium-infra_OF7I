@@ -68,8 +68,26 @@ func allowedRebootExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+// filesystemIoNotBlockedExec check if the labstation's filesystem IO is blocked.
+func filesystemIoNotBlockedExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
+	cmd := "ps axl | awk '$10 ~ /D/'"
+	output, err := run(ctx, info.ActionTimeout, cmd)
+	if err != nil {
+		return errors.Annotate(err, "filesystem is not blocked").Err()
+	}
+	// Good labstation may occasionally have an process in uninterruptible
+	// sleep state transiently, so we look for these who have 2+ processes
+	// stuck in such a state.
+	if len(output) > 1 {
+		return errors.Reason("filesystem is not blocked: more than one processes in uninterruptible sleep state, I/O is likely blocked.").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_clean_tmp_owner_request", cleanTmpOwnerRequestExec)
 	execs.Register("cros_validate_uptime", validateUptime)
 	execs.Register("cros_allowed_reboot", allowedRebootExec)
+	execs.Register("cros_filesystem_io_not_blocked", filesystemIoNotBlockedExec)
 }
